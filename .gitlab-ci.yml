@@ -1,0 +1,26 @@
+# Quantum Lab — static physics playground (HTML + JS + CSS) plus a
+# Python engine under engines/. No build, no Dockerfile yet — this CI
+# wires SonarQube quality scanning only. Add a `deploy:` stage when /
+# if the site graduates to a hosted ingress under platforms/landings.
+
+include:
+  - project: infrastructure/ci
+    file: /templates/scan.yml
+
+stages:
+  - scan
+
+variables:
+  # The .docx briefs and the modules/**/qho_apps_games.js bundles are
+  # vendored teaching material we don't author — exclude from sonar
+  # to keep duplication / maintainability scores honest.
+  SONAR_EXCLUSIONS: "**/*.docx,**/qho_apps_games.js,refinement.txt"
+
+sonar:
+  extends: .sonar-scan
+  variables:
+    # First-time scan: quality gate hasn't been baseline'd yet on
+    # sonar.kaneky.dev, so allow the gate to fail without blocking.
+    # Drop ALLOW_SONAR_FAIL once the New Code window has a clean
+    # baseline (Sonar UI → Quality Gates → Kaneky New Code).
+    ALLOW_SONAR_FAIL: "true"
