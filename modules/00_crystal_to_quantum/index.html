@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crystal → Quantum — The Zoom Journey</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link rel="stylesheet" href="../../shared_styles.css">
+<style>
+  /* Full-screen layout */
+  body { margin: 0; overflow: hidden; background: var(--bg-deep); }
+
+  #crystal-canvas {
+    position: fixed; inset: 0; z-index: 0;
+    width: 100vw; height: 100vh;
+  }
+  #crystal-canvas canvas { display: block; }
+
+  /* UI overlay */
+  .cq-overlay {
+    position: fixed; z-index: 10; pointer-events: none;
+    inset: 0; display: flex; flex-direction: column; justify-content: space-between;
+    padding: var(--space-md);
+  }
+  .cq-overlay > * { pointer-events: auto; }
+
+  /* Top bar: nav + scale label */
+  .cq-top {
+    display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-md);
+  }
+  .cq-scale-info {
+    background: var(--bg-panel);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md) var(--space-lg);
+    backdrop-filter: blur(16px);
+    max-width: 420px;
+    animation: fadeInUp 0.6s var(--ease-out) both;
+  }
+  .cq-scale-label {
+    font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600;
+    color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 0.3rem;
+  }
+  .cq-scale-title {
+    font-family: var(--font-display); font-size: 1.3rem; font-weight: 600;
+    margin-bottom: 0.4rem; line-height: 1.2;
+  }
+  .cq-scale-desc {
+    font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;
+  }
+
+  /* Bandgap quantum confinement diagram */
+  .cq-bandgap-wrap {
+    margin-top: var(--space-md);
+    border-top: 1px solid var(--glass-border);
+    padding-top: var(--space-sm);
+  }
+  .cq-bandgap-title {
+    font-family: var(--font-mono); font-size: 0.6rem;
+    color: var(--accent-cyan); text-transform: uppercase;
+    letter-spacing: 0.1em; margin-bottom: 0.3rem;
+  }
+  .cq-bandgap-svg { width: 100%; height: 90px; display: block; }
+  .band-bar { transition: all 0.6s var(--ease-out); }
+  .band-gap-line {
+    stroke: var(--accent-cyan); stroke-width: 1;
+    stroke-dasharray: 3 2; opacity: 0.5;
+    transition: all 0.6s var(--ease-out);
+  }
+  .band-photon-arrow {
+    stroke-width: 2.5;
+    marker-end: url(#arrowPink);
+    transition: all 0.4s var(--ease-out);
+  }
+  .band-label {
+    font-family: var(--font-mono); font-size: 7px;
+    fill: var(--text-dim);
+  }
+  .discrete-line {
+    stroke: var(--accent-cyan); stroke-width: 1.2;
+    opacity: 0; transition: opacity 0.8s var(--ease-out);
+  }
+  .discrete-label {
+    font-family: var(--font-mono); font-size: 6px;
+    fill: var(--accent-cyan); opacity: 0;
+    transition: opacity 0.8s var(--ease-out);
+  }
+  .discrete-visible .discrete-line,
+  .discrete-visible .discrete-label { opacity: 1; }
+  .conf-note {
+    font-family: var(--font-mono); font-size: 0.6rem;
+    fill: var(--accent-pink); opacity: 0.8;
+  }
+
+  /* Bottom bar: controls */
+  .cq-bottom {
+    display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg); align-items: end;
+    max-width: 1200px; margin: 0 auto; width: 100%;
+  }
+  @media (max-width: 900px) { .cq-bottom { grid-template-columns: 1fr; } }
+
+  .cq-panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md) var(--space-lg);
+    backdrop-filter: blur(16px);
+    box-shadow: var(--shadow-lg);
+  }
+  .cq-panel-title {
+    font-family: var(--font-mono); font-size: 0.7rem; font-weight: 600;
+    color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: var(--space-sm);
+  }
+
+  /* Scale step bar */
+  .scale-steps {
+    display: flex; align-items: center; gap: 0.4rem; margin-bottom: var(--space-sm);
+  }
+  .scale-step {
+    flex: 1; height: 6px; border-radius: 3px;
+    background: rgba(255,255,255,0.08);
+    transition: all 0.4s var(--ease-out); cursor: pointer; position: relative;
+  }
+  .scale-step::after {
+    content: attr(data-label); position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+    font-size: 0.65rem; color: var(--text-dim); white-space: nowrap; opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .scale-step:hover::after { opacity: 1; }
+  .scale-step.passed  { background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple)); opacity: 0.5; }
+  .scale-step.active  { background: var(--grad-hero); box-shadow: 0 0 12px rgba(0,240,255,0.3); transform: scaleY(1.5); }
+
+  /* Zoom slider */
+  .cq-zoom-row {
+    display: flex; align-items: center; gap: var(--space-sm);
+  }
+  .cq-zoom-row input[type="range"] { flex: 1; }
+  .cq-zoom-value {
+    font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent-cyan); font-weight: 600;
+    min-width: 70px; text-align: right;
+  }
+
+  /* Photon controls */
+  .photon-energy-row {
+    display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-sm);
+  }
+  .photon-energy-row input[type="range"] { flex: 1; }
+  .photon-val {
+    font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent-cyan); font-weight: 600;
+    min-width: 80px; text-align: right;
+  }
+
+  .btn-fire {
+    width: 100%; padding: 0.7rem; margin-top: 0.4rem;
+    background: var(--grad-hero); color: #fff; border: none;
+    border-radius: var(--radius-pill); font-family: var(--font-body);
+    font-size: 0.95rem; font-weight: 700; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,240,255,0.25);
+    transition: all 0.3s var(--ease-out);
+    position: relative; overflow: hidden;
+  }
+  .btn-fire::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.5s;
+  }
+  .btn-fire:hover::after { transform: translateX(100%); }
+  .btn-fire:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,240,255,0.4); }
+  .btn-fire:active { transform: scale(0.98); }
+
+  /* Message area */
+  .cq-msg {
+    font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;
+    min-height: 1.4em; font-style: italic;
+    transition: opacity 0.3s;
+  }
+  .cq-msg strong { color: var(--accent-cyan); font-style: normal; }
+
+  /* Photon color indicator */
+  .photon-spectrum {
+    display: flex; height: 6px; border-radius: 3px; overflow: hidden;
+    margin-top: 0.4rem; opacity: 0.6;
+  }
+  .spectrum-ir   { flex: 1; background: #ff2200; }
+  .spectrum-vis  { flex: 2; background: linear-gradient(90deg, #ff0000, #ffaa00, #00ff00, #00aaff, #aa00ff); }
+  .spectrum-uv   { flex: 1; background: #aa00ff; }
+  .spectrum-xray { flex: 0.5; background: #00f0ff; }
+
+  /* Corner badge */
+  .cq-xp-badge {
+    position: fixed; top: 0.8rem; right: 0.8rem; z-index: 11;
+    background: var(--bg-panel); border: 1px solid var(--glass-border);
+    border-radius: var(--radius-pill); padding: 0.35rem 1rem;
+    backdrop-filter: blur(12px); font-size: 0.8rem; font-weight: 600;
+    color: var(--accent-cyan); font-family: var(--font-mono);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .cq-top { flex-direction: column; }
+    .cq-scale-info { max-width: 100%; }
+    .cq-bottom { gap: var(--space-sm); }
+  }
+</style>
+</head>
+<body>
+
+<!-- AMBIENT ORBS -->
+<div class="orb orb-cyan"></div>
+<div class="orb orb-purple"></div>
+<div class="orb orb-pink"></div>
+
+<!-- Three.js Canvas -->
+<div id="crystal-canvas"></div>
+
+<!-- XP Badge -->
+<div class="cq-xp-badge">⭐ <span id="nav-xp">0 XP</span></div>
+
+<!-- UI Overlay -->
+<div class="cq-overlay">
+
+  <!-- Top: nav + info -->
+  <div class="cq-top">
+    <div style="display:flex;align-items:center;gap:0.5rem;">
+      <a href="../../index.html" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:0.5rem;">
+        <span class="nav-logo" style="width:32px;height:32px;font-size:1.1rem;">⚛</span>
+        <span style="font-family:var(--font-display);font-weight:600;font-size:0.95rem;">Physics Playground</span>
+      </a>
+    </div>
+
+    <div class="cq-scale-info">
+      <div class="cq-scale-label" id="scale-label">Macro — 1 cm crystal</div>
+      <div class="cq-scale-title">From Crystal to Quantum</div>
+      <div class="cq-scale-desc" id="scale-info">Silicon looks like a solid grey block. Nothing quantum here yet.</div>
+
+      <!-- Live bandgap confinement diagram -->
+      <div class="cq-bandgap-wrap" id="bandgap-wrap">
+        <div class="cq-bandgap-title">Energy Bands (live)</div>
+        <svg class="cq-bandgap-svg" id="bandgap-svg" viewBox="0 0 300 90" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrowPink" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 L0,3" fill="var(--accent-pink)"/>
+            </marker>
+          </defs>
+          <!-- X axis: crystal size (macro → quantum) -->
+          <text x="150" y="85" text-anchor="middle" class="band-label">crystal size →</text>
+
+          <!-- Valence band (filled) -->
+          <rect id="valence-bar" x="20" y="55" width="260" height="20" rx="2" fill="rgba(0,240,255,0.15)" class="band-bar"/>
+          <text x="16" y="68" text-anchor="end" class="band-label">VB</text>
+
+          <!-- Conduction band (empty at 0K) -->
+          <rect id="conduction-bar" x="20" y="15" width="260" height="20" rx="2" fill="rgba(192,132,252,0.15)" class="band-bar"/>
+          <text x="16" y="28" text-anchor="end" class="band-label">CB</text>
+
+          <!-- Gap bracket -->
+          <line id="gap-left" x1="150" y1="40" x2="150" y2="55" class="band-gap-line"/>
+          <line id="gap-right" x1="270" y1="40" x2="270" y2="55" class="band-gap-line"/>
+          <line id="gap-top" x1="150" y1="40" x2="270" y2="40" class="band-gap-line"/>
+          <text id="gap-label" x="210" y="47" text-anchor="middle" class="band-label">E_gap = 1.12 eV</text>
+
+          <!-- Discrete quantum levels (appear at quantum scale) -->
+          <line x1="220" y1="20" x2="240" y2="20" class="discrete-line"/>
+          <line x1="220" y1="25" x2="240" y2="25" class="discrete-line"/>
+          <line x1="220" y1="65" x2="240" y2="65" class="discrete-line"/>
+          <text x="245" y="22" class="discrete-label">CB₁</text>
+          <text x="245" y="67" class="discrete-label">VB₁</text>
+
+          <!-- Photon arrow (moves with slider) -->
+          <line id="photon-arrow" class="band-photon-arrow" x1="150" y1="80" x2="150" y2="55"
+                stroke="var(--accent-pink)" opacity="0"/>
+          <text id="photon-arrow-label" x="152" y="68" class="band-label" fill="var(--accent-pink)" opacity="0">E_γ</text>
+
+          <!-- Confinement note -->
+          <text id="conf-note" x="240" y="50" class="conf-note" text-anchor="middle" opacity="0">
+            E_gap ↑
+          </text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom: controls -->
+  <div class="cq-bottom">
+
+    <!-- Zoom panel -->
+    <div class="cq-panel">
+      <div class="cq-panel-title">🔍 Zoom Level</div>
+      <div class="scale-steps">
+        <div class="scale-step passed active" data-label="1 cm" onclick="manualScale('macro')"></div>
+        <div class="scale-step" data-label="5 Å" onclick="manualScale('lattice')"></div>
+        <div class="scale-step" data-label="2 Å" onclick="manualScale('cluster')"></div>
+        <div class="scale-step" data-label="1 Å" onclick="manualScale('bands')"></div>
+        <div class="scale-step" data-label="100 pm" onclick="manualScale('atom')"></div>
+        <div class="scale-step" data-label="10 pm" onclick="manualScale('spin')"></div>
+      </div>
+      <div class="cq-zoom-row">
+        <span style="font-size:0.75rem;color:var(--text-dim);white-space:nowrap;">Crystal</span>
+        <input type="range" id="zoom-slider" min="0" max="5" step="0.01" value="0">
+        <span style="font-size:0.75rem;color:var(--text-dim);white-space:nowrap;">Quantum</span>
+      </div>
+      <div class="cq-msg" id="zoom-msg">Drag the slider to zoom through scales</div>
+    </div>
+
+    <!-- Photon panel -->
+    <div class="cq-panel">
+      <div class="cq-panel-title">⚡ Photon Beam</div>
+      <div class="photon-energy-row">
+        <span style="font-size:0.75rem;color:var(--text-dim);white-space:nowrap;">0.1 eV</span>
+        <input type="range" id="photon-slider" min="0.1" max="6.0" step="0.05" value="1.5">
+        <span style="font-size:0.75rem;color:var(--text-dim);white-space:nowrap;">6 eV</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span class="photon-val" id="photon-val">1.50 eV</span>
+        <span style="font-size:0.7rem;color:var(--text-dim);">Si gap = 1.12 eV · Work fn ≈ 4.5 eV</span>
+      </div>
+      <div class="photon-spectrum">
+        <div class="spectrum-ir"></div>
+        <div class="spectrum-vis"></div>
+        <div class="spectrum-uv"></div>
+        <div class="spectrum-xray"></div>
+      </div>
+      <button class="btn-fire magnetic" id="btn-fire">🚀 Fire Photon</button>
+      <div class="cq-msg" id="photon-msg">Set energy and fire a photon into the crystal</div>
+      <div class="cq-msg" id="interaction-msg" style="margin-top:0.3rem;color:var(--accent-cyan);"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SCRIPTS -->
+<script src="../../shared_ui.js"></script>
+<script src="../../shared_games.js"></script>
+<script src="../../shared_effects.js"></script>
+<script src="cq_sim.js?v=1"></script>
+<script>
+(function(){
+  'use strict';
+
+  var scaleNames = ['macro','lattice','cluster','bands','atom','spin'];
+  var scaleThresholds = [0, 0.75, 1.6, 2.4, 3.3, 4.2];
+
+  function getScaleFromSlider(v) {
+    for (var i = scaleThresholds.length - 1; i >= 0; i--) {
+      if (v >= scaleThresholds[i]) return scaleNames[i];
+    }
+    return scaleNames[0];
+  }
+
+  // Init Three.js scene
+  if (typeof initCrystalSim === 'function') {
+    initCrystalSim();
+  } else {
+    setTimeout(function(){ if (typeof initCrystalSim === 'function') initCrystalSim(); }, 500);
+  }
+
+  // Zoom slider
+  var zoomSlider = document.getElementById('zoom-slider');
+  var zoomMsg = document.getElementById('zoom-msg');
+  var lastScale = 'macro';
+
+  zoomSlider.addEventListener('input', function(){
+    var v = parseFloat(this.value);
+    var s = getScaleFromSlider(v);
+    if (s !== lastScale && typeof setCrystalScale === 'function') {
+      setCrystalScale(s);
+      lastScale = s;
+      // Award XP for first discovery of each scale
+      var explored = __GameState.session.exploredScales || {};
+      if (!explored[s]) {
+        explored[s] = true;
+        __GameState.session.exploredScales = explored;
+        var xp = 15;
+        if (s === 'spin') xp = 30;
+        if (s === 'bands') xp = 20;
+        __GameState.addXP(xp, 'Discovered ' + s + ' scale');
+        zoomMsg.textContent = 'First time at ' + s + '! +' + xp + ' XP';
+        setTimeout(function(){ zoomMsg.textContent = 'Drag the slider to zoom through scales'; }, 2500);
+      }
+    }
+    // Update live bandgap diagram
+    updateBandgapDiagram(v);
+  });
+
+  // ── Bandgap confinement diagram updater ──
+  function updateBandgapDiagram(v) {
+    // Slider v∈[0,5] maps: macro→lattice→cluster→bands→atom→spin
+    var EgBulk = 1.12;
+    var EgMax  = 3.80;  // quantum dot limit
+    var t      = Math.min(v / 5, 1);
+    var Eg     = EgBulk + (EgMax - EgBulk) * Math.pow(t, 1.8);
+
+    // --- Band bars: shrink continuously + move apart ---
+    // Bar width narrows → fewer states as crystal shrinks
+    var barW    = 260 - t * 150;               // 260 → 110
+    var barX    = 20 + (260 - barW) * 0.5;
+    var gapH    = 14 + t * 26;                 // gap height 14 → 40 px
+
+    // VB top Y and CB bottom Y move apart
+    var vbTop   = 55;                          // VB top stays fixed
+    var cbBot   = vbTop - gapH;                // CB bottom moves UP = larger gap
+
+    var vBar = document.getElementById('valence-bar');
+    var cBar = document.getElementById('conduction-bar');
+    if (vBar) { vBar.setAttribute('width', barW); vBar.setAttribute('x', barX); }
+    if (cBar) { cBar.setAttribute('width', barW); cBar.setAttribute('x', barX); }
+    // Also move CB rect up/down
+    if (cBar) { cBar.setAttribute('y', cbBot - 20); } // 20px tall CB rect
+
+    // --- Gap bracket follows smoothly ---
+    var gapL = document.getElementById('gap-left');
+    var gapR = document.getElementById('gap-right');
+    var gapT = document.getElementById('gap-top');
+    if (gapL) { gapL.setAttribute('y1', cbBot); gapL.setAttribute('y2', vbTop); }
+    if (gapR) { gapR.setAttribute('y1', cbBot); gapR.setAttribute('y2', vbTop); }
+    if (gapT) { gapT.setAttribute('y1', cbBot); gapT.setAttribute('y2', cbBot); }
+
+    // Gap label always centered in the gap
+    var gapLabel = document.getElementById('gap-label');
+    if (gapLabel) {
+      gapLabel.textContent = 'E_gap = ' + Eg.toFixed(2) + ' eV';
+      gapLabel.setAttribute('y', (cbBot + vbTop) / 2 + 3);
+    }
+
+    // --- Discrete levels: smooth opacity fade at quantum end ---
+    var discOpacity = Math.max(0, (v - 2.0) / 2.0); // 0 @ v=2.0, 1 @ v=4.0
+    var wrap = document.getElementById('bandgap-svg');
+    if (wrap) {
+      wrap.querySelectorAll('.discrete-line, .discrete-label').forEach(function(el){
+        el.style.opacity = discOpacity;
+      });
+    }
+    // Discrete lines also spread apart with gap
+    var dLines = wrap ? wrap.querySelectorAll('.discrete-line') : [];
+    if (dLines[0]) dLines[0].setAttribute('y1', cbBot - 4);  dLines[0].setAttribute('y2', cbBot - 4);
+    if (dLines[1]) dLines[1].setAttribute('y1', cbBot - 8);  dLines[1].setAttribute('y2', cbBot - 8);
+    if (dLines[2]) dLines[2].setAttribute('y1', vbTop + 4);    dLines[2].setAttribute('y2', vbTop + 4);
+
+    // --- Confinement note ---
+    var cNote = document.getElementById('conf-note');
+    if (cNote) {
+      cNote.style.opacity = t > 0.3 ? (0.5 + 0.5 * t) : 0;
+      cNote.textContent = t > 0.85 ? 'quantum confined!' : 'confinement ↑';
+      cNote.setAttribute('y', (cbBot + vbTop) / 2 - 6);
+    }
+
+    // --- Photon arrow: maps photon energy to gap, color changes by outcome ---
+    var photonE = parseFloat(document.getElementById('photon-slider').value) || 1.5;
+    var arrow   = document.getElementById('photon-arrow');
+    var arrowLbl = document.getElementById('photon-arrow-label');
+    if (arrow && arrowLbl) {
+      var aOp = Math.min(t * 2, 1); // fade in 0→1 over first half of slider
+      arrow.style.opacity = aOp;
+      arrowLbl.style.opacity = aOp;
+      // Arrow tip y: photon energy as fraction of current gap
+      var frac = Math.min(photonE / Eg, 1.15);
+      var tipY = vbTop - frac * gapH;
+      tipY = Math.max(cbBot + 2, Math.min(vbTop - 2, tipY));
+      arrow.setAttribute('y2', tipY);
+      arrowLbl.setAttribute('y', tipY + 3);
+      // Color = outcome
+      var color;
+      if (photonE < 0.08)       color = '#ff8800'; // phonon
+      else if (photonE < Eg)    color = '#ffaa00'; // transmission
+      else if (photonE < 4.5)   color = '#00f0ff'; // excitation
+      else                      color = '#ff4ecd'; // photoelectric
+      arrow.setAttribute('stroke', color);
+    }
+
+    // --- Interaction outcome label next to arrow ---
+    if (arrowLbl) {
+      var outcome;
+      if (photonE < 0.08)       outcome = 'phonon';
+      else if (photonE < Eg)    outcome = 'transmission';
+      else if (photonE < 4.5)   outcome = 'excitation';
+      else                      outcome = 'photoemission';
+      arrowLbl.textContent = 'E_γ → ' + outcome;
+    }
+  }
+
+  // Photon slider
+  var photonSlider = document.getElementById('photon-slider');
+  var photonVal = document.getElementById('photon-val');
+  photonSlider.addEventListener('input', function(){
+    var e = parseFloat(this.value);
+    photonVal.textContent = e.toFixed(2) + ' eV';
+    var color = e < 0.5 ? '#ff2200' : e < 2.0 ? '#ffaa00' : e < 4.0 ? '#aa00ff' : '#00f0ff';
+    photonVal.style.color = color;
+    // Update bandgap arrow
+    updateBandgapDiagram(parseFloat(zoomSlider.value) || 0);
+  });
+
+  // Fire button
+  document.getElementById('btn-fire').addEventListener('click', function(){
+    var e = parseFloat(photonSlider.value);
+    if (typeof firePhoton === 'function') {
+      firePhoton(e);
+      __GameState.addXP(5, 'Fired photon');
+    }
+  });
+
+  // Manual scale buttons
+  window.manualScale = function(mode) {
+    var idx = scaleNames.indexOf(mode);
+    if (idx >= 0) {
+      zoomSlider.value = scaleThresholds[idx] + 0.1;
+      zoomSlider.dispatchEvent(new Event('input'));
+    }
+  };
+
+  // Update XP badge
+  function refreshXP() {
+    var el = document.getElementById('nav-xp');
+    if (el) el.textContent = __GameState.xp() + ' XP';
+  }
+  setInterval(refreshXP, 1000);
+  refreshXP();
+
+  // Mark module explored
+  __GameState.setProgress(0, 10);
+
+  // Init bandgap diagram at start
+  updateBandgapDiagram(0);
+
+})();
+</script>
+
+</body>
+</html>

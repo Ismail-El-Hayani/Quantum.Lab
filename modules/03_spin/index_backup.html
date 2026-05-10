@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spin-1/2 & Quantum Measurement — Physics Playground</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  :root {
+    --bg-deep:#0a0a0f; --bg-panel:#12121a; --bg-elevated:#1a1a28; --border-subtle:#2a2a3a; --border-accent:#3a3a55;
+    --text-main:#e0e0f0; --text-muted:#8080a0; --text-dim:#505070;
+    --accent-cyan:#00d4ff; --accent-purple:#b388ff; --accent-pink:#ff4081;
+    --accent-green:#69f0ae; --accent-yellow:#ffd740; --accent-orange:#ff6e40;
+    --mono:'JetBrains Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:var(--bg-deep);color:var(--text-main);min-height:100vh;overflow-x:hidden}
+  .hero{padding:3rem 2rem 2rem;max-width:1400px;margin:0 auto}
+  .hero h1{font-size:2.8rem;font-weight:700;letter-spacing:-0.02em;line-height:1.1;margin-bottom:0.6rem}
+  .hero h1 .gradient-cyan{background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .hero-subtitle{font-size:1.1rem;color:var(--text-muted);max-width:700px;line-height:1.6;margin-bottom:2rem}
+  .topic-badge{display:inline-flex;align-items:center;gap:0.5rem;background:var(--bg-elevated);border:1px solid var(--border-subtle);padding:0.4rem 1rem;border-radius:20px;font-size:0.85rem;color:var(--text-muted);font-family:var(--mono)}
+  .topic-badge::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--accent-green)}
+  .container{max-width:1400px;margin:0 auto;padding:0 2rem 3rem;display:grid;grid-template-columns:1fr 380px;gap:1.5rem}
+  @media(max-width:1100px){.container{grid-template-columns:1fr}}
+  .card{background:var(--bg-panel);border:1px solid var(--border-subtle);border-radius:16px;padding:1.5rem;transition:border-color .2s}
+  .card:hover{border-color:var(--border-accent)}
+  .card-title{font-size:0.9rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem}
+  .sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+  @media(max-width:700px){.sim-grid{grid-template-columns:1fr}}
+  .plot-container{min-height:320px;background:var(--bg-deep);border-radius:12px;overflow:hidden}
+  .control-row{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+  .control-label{font-size:0.9rem;color:var(--text-muted);min-width:130px}
+  .control-value{font-family:var(--mono);font-size:0.85rem;color:var(--accent-cyan);min-width:80px;text-align:right}
+  input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:4px;background:var(--bg-elevated);border-radius:2px;outline:none}
+  input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent-cyan);cursor:pointer;box-shadow:0 0 12px rgba(0,212,255,0.4);border:2px solid var(--bg-deep)}
+  .btn{padding:0.6rem 1.2rem;border-radius:8px;border:1px solid var(--border-subtle);background:var(--bg-elevated);color:var(--text-muted);font-size:0.85rem;font-weight:500;cursor:pointer;transition:all .15s;font-family:inherit}
+  .btn:hover{border-color:var(--accent-cyan);color:var(--text-main)}
+  .btn.active{background:rgba(0,212,255,0.12);border-color:var(--accent-cyan);color:var(--accent-cyan)}
+  .btn-group{display:flex;gap:0.5rem;flex-wrap:wrap}
+  .theory-content{font-size:0.95rem;line-height:1.7;color:var(--text-main)}
+  .theory-content p{margin-bottom:1rem}
+  .theory-content strong{color:var(--accent-cyan);font-weight:500}
+  .equation-box{background:var(--bg-deep);border:1px solid var(--border-subtle);border-radius:10px;padding:1.2rem 1.5rem;margin:1rem 0;font-family:var(--mono);font-size:0.9rem;overflow-x:auto}
+  .equation-box .mjx-chtml{font-size:1.1em!important}
+  .insight-callout{background:linear-gradient(90deg,rgba(0,212,255,0.08),transparent);border-left:3px solid var(--accent-cyan);padding:1rem 1.2rem;border-radius:0 8px 8px 0;margin:1rem 0;font-size:0.92rem;color:var(--text-main)}
+  .insight-callout .label{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent-cyan);font-weight:600;margin-bottom:0.4rem}
+  .app-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;margin-top:1rem}
+  .app-card{background:var(--bg-deep);border:1px solid var(--border-subtle);border-radius:12px;padding:1.2rem;transition:all .2s}
+  .app-card:hover{border-color:var(--border-accent);transform:translateY(-2px)}
+  .app-card h4{font-size:0.95rem;font-weight:600;margin-bottom:0.4rem;color:var(--text-main)}
+  .app-card p{font-size:0.85rem;color:var(--text-muted);line-height:1.5}
+  .app-card .mini-plot{height:180px;background:var(--bg-deep);border-radius:8px;margin-top:0.6rem}
+  .sg-box{background:var(--bg-panel);border:1px solid var(--border-subtle);border-radius:10px;padding:1rem;margin-top:0.6rem}
+  .sg-row{display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid var(--border-subtle)}
+  .sg-row:last-child{border-bottom:none}
+  table{width:100%;border-collapse:collapse;font-size:0.9rem;margin:1rem 0}
+  th,td{padding:0.7rem 0.8rem;text-align:left;border-bottom:1px solid var(--border-subtle)}
+  th{color:var(--text-dim);font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.06em}
+  td{color:var(--text-main)}
+  tr:hover td{background:rgba(255,255,255,0.02)}
+  .highlight-num{font-family:var(--mono);color:var(--accent-cyan);font-size:0.9rem}
+  .highlight-pink{font-family:var(--mono);color:var(--accent-pink);font-size:0.9rem}
+  .section-divider{height:1px;background:linear-gradient(90deg,transparent,var(--border-subtle),transparent);margin:2rem 0}
+  .live-indicator{display:inline-flex;align-items:center;gap:0.4rem;font-size:0.75rem;color:var(--accent-green);font-family:var(--mono)}
+  .live-indicator::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent-green);animation:blink 1s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  .unit-tag{display:inline-block;background:rgba(0,212,255,0.08);color:var(--accent-cyan);font-family:var(--mono);font-size:0.7rem;padding:0.15rem 0.4rem;border-radius:4px;margin-left:0.3rem}
+
+  /* Hover tooltips */
+  .tooltip-container { position: relative; display: inline-block; cursor: help; border-bottom: 1px dashed var(--text-dim); }
+  .tooltip-container::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 130%;
+    left: 0;
+    transform: translateY(4px);
+    background: var(--bg-elevated);
+    color: var(--text-main);
+    padding: 0.7rem 1rem;
+    border-radius: 10px;
+    border: 1px solid var(--border-accent);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    z-index: 1000;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    pointer-events: none;
+    max-width: 320px;
+    white-space: normal;
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 400;
+  }
+  .tooltip-container:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  .tooltip-container:hover { color: var(--accent-cyan); border-bottom-color: var(--accent-cyan); }
+
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="topic-badge">Module 03 / Spin-1/2 & Quantum Measurement</div>
+  <h1><span class="gradient-cyan">The Quantum Bit</span></h1>
+  <p class="hero-subtitle">
+    Spin-1/2 is the simplest quantum system — two states, superposition, and the mystery of measurement. Every qubit, every MRI scan, every atomic clock relies on manipulating this tiny magnetic moment.
+  </p>
+  <div class="live-indicator">Live simulation running</div>
+</div>
+
+<div class="container">
+  <div class="left-col">
+
+    <!-- LAYER A: PLAYGROUND -->
+    <div class="card">
+      <div class="card-title">A. Playground — Build a state on the Bloch sphere</div>
+      <div class="sim-grid">
+        <div>
+          <div class="plot-container" id="plot-bloch"></div>
+          <p style="font-size:0.8rem;color:var(--text-dim);text-align:center;margin-top:0.5rem;">Bloch sphere — |ψ⟩ = cos(θ/2)|↑⟩ + e^{iφ}sin(θ/2)|↓⟩</p>
+        </div>
+        <div>
+          <div class="plot-container" id="plot-components"></div>
+          <p style="font-size:0.8rem;color:var(--text-dim);text-align:center;margin-top:0.5rem;">Spin expectation values ⟨Sₓ⟩, ⟨Sᵧ⟩, ⟨Sz⟩<span class="unit-tag">ħ/2</span></p>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="card" style="background:var(--bg-deep);">
+          <div class="card-title">Controls</div>
+          <div style="margin-bottom:1rem;">
+            <div class="control-row">
+              <span class="control-label">Polar angle θ</span>
+              <span class="control-value" id="val-theta">60°</span>
+            </div>
+            <input type="range" id="slider-theta" min="0" max="180" value="60" step="1">
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">θ = 0° → |↑z⟩, θ = 180° → |↓z⟩</p>
+          </div>
+          <div style="margin-bottom:1rem;">
+            <div class="control-row">
+              <span class="control-label">Azimuthal φ</span>
+              <span class="control-value" id="val-phi">45°</span>
+            </div>
+            <input type="range" id="slider-phi" min="0" max="360" value="45" step="1">
+          </div>
+          <div class="btn-group">
+            <button class="btn" id="btn-animate">Animate Larmor precession</button>
+          </div>
+        </div>
+
+        <div class="card" style="background:var(--bg-deep);">
+          <div class="card-title">Live Parameters</div>
+          <table>
+            <tr><th>Quantity</th><th>Value</th></tr>
+            <tr><td>Polar θ</td><td class="highlight-num" id="live-theta">—</td></tr>
+            <tr><td>Azimuthal φ</td><td class="highlight-num" id="live-phi">—</td></tr>
+            <tr><td>⟨Sx⟩</td><td class="highlight-pink" id="live-sx">—</td></tr>
+            <tr><td>⟨Sy⟩</td><td class="highlight-pink" id="live-sy">—</td></tr>
+            <tr><td>⟨Sz⟩</td><td class="highlight-pink" id="live-sz">—</td></tr>
+            <tr><td>Larmor f (g=2, B=1T)</td><td id="live-omega">—</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAYER B: THEORY -->
+    <div class="card">
+      <div class="card-title">B. Theory — Why is spin quantized?</div>
+      <div class="theory-content">
+        <p>
+          Unlike orbital angular momentum which comes from spatial motion, <strong>spin</strong> is an intrinsic property of the electron — it has no classical analogue. The Stern-Gerlach experiment (1922) proved it is quantized: a beam of silver atoms splits into exactly two paths, never three, never a continuum.
+        </p>
+
+        <div class="equation-box">
+          <p><strong>Pauli matrices:</strong></p>
+          $$\sigma_x = \begin{pmatrix} 0 & 1 \\ 1 & 0 \end{pmatrix}, \quad
+            \sigma_y = \begin{pmatrix} 0 & -i \\ i & 0 \end{pmatrix}, \quad
+            \sigma_z = \begin{pmatrix} 1 & 0 \\ 0 & -1 \end{pmatrix}$$
+          <p style="margin-top:1rem;"><strong>Spin operator:</strong> $\vec{S} = \frac{\hbar}{2}\vec{\sigma}$</p>
+          <p style="margin-top:1rem;"><strong>Any pure state:</strong></p>
+          $$|\psi\rangle = \cos\frac{\theta}{2}|\uparrow_z\rangle + e^{i\phi}\sin\frac{\theta}{2}|\downarrow_z\rangle$$
+          <p style="margin-top:1rem;"><strong>Expectation value:</strong> $\langle\vec{S}\rangle = \frac{\hbar}{2}(\sin\theta\cos\phi, \sin\theta\sin\phi, \cos\theta)$ — this is the arrow on the Bloch sphere.</p>
+        </div>
+
+        <div class="insight-callout">
+          <div class="label">Measurement Postulate</div>
+          When you measure Sz, the state <strong>collapses</strong> to either |↑z⟩ or |↓z⟩ with probabilities |cos(θ/2)|² and |sin(θ/2)|². After the measurement, the state <em>is</em> the result — not a mixture. This is why you cannot measure Sx and Sz simultaneously: measuring one destroys information about the other.
+        </div>
+
+        <p>
+          <strong>The commutation relation</strong> $[S_x, S_y] = i\hbar S_z$ (and cyclic permutations) is the mathematical root of uncertainty. It means the spin operators do not share eigenstates — there is no state that is simultaneously an eigenstate of Sx and Sz.
+        </p>
+      </div>
+    </div>
+
+    <!-- LAYER C: APPLICATIONS — INTERACTIVE SIMULATIONS -->
+    <div class="card">
+      <div class="card-title">C. Applications — Interactive Simulations</div>
+
+      <!-- 1. Stern-Gerlach -->
+      <div style="margin-bottom:2rem;">
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.8rem;">
+          <div style="width:36px; height:36px; border-radius:10px; background:rgba(0,212,255,0.12); display:flex; align-items:center; justify-content:center; font-size:1.1rem;">🔬</div>
+          <h4 style="font-size:1rem; color:var(--text-main); margin:0;">Stern-Gerlach — Measurement Probabilities</h4>
+        </div>
+        <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.5; margin-bottom:0.8rem;">
+          Silver atoms pass through an inhomogeneous magnetic field. Classically they'd smear out. Quantum mechanically they split into exactly two beams — proof of spin quantization. Rotate the preparation angle θ to see how the probabilities change.
+        </p>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:0.8rem;">
+          <div>
+            <div class="control-row"><span class="control-label">Polar angle θ</span><span class="control-value" id="val-sg-theta">60</span><span class="unit-tag">°</span></div>
+            <input type="range" id="slider-sg-theta" min="0" max="180" value="60" step="1">
+          </div>
+          <div style="font-size:0.8rem; color:var(--text-muted); background:var(--bg-panel); padding:0.8rem; border-radius:8px; line-height:1.5;">
+            <strong style="color:var(--accent-cyan);">Formula:</strong> P(↑) = cos²(θ/2)<br>
+            P(↓) = sin²(θ/2) · <strong>Expectation:</strong> ⟨Sᵤ⟩ = (ℏ/2) cos θ
+          </div>
+        </div>
+        <div id="app-sg" style="min-height:300px;"></div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- 2. ESR -->
+      <div style="margin-bottom:2rem;">
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.8rem;">
+          <div style="width:36px; height:36px; border-radius:10px; background:rgba(255,64,129,0.12); display:flex; align-items:center; justify-content:center; font-size:1.1rem;">⚡</div>
+          <h4 style="font-size:1rem; color:var(--text-main); margin:0;">Electron Spin Resonance (ESR) — Resonance Sweep</h4>
+        </div>
+        <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.5; margin-bottom:0.8rem;">
+          In a magnetic field B, the spin precesses at Larmor frequency f = gμ_BB/h ≈ 28 GHz/T. Microwave radiation at this frequency flips the spin — principle behind ESR spectrometers, atomic clocks, and NV-center magnetometers.
+        </p>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:0.8rem;">
+          <div>
+            <div class="control-row"><span class="control-label">B field</span><span class="control-value" id="val-esr-b">1.00</span><span class="unit-tag">T</span></div>
+            <input type="range" id="slider-esr-b" min="0.1" max="5" value="1" step="0.1">
+          </div>
+          <div style="font-size:0.8rem; color:var(--text-muted); background:var(--bg-panel); padding:0.8rem; border-radius:8px; line-height:1.5;">
+            <strong>g = 2.0023</strong> (free electron)<br>
+            f₀ = 28.024 GHz/T × B<br>
+            <strong>NV centers:</strong> 2.87 GHz zero-field<br>
+            <strong>Applications:</strong> ODMR, bio-sensing
+          </div>
+        </div>
+        <div id="app-esr" style="min-height:300px;"></div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- 3. NMR -->
+      <div style="margin-bottom:2rem;">
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.8rem;">
+          <div style="width:36px; height:36px; border-radius:10px; background:rgba(105,240,174,0.12); display:flex; align-items:center; justify-content:center; font-size:1.1rem;">🧲</div>
+          <h4 style="font-size:1rem; color:var(--text-main); margin:0;">Nuclear Magnetic Resonance — Larmor Frequency vs Field</h4>
+        </div>
+        <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.5; margin-bottom:0.8rem;">
+          Protons in water are tiny magnets. In MRI, a strong field aligns them; a radio pulse flips them; relaxation emits a signal. The ¹H Larmor frequency at 3T is 128 MHz — the basis of all clinical MRI.
+        </p>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:0.8rem;">
+          <div>
+            <div class="control-row"><span class="control-label">B field</span><span class="control-value" id="val-nmr-b">3.0</span><span class="unit-tag">T</span></div>
+            <input type="range" id="slider-nmr-b" min="0.5" max="12" value="3" step="0.5">
+          </div>
+          <div style="font-size:0.8rem; color:var(--text-muted); background:var(--bg-panel); padding:0.8rem; border-radius:8px; line-height:1.5;">
+            <strong style="color:var(--accent-green);">γ(¹H) = 42.577 MHz/T</strong><br>
+            1.5T: clinical MRI<br>3T: research MRI<br>11.7T: preclinical / NMR spectroscopy
+          </div>
+        </div>
+        <div id="app-nmr" style="min-height:300px;"></div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- 4. Quantum Gates -->
+      <div style="margin-bottom:2rem;">
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.8rem;">
+          <div style="width:36px; height:36px; border-radius:10px; background:rgba(0,212,255,0.12); display:flex; align-items:center; justify-content:center; font-size:1.1rem;">💻</div>
+          <h4 style="font-size:1rem; color:var(--text-main); margin:0;">Quantum Gates — State Evolution on Bloch Sphere</h4>
+        </div>
+        <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.5; margin-bottom:0.8rem;">
+          A qubit is any two-level quantum system. Single-qubit gates are rotations on the Bloch sphere. H-Z-H sends |0⟩ → |+⟩ → |−⟩ → |0⟩. Two-qubit gates (CNOT) create entanglement — the resource behind quantum speedup.
+        </p>
+        <div id="app-gates" style="min-height:300px;"></div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- 5. 21cm line -->
+      <div style="margin-bottom:2rem;">
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.8rem;">
+          <div style="width:36px; height:36px; border-radius:10px; background:rgba(255,215,64,0.12); display:flex; align-items:center; justify-content:center; font-size:1.1rem;">🌌</div>
+          <h4 style="font-size:1rem; color:var(--text-main); margin:0;">21-cm Line — Hyperfine Transition in Interstellar Hydrogen</h4>
+        </div>
+        <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.5; margin-bottom:0.8rem;">
+          Neutral hydrogen fills interstellar space. The hyperfine interaction between proton and electron spins creates a tiny splitting ΔE = 5.874 μeV. The 1420.4 MHz transition maps galactic structure and probes the Epoch of Reionization.
+        </p>
+        <div id="app-21cm" style="min-height:300px;"></div>
+      </div>
+    </div>
+
+    <!-- LAYER D: CODE -->
+    <div class="card">
+      <div class="card-title">D. Under the Hood — Spin-1/2 engine</div>
+      <pre style="background:var(--bg-deep);border:1px solid var(--border-subtle);border-radius:10px;padding:1.2rem 1.5rem;font-family:var(--mono);font-size:0.82rem;line-height:1.6;overflow-x:auto;color:var(--text-main);">
+<span style="color:#505070"># spin_engine.py — Spin-1/2 expectation values & measurement</span>
+<span style="color:#b388ff">import</span> numpy <span style="color:#b388ff">as</span> np
+
+<span style="color:#505070"># Pauli matrices</span>
+sx = np.array([[<span style="color:#ff6e40">0</span>,<span style="color:#ff6e40">1</span>],[<span style="color:#ff6e40">1</span>,<span style="color:#ff6e40">0</span>]])
+sy = np.array([[<span style="color:#ff6e40">0</span>,-<span style="color:#ff6e40">1j</span>],[<span style="color:#ff6e40">1j</span>,<span style="color:#ff6e40">0</span>]])
+sz = np.array([[<span style="color:#ff6e40">1</span>,<span style="color:#ff6e40">0</span>],[<span style="color:#ff6e40">0</span>,-<span style="color:#ff6e40">1</span>]])
+
+<span style="color:#505070"># State on Bloch sphere</span>
+theta = np.pi/<span style="color:#ff6e40">3</span>
+phi = np.pi/<span style="color:#ff6e40">4</span>
+psi = np.array([np.cos(theta/<span style="color:#ff6e40">2</span>),
+                np.sin(theta/<span style="color:#ff6e40">2</span>)*np.exp(<span style="color:#ff6e40">1j</span>*phi)])
+
+<span style="color:#505070"># Expectation values</span>
+Ex = psi.conj() @ sx @ psi
+Ey = psi.conj() @ sy @ psi
+Ez = psi.conj() @ sz @ psi
+
+<span style="color:#505070"># Larmor precession</span>
+g, muB, hbar = <span style="color:#ff6e40">2.0023</span>, <span style="color:#ff6e40">5.788e-5</span>, <span style="color:#ff6e40">1</span>  <span style="color:#505070"># eV/T, natural units</span>
+B = <span style="color:#ff6e40">1.0</span>  <span style="color:#505070"># Tesla</span>
+omega = g * muB * B / hbar  <span style="color:#505070"># rad/s</span>
+      </pre>
+    </div>
+
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <div class="right-col">
+    <div class="card" style="position:sticky;top:1.5rem;">
+      <div class="card-title">Module Navigator</div>
+            <div style="display:flex;flex-direction:column;gap:0.4rem;">
+        <a href="../01_qho/index.html" style="text-decoration:none;">
+          <div style="padding:0.7rem 1rem;border-radius:8px;background:var(--bg-deep);border:1px solid var(--border-subtle);color:var(--text-dim);font-size:0.9rem;cursor:pointer;" onmouseover="this.style.borderColor='var(--border-accent)'" onmouseout="this.style.borderColor='var(--border-subtle)'">01. Quantum Harmonic Oscillator</div>
+        </a>
+        <a href="../02_hydrogen/index.html" style="text-decoration:none;">
+          <div style="padding:0.7rem 1rem;border-radius:8px;background:var(--bg-deep);border:1px solid var(--border-subtle);color:var(--text-dim);font-size:0.9rem;cursor:pointer;" onmouseover="this.style.borderColor='var(--border-accent)'" onmouseout="this.style.borderColor='var(--border-subtle)'">02. Hydrogen Atom</div>
+        </a>
+        <div style="padding:0.7rem 1rem;border-radius:8px;background:rgba(187,134,252,0.1);border:1px solid rgba(187,134,252,0.3);color:var(--accent-cyan);font-weight:500;font-size:0.9rem;">03. Spin-1/2 (here)</div>
+        <a href="../04_kronig_penney/index.html" style="text-decoration:none;">
+          <div style="padding:0.7rem 1rem;border-radius:8px;background:var(--bg-deep);border:1px solid var(--border-subtle);color:var(--text-dim);font-size:0.9rem;cursor:pointer;" onmouseover="this.style.borderColor='var(--border-accent)'" onmouseout="this.style.borderColor='var(--border-subtle)'">04. Kronig-Penney Model</div>
+        </a>
+        <a href="../05_energy_bands/index.html" style="text-decoration:none;">
+          <div style="padding:0.7rem 1rem;border-radius:8px;background:var(--bg-deep);border:1px solid var(--border-subtle);color:var(--text-dim);font-size:0.9rem;cursor:pointer;" onmouseover="this.style.borderColor='var(--border-accent)'" onmouseout="this.style.borderColor='var(--border-subtle)'">05. Energy Bands & DOS</div>
+        </a>
+        <a href="../06_fermi_surface/index.html" style="text-decoration:none;">
+          <div style="padding:0.7rem 1rem;border-radius:8px;background:var(--bg-deep);border:1px solid var(--border-subtle);color:var(--text-dim);font-size:0.9rem;cursor:pointer;" onmouseover="this.style.borderColor='var(--border-accent)'" onmouseout="this.style.borderColor='var(--border-subtle)'">06. Fermi Surface</div>
+        </a>
+        <a href="../07_conductivity/index.html" style="text-decoration:none;">
+          <div style="padding:0.7rem 1rem;border-radius:8px;background:var(--bg-deep);border:1px solid var(--border-subtle);color:var(--text-dim);font-size:0.9rem;cursor:pointer;" onmouseover="this.style.borderColor='var(--border-accent)'" onmouseout="this.style.borderColor='var(--border-subtle)'">07. Electrical Conductivity</div>
+        </a>
+      </div>
+
+      <div class="section-divider" style="margin:1.5rem 0;"></div>
+
+      <div class="card-title">Study Flow</div>
+      <div style="font-size:0.85rem;color:var(--text-muted);line-height:1.6;">
+        <p style="margin-bottom:0.8rem;"><strong style="color:var(--accent-cyan);">1.</strong> Drag θ to move the state from North pole (|↑⟩) to South pole (|↓⟩).</p>
+        <p style="margin-bottom:0.8rem;"><strong style="color:var(--accent-purple);">2.</strong> Drag φ to rotate around the z-axis. Watch ⟨Sx⟩ and ⟨Sy⟩ oscillate.</p>
+        <p style="margin-bottom:0.8rem;"><strong style="color:var(--accent-pink);">3.</strong> Click "Animate" to see Larmor precession — the arrow circles around B.</p>
+        <p style="margin-bottom:0.8rem;"><strong style="color:var(--accent-green);">4.</strong> Use Stern-Gerlach buttons. Measure Sz, then Sx. Notice the second measurement is random.</p>
+        <p><strong style="color:var(--accent-yellow);">5.</strong> Read the theory: the commutation relation [Sx, Sy] = iħSz forbids simultaneous knowledge.</p>
+      </div>
+
+      <div class="section-divider" style="margin:1.5rem 0;"></div>
+
+      <div class="card-title">Constants</div>
+      <table style="font-size:0.78rem;">
+        <tr><td>μ_B</td><td style="font-family:var(--mono);">5.788×10⁻⁵ eV/T</td></tr>
+        <tr><td>g_e</td><td style="font-family:var(--mono);">2.002319</td></tr>
+        <tr><td>ħ/2</td><td style="font-family:var(--mono);">0.5 (natural units)</td></tr>
+        <tr><td>ESR (g=2)</td><td style="font-family:var(--mono);">28.024 GHz/T</td></tr>
+        <tr><td>NMR ¹H</td><td style="font-family:var(--mono);">42.577 MHz/T</td></tr>
+        <tr><td>21cm ΔE</td><td style="font-family:var(--mono);">5.874 μeV</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="../../shared_ui.js"></script>
+<script src="spin_sim.js?v=1"></script>
+<script src="spin_apps.js"></script>
+
+<script>
+  setTimeout(function(){
+    var el = document.getElementById('live-theta');
+    if (el && el.textContent === '—') {
+      if (typeof initSpin === 'function') initSpin();
+    }
+  }, 300);
+</script>
+
+</body>
+</html>

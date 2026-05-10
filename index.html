@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Playground — Learn by Playing</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<link rel="stylesheet" href="shared_styles.css">
+<!-- Root-page styles not in shared CSS -->
+<style>
+  .game-container { max-width: 1400px; margin: 0 auto; padding: 0 var(--space-xl) var(--space-2xl); }
+  .section-header { margin-bottom: var(--space-xl); animation: fadeInUp 0.6s var(--ease-out) both; }
+  .section-header h2 { font-family: var(--font-display); font-size: 1.6rem; font-weight: 600; margin-bottom: 0.4rem; }
+  .section-header p  { color: var(--text-muted); font-size: 0.95rem; }
+  .section-icon { margin-right: 0.5rem; }
+
+  .lab-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: var(--space-lg);
+  }
+
+  /* Lab glow blobs inside cards */
+  .lab-glow {
+    position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0.15;
+    transition: opacity 0.5s;
+  }
+  .lab-card:hover .lab-glow { opacity: 0.25; }
+  .lab-glow.qho      { background: radial-gradient(circle at 80% 20%, #00f0ff, transparent 60%); }
+  .lab-glow.hydrogen { background: radial-gradient(circle at 20% 80%, #c084fc, transparent 60%); }
+  .lab-glow.spin     { background: radial-gradient(circle at 50% 50%, #ff4ecd, transparent 60%); }
+  .lab-glow.kp       { background: radial-gradient(circle at 80% 80%, #facc15, transparent 60%); }
+  .lab-glow.bands    { background: radial-gradient(circle at 20% 20%, #4ade80, transparent 60%); }
+  .lab-glow.fermi    { background: radial-gradient(circle at 50% 80%, #fb923c, transparent 60%); }
+  .lab-glow.conduct  { background: radial-gradient(circle at 80% 50%, #00f0ff, transparent 60%); }
+
+  .lab-content { position: relative; z-index: 1; display: flex; flex-direction: column; gap: var(--space-sm); }
+  .lab-badge {
+    align-self: flex-start;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+    border-radius: var(--radius-pill); padding: 0.2rem 0.8rem;
+  }
+  .lab-num { font-family: var(--font-mono); font-size: 0.75rem; font-weight: 600; color: var(--accent-cyan); }
+  .lab-info h3 { font-family: var(--font-display); font-size: 1.1rem; font-weight: 600; margin-bottom: 0.3rem; }
+  .lab-info p  { font-size: 0.85rem; color: var(--text-muted); line-height: 1.55; margin-bottom: var(--space-sm); }
+
+  .lab-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: var(--space-sm); }
+  .chip {
+    font-size: 0.72rem; font-weight: 500; padding: 0.25rem 0.6rem;
+    background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
+    border-radius: var(--radius-pill); color: var(--text-muted);
+    transition: all 0.3s;
+  }
+  .lab-card:hover .chip { border-color: rgba(0,240,255,0.15); color: var(--text-main); }
+
+  /* Progress ring */
+  .lab-progress-ring {
+    position: relative; width: 48px; height: 48px; align-self: flex-end; margin-top: auto;
+  }
+  .lab-progress-ring svg {
+    width: 100%; height: 100%; transform: rotate(-90deg);
+  }
+  .ring-bg  { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 3; }
+  .ring-fill { fill: none; stroke: url(#ringGrad); stroke-width: 3; stroke-linecap: round;
+    transition: stroke-dasharray 0.8s var(--ease-out);
+  }
+  .ring-text {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono); font-size: 0.65rem; font-weight: 600; color: var(--accent-cyan);
+  }
+
+  /* Footer */
+  .game-footer {
+    max-width: 1400px; margin: 0 auto; padding: var(--space-lg) var(--space-xl);
+    border-top: 1px solid var(--glass-border);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.8rem; color: var(--text-dim);
+    animation: fadeInUp 0.6s var(--ease-out) both;
+  }
+  .footer-badge {
+    background: rgba(0,240,255,0.06); border: 1px solid rgba(0,240,255,0.12);
+    border-radius: var(--radius-pill); padding: 0.25rem 0.8rem;
+    color: var(--accent-cyan); font-weight: 500; font-size: 0.75rem;
+  }
+
+  /* Spotlight gradient effect on cards (via JS in shared_effects) */
+  .spotlight {
+    position: relative; overflow: hidden;
+  }
+  .spotlight::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0;
+    background: radial-gradient(600px circle at var(--spotlight-x,50%) var(--spotlight-y,50%),
+                rgba(255,255,255,0.06), transparent 40%);
+    transition: opacity 0.3s;
+  }
+  .spotlight:hover::after { opacity: 1; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .lab-grid { grid-template-columns: 1fr; }
+    .game-footer { flex-direction: column; gap: var(--space-sm); text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- AMBIENT ORBS -->
+<div class="orb orb-cyan"></div>
+<div class="orb orb-purple"></div>
+<div class="orb orb-pink"></div>
+
+<!-- SVG gradient def for progress rings -->
+<svg width="0" height="0" style="position:absolute;">
+  <defs>
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00f0ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#c084fc;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>
+
+<!-- TOP NAVBAR -->
+<nav class="game-nav">
+  <div class="nav-brand"><span class="nav-logo">⚛</span> Physics Playground</div>
+  <div class="nav-stats">
+    <div class="stat-badge">
+      <span class="stat-icon">⭐</span>
+      <span class="stat-value" id="nav-xp">0 XP</span>
+    </div>
+    <div class="stat-badge" id="nav-badges" style="display:none">
+      <span class="stat-icon">🏆</span>
+      <span class="stat-value" id="nav-badges-text">0 badges</span>
+    </div>
+    <div class="stat-badge">
+      <span class="stat-icon">🔬</span>
+      <span class="stat-value" id="nav-explored">0/8 modules</span>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="game-hero">
+  <div class="hero-left">
+    <div class="level-badge">Level <span id="hero-level">1</span> — Quantum Initiate</div>
+    <h1>Learn Physics by Playing</h1>
+    <p class="hero-desc">
+      No textbooks. No lectures. Drag electrons. Tune lasers. Freeze atoms.
+      <strong>Discover equations through experiments.</strong>
+      Each level is a physics puzzle waiting for you to solve.
+    </p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-num" id="stat-labs">0</div>
+        <div class="hero-stat-label">Laboratories</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">35+</div>
+        <div class="hero-stat-label">Challenges</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">∞</div>
+        <div class="hero-stat-label">Experiments</div>
+      </div>
+    </div>
+    <div class="hero-xp-bar">
+      <div class="xp-label"><span>Next Level</span><span id="xp-text">0 / 100 XP</span></div>
+      <div class="xp-track"><div class="xp-fill" id="xp-bar" style="width:0%"></div></div>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="preview-card tilt-card" id="hero-preview">
+      <div class="preview-plot" id="preview-plot" style="height:260px;"></div>
+      <div class="preview-caption"><span class="live-dot"></span> Live simulation running — hover a lab to preview</div>
+    </div>
+  </div>
+</div>
+
+<!-- STORY FLOW -->
+<div class="timeline reveal">
+  <div class="timeline-line"></div>
+  <div class="timeline-node active" data-module="00">
+    <div class="timeline-dot">0</div>
+    <div class="timeline-label">Crystal</div>
+  </div>
+  <div class="timeline-node" data-module="01">
+    <div class="timeline-dot">1</div>
+    <div class="timeline-label">Single Particle</div>
+  </div>
+  <div class="timeline-node" data-module="02">
+    <div class="timeline-dot">2</div>
+    <div class="timeline-label">Atomic Orbitals</div>
+  </div>
+  <div class="timeline-node" data-module="03">
+    <div class="timeline-dot">3</div>
+    <div class="timeline-label">Spin &amp; Measurement</div>
+  </div>
+  <div class="timeline-node" data-module="04">
+    <div class="timeline-dot">4</div>
+    <div class="timeline-label">Periodic Lattice</div>
+  </div>
+  <div class="timeline-node" data-module="05">
+    <div class="timeline-dot">5</div>
+    <div class="timeline-label">Bands &amp; States</div>
+  </div>
+  <div class="timeline-node" data-module="06">
+    <div class="timeline-dot">6</div>
+    <div class="timeline-label">Fermi Statistics</div>
+  </div>
+  <div class="timeline-node" data-module="07">
+    <div class="timeline-dot">7</div>
+    <div class="timeline-label">Transport</div>
+  </div>
+</div>
+
+<!-- MODULE CARDS -->
+<div class="game-container">
+  <div class="section-header reveal">
+    <h2><span class="section-icon">🔬</span> Choose Your Laboratory</h2>
+    <p>Each lab has experiments, challenges, and puzzles. Complete them to level up.</p>
+  </div>
+
+  <div class="lab-grid">
+
+    <!-- MODULE 00: FEATURED INTRO -->
+    <a href="modules/00_crystal_to_quantum/index.html" class="lab-card tilt-card spotlight reveal" data-module="00" style="grid-column: 1 / -1; background: linear-gradient(135deg, rgba(0,240,255,0.05), rgba(192,132,252,0.05));">
+      <div class="lab-glow qho"></div>
+      <div class="lab-content" style="display:grid; grid-template-columns: 1fr auto; gap: var(--space-lg); align-items: center;">
+        <div>
+          <div class="lab-badge"><span class="lab-num" style="background: var(--grad-hero); color: #fff;">START</span></div>
+          <div class="lab-info">
+            <h3 style="font-size: 1.4rem;">🚀 From Crystal to Quantum</h3>
+            <p>Zoom through a silicon crystal from 1 cm down to the quantum realm. Fire photons, watch electrons dance, and discover why solid-state physics matters.</p>
+            <div class="lab-chips">
+              <span class="chip">🔬 Three.js 3D</span>
+              <span class="chip">⚡ Photon Beam</span>
+              <span class="chip">🎯 Zoom Journey</span>
+            </div>
+          </div>
+        </div>
+        <div class="lab-progress-ring" style="width: 64px; height: 64px;">
+          <svg viewBox="0 0 36 36">
+            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path class="ring-fill" id="ring-00" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          </svg>
+          <span class="ring-text" id="pct-00">0%</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- MODULE 01 -->
+    <a href="modules/01_qho/index.html" class="lab-card tilt-card spotlight reveal" data-module="01">
+      <div class="lab-glow qho"></div>
+      <div class="lab-content">
+        <div class="lab-badge"><span class="lab-num">01</span></div>
+        <div class="lab-info">
+          <h3>Quantum Harmonic Oscillator</h3>
+          <p>Drag energy levels. Build wavefunctions. Match the quantum pattern.</p>
+          <div class="lab-chips">
+            <span class="chip">🎮 Wave Puzzle</span>
+            <span class="chip">🎯 Energy Ladder</span>
+            <span class="chip">⚗️ Laser Tuner</span>
+          </div>
+        </div>
+        <div class="lab-progress-ring">
+          <svg viewBox="0 0 36 36">
+            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path class="ring-fill" id="ring-01" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          </svg>
+          <span class="ring-text" id="pct-01">0%</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- MODULE 02 -->
+    <a href="modules/02_hydrogen/index.html" class="lab-card tilt-card spotlight reveal reveal-delay-1" data-module="02">
+      <div class="lab-glow hydrogen"></div>
+      <div class="lab-content">
+        <div class="lab-badge"><span class="lab-num">02</span></div>
+        <div class="lab-info">
+          <h3>Hydrogen Atom</h3>
+          <p>Build orbitals from quantum numbers. Solve spectral mysteries.</p>
+          <div class="lab-chips">
+            <span class="chip">🎮 Orbital Builder</span>
+            <span class="chip">🎯 Spectral Detective</span>
+            <span class="chip">⚗️ Electron Config</span>
+          </div>
+        </div>
+        <div class="lab-progress-ring">
+          <svg viewBox="0 0 36 36">
+            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path class="ring-fill" id="ring-02" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          </svg>
+          <span class="ring-text" id="pct-02">0%</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- MODULE 03 -->
+    <a href="modules/03_spin/index.html" class="lab-card tilt-card spotlight reveal reveal-delay-2" data-module="03">
+      <div class="lab-glow spin"></div>
+      <div class="lab-content">
+        <div class="lab-badge"><span class="lab-num">03</span></div>
+        <div class="lab-info">
+          <h3>Spin-1/2 &amp; Quantum Measurement</h3>
+          <p>Navigate the Bloch sphere. Predict measurement outcomes. Build quantum circuits.</p>
+          <div class="lab-chips">
+            <span class="chip">🎮 Bloch Navigator</span>
+            <span class="chip">🎯 Stern-Gerlach</span>
+            <span class="chip">⚗️ Gate Puzzle</span>
+          </div>
+        </div>
+        <div class="lab-progress-ring">
+          <svg viewBox="0 0 36 36">
+            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path class="ring-fill" id="ring-03" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          </svg>
+          <span class="ring-text" id="pct-03">0%</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- MODULE 04 -->
+    <a href="modules/04_kronig_penney/index.html" class="lab-card tilt-card spotlight reveal reveal-delay-3" data-module="04">
+      <div class="lab-glow kp"></div>
+      <div class="lab-content">
+        <div class="lab-badge"><span class="lab-num">04</span></div>
+        <div class="lab-info">
+          <h3>Kronig-Penney Model</h3>
+          <p>Design a crystal. Watch the bandgap open. Engineer your material.</p>
+          <div class="lab-chips">
+            <span class="chip">🎮 Crystal Designer</span>
+            <span class="chip">🎯 Bandgap Builder</span>
+            <span class="chip">⚗️ Wave Packet</span>
+          </div>
+        </div>
+        <div class="lab-progress-ring">
+          <svg viewBox="0 0 36 36">
+            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path class="ring-fill" id="ring-04" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          </svg>
+          <span class="ring-text" id="pct-04">0%</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- MODULE 05 -->
+    <a href="modules/05_energy_bands/index.html" class="lab-card tilt-card spotlight reveal reveal-delay-4" data-module="05">
+      <div class="lab-glow bands"></div>
+      <div class="lab-content">
+        <div class="lab-badge"><span class="lab-num">05</span></div>
+        <div class="lab-info">
+          <h3>Energy Bands &amp; Density of States</h3>
+          <p>Hunt the Fermi level. Design materials. Explore dimensions.</p>
+          <div class="lab-chips">
+            <span class="chip">🎮 Fermi Hunter</span>
+            <span class="chip">🎯 Material Designer</span>
+            <span class="chip">⚗️ Dimension Explorer</span>
+          </div>
+        </div>
+        <div class="lab-progress-ring">
+          <svg viewBox="0 0 36 36">
+            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path class="ring-fill" id="ring-05" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          </svg>
+          <span class="ring-text" id="pct-05">0%</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- MODULE 06 -->
+    <a href="modules/06_fermi_surface/index.html" class="lab-card tilt-card spotlight reveal reveal-delay-5" data-module="06">
+      <div class="lab-glow fermi"></div>
+      <div class="lab-content">
+        <div class="lab-badge"><span class="lab-num">06</span></div>
+        <div class="lab-info">
+          <h3>Fermi Surface &amp; Temperature</h3>
+          <p>Freeze metals. Smear Fermi surfaces. Race against temperature.</p>
+          <div class="lab-chips">
+            <span class="chip">🎮 Temperature Race</span>
+            <span class="chip">🎯 3D Fermi Explorer</span>
+            <span class="chip">⚗️ Metal Detector</span>
+          </div>
+        </div>
+        <div class="lab-progress-ring">
+          <svg viewBox="0 0 36 36">
+            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path class="ring-fill" id="ring-06" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          </svg>
+          <span class="ring-text" id="pct-06">0%</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- MODULE 07 -->
+    <a href="modules/07_conductivity/index.html" class="lab-card tilt-card spotlight reveal" data-module="07">
+      <div class="lab-glow conduct"></div>
+      <div class="lab-content">
+        <div class="lab-badge"><span class="lab-num">07</span></div>
+        <div class="lab-info">
+          <h3>Electrical Conductivity</h3>
+          <p>Build circuits. Race electrons. Make a superconductor.</p>
+          <div class="lab-chips">
+            <span class="chip">🎮 Circuit Builder</span>
+            <span class="chip">🎯 Drift Race</span>
+            <span class="chip">⚗️ Superconductor Quest</span>
+          </div>
+        </div>
+        <div class="lab-progress-ring">
+          <svg viewBox="0 0 36 36">
+            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path class="ring-fill" id="ring-07" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          </svg>
+          <span class="ring-text" id="pct-07">0%</span>
+        </div>
+      </div>
+    </a>
+
+  </div>
+</div>
+
+<footer class="game-footer reveal">
+  <div class="footer-left"><span>⚛ Physics Playground</span> · Built for Atomic Physics &amp; Solid State · Nano Master</div>
+  <div class="footer-right"><span class="footer-badge">🎮 Game Mode</span></div>
+</footer>
+
+<!-- SCRIPTS -->
+<script src="shared_ui.js"></script>
+<script src="shared_games.js"></script>
+<script src="shared_effects.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  // ── Preview plot ──
+  var t = Array.from({length:200}, function(_,i){ return i/20; });
+  var y = t.map(function(ti){ return Math.sin(ti) * Math.exp(-ti*0.1); });
+  Plotly.newPlot('preview-plot', [
+    { x: t, y: y, mode: 'lines',
+      line: { color: '#00f0ff', width: 2.5, shape: 'spline' },
+      fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.06)'
+    }
+  ], {
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+    xaxis: { showgrid: false, zeroline: false, showticklabels: false },
+    yaxis: { showgrid: false, zeroline: false, showticklabels: false, range: [-1.2, 1.2] },
+    margin: { l: 0, r: 0, t: 0, b: 0 },
+    showlegend: false,
+    dragmode: false
+  }, { responsive: true, displayModeBar: false });
+
+  // ── Load progress & animate counts ──
+  var explored = 0, totalXP = 0;
+  for (var m = 0; m <= 7; m++) {
+    var pct = __GameState.getProgress(m);
+    var ring = document.getElementById('ring-0' + m);
+    if (ring) ring.setAttribute('stroke-dasharray', pct + ', 100');
+    var pctEl = document.getElementById('pct-0' + m);
+    if (pctEl) pctEl.textContent = pct + '%';
+    if (pct > 0) explored++;
+  }
+  totalXP = __GameState.xp;
+  document.getElementById('nav-xp').textContent = totalXP + ' XP';
+  document.getElementById('nav-explored').textContent = explored + '/8 modules';
+  if (typeof animateCount === 'function') {
+    animateCount(document.getElementById('stat-labs'), explored, 800);
+  } else {
+    document.getElementById('stat-labs').textContent = explored;
+  }
+
+  // XP bar
+  var level = __GameState.level || 1;
+  var xpInLevel = totalXP - ((level-1)*100);
+  var pctXP = Math.min(Math.max(xpInLevel, 0), 100);
+  document.getElementById('xp-bar').style.width = pctXP + '%';
+  document.getElementById('xp-text').textContent = xpInLevel + ' / 100 XP';
+  document.getElementById('hero-level').textContent = level;
+
+  // ── Preview on hover ──
+  document.querySelectorAll('.lab-card').forEach(function(card) {
+    card.addEventListener('mouseenter', function() {
+      var mod = parseInt(card.dataset.module) || 1;
+      var waveData = [];
+      for (var i = 0; i < 200; i++) {
+        var ti = i / 30, baseFreq = 0.5 + mod * 0.3;
+        waveData.push(Math.sin(baseFreq * ti) * Math.cos(2*ti) * Math.exp(-ti*0.08));
+      }
+      Plotly.animate('preview-plot', {
+        data: [{ y: waveData }]
+      }, { transition: { duration: 500 }, frame: { duration: 500 } });
+    });
+  });
+
+  // ── Timeline node click scroll ──
+  document.querySelectorAll('.timeline-node').forEach(function(node) {
+    node.addEventListener('click', function() {
+      var mod = node.dataset.module;
+      var card = document.querySelector('.lab-card[data-module="' + mod + '"]');
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  });
+
+})();
+</script>
+
+</body>
+</html>

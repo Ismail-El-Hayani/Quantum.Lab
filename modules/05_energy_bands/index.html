@@ -1,0 +1,259 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Energy Bands Lab — Physics Playground</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<link rel="stylesheet" href="../../shared_styles.css">
+<style>
+  .challenge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .draggable-target { cursor: grab; border: 2px dashed var(--glass-border); border-radius: var(--radius-sm); padding: 0.8rem; transition: all 0.2s; text-align: center; background: var(--bg-elevated); }
+  .draggable-target:hover { border-color: var(--accent-cyan); background: rgba(0,240,255,0.04); }
+  .drop-zone { border: 2px dashed var(--glass-border); border-radius: var(--radius-sm); padding: 1rem; min-height: 60px; transition: all 0.2s; background: var(--bg-panel); }
+  .drop-zone.dragover { border-color: var(--accent-cyan); background: rgba(0,240,255,0.04); }
+  .drop-zone.correct { border-color: var(--accent-green); background: rgba(74,222,128,0.08); }
+  .drop-zone.wrong { border-color: var(--accent-red); background: rgba(255,68,68,0.08); }
+  .timer-bar { height: 4px; background: var(--bg-elevated); border-radius: 2px; overflow: hidden; margin-bottom: 1rem; }
+  .timer-fill { height: 100%; background: var(--accent-cyan); transition: width 1s linear; }
+  .timer-fill.urgent { background: var(--accent-red); }
+  .dim-btn { padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--bg-elevated); color: var(--text-dim); cursor: pointer; font-family: var(--font-mono); font-size: 0.8rem; }
+  .dim-btn.active { border-color: var(--accent-cyan); color: var(--accent-cyan); background: rgba(0,240,255,0.08); }
+  .material-card { padding: 1rem; background: var(--bg-elevated); border-radius: var(--radius-sm); border: 1px solid var(--glass-border); text-align: center; cursor: pointer; transition: all 0.2s; }
+  .material-card:hover { border-color: var(--accent-cyan); }
+  .material-card.selected { border-color: var(--accent-purple); background: rgba(192,132,252,0.08); }
+</style>
+</head>
+<body>
+
+<!-- AMBIENT ORBS -->
+<div class="orb orb-cyan"></div>
+<div class="orb orb-purple"></div>
+<div class="orb orb-pink"></div>
+
+<nav class="game-nav">
+  <div class="nav-brand"><a href="../../index.html" style="text-decoration:none;color:inherit;"><span class="nav-logo">⚛</span> Physics Playground</a></div>
+  <div class="nav-stats">
+    <div class="stat-badge"><span class="stat-icon">⚗</span><span class="stat-value">Bands Lab</span></div>
+    <div class="stat-badge"><span class="stat-icon">⭐</span><span class="stat-value" id="nav-xp">0 XP</span></div>
+  </div>
+</nav>
+
+<div class="game-hero" style="padding-bottom:0;">
+  <div class="level-badge">Module 05 · Level <span id="current-level">1</span> · Material Tuner</div>
+  <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Energy Bands & DOS</span></h1>
+  <p class="hero-desc">Free electrons live in bands. Their density of states shapes every semiconductor device.</p>
+</div>
+
+<div class="game-container">
+
+  <div class="game-mode-bar">
+    <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
+    <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">🎯 Challenges</button>
+    <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">🧩 Puzzles</button>
+  </div>
+
+  <!-- PLAYGROUND -->
+  <div class="mode-section" id="section-play">
+    <div class="playground-area">
+      <div class="playground-header">
+        <div class="playground-title">🔬 DOS Dimensionality Explorer</div>
+        <div class="playground-level">Toggle dimensions to see how quantum confinement changes the density of states.</div>
+      </div>
+
+      <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
+        <button class="dim-btn active" id="dim-3d" onclick="plotDOSPlayground('3D')">3D (√E)</button>
+        <button class="dim-btn" id="dim-2d" onclick="plotDOSPlayground('2D')">2D (const)</button>
+        <button class="dim-btn" id="dim-1d" onclick="plotDOSPlayground('1D')">1D (1/√E)</button>
+        <button class="dim-btn" id="dim-dirac" onclick="plotDOSPlayground('dirac')">Dirac (E)</button>
+      </div>
+      <div class="plot-container" id="plot-dos-playground" style="min-height:350px;"></div>
+      <div class="plot-container" id="plot-band-structure" style="min-height:280px; margin-top:1.5rem;"></div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top:1.5rem;">
+        <div class="challenge-panel">
+          <div class="challenge-header">
+            <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙</span>
+            <span class="challenge-title">Controls</span>
+          </div>
+          <div class="control-row">
+            <span class="control-label">Hopping t</span>
+            <span class="control-value" id="val-t">1.0</span><span class="unit-tag">eV</span>
+          </div>
+          <input type="range" id="slider-t" min="0.1" max="3" value="1.0" step="0.1">
+        </div>
+        <div class="challenge-panel">
+          <div class="challenge-header">
+            <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">📊</span>
+            <span class="challenge-title">Live Readout</span>
+          </div>
+          <table>
+            <tr><th>Quantity</th><th>Value</th></tr>
+            <tr><td>Dimension</td><td class="highlight-num" id="live-dim">3D</td></tr>
+            <tr><td>DOS near E_F</td><td class="highlight-pink">∝ √E</td></tr>
+            <tr><td>Tight-binding t</td><td class="highlight-num">1.0 eV</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHALLENGES -->
+  <div class="mode-section" id="section-challenge" style="display:none;">
+
+    <div class="challenge-panel">
+      <div class="challenge-header">
+        <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span>
+        <span class="challenge-title">Challenge 1: Fermi Level Hunter</span>
+        <span class="challenge-difficulty easy">Easy</span>
+      </div>
+      <div class="challenge-desc">Given carrier density and material type, identify whether it is n-type, p-type, intrinsic, metal, or insulator.</div>
+      <div class="challenge-reward">🏆 Reward: 50 XP · Combo bonus: +5 XP per streak</div>
+      <div class="timer-bar"><div class="timer-fill" id="fermi-timer" style="width:100%"></div></div>
+      <div id="fermi-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+        <button class="btn" onclick="guessFermiType('n-type')">n-type</button>
+        <button class="btn" onclick="guessFermiType('p-type')">p-type</button>
+        <button class="btn" onclick="guessFermiType('intrinsic')">Intrinsic</button>
+        <button class="btn" onclick="guessFermiType('metal')">Metal</button>
+        <button class="btn" onclick="guessFermiType('insulator')">Insulator</button>
+      </div>
+      <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;"><strong>Score:</strong> <span id="fermi-score">0</span> · <strong>Combo:</strong> <span id="fermi-combo">0</span></div>
+      <div class="challenge-feedback" id="fermi-feedback"></div>
+    </div>
+
+    <div class="challenge-panel">
+      <div class="challenge-header">
+        <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🎯</span>
+        <span class="challenge-title">Challenge 2: Effective Mass from Curvature</span>
+        <span class="challenge-difficulty medium">Medium</span>
+      </div>
+      <div class="challenge-desc">At the bottom of a tight-binding band, m* = ℏ²/(2ta²). Given t = <span id="effmass-t">1.0</span> eV, what is m* (in units of mₑ, assuming a=0.5 nm)?</div>
+      <div class="challenge-reward">🏆 Reward: 75 XP · "DOS Explorer" badge</div>
+      <div class="plot-container" id="plot-effmass" style="height:260px;"></div>
+      <div style="display:flex; gap:1rem; align-items:center; margin-top:1rem;">
+        <input type="number" id="effmass-guess" step="0.01" placeholder="m* / mₑ" style="background:var(--bg-elevated);border:1px solid var(--glass-border);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);width:120px;">
+        <button class="btn" onclick="checkEffectiveMass()">✓ Submit</button>
+      </div>
+      <div class="challenge-feedback" id="effmass-feedback"></div>
+    </div>
+
+    <div class="challenge-panel">
+      <div class="challenge-header">
+        <span class="challenge-icon" style="background:rgba(74,222,128,0.12);">🏎</span>
+        <span class="challenge-title">Challenge 3: Bandgap Material Detector</span>
+        <span class="challenge-difficulty medium">Medium</span>
+      </div>
+      <div class="challenge-desc">Given a material name, classify it as metal, semiconductor, or insulator based on its bandgap.</div>
+      <div class="challenge-reward">🏆 Reward: 60 XP · "Graphene Disciple" badge</div>
+      <div id="gap-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+      <div style="display:flex; gap:0.5rem;">
+        <button class="btn" onclick="guessBandgapCat('metal')">Metal</button>
+        <button class="btn" onclick="guessBandgapCat('semiconductor')">Semiconductor</button>
+        <button class="btn" onclick="guessBandgapCat('insulator')">Insulator</button>
+      </div>
+      <div class="challenge-feedback" id="gap-feedback"></div>
+    </div>
+  </div>
+
+  <!-- PUZZLES -->
+  <div class="mode-section" id="section-puzzle" style="display:none;">
+
+    <div class="challenge-panel">
+      <div class="challenge-header">
+        <span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🧩</span>
+        <span class="challenge-title">Puzzle 1: Doping Level Slider</span>
+        <span class="challenge-difficulty easy">Easy</span>
+      </div>
+      <div class="challenge-desc">Set the carrier density to achieve the target doping type. Watch E_F shift!</div>
+      <div class="challenge-reward">🏆 Reward: 60 XP</div>
+      <div style="font-size:1rem;margin-bottom:1rem;">Target: <strong id="doping-target-type">n-type</strong></div>
+      <div class="control-row">
+        <span class="control-label">Carrier density n</span>
+        <span class="control-value" id="val-doping">1.0e28</span><span class="unit-tag">m⁻³</span>
+      </div>
+      <input type="range" id="slider-doping" min="1e15" max="1e29" value="1e28" step="1e15" style="width:100%;">
+      <div class="plot-container" id="plot-doping" style="height:220px; margin-top:1rem;"></div>
+      <button class="btn" onclick="checkDopingSlider()">✓ Check Doping</button>
+      <div class="challenge-feedback" id="doping-feedback"></div>
+    </div>
+
+    <div class="challenge-panel">
+      <div class="challenge-header">
+        <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🧩</span>
+        <span class="challenge-title">Puzzle 2: DOS Integral Matching</span>
+        <span class="challenge-difficulty hard">Hard</span>
+      </div>
+      <div class="challenge-desc">Drag each integral expression to what it computes physically.</div>
+      <div class="challenge-reward">🏆 Reward: 100 XP</div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:0.5rem;">
+        <div>
+          <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem;">Expressions (drag to right):</p>
+          <div id="integral-pool" style="display:flex;flex-wrap:wrap;gap:0.5rem;"></div>
+        </div>
+        <div>
+          <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem;">Physical quantities:</p>
+          <div id="integral-targets" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+        </div>
+      </div>
+      <button class="btn" onclick="checkIntegralPuzzle()">✓ Verify Matching</button>
+      <div class="challenge-feedback" id="integral-feedback"></div>
+    </div>
+
+    <div class="challenge-panel">
+      <div class="challenge-header">
+        <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🧩</span>
+        <span class="challenge-title">Puzzle 3: Dirac Cone vs Parabolic</span>
+        <span class="challenge-difficulty master">Master</span>
+      </div>
+      <div class="challenge-desc">Classify each material's dispersion as parabolic (massive) or conical (Dirac/massless).</div>
+      <div class="challenge-reward">🏆 Reward: 120 XP · "Dirac Master" badge</div>
+      <div id="dirac-list" style="margin-top:0.5rem;"></div>
+      <button class="btn" onclick="checkDiracPuzzle()">✓ Check Classification</button>
+      <div class="challenge-feedback" id="dirac-feedback"></div>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; margin-top:2rem;">
+    <div></div>
+    <div>
+      <div class="challenge-panel" style="position:sticky; top:5rem;">
+        <div class="challenge-header">
+          <span class="challenge-icon" style="background:rgba(0,240,255,0.08);">🗺</span>
+          <span class="challenge-title">Lab Navigator</span>
+        </div>
+        <div id="module-nav"></div>
+        <div class="section-divider" style="margin:1rem 0;"></div>
+        <div class="challenge-header">
+          <span class="challenge-icon" style="background:rgba(74,222,128,0.08);">🏆</span>
+          <span class="challenge-title">Your Badges</span>
+        </div>
+        <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
+        <div class="section-divider" style="margin:1rem 0;"></div>
+        <div class="challenge-header">
+          <span class="challenge-icon" style="background:rgba(255,215,64,0.08);">📊</span>
+          <span class="challenge-title">Progress</span>
+        </div>
+        <div class="scoreboard">
+          <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
+          <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
+          <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
+          <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="../../shared_ui.js"></script>
+<script src="../../shared_games.js"></script>
+<script src="../../shared_interactive.js"></script>
+<script src="eb_sim.js?v=1"></script>
+<script src="eb_apps_games.js?v=1"></script>
+
+<script src="../../shared_effects.js"></script>
+</body>
+</html>

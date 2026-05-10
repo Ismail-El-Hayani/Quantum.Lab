@@ -1,0 +1,22 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Node (if ever added)
+node_modules/
+package-lock.json
+
+# Large auto-generated files (keep source, ignore heavy renders)
+# Uncomment if you want to exclude media:
+# *.mp4
+# *.png

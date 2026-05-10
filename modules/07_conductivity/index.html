@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conductivity Lab — Physics Playground</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<link rel="stylesheet" href="../../shared_styles.css">
+<style>
+  .challenge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .draggable-target { cursor: grab; border: 2px dashed var(--glass-border); border-radius: var(--radius-sm); padding: 0.8rem; transition: all 0.2s; text-align: center; background: var(--bg-elevated); }
+  .draggable-target:hover { border-color: var(--accent-cyan); background: rgba(0,240,255,0.04); }
+  .drop-zone { border: 2px dashed var(--glass-border); border-radius: var(--radius-sm); padding: 1rem; min-height: 50px; transition: all 0.2s; background: var(--bg-panel); }
+  .drop-zone.correct { border-color: var(--accent-green); background: rgba(74,222,128,0.08); }
+  .drop-zone.wrong { border-color: var(--accent-red); background: rgba(255,68,68,0.08); }
+  .timer-bar { height: 4px; background: var(--bg-elevated); border-radius: 2px; overflow: hidden; margin-bottom: 1rem; }
+  .timer-fill { height: 100%; background: var(--accent-cyan); transition: width 1s linear; }
+</style>
+</head>
+<body>
+
+<!-- AMBIENT ORBS -->
+<div class="orb orb-cyan"></div>
+<div class="orb orb-purple"></div>
+<div class="orb orb-pink"></div>
+
+<nav class="game-nav">
+  <div class="nav-brand"><a href="../../index.html" style="text-decoration:none;color:inherit;"><span class="nav-logo">⚛</span> Physics Playground</a></div>
+  <div class="nav-stats">
+    <div class="stat-badge"><span class="stat-icon">🔌</span><span class="stat-value">Conductivity Lab</span></div>
+    <div class="stat-badge"><span class="stat-icon">⭐</span><span class="stat-value" id="nav-xp">0 XP</span></div>
+  </div>
+</nav>
+
+<div class="game-hero" style="padding-bottom:0;">
+  <div class="level-badge">Module 07 · Level <span id="current-level">1</span> · Circuit Builder</div>
+  <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Electrical Conductivity</span></h1>
+  <p class="hero-desc">Drift, scatter, superconduct. Build circuits and trace I-V curves.</p>
+</div>
+
+<div class="game-container">
+
+  <div class="game-mode-bar">
+    <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
+    <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">🎯 Challenges</button>
+    <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">🧩 Puzzles</button>
+  </div>
+
+  <!-- PLAYGROUND -->
+  <div class="mode-section" id="section-play">
+    <div class="playground-area">
+      <div class="playground-header">
+        <div class="playground-title">🔬 Drift & Resistivity</div>
+        <div class="playground-level">Tune field, scattering time, and temperature. Watch electrons drift.</div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 320px; gap: 1.5rem;">
+        <div>
+          <div class="plot-container" id="plot-drift" style="min-height:300px;"></div>
+          <div class="plot-container" id="plot-rho-T" style="min-height:260px; margin-top:1.5rem;"></div>
+          <div class="plot-container" id="plot-iv" style="min-height:260px; margin-top:1.5rem;"></div>
+        </div>
+        <div>
+          <div class="challenge-panel" style="margin-bottom:1rem;">
+            <div class="challenge-header">
+              <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙</span>
+              <span class="challenge-title">Controls</span>
+            </div>
+            <div class="control-row">
+              <span class="control-label">E-field</span>
+              <span class="control-value" id="val-Efield">0.01</span><span class="unit-tag">V/m</span>
+            </div>
+            <input type="range" id="slider-Efield" min="0.001" max="0.5" value="0.01" step="0.001">
+            <div class="control-row" style="margin-top:0.8rem;">
+              <span class="control-label">Scattering time τ</span>
+              <span class="control-value" id="val-tau">30</span><span class="unit-tag">fs</span>
+            </div>
+            <input type="range" id="slider-tau" min="5" max="100" value="30" step="5">
+            <div class="control-row" style="margin-top:0.8rem;">
+              <span class="control-label">Temperature</span>
+              <span class="control-value" id="val-T-cond">300</span><span class="unit-tag">K</span>
+            </div>
+            <input type="range" id="slider-T-cond" min="1" max="1000" value="300" step="10">
+            <div class="control-row" style="margin-top:0.8rem;">
+              <span class="control-label">Carrier density n</span>
+              <span class="control-value" id="val-n-cond">1.0e28</span><span class="unit-tag">m⁻³</span>
+            </div>
+            <input type="range" id="slider-n-cond" min="1e20" max="1e30" value="1e28" step="1e20">
+          </div>
+          <div class="challenge-panel">
+            <div class="challenge-header">
+              <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">📊</span>
+              <span class="challenge-title">Live Readout</span>
+            </div>
+            <table>
+              <tr><th>Quantity</th><th>Value</th></tr>
+              <tr><td>Drift velocity v_d</td><td class="highlight-num" id="live-vd">0.01 mm/s</td></tr>
+              <tr><td>Conductivity σ</td><td class="highlight-pink" id="live-sigma">5.9×10⁷ (Ω·m)⁻¹</td></tr>
+              <tr><td>Mean free path</td><td class="highlight-num" id="live-mfp">40 nm</td></tr>
+              <tr><td>Mobility μ</td><td>~40 cm²/V·s</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHALLENGES -->
+  <div class="mode-section" id="section-challenge" style="display:none;">
+
+    <div class="challenge-panel">
+      <div class="challenge-header">
+        <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span>
+        <span class="challenge-title">Challenge 1: I-V Curve Tracer</span>
+        <span class="challenge-difficulty easy">Easy</span>
+      </div>
+      <div class="challenge-desc">Identify electronic components from their I-V characteristics.</div>
+      <div class="challenge-reward">🏆 Reward: 50 XP · Combo bonus: +5 XP per streak</div>
+      <div class="timer-bar"><div class="timer-fill" id="iv-timer" style="width:100%"></div></div>
+      <div id="iv-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+      <div style="display:flex; gap:0.5rem;">
+        <button class="btn" onclick="guessIVCurve('ohmic')">Ohmic resistor</button>
+        <button class="btn" onclick="guessIVCurve('diode')">p-n Diode</button>
+        <button class="btn" onclick="guessIVCurve('schottky')">Schottky</button>
+      </div>
+      <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;">
+        <strong>Score:</strong> <span id="iv-score">0</span> · <strong>Combo:</strong> <span id="iv-combo">0</span>
+      </div>
+      <div class="challenge-feedback" id="iv-feedback"></div>
+    </div>
+
+    <div class="challenge-panel">
+      <div class="challenge-header">
+        <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🧲</span>
+        <span class="challenge-title">Challenge 2: Hall Effect Sign</span>
+        <span class="challenge-difficulty medium">Medium</span>
+      </div>
+      <div class="challenge-desc">Determine if the Hall voltage is positive or negative.</div>
+      <div class="challenge-reward">🏆 Reward: 60 XP · "Hall Detector" badge</div>
+      <div id="hall-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+      <div style="display:flex; gap:0.5rem;">
+        <button class="btn" onclick="guessHallSign('positive')">Positive V_H</button>
+        <button class="btn" onclick="guessHallSign('negative')">Negative V_H</button>
+      </div>
+      <div class="challenge-feedback" id="hall-feedback"></div>
+    </div>
+
+    <div class="challenge-panel">
+      <div class="challenge-header">
+        <span class="challenge-icon" style="background:rgba(74,222,128,0.12);">❄</span>
+        <span class="challenge-title">Challenge 3: Superconductor Challenge</span>
+        <span class="challenge-difficulty hard">Hard</span>
+      </div>
+      <div class="challenge-desc">Is the material superconducting at 4 K?</div>
+      <div class="challenge-reward">🏆 Reward: 80 XP + "Superconductor" badge</div>
+      <div id="super-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+      <div style="display:flex; gap:0.5rem;">
+        <button class="btn" onclick="guessSuperConducting(true)">Superconducting</button>
+        <button class="btn" onclick="guessSuperConducting(false)">Normal</button>
+      </div>
+      <div class="challenge-feedback" id="super-feedback"></div>
+    </div>
+  </div>
+
+  <!-- PUZZLES -->
+  <div class="mode-section" id="section-puzzle" style="display:none;">
+
+    <div class="challenge-panel">
+      <div class="challenge-header">
+        <span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🔧</span>
+        <span class="challenge-title">Puzzle 1: Mean Free Path Builder</span>
+        <span class="challenge-difficulty medium">Medium</span>
+      </div>
+      <div class="challenge-desc">Match scattering mechanisms to their effects on resistivity.</div>
+      <div class="challenge-reward">🏆 Reward: 60 XP</div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:0.5rem;">
+        <div>
+          <p style="font-size:0.85rem;color:var(--text-muted);">Mechanisms:</p>
+          <div id="mfp-pool" style="display:flex;flex-wrap:wrap;gap:0.5rem;"></div>
+        </div>
+        <div>
+          <p style="font-size:0.85rem;color:var(--text-muted);">Effects:</p>
+          <div id="mfp-zones" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+        </div>
+      </div>
+      <button class="btn" onclick="checkMFPBuilder()">✓ Verify</button>
+      <div class="challenge-feedback" id="mfp-feedback"></div>
+    </div>
+
+    <div class="challenge-panel">
+      <div class="challenge-header">
+        <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">📐</span>
+        <span class="challenge-title">Puzzle 2: Build σ = ne²τ/m*</span>
+        <span class="challenge-difficulty hard">Hard</span>
+      </div>
+      <div class="challenge-desc">Drag terms into the conductivity formula.</div>
+      <div class="challenge-reward">🏆 Reward: 80 XP</div>
+      <div id="sigma-target" style="font-size:1.5rem;margin:1rem 0;font-family:var(--font-mono);color:var(--text-main);"></div>
+      <div id="sigma-pool" style="display:flex;gap:0.5rem;flex-wrap:wrap;"></div>
+      <button class="btn" onclick="checkSigmaBuilder()">✓ Check Formula</button>
+      <div class="challenge-feedback" id="sigma-feedback"></div>
+    </div>
+
+    <div class="challenge-panel">
+      <div class="challenge-header">
+        <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🛡</span>
+        <span class="challenge-title">Puzzle 3: Wiedemann-Franz Detective</span>
+        <span class="challenge-difficulty master">Master</span>
+      </div>
+      <div class="challenge-desc">Does each system obey or violate the Wiedemann-Franz law?</div>
+      <div class="challenge-reward">🏆 Reward: 120 XP</div>
+      <div id="wf-list" style="margin-top:0.5rem;"></div>
+      <button class="btn" onclick="checkWFPuzzle()">✓ Check Classification</button>
+      <div class="challenge-feedback" id="wf-cond-feedback"></div>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; margin-top:2rem;">
+    <div></div>
+    <div>
+      <div class="challenge-panel" style="position:sticky; top:5rem;">
+        <div class="challenge-header">
+          <span class="challenge-icon" style="background:rgba(0,240,255,0.08);">🗺</span>
+          <span class="challenge-title">Lab Navigator</span>
+        </div>
+        <div id="module-nav"></div>
+        <div class="section-divider" style="margin:1rem 0;"></div>
+        <div class="challenge-header">
+          <span class="challenge-icon" style="background:rgba(74,222,128,0.08);">🏆</span>
+          <span class="challenge-title">Your Badges</span>
+        </div>
+        <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
+        <div class="section-divider" style="margin:1rem 0;"></div>
+        <div class="scoreboard">
+          <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
+          <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
+          <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
+          <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="../../shared_ui.js"></script>
+<script src="../../shared_games.js"></script>
+<script src="../../shared_interactive.js"></script>
+<script src="cond_sim.js?v=1"></script>
+<script src="cond_apps_games.js?v=1"></script>
+
+<script src="../../shared_effects.js"></script>
+</body>
+</html>
