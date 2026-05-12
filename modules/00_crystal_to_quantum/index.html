@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Crystal → Quantum — The Zoom Journey</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <link rel="stylesheet" href="../../shared_styles.css">
 <style>
   /* Full-screen layout */
@@ -179,6 +180,43 @@
   }
   .cq-msg strong { color: var(--accent-cyan); font-style: normal; }
 
+  /* View mode toggle */
+  .view-toggle {
+    display: flex; gap: 0.3rem; margin-bottom: 0.4rem;
+    background: rgba(255,255,255,0.06); border-radius: var(--radius-pill);
+    padding: 0.2rem;
+  }
+  .view-toggle button {
+    flex: 1; padding: 0.4rem 0.8rem; border: none; background: transparent;
+    color: var(--text-muted); font-size: 0.82rem; font-weight: 600;
+    border-radius: var(--radius-pill); cursor: pointer; transition: all 0.3s;
+    font-family: var(--font-body);
+  }
+  .view-toggle button.active {
+    background: var(--grad-hero); color: #fff;
+    box-shadow: 0 2px 8px rgba(0,240,255,0.2);
+  }
+  .view-toggle button:not(.active):hover { color: var(--accent-cyan); }
+
+  /* Material properties readout */
+  .mat-props-panel {
+    background: rgba(0,240,255,0.06);
+    border: 1px solid rgba(0,240,255,0.12);
+    border-radius: var(--radius-md);
+    padding: 0.5rem;
+    font-size: 0.7rem;
+    font-family: var(--font-mono);
+    color: var(--accent-cyan);
+    line-height: 1.5;
+    margin-top: 0.3rem;
+    min-height: 2.8em;
+  }
+
+  #view-mode-msg {
+    font-size: 0.75rem; color: var(--text-muted); font-style: italic;
+    margin-bottom: 0.3rem; min-height: 1.2em;
+  }
+
   /* Photon color indicator */
   .photon-spectrum {
     display: flex; height: 6px; border-radius: 3px; overflow: hidden;
@@ -294,25 +332,32 @@
         <div class="scale-step passed active" data-label="1 cm" onclick="manualScale('macro')"></div>
         <div class="scale-step" data-label="5 Å" onclick="manualScale('lattice')"></div>
         <div class="scale-step" data-label="2 Å" onclick="manualScale('cluster')"></div>
-        <div class="scale-step" data-label="1 Å" onclick="manualScale('bands')"></div>
         <div class="scale-step" data-label="100 pm" onclick="manualScale('atom')"></div>
         <div class="scale-step" data-label="10 pm" onclick="manualScale('spin')"></div>
       </div>
       <div class="cq-zoom-row">
         <span style="font-size:0.75rem;color:var(--text-dim);white-space:nowrap;">Crystal</span>
-        <input type="range" id="zoom-slider" min="0" max="5" step="0.01" value="0">
+        <input type="range" id="zoom-slider" min="0" max="4" step="0.01" value="0">
         <span style="font-size:0.75rem;color:var(--text-dim);white-space:nowrap;">Quantum</span>
       </div>
       <div class="cq-msg" id="zoom-msg">Drag the slider to zoom through scales</div>
     </div>
 
-    <!-- Photon panel -->
+    <!-- Photon / Wave panel -->
     <div class="cq-panel">
-      <div class="cq-panel-title">⚡ Photon Beam</div>
+      <div class="cq-panel-title">⚡ Photon / Wave Beam</div>
+
+      <!-- View mode toggle -->
+      <div class="view-toggle" id="view-toggle">
+        <button class="active" id="btn-particle" data-mode="particle">• Particle</button>
+        <button id="btn-wave" data-mode="wave">🌊 Wave</button>
+      </div>
+      <div id="view-mode-msg">• Particle mode: single photons</div>
+
       <div class="photon-energy-row">
         <span style="font-size:0.75rem;color:var(--text-dim);white-space:nowrap;">0.1 eV</span>
-        <input type="range" id="photon-slider" min="0.1" max="6.0" step="0.05" value="1.5">
-        <span style="font-size:0.75rem;color:var(--text-dim);white-space:nowrap;">6 eV</span>
+        <input type="range" id="photon-slider" min="0.1" max="12.0" step="0.05" value="1.5">
+        <span style="font-size:0.75rem;color:var(--text-dim);white-space:nowrap;">12 eV</span>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <span class="photon-val" id="photon-val">1.50 eV</span>
@@ -327,6 +372,7 @@
       <button class="btn-fire magnetic" id="btn-fire">🚀 Fire Photon</button>
       <div class="cq-msg" id="photon-msg">Set energy and fire a photon into the crystal</div>
       <div class="cq-msg" id="interaction-msg" style="margin-top:0.3rem;color:var(--accent-cyan);"></div>
+      <div class="mat-props-panel" id="mat-props"><b>Si optical constants @ 1.5 eV</b><br>λ = 827 nm · n = 3.42 · κ = 0.057 · R ≈ 30%</div>
     </div>
 
   </div>
@@ -341,8 +387,8 @@
 (function(){
   'use strict';
 
-  var scaleNames = ['macro','lattice','cluster','bands','atom','spin'];
-  var scaleThresholds = [0, 0.75, 1.6, 2.4, 3.3, 4.2];
+  var scaleNames = ['macro','lattice','cluster','atom','spin'];
+  var scaleThresholds = [0, 0.85, 1.8, 2.8, 4.0];
 
   function getScaleFromSlider(v) {
     for (var i = scaleThresholds.length - 1; i >= 0; i--) {
@@ -376,7 +422,7 @@
         __GameState.session.exploredScales = explored;
         var xp = 15;
         if (s === 'spin') xp = 30;
-        if (s === 'bands') xp = 20;
+        if (s === 'atom') xp = 25;
         __GameState.addXP(xp, 'Discovered ' + s + ' scale');
         zoomMsg.textContent = 'First time at ' + s + '! +' + xp + ' XP';
         setTimeout(function(){ zoomMsg.textContent = 'Drag the slider to zoom through scales'; }, 2500);
@@ -388,10 +434,10 @@
 
   // ── Bandgap confinement diagram updater ──
   function updateBandgapDiagram(v) {
-    // Slider v∈[0,5] maps: macro→lattice→cluster→bands→atom→spin
+    // Slider v∈[0,4] maps: macro→lattice→cluster→atom→spin
     var EgBulk = 1.12;
     var EgMax  = 3.80;  // quantum dot limit
-    var t      = Math.min(v / 5, 1);
+    var t      = Math.min(v / 4, 1);
     var Eg     = EgBulk + (EgMax - EgBulk) * Math.pow(t, 1.8);
 
     // --- Band bars: shrink continuously + move apart ---
@@ -494,6 +540,23 @@
     updateBandgapDiagram(parseFloat(zoomSlider.value) || 0);
   });
 
+  // View mode toggle
+  var viewToggle = document.getElementById('view-toggle');
+  var btnParticle = document.getElementById('btn-particle');
+  var btnWave = document.getElementById('btn-wave');
+  var viewModeMsg = document.getElementById('view-mode-msg');
+
+  function setViewMode(mode) {
+    btnParticle.classList.toggle('active', mode === 'particle');
+    btnWave.classList.toggle('active', mode === 'wave');
+    if (window.toggleViewMode) window.toggleViewMode(mode);
+    if (viewModeMsg) viewModeMsg.textContent = mode === 'wave'
+      ? '🌊 Wave mode: EM oscillations (E ⟂ k, B ⟂ E)'
+      : '• Particle mode: single photons';
+  }
+  btnParticle.addEventListener('click', function(){ setViewMode('particle'); });
+  btnWave.addEventListener('click', function(){ setViewMode('wave'); });
+
   // Fire button
   document.getElementById('btn-fire').addEventListener('click', function(){
     var e = parseFloat(photonSlider.value);
@@ -506,10 +569,22 @@
   // Manual scale buttons
   window.manualScale = function(mode) {
     var idx = scaleNames.indexOf(mode);
-    if (idx >= 0) {
-      zoomSlider.value = scaleThresholds[idx] + 0.1;
+    if (idx < 0) return;
+    var target = scaleThresholds[idx] + 0.1;
+    var start = parseFloat(zoomSlider.value) || 0;
+    var dur = 600; // ms
+    var t0 = performance.now();
+
+    function step(now) {
+      var t = Math.min((now - t0) / dur, 1);
+      // ease-in-out
+      var e = t < 0.5 ? 2*t*t : -1 + (4 - 2*t)*t;
+      var v = start + (target - start) * e;
+      zoomSlider.value = v;
       zoomSlider.dispatchEvent(new Event('input'));
+      if (t < 1) requestAnimationFrame(step);
     }
+    requestAnimationFrame(step);
   };
 
   // Update XP badge

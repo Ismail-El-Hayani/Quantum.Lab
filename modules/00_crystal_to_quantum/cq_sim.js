@@ -13,6 +13,18 @@
   var WORKFN_SI = 4.5;
   var PHONON_EV = 0.08;
 
+  function wavelengthFromEnergy(E) {
+    // E (eV) → λ (nm)  via  λ = hc/E = 1240 / E  (nm)
+    return 1240 / Math.max(E, 0.01);
+  }
+
+  function frequencyFromEnergy(E) {
+    // E (eV) → ω (rad/frame) scaled for visualisation
+    // E = ℏω_real  → ω_real = E / 0.658 eV·fs
+    // Map: 0.1 eV → slow, 12 eV → fast  (proportional to E)
+    return 0.02 + E * 0.025;
+  }
+
   /* ─── THREE.JS GLOBALS ─── */
   var scene, camera, renderer;
   var atoms = [], bonds = [], clouds = [];
@@ -27,6 +39,8 @@
 
   // Spin-split objects
   var spinLevels = [], spinArrows = [], spinElectrons = [];
+  var spinRingLevels = []; // for spin band update
+  var orbitControls, laserPistol;
 
   // Photon / interaction
   var photons = [], excitedAtoms = [];
@@ -39,8 +53,7 @@
     macro:   { camZ: 18, fov: 45, vis: ['macro'],                     label: 'Macro — 1 cm',       info: 'Silicon crystal at centimeter scale. A solid grey block. Classical continuum — no quantum confinement visible.' },
     lattice: { camZ: 6,  fov: 50, vis: ['atoms','bonds'],             label: 'Lattice — 5 Å',      info: 'Diamond-cubic lattice. Each Si has 4 nearest neighbors held by covalent bonds. Atoms vibrate thermally. Bulk band gap = 1.12 eV.' },
     cluster: { camZ: 4.5,fov: 45, vis: ['cluster'],                   label: 'Cluster — 2 Å',      info: '5 Si atoms in tetrahedral bonding. 4 valence electrons orbit the entire cluster — delocalized bonding electrons start feeling finite size.' },
-    bands:   { camZ: 3.5,fov: 40, vis: ['focusAtom','bands'],       label: 'Bands — 1 Å',        info: 'Single Si atom: 14 electrons orbit the nucleus on 4 energy levels. Inner electrons orbit fastest. Photon with E > gap excites valence → conduction.' },
-    atom:    { camZ: 2.5,fov: 35, vis: ['focusAtom','shells'],      label: 'Atom — 100 pm',      info: 'Electron shells: 10 core electrons (tight purple sphere) + 4 valence lobes (delocalized cyan). The wave-like nature of electron orbitals.' },
+    atom:    { camZ: 2.5,fov: 35, vis: ['focusAtom','bands','shells'], label: 'Atom — 100 pm',    info: 'Single Si atom: 14 electrons orbit the nucleus on 4 energy levels. Inner electrons orbit fastest. Photon with E > gap excites valence → conduction.' },
     spin:    { camZ: 2,  fov: 30, vis: ['focusAtom','spin'],        label: 'Spin — 10 pm',       info: 'Every energy level splits in two: spin-up (cyan ↑) and spin-down (pink ↓). Each orbital holds 2 electrons with opposite spin — the Pauli exclusion principle.' }
   };
   var curScale = 'macro';
@@ -63,6 +76,17 @@
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
+
+    /* OrbitControls */
+    orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+    orbitControls.enableDamping = true;
+    orbitControls.dampingFactor = 0.05;
+    orbitControls.enablePan = true;
+    orbitControls.enableZoom = true;
+    orbitControls.rotateSpeed = 0.6;
+    orbitControls.minDistance = 0.3;
+    orbitControls.maxDistance = 28;
+
     container.appendChild(renderer.domElement);
 
     /* Lights */
@@ -83,6 +107,7 @@
     buildEnergyBands();
     buildSpinLevels();
     buildQuantumClouds();
+    buildLaserPistol();
 
     /* Start */
     setCrystalScale('macro');
@@ -205,7 +230,10 @@
     });
   }
 
-  /* ─── CLUSTER: 5 atoms with spring bonds + hanging electrons ─── */
+  /* ─── CLUSTER: 5 Si atoms, covalently linked. Free electrons = 4 − bonds. ───
+     Si valence = 4. Center atom: 4 bonds → 0 free e⁻.
+     Corner atoms: 3 bonds → 1 free e⁻ each. 4 free e⁻ total.
+     Free electrons orbit their atom as small cyan spheres. */
   var clusterSprings = []; // { atomA, atomB, restLength, k }
 
   function buildCluster() {
@@ -230,7 +258,7 @@
     center.position.set(0, 0, 0);
     center.userData = {
       type: 'clusterAtom', basePos: new THREE.Vector3(0,0,0),
-      idx: 0, vel: new THREE.Vector3(0,0,0)
+      idx: 0, vel: new THREE.Vector3(0,0,0), bondCount: 0
     };
     clusterAtoms.push(center);
     scene.add(center);
@@ -242,7 +270,7 @@
       a.position.copy(pos);
       a.userData = {
         type: 'clusterAtom', basePos: pos.clone(),
-        idx: i + 1, vel: new THREE.Vector3(0,0,0)
+        idx: i + 1, vel: new THREE.Vector3(0,0,0), bondCount: 0
       };
       clusterAtoms.push(a);
       scene.add(a);
@@ -263,38 +291,42 @@
       clusterBonds.push(bond);
       clusterSprings.push({ atomA: ai, atomB: bi, restLength: rl, k: 0.08 });
       scene.add(bond);
+      // increment bond counts
+      clusterAtoms[ai].userData.bondCount = (clusterAtoms[ai].userData.bondCount || 0) + 1;
+      clusterAtoms[bi].userData.bondCount = (clusterAtoms[bi].userData.bondCount || 0) + 1;
     }
 
     // Center-to-corners (4 bonds)
     for (var i = 1; i < 5; i++) addBond(0, i);
-    // Corner-to-corner (tetrahedron edges: each pair of corners is connected)
+    // Corner-to-corner (tetrahedron edges)
     for (var i = 1; i < 5; i++) {
       for (var j = i + 1; j < 5; j++) {
         addBond(i, j);
       }
     }
 
-    // ── HANGING ELECTRONS: 4 electrons shuttle along center-to-corner bonds ──
+    // ── FREE ELECTRONS: one per corner atom (Si valence=4, corners have 3 bonds) ──
     var eGeo = new THREE.SphereGeometry(0.038, 16, 16);
     var eMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.9 });
-    var hangConfig = [
-      { bondIdx: 0, speed: 2.2, amp: 0.18, phase: 0.0,   swing: 0.06 }, // along bond 0-1
-      { bondIdx: 1, speed: 1.8, amp: 0.16, phase: 1.57,  swing: 0.05 }, // along bond 0-2
-      { bondIdx: 2, speed: 2.5, amp: 0.20, phase: 3.14,  swing: 0.07 }, // along bond 0-3
-      { bondIdx: 3, speed: 1.5, amp: 0.14, phase: 4.71,  swing: 0.04 }  // along bond 0-4
-    ];
-
-    for (var e = 0; e < 4; e++) {
-      var electron = new THREE.Mesh(eGeo, eMat.clone());
-      electron.position.set(0, 0, 0);
-      electron.userData = {
-        type: 'clusterElectron',
-        hang: hangConfig[e],
-        baseAngle: e * 1.3
-      };
-      clusterElectrons.push(electron);
-      scene.add(electron);
-    }
+    clusterAtoms.forEach(function(atom, idx) {
+      var bonds = atom.userData.bondCount || 0;
+      var free = Math.max(0, 4 - bonds);
+      for (var e = 0; e < free; e++) {
+        var electron = new THREE.Mesh(eGeo, eMat.clone());
+        electron.position.copy(atom.position);
+        electron.userData = {
+          type: 'clusterElectron',
+          atomIdx: idx,
+          angle: e * 2.4 + idx * 0.7,
+          orbitR: 0.22 + e * 0.04,
+          speed: 1.5 + Math.random() * 0.6,
+          tiltX: (Math.random() - 0.5) * 1.2,
+          tiltZ: (Math.random() - 0.5) * 1.0
+        };
+        clusterElectrons.push(electron);
+        scene.add(electron);
+      }
+    });
   }
 
   /* ─── FOCUS ATOM: nucleus + shells ─── */
@@ -411,9 +443,11 @@
     }
   }
 
-  /* ─── SPIN LEVELS: split rings + orbiting electrons with spin arrows ─── */
+  /* ─── SPIN LEVELS: up & down electrons share SAME orbital ring ───
+     Pauli principle: every energy level holds 2 electrons with opposite spin.
+     Cyan = spin-up (arrow ↑), Pink = spin-down (arrow ↓).
+     Both orbit the SAME radius — the band is one shared ring. */
   function buildSpinLevels() {
-    // 3 levels: 1s, 2p, 3p — each splits into spin-up (cyan) and spin-down (pink)
     var levelData = [
       { r: 0.24, label: '1s' },
       { r: 0.38, label: '2p' },
@@ -421,69 +455,55 @@
     ];
 
     levelData.forEach(function(l, idx) {
-      // Split delta: spin-up ring is slightly larger radius
-      var dR = 0.04;
-
-      // ── Spin-up ring (cyan) ──
-      var upTube = new THREE.TorusGeometry(l.r + dR, 0.006, 8, 64);
-      var upMat = new THREE.MeshBasicMaterial({
-        color: 0x00f0ff, transparent: true, opacity: 0.18,
+      // ── ONE shared ring per level (white/cyan blend) ──
+      var tube = new THREE.TorusGeometry(l.r, 0.007, 8, 64);
+      var ringMat = new THREE.MeshBasicMaterial({
+        color: 0x88ccff, transparent: true, opacity: 0.16,
         blending: THREE.AdditiveBlending, depthWrite: false
       });
-      var upRing = new THREE.Mesh(upTube, upMat);
-      upRing.rotation.x = Math.PI / 2;
-      upRing.userData = { type: 'spinRing', spin: 'up', levelIdx: idx };
-      spinLevels.push(upRing);
-      focusGroup.add(upRing);
+      var ring = new THREE.Mesh(tube, ringMat);
+      ring.rotation.x = Math.PI / 2;
+      ring.userData = { type: 'spinRing', levelIdx: idx };
+      spinLevels.push(ring);
+      focusGroup.add(ring);
+      spinRingLevels.push(ring); // ref for update
 
-      // ── Spin-down ring (pink) ──
-      var downTube = new THREE.TorusGeometry(l.r - dR, 0.006, 8, 64);
-      var downMat = new THREE.MeshBasicMaterial({
-        color: 0xff4ecd, transparent: true, opacity: 0.18,
-        blending: THREE.AdditiveBlending, depthWrite: false
-      });
-      var downRing = new THREE.Mesh(downTube, downMat);
-      downRing.rotation.x = Math.PI / 2;
-      downRing.userData = { type: 'spinRing', spin: 'down', levelIdx: idx };
-      spinLevels.push(downRing);
-      focusGroup.add(downRing);
-
-      // ── Spin-up electron + arrow ──
       var eGeo = new THREE.SphereGeometry(0.028, 16, 16);
+      var speed = 1.6 + idx * 0.35;
+      var baseAngle = idx * 1.3;
+
+      // ── Spin-up electron (cyan, arrow ↑) on shared ring ──
       var eUpMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
       var eUp = new THREE.Mesh(eGeo, eUpMat);
-      var aUp = idx * 2.4; // spread angles across levels
-      eUp.position.set(Math.cos(aUp) * (l.r + dR), 0, Math.sin(aUp) * (l.r + dR));
+      eUp.position.set(Math.cos(baseAngle) * l.r, 0, Math.sin(baseAngle) * l.r);
       eUp.userData = {
         type: 'spinElectron', spin: 'up', levelIdx: idx,
-        angle: aUp, r: l.r + dR, speed: 1.8 + idx * 0.4
+        angle: baseAngle, r: l.r, speed: speed
       };
       spinElectrons.push(eUp);
       focusGroup.add(eUp);
 
-      // Arrow pointing UP from electron
       var arrowUp = buildSpinArrow(0x00f0ff, 1);
       arrowUp.position.copy(eUp.position);
-      arrowUp.userData = { type: 'spinArrow', parent: eUp, spin: 'up', offset: 0.06 };
+      arrowUp.userData = { type: 'spinArrow', parent: eUp, spin: 'up', offset: 0.045 };
       spinArrows.push(arrowUp);
       focusGroup.add(arrowUp);
 
-      // ── Spin-down electron + arrow ──
+      // ── Spin-down electron (pink, arrow ↓) on SAME ring, π opposite ──
       var eDownMat = new THREE.MeshBasicMaterial({ color: 0xff4ecd });
       var eDown = new THREE.Mesh(eGeo, eDownMat);
-      var aDown = aUp + Math.PI; // opposite side
-      eDown.position.set(Math.cos(aDown) * (l.r - dR), 0, Math.sin(aDown) * (l.r - dR));
+      var aDown = baseAngle + Math.PI;
+      eDown.position.set(Math.cos(aDown) * l.r, 0, Math.sin(aDown) * l.r);
       eDown.userData = {
         type: 'spinElectron', spin: 'down', levelIdx: idx,
-        angle: aDown, r: l.r - dR, speed: 1.4 + idx * 0.4
+        angle: aDown, r: l.r, speed: speed * 0.92 // slightly different speed for visual separation
       };
       spinElectrons.push(eDown);
       focusGroup.add(eDown);
 
-      // Arrow pointing DOWN from electron
       var arrowDown = buildSpinArrow(0xff4ecd, -1);
       arrowDown.position.copy(eDown.position);
-      arrowDown.userData = { type: 'spinArrow', parent: eDown, spin: 'down', offset: -0.06 };
+      arrowDown.userData = { type: 'spinArrow', parent: eDown, spin: 'down', offset: -0.045 };
       spinArrows.push(arrowDown);
       focusGroup.add(arrowDown);
     });
@@ -534,6 +554,56 @@
     }
   }
 
+  /* ─── LASER PISTOL: visible source of photons/EM waves ─── */
+  function buildLaserPistol() {
+    var group = new THREE.Group();
+    var greyMat = new THREE.MeshStandardMaterial({
+      color: 0x334455, metalness: 0.75, roughness: 0.25
+    });
+    // Barrel — long cylinder along +X
+    var barrel = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.035, 0.035, 0.55, 12),
+      greyMat
+    );
+    barrel.rotation.z = Math.PI / 2;
+    group.add(barrel);
+    // Muzzle cone
+    var muzzle = new THREE.Mesh(
+      new THREE.ConeGeometry(0.045, 0.10, 12),
+      new THREE.MeshBasicMaterial({ color: 0xff3300 })
+    );
+    muzzle.rotation.z = -Math.PI / 2;
+    muzzle.position.set(0.30, 0, 0);
+    group.add(muzzle);
+    // Grip
+    var grip = new THREE.Mesh(
+      new THREE.BoxGeometry(0.10, 0.22, 0.04),
+      greyMat
+    );
+    grip.position.set(-0.18, -0.12, 0);
+    group.add(grip);
+    // Body detail
+    var body = new THREE.Mesh(
+      new THREE.BoxGeometry(0.14, 0.07, 0.05),
+      greyMat
+    );
+    group.add(body);
+    // Cyan status LED
+    var led = new THREE.Mesh(
+      new THREE.SphereGeometry(0.012, 8, 8),
+      new THREE.MeshBasicMaterial({ color: 0x00f0ff })
+    );
+    led.position.set(0.0, 0.045, 0.03);
+    group.add(led);
+
+    // Position on screen-right, pointing at origin
+    group.position.set(4.0, -0.5, 1.0);
+    group.lookAt(new THREE.Vector3(0, 0, 0));
+    group.userData.type = 'laserPistol';
+    scene.add(group);
+    laserPistol = group;
+  }
+
   /* ═══════════════════════════════════════════════════════════════
      SCALE / VISIBILITY
      ═══════════════════════════════════════════════════════════════ */
@@ -552,9 +622,11 @@
     } else {
       targetLookAt.set(0, 0, 0);
     }
+    if (orbitControls) orbitControls.target.copy(targetLookAt);
 
     // Visibility toggles
     if (macroCube) macroCube.visible = cfg.vis.indexOf('macro') >= 0;
+    if (laserPistol) laserPistol.visible = curScale !== 'macro';
 
     // Full lattice atoms/bonds
     atoms.forEach(function(a){ a.visible = cfg.vis.indexOf('atoms') >= 0; });
@@ -572,6 +644,14 @@
 
     // Valence shells
     valenceShells.forEach(function(s){ s.visible = cfg.vis.indexOf('shells') >= 0; });
+
+    // Energy bands: also visible in atom scale (merged view)
+    bandPlanes.forEach(function(p){ p.visible = cfg.vis.indexOf('bands') >= 0 || cfg.vis.indexOf('shells') >= 0; });
+    bandElectrons.forEach(function(e){
+      var showBands = cfg.vis.indexOf('bands') >= 0 || cfg.vis.indexOf('shells') >= 0;
+      if (e.userData.type === 'conductionElectron') showBands = showBands && e.userData.active;
+      e.visible = showBands;
+    });
 
     // Cluster
     clusterAtoms.forEach(function(a){ a.visible = cfg.vis.indexOf('cluster') >= 0; });
@@ -608,9 +688,51 @@
   var targetLookAt = new THREE.Vector3(0, 0, 0);
   var currentLookAt = new THREE.Vector3(0, 0, 0);
 
+  /* ─── WAVE MODE GLOBALS ─── */
+  var viewMode = 'particle';   // 'particle' | 'wave'
+  var emWaves = [];            // active wave packets
+  var waveSpeed = 0.04;        // propagation speed (scene units/frame) — slower for visibility
+  var WAVE_SEGMENTS = 48;      // geometry resolution
+  var WAVE_PACKET_WIDTH = 3.0; // packet envelope width (scene units)
+
+  window.toggleViewMode = function(mode) {
+    viewMode = mode;
+  };
+
+  /* Material optical properties (Si at room temp, simplified)
+     ε1 = n² - κ²,  ε2 = σ/(ε0ω) = 2nκ for E > Eg
+     Hagen-Rubens: R ≈ 1 - 4√(πε0ω/σ) for metals at low ω
+     For Si: n ≈ 3.4 (visible), κ ≈ 0 (transparent < Eg), κ large (absorbing > Eg) */
+  var MAT_SI = {
+    name: 'Silicon',
+    Eg: 1.12,                  // bandgap eV
+    workFn: 4.5,               // work function eV
+    n: function(E) {           // refractive index (simplified Sellmeier)
+      if (E < 0.08) return 3.42;                 // IR
+      if (E < 1.12) return 3.45;                 // near-IR transparent
+      if (E < 2.5) return 3.4 + (E-1.12)*0.1;   // visible
+      if (E < 4.5) return 3.55 + (E-2.5)*0.05; // UV
+      return 1.0 + 2.0/E;                        // X-ray: n → 1
+    },
+    kappa: function(E) {       // extinction coefficient
+      if (E < 0.08) return 0.001;                // IR transparent
+      if (E < 1.12) return 0.002;                // near-IR
+      if (E < 4.5) return 0.15 * (E - 1.12);     // strong absorption
+      return 2.5;                                 // deep UV/X-ray
+    },
+    alpha: function(E) {       // absorption coefficient (1/scene unit)
+      return this.kappa(E) * E * 2.5;  // proportional to κ
+    },
+    R: function(E) {           // reflectivity (Fresnel normal incidence)
+      var n0 = 1.0;             // air
+      var n1 = this.n(E);
+      return Math.pow((n0 - n1)/(n0 + n1), 2);
+    }
+  };
+
   function updateScaleBar(mode) {
     var bars = document.querySelectorAll('.scale-step');
-    var order = ['macro','lattice','cluster','bands','atom','spin'];
+    var order = ['macro','lattice','cluster','atom','spin'];
     var idx = order.indexOf(mode);
     bars.forEach(function(bar, i){
       bar.classList.toggle('active', i === idx);
@@ -647,15 +769,50 @@
     energyEV = parseFloat(energyEV);
     if (!scene) return;
 
+    if (viewMode === 'wave') {
+      fireEMWave(energyEV);
+      return;
+    }
+
     var color = photonColorFromEnergy(energyEV);
 
     var geo = new THREE.SphereGeometry(0.06, 16, 16);
     var mat = new THREE.MeshBasicMaterial({ color: color });
     var photon = new THREE.Mesh(geo, mat);
 
-    // Launch from right side toward center
-    var start = new THREE.Vector3(5, Math.random()*1.5-0.75, Math.random()*1.5-0.75);
-    var end   = new THREE.Vector3(0, 0, 0);
+    // ── LASER PISTOL: fire perpendicularly from barrel tip toward material center ──
+    var start, end = new THREE.Vector3(0, 0, 0);
+    // For atom/spin: aim directly at the focused atom
+    if (['atom','spin'].indexOf(curScale) >= 0 && focusGroup) {
+      end.copy(focusGroup.position);
+    }
+    // For cluster: aim at cluster center
+    else if (curScale === 'cluster') {
+      end.set(0, 0, 0);
+    }
+
+    // Compute start = perpendicular direction from camera right toward end
+    // Material is at origin; photon should be fired along -X (from +right toward center)
+    var dir = new THREE.Vector3().subVectors(end, new THREE.Vector3(4, 0, 0)).normalize();
+    if (dir.length() < 0.01) dir.set(-1, 0, 0);
+
+    // If pistol exists, use its tip; otherwise default to right side
+    if (laserPistol && laserPistol.visible !== false) {
+      // Pistol is oriented along +X, tip at local X≈0.28
+      var tip = new THREE.Vector3(0.30, 0, 0);
+      tip.applyMatrix4(laserPistol.matrixWorld);
+      start = tip.clone();
+      // Re-orient pistol to point at target
+      var aimDir = new THREE.Vector3().subVectors(end, start).normalize();
+      var quat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1,0,0), aimDir);
+      laserPistol.setRotationFromQuaternion(quat);
+      // Small recoil kick
+      laserPistol.position.add(aimDir.clone().multiplyScalar(-0.06));
+      setTimeout(function(){ laserPistol.position.add(aimDir.clone().multiplyScalar(0.06)); }, 150);
+    } else {
+      start = new THREE.Vector3(4.5, Math.random()*0.3, Math.random()*0.3);
+    }
+
     photon.position.copy(start);
     photon.userData = {
       energy: energyEV,
@@ -687,101 +844,105 @@
       p.userData.life--;
 
       if (p.userData.state === 'flying') {
-        // Scale-aware collision targets
-        if (curScale === 'macro') {
-          // Macro cube: photon must reach center region
-          var d = p.position.distanceTo(new THREE.Vector3(0,0,0));
-          if (d < 2.2) {
-            p.userData.state = 'absorbed';
-            handlePhotonAbsorption(p, macroCube);
-            scene.remove(p);
-            photons.splice(i, 1);
-            continue;
-          }
-        } else if (curScale === 'lattice') {
-          for (var a = 0; a < atoms.length; a++) {
-            var atom = atoms[a];
-            if (!atom.visible) continue;
-            var d = p.position.distanceTo(atom.position);
-            if (d < 0.35) {
-              p.userData.state = 'absorbed';
-              handlePhotonAbsorption(p, atom);
-              scene.remove(p);
-              photons.splice(i, 1);
-              break;
-            }
-          }
-        } else if (curScale === 'cluster') {
-          for (var a = 0; a < clusterAtoms.length; a++) {
-            var cat = clusterAtoms[a];
-            if (!cat.visible) continue;
-            var d = p.position.distanceTo(cat.position);
-            if (d < 0.35) {
-              p.userData.state = 'absorbed';
-              handlePhotonAbsorption(p, cat);
-              scene.remove(p);
-              photons.splice(i, 1);
-              break;
-            }
-          }
-        } else {
-          // bands / atom / spin: photon hits focusGroup/nucleus area
-          var d = p.position.distanceTo(new THREE.Vector3(0,0,0));
-          if (d < 0.5) {
-            p.userData.state = 'absorbed';
-            handlePhotonAbsorption(p, nucleus || focusGroup);
-            scene.remove(p);
-            photons.splice(i, 1);
-            continue;
-          }
-        }
-      }
-
-      if (p.userData.life <= 0 && p.userData.state === 'flying') {
-        scene.remove(p);
-        photons.splice(i, 1);
-      }
-    }
-  }
-
-  function updatePhotons() {
-    for (var i = photons.length - 1; i >= 0; i--) {
-      var p = photons[i];
-      p.position.add(p.userData.velocity);
-      p.userData.life--;
-
-      if (p.userData.state === 'flying') {
-        // Scale-aware collision
+        // Scale-aware collision — check multiple targets in order
         var hit = false;
         var hitObj = null;
+        var hitType = '';
 
-        if (curScale === 'macro') {
+        // ── LATTICE: photon can hit nucleus OR electrons ──
+        if (curScale === 'lattice') {
+          // Check electrons first (orbitals — larger cross-section)
+          for (var e = 0; e < latticeElectrons.length; e++) {
+            var le = latticeElectrons[e];
+            if (!le.visible) continue;
+            if (p.position.distanceTo(le.position) < 0.12) {
+              hit = true; hitObj = le; hitType = 'electron';
+              break;
+            }
+          }
+          // Then check atoms (nucleus — smaller, denser)
+          if (!hit) {
+            for (var a = 0; a < atoms.length; a++) {
+              if (!atoms[a].visible) continue;
+              if (p.position.distanceTo(atoms[a].position) < 0.18) {
+                hit = true; hitObj = atoms[a]; hitType = 'nucleus';
+                break;
+              }
+            }
+          }
+        }
+        // ── CLUSTER: photon can hit hanging electrons OR atoms ──
+        else if (curScale === 'cluster') {
+          for (var e = 0; e < clusterElectrons.length; e++) {
+            var ce = clusterElectrons[e];
+            if (!ce.visible) continue;
+            if (p.position.distanceTo(ce.position) < 0.10) {
+              hit = true; hitObj = ce; hitType = 'electron';
+              break;
+            }
+          }
+          if (!hit) {
+            for (var a = 0; a < clusterAtoms.length; a++) {
+              if (!clusterAtoms[a].visible) continue;
+              if (p.position.distanceTo(clusterAtoms[a].position) < 0.22) {
+                hit = true; hitObj = clusterAtoms[a]; hitType = 'nucleus';
+                break;
+              }
+            }
+          }
+        }
+        // ── BANDS / ATOM / SPIN: photon hits electrons OR nucleus ──
+        else if (['bands','atom','spin'].indexOf(curScale) >= 0) {
+          // Check band electrons first (delocalized, larger cross-section)
+          if (!hit && bandElectrons.length > 0) {
+            for (var e = 0; e < bandElectrons.length; e++) {
+              var be = bandElectrons[e];
+              if (!be.visible) continue;
+              if (p.position.distanceTo(
+                new THREE.Vector3(be.position.x + focusGroup.position.x,
+                                  be.position.y + focusGroup.position.y,
+                                  be.position.z + focusGroup.position.z)) < 0.10) {
+                hit = true; hitObj = be; hitType = 'electron';
+                break;
+              }
+            }
+          }
+          // Check spin electrons
+          if (!hit && spinElectrons.length > 0) {
+            for (var e = 0; e < spinElectrons.length; e++) {
+              var se = spinElectrons[e];
+              if (!se.visible) continue;
+              if (p.position.distanceTo(
+                new THREE.Vector3(se.position.x + focusGroup.position.x,
+                                  se.position.y + focusGroup.position.y,
+                                  se.position.z + focusGroup.position.z)) < 0.10) {
+                hit = true; hitObj = se; hitType = 'electron';
+                break;
+              }
+            }
+          }
+          // Nucleus (small, dense)
+          if (!hit && nucleus && nucleus.visible) {
+            if (p.position.distanceTo(focusGroup.position) < 0.12) {
+              hit = true; hitObj = nucleus; hitType = 'nucleus';
+            }
+          }
+          // Fallback to center region
+          if (!hit) {
+            if (p.position.distanceTo(new THREE.Vector3(0,0,0)) < 0.5) {
+              hit = true; hitObj = nucleus || focusGroup; hitType = 'atom';
+            }
+          }
+        }
+        // ── MACRO: bulk material ──
+        else if (curScale === 'macro') {
           if (p.position.distanceTo(new THREE.Vector3(0,0,0)) < 2.2) {
-            hit = true; hitObj = macroCube;
-          }
-        } else if (curScale === 'lattice') {
-          for (var a = 0; a < atoms.length; a++) {
-            if (!atoms[a].visible) continue;
-            if (p.position.distanceTo(atoms[a].position) < 0.35) {
-              hit = true; hitObj = atoms[a]; break;
-            }
-          }
-        } else if (curScale === 'cluster') {
-          for (var a = 0; a < clusterAtoms.length; a++) {
-            if (!clusterAtoms[a].visible) continue;
-            if (p.position.distanceTo(clusterAtoms[a].position) < 0.35) {
-              hit = true; hitObj = clusterAtoms[a]; break;
-            }
-          }
-        } else {
-          // bands / atom / spin — photon hits the nucleus/focus area
-          if (p.position.distanceTo(new THREE.Vector3(0,0,0)) < 0.5) {
-            hit = true; hitObj = nucleus || focusGroup;
+            hit = true; hitObj = macroCube; hitType = 'bulk';
           }
         }
 
         if (hit && hitObj) {
-          handlePhotonInteraction(p, hitObj, i);
+          handlePhotonInteraction(p, hitObj, i, hitType);
           continue;
         }
       }
@@ -793,6 +954,444 @@
     }
   }
 
+
+
+  /* ═══════════════════════════════════════════════════════════════
+     ELECTROMAGNETIC WAVE SYSTEM
+     Render photon as transverse E + B oscillating wave packet.
+     Physics from Maxwell: E(x,t) = E₀ sin(kx-ωt), B perp to E & k.
+     ═══════════════════════════════════════════════════════════════ */
+
+  /* ─── WAVE PACKET BUILDER ─── */
+  function buildEMWave(startPos, direction, energy, color) {
+    direction.normalize();
+    // Perpendicular basis vectors for E-field and B-field
+    var perp1 = new THREE.Vector3(0, 1, 0);
+    if (Math.abs(direction.y) > 0.9) perp1.set(1, 0, 0);
+    perp1 = perp1.clone().sub(direction.clone().multiplyScalar(perp1.dot(direction))).normalize();
+    var perp2 = new THREE.Vector3().crossVectors(direction, perp1).normalize();
+
+    var segments = WAVE_SEGMENTS;
+    var positions = new Float32Array(segments * 3);
+    var group = new THREE.Group();
+
+    // E-field oscillation (vertical — perp1)
+    var eGeo = new THREE.BufferGeometry();
+    eGeo.setAttribute('position', new THREE.BufferAttribute(positions.slice(), 3));
+    var eMat = new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending });
+    var eLine = new THREE.Line(eGeo, eMat);
+
+    // B-field oscillation (horizontal — perp2, phase-shifted π/2)
+    var bGeo = new THREE.BufferGeometry();
+    bGeo.setAttribute('position', new THREE.BufferAttribute(positions.slice(), 3));
+    var bColor = new THREE.Color(color).lerp(new THREE.Color(0xff4ecd), 0.4).getHex();
+    var bMat = new THREE.LineBasicMaterial({ color: bColor, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending });
+    var bLine = new THREE.Line(bGeo, bMat);
+
+    // Propagation axis (faint white)
+    var axisGeo = new THREE.BufferGeometry();
+    var axisPositions = new Float32Array([0,0,0, WAVE_PACKET_WIDTH,0,0]);
+    axisGeo.setAttribute('position', new THREE.BufferAttribute(axisPositions, 3));
+    var axisMat = new THREE.LineBasicMaterial({ color: 0x444444, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending });
+    var axisLine = new THREE.Line(axisGeo, axisMat);
+
+    // Glowing trail dots that make the wave visible as a luminous body
+    var trailCount = 20;
+    var trail = [];
+    var dotGeo = new THREE.SphereGeometry(0.18, 16, 16);
+    for (var t = 0; t < trailCount; t++) {
+      var dotMat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.65, blending: THREE.AdditiveBlending });
+      var dot = new THREE.Mesh(dotGeo, dotMat);
+      group.add(dot);
+      trail.push(dot);
+    }
+
+    // Bright oscillating head sphere (follows the peak amplitude)
+    var headGeo = new THREE.SphereGeometry(0.28, 24, 24);
+    var headMat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending });
+    var head = new THREE.Mesh(headGeo, headMat);
+    group.add(head);
+
+    // Central glow light
+    var glow = new THREE.PointLight(color, 4.0, 15);
+    group.add(glow);
+
+    group.add(eLine); group.add(bLine); group.add(axisLine);
+    group.position.copy(startPos);
+    // Orient group so local X aligns with direction
+    var alignQuat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1,0,0), direction);
+    group.setRotationFromQuaternion(alignQuat);
+    scene.add(group);
+
+    var wave = {
+      mesh: group,
+      eLine: eLine,
+      bLine: bLine,
+      axisLine: axisLine,
+      trail: trail,
+      glow: glow,
+      head: head,
+      direction: direction.clone(),
+      perp1: perp1.clone(),
+      perp2: perp2.clone(),
+      energy: energy,
+      color: color,
+      phase: 0,
+      life: 300,
+      maxLife: 300,
+      state: 'flying',
+      amplitude: 0.08,
+      wavelength: wavelengthFromEnergy(energy),
+      frequency: frequencyFromEnergy(energy),
+      speed: waveSpeed,
+      insideMaterial: false,
+      pathLength: 0
+    };
+
+    emWaves.push(wave);
+    return wave;
+  }
+
+  /* ─── FIRE EM WAVE ─── */
+  function fireEMWave(energyEV) {
+    var color = photonColorFromEnergy(energyEV);
+    var end = new THREE.Vector3(0, 0, 0);
+    if (['atom','spin'].indexOf(curScale) >= 0 && focusGroup) { end.copy(focusGroup.position); }
+    else if (curScale === 'cluster') { end.set(0, 0, 0); }
+
+    // Perpendicular EM wave from laser pistol toward material center
+    var start;
+    if (laserPistol) {
+      var tip = new THREE.Vector3(0.30, 0, 0);
+      tip.applyMatrix4(laserPistol.matrixWorld);
+      start = tip.clone();
+      var aimDir = new THREE.Vector3().subVectors(end, start).normalize();
+      var quat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1,0,0), aimDir);
+      laserPistol.setRotationFromQuaternion(quat);
+      laserPistol.position.add(aimDir.clone().multiplyScalar(-0.06));
+      setTimeout(function(){ laserPistol.position.add(aimDir.clone().multiplyScalar(0.06)); }, 150);
+    } else {
+      start = new THREE.Vector3(4.5, Math.random()*0.3, Math.random()*0.3);
+    }
+    var dir = new THREE.Vector3().subVectors(end, start).normalize();
+    if (dir.length() < 0.01) dir.set(-1, 0, 0);
+    buildEMWave(start, dir, energyEV, color);
+
+    var msg = document.getElementById('photon-msg');
+    if (msg) {
+      var λ = wavelengthFromEnergy(energyEV);
+      msg.innerHTML = 'EM wave fired: E = ' + energyEV.toFixed(2) + ' eV, λ = ' + λ.toFixed(0) + ' nm';
+      msg.style.opacity = '1';
+      setTimeout(function(){ msg.style.opacity = '0.7'; }, 3000);
+    }
+    updateMaterialPanel(energyEV);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     WAVE ↔ MATTER INTERACTION (Maxwell optical physics)
+     ═══════════════════════════════════════════════════════════════ */
+  function updateEMWaves() {
+    for (var i = emWaves.length - 1; i >= 0; i--) {
+      var w = emWaves[i];
+      w.life--;
+      w.phase += w.frequency;
+      var speed = w.speed || waveSpeed;
+      w.pathLength += speed;
+
+      // Move wave center
+      w.mesh.position.add(w.direction.clone().multiplyScalar(speed));
+
+      // Fade near end of life
+      var lifeFrac = w.life / w.maxLife;
+      var fade = lifeFrac < 0.2 ? lifeFrac / 0.2 : 1.0;
+      if (w.eLine && w.eLine.material) w.eLine.material.opacity = 0.85 * fade;
+      if (w.bLine && w.bLine.material) w.bLine.material.opacity = 0.6 * fade;
+
+      // Animate sine oscillations
+      animateWaveOscillation(w);
+
+      // Collision detection — what's in front?
+      if (w.state === 'flying') {
+        handleWaveCollision(w, i);
+      }
+
+      if (w.life <= 0) {
+        scene.remove(w.mesh);
+        emWaves.splice(i, 1);
+        continue;
+      }
+
+      // Fade trail + glow with life
+      var lifeFrac = w.life / w.maxLife;
+      var fade = lifeFrac < 0.2 ? lifeFrac / 0.2 : 1.0;
+      if (w.eLine && w.eLine.material) w.eLine.material.opacity = 0.85 * fade;
+      if (w.bLine && w.bLine.material) w.bLine.material.opacity = 0.6 * fade;
+      if (w.trail) {
+        w.trail.forEach(function(dot){ if(dot.material) dot.material.opacity *= fade; });
+      }
+      if (w.head && w.head.material) {
+        w.head.material.opacity = 0.85 * fade;
+      }
+      if (w.glow) {
+        w.glow.intensity = 3.0 * fade;
+      }
+    }
+  }
+
+  function animateWaveOscillation(w) {
+    if (!w.eLine || !w.bLine) return;
+    var ePos = w.eLine.geometry.attributes.position.array;
+    var bPos = w.bLine.geometry.attributes.position.array;
+    var seg = WAVE_SEGMENTS;
+    var amp = w.amplitude;
+    var λVis = w.wavelength / 200;  // scale λ to scene units
+    var k = 2 * Math.PI / λVis;
+    // Packet shows ~3 wavelengths, min 1.5 scene units so low-E waves are visible
+    var packetEnv = Math.max(λVis * 3, 1.5);
+
+    // Update axis line to match packet length
+    if (w.axisLine && w.axisLine.geometry) {
+      var ap = w.axisLine.geometry.attributes.position.array;
+      ap[3] = packetEnv; // endpoint x
+      w.axisLine.geometry.attributes.position.needsUpdate = true;
+    }
+
+    for (var s = 0; s < seg; s++) {
+      var x = (s / (seg - 1)) * packetEnv;  // 0 → packetEnv
+      var envelope = Math.exp(-Math.pow((x - packetEnv*0.5) / (packetEnv*0.25), 2));
+      var phase = k * x - w.phase;
+      // E field oscillates in perp1 direction (local Y)
+      ePos[s*3 + 0] = x;
+      ePos[s*3 + 1] = Math.sin(phase) * amp * envelope;
+      ePos[s*3 + 2] = 0;
+      // B field oscillates in perp2 direction (local Z), phase-shifted π/2
+      bPos[s*3 + 0] = x;
+      bPos[s*3 + 1] = 0;
+      bPos[s*3 + 2] = Math.sin(phase + Math.PI/2) * amp * envelope * 0.6;
+    }
+    w.eLine.geometry.attributes.position.needsUpdate = true;
+    w.bLine.geometry.attributes.position.needsUpdate = true;
+
+    // Animate glowing trail dots to follow the oscillating peak
+    if (w.trail) {
+      var tCount = w.trail.length;
+      for (var t = 0; t < tCount; t++) {
+        var tx = (t / (tCount - 1)) * packetEnv;
+        var tEnvelope = Math.exp(-Math.pow((tx - packetEnv*0.5) / (packetEnv*0.25), 2));
+        var tPhase = k * tx - w.phase;
+        var dot = w.trail[t];
+        dot.position.set(tx,
+          Math.sin(tPhase) * amp * tEnvelope,
+          Math.sin(tPhase + Math.PI/2) * amp * tEnvelope * 0.6);
+      }
+    }
+    // Move glow light to center of packet
+    if (w.glow) {
+      w.glow.position.set(packetEnv * 0.5, 0, 0);
+    }
+    // Animate bright head sphere at the oscillation peak
+    if (w.head) {
+      var headX = packetEnv * 0.5;
+      var headPhase = k * headX - w.phase;
+      var headEnv = Math.exp(-Math.pow((headX - packetEnv*0.5) / (packetEnv*0.25), 2));
+      w.head.position.set(headX,
+        Math.sin(headPhase) * amp * headEnv,
+        Math.sin(headPhase + Math.PI/2) * amp * headEnv * 0.6);
+    }
+  }
+
+  /* ─── WAVE COLLISION: what does the wave hit (if anything)? ─── */
+  function handleWaveCollision(w, idx) {
+    var pos = w.mesh.position.clone();
+    var E = w.energy;
+
+    // Scale-specific collision targets
+    var hit = null;
+    var hitType = '';
+
+    if (curScale === 'macro') {
+      // Check if wave center is inside the macro cube
+      if (pos.distanceTo(new THREE.Vector3(0,0,0)) < 2.0) {
+        hit = macroCube; hitType = 'bulk';
+      }
+    }
+    else if (curScale === 'lattice') {
+      for (var a = 0; a < atoms.length; a++) {
+        if (!atoms[a].visible) continue;
+        if (pos.distanceTo(atoms[a].position) < 0.15) { hit = atoms[a]; hitType = 'nucleus'; break; }
+      }
+      if (!hit) {
+        for (var e = 0; e < latticeElectrons.length; e++) {
+          var le = latticeElectrons[e];
+          if (!le.visible) continue;
+          if (pos.distanceTo(le.position) < 0.10) { hit = le; hitType = 'electron'; break; }
+        }
+      }
+    }
+    else if (curScale === 'cluster') {
+      for (var a = 0; a < clusterAtoms.length; a++) {
+        if (!clusterAtoms[a].visible) continue;
+        if (pos.distanceTo(clusterAtoms[a].position) < 0.18) { hit = clusterAtoms[a]; hitType = 'nucleus'; break; }
+      }
+      if (!hit) {
+        for (var e = 0; e < clusterElectrons.length; e++) {
+          var ce = clusterElectrons[e];
+          if (!ce.visible) continue;
+          if (pos.distanceTo(ce.position) < 0.08) { hit = ce; hitType = 'electron'; break; }
+        }
+      }
+    }
+    else if (['atom','spin'].indexOf(curScale) >= 0) {
+      if (focusGroup && pos.distanceTo(focusGroup.position) < 0.25) {
+        // Wave has entered the "atom zone" — check what exactly
+        var fp = focusGroup.position;
+        // Check electrons first
+        for (var e = 0; e < bandElectrons.length; e++) {
+          var be = bandElectrons[e];
+          if (!be.visible) continue;
+          var wPos = new THREE.Vector3(be.position.x + fp.x, be.position.y + fp.y, be.position.z + fp.z);
+          if (pos.distanceTo(wPos) < 0.10) { hit = be; hitType = 'electron'; break; }
+        }
+        if (!hit && nucleus && pos.distanceTo(fp) < 0.12) {
+          hit = nucleus; hitType = 'nucleus';
+        }
+        if (!hit) { hit = focusGroup; hitType = 'atom'; }
+      }
+    }
+
+    if (!hit) return; // nothing hit yet, keep flying
+
+    // Already processed this hit? (simple debounce: if w.insideMaterial already reflects processed)
+    if (w.state !== 'flying') return;
+
+    // ── Material optical response based on E and hitType (Maxwell physics) ──
+    var nMat = MAT_SI.n(E);
+    var kMat = MAT_SI.kappa(E);
+    var R = MAT_SI.R(E);
+    var α = MAT_SI.alpha(E);
+
+    var msg = document.getElementById('interaction-msg');
+
+    // Decide interaction type (same physics rules as particles, now with wave visuals)
+    if (curScale === 'macro') {
+      // BULK OPTICS: reflection + refraction + absorption
+      if (E < BANDGAP_SI) {
+        // Transparent Si: transmit + refract (n ≈ 3.4)
+        w.state = 'refracted';
+        spawnRefractedWave(w, nMat);
+        if (msg) msg.innerHTML = 'Wave: <span style="color:#00f0ff">refraction</span> (E &lt; E<sub>g</sub>, Si transparent, n ≈ ' + nMat.toFixed(1) + ')';
+      } else {
+        // Absorbing: Fresnel reflection + attenuated transmission
+        if (Math.random() < R) {
+          w.state = 'reflected';
+          spawnReflectedWave(w);
+          if (msg) msg.innerHTML = 'Wave: <span style="color:#ffaa00">Fresnel reflection</span> (R ≈ ' + (R*100).toFixed(0) + '%) + attenuated penetration';
+        } else {
+          w.state = 'absorbed';
+          w.amplitude *= 0.15; // heavy attenuation
+          w.life = Math.min(w.life, 40);
+          if (macroCube && macroCube.material) {
+            macroCube.material.transparent = true;
+            macroCube.material.opacity = Math.max(0.2, macroCube.material.opacity * 0.3);
+            macroCube.material.emissive.setHex(0xff8800);
+            macroCube.material.emissiveIntensity = Math.min(E * 0.1, 0.5);
+            setTimeout(function(){ if(macroCube && macroCube.material){ macroCube.material.opacity = 1; macroCube.material.transparent = false; macroCube.material.emissiveIntensity = 0; } }, 600);
+          }
+          if (msg) msg.innerHTML = 'Wave: <span style="color:#ff4ecd">absorption</span> (α ≈ ' + α.toFixed(1) + ' /cm, κ ≈ ' + kMat.toFixed(2) + ')';
+        }
+      }
+    }
+    else if (curScale === 'lattice' || curScale === 'cluster') {
+      // Discrete atoms: scatter or absorb
+      if (E < PHONON_EV) {
+        // Thomson scatter: elastic, wave bends
+        w.state = 'scattered';
+        w.direction.add(new THREE.Vector3((Math.random()-0.5)*0.3, (Math.random()-0.5)*0.3, (Math.random()-0.5)*0.3)).normalize();
+        w.amplitude *= 0.85;
+        if (msg) msg.textContent = 'Wave: Thomson scattering (E < phonon, elastic deflection)';
+      } else if (E < BANDGAP_SI) {
+        // Phonon absorption: vibrate target
+        w.state = 'absorbed';
+        w.amplitude *= 0.1;
+        w.life = 30;
+        vibrateTarget(hit, E);
+        if (msg) msg.textContent = 'Wave: absorbed → phonon (atom vibrates, E < E_g)';
+      } else {
+        // Strong absorption → ionize
+        w.state = 'absorbed';
+        w.amplitude *= 0.05;
+        w.life = 20;
+        ionizeTarget(hit, E);
+        if (msg) msg.innerHTML = 'Wave: <span style="color:#ff4ecd">photoionization</span> (E ≥ E_g, electron ejected)';
+      }
+    }
+    else if (['atom','spin'].indexOf(curScale) >= 0) {
+      // Single atom (discrete levels):
+      if (E < BANDGAP_SI) {
+        // No allowed transition → elastic scatter / reflection
+        w.state = 'reflected';
+        spawnReflectedWave(w);
+        if (msg) msg.innerHTML = 'Wave: <span style="color:#ffaa00">elastic scattering</span> (E &lt; E<sub>g</sub>, no transition)';
+      } else if (E < WORKFN_SI) {
+        // Excitation → fluorescence (absorb + delayed re-emit = same as particle)
+        w.state = 'absorbed';
+        w.amplitude *= 0.1;
+        w.life = 25;
+        exciteAndEmit(hit, E, w.color);
+        if (msg) msg.innerHTML = 'Wave: <span style="color:#00f0ff">excitation</span> → fluorescence (E_g < E < W_f)';
+      } else {
+        // Ionization
+        w.state = 'absorbed';
+        w.amplitude *= 0.03;
+        w.life = 15;
+        ionizeTarget(hit, E);
+        if (msg) msg.innerHTML = 'Wave: <span style="color:#ff4ecd">photoionization</span> (E > W_f)';
+      }
+    }
+  }
+
+  /* ─── SPAWN REFLECTED WAVE (elastic bounce, k reverses) ─── */
+  function spawnReflectedWave(parent) {
+    // Kill the incident ghost — reflected wave takes the remaining energy
+    parent.life = Math.min(parent.life, 5);
+    parent.maxLife = parent.life;
+    parent.amplitude *= 0.05;
+
+    var refDir = parent.direction.clone().negate();
+    var refPos = parent.mesh.position.clone().add(refDir.clone().multiplyScalar(0.3));
+    var w = buildEMWave(refPos, refDir, parent.energy * 0.95, parent.color);
+    w.amplitude = parent.amplitude * 14; // restore from *0.05 above ≈ 0.7x original
+    w.life = parent.life * 16;
+    w.maxLife = w.life;
+    w.frequency = parent.frequency; // reflection doesn't change frequency
+  }
+
+  /* ─── SPAWN REFRACTED WAVE (Snell's law, wavelength compresses, speed drops) ─── */
+  function spawnRefractedWave(parent, nMat) {
+    // Kill the incident ghost — transmitted wave takes the remaining energy
+    parent.life = Math.min(parent.life, 5);
+    parent.maxLife = parent.life;
+    parent.amplitude *= 0.05;
+
+    var slowDir = parent.direction.clone();
+    var slowPos = parent.mesh.position.clone().add(slowDir.clone().multiplyScalar(0.2));
+    var ratio = 1.0 / nMat;                     // v_mat / v_vac = 1/n
+    var w = buildEMWave(slowPos, slowDir, parent.energy, parent.color);
+    // In material: wavelength compressed, amplitude slightly reduced, speed = c/n
+    w.wavelength = parent.wavelength * ratio;
+    w.frequency = parent.frequency;             // frequency conserved at boundary
+    w.speed = (parent.speed || waveSpeed) * ratio;
+    w.amplitude = parent.amplitude * 17;         // restore from *0.05 above ≈ 0.85x original
+    w.life = parent.life * 16;
+    w.maxLife = w.life;
+    w.state = 'flying';
+    w.insideMaterial = true;
+
+    // Color shift toward material color (greenish for Si)
+    var newColor = new THREE.Color(parent.color).lerp(new THREE.Color(0x55aa55), 0.3).getHex();
+    if (w.eLine && w.eLine.material) w.eLine.material.color.setHex(newColor);
+  }
+
   /* ═══════════════════════════════════════════════════════════════
      PHOTON-ATOM INTERACTION  (absorption / reflection / transmission)
      Decision tree based on photon energy E_γ vs atomic transitions:
@@ -802,51 +1401,142 @@
        E_γ ≥ E_work           → ABSORPTION + IONIZATION (electron ejected)
      Also handles REFLECTION when E_γ doesn't match any allowed transition.
      ═══════════════════════════════════════════════════════════════ */
-  function handlePhotonInteraction(photon, target, idx) {
+  function handlePhotonInteraction(photon, target, idx, hitType) {
     var E = photon.userData.energy;
     var color = photon.userData.color;
     var msg = document.getElementById('interaction-msg');
 
-    // Decide interaction type
+    hitType = hitType || 'atom';
+
+    // ── Interaction decision tree (0.1–10+ eV) ──
     var interaction = 'transmission';
-    if (E < PHONON_EV) {
-      interaction = 'transmission'; // energy too low for anything
-    } else if (E < BANDGAP_SI) {
-      interaction = 'absorb_vibrate'; // phonon absorption
-    } else if (E < WORKFN_SI) {
-      interaction = 'absorb_emit';  // interband excitation, then relax
-    } else {
-      interaction = 'absorb_ionize'; // photoelectric / photoionization
+
+    // BULK / LATTICE / CLUSTER: continuous or semi-continuous
+    if (['macro','lattice','cluster'].indexOf(curScale) >= 0) {
+      if (E < PHONON_EV) {
+        interaction = 'transmission';           // sub-phonon: passes through
+      } else if (E < BANDGAP_SI) {
+        interaction = 'absorb_vibrate';       // phonon absorption → heat
+      } else if (E < WORKFN_SI) {
+        interaction = 'absorb_emit';           // interband excitation → fluorescence
+      } else {
+        interaction = 'absorb_ionize';         // photoelectric / photoionization
+      }
+    }
+    // SINGLE ATOM / BANDS / SPIN: discrete levels
+    else {
+      if (E < PHONON_EV) {
+        interaction = 'transmission';         // too weak, misses atom
+      } else if (E < BANDGAP_SI) {
+        interaction = 'reflect';              // no allowed transition → elastic bounce
+      } else if (E < WORKFN_SI) {
+        interaction = 'absorb_emit';          // valence → conduction excitation
+      } else if (E < 8.0) {
+        interaction = 'absorb_ionize';        // valence electron ejected
+      } else {
+        interaction = 'absorb_ionize';        // deep shell (2p/2s) ionization
+      }
     }
 
-    // Override by scale-specific physics
-    if (curScale === 'macro') {
-      // Bulk: transmission for E < E_gap, absorb for E ≥ E_gap
+    // HIT-TYPE corrections:
+    // Electron hit → always interact with that electron
+    if (hitType === 'electron') {
+      if (E < PHONON_EV) {
+        interaction = 'compton';              // Thomson scattering off free e⁻
+      } else if (E < WORKFN_SI) {
+        interaction = 'absorb_vibrate';       // e⁻ absorbs → orbital wobble
+      } else {
+        interaction = 'absorb_ionize';        // photoelectric on this electron
+      }
+    }
+    // Nucleus hit → elastic or thermal
+    else if (hitType === 'nucleus') {
+      if (E < 1.0) {
+        interaction = 'reflect';              // Rutherford elastic scattering
+      } else if (E < 10.0) {
+        interaction = 'absorb_vibrate';       // nucleus-field absorbs → heat
+      } else {
+        interaction = 'compton';              // nuclear Compton (simplified)
+      }
+    }
+    // Bulk hit
+    else if (hitType === 'bulk') {
       if (E < BANDGAP_SI) interaction = 'transmission';
+      else if (E < WORKFN_SI) interaction = 'absorb_vibrate';
       else interaction = 'absorb_vibrate';
-    } else if (curScale === 'bands' || curScale === 'atom' || curScale === 'spin') {
-      // Atom: discrete levels — reflection if E doesn't match a transition
-      // Simplified: E < gap → reflection (no transition available)
-      if (E < BANDGAP_SI) interaction = 'reflect';
     }
 
     // Execute interaction
     switch (interaction) {
 
     case 'transmission':
-      // Photon passes through — no visual change, just keep flying
+      // Photon passes through — for high E, show material transparency (X-ray penetration)
       if (msg) msg.textContent = scaleLabel() + ': E_γ = ' + E.toFixed(2) +
         ' eV — transmission (no matching transition).';
+      if (E > 4.5) {
+        if (hitType === 'bulk' && macroCube && macroCube.material) {
+          macroCube.material.transparent = true;
+          var origOp = macroCube.material.opacity;
+          macroCube.material.opacity = Math.max(origOp * 0.35, 0.15);
+          setTimeout(function(){ if(macroCube && macroCube.material){ macroCube.material.opacity = origOp; macroCube.material.transparent = false; } }, 400 + E*20);
+        }
+        else if (hitType === 'nucleus' && target && target.material) {
+          target.material.transparent = true;
+          var origOp2 = target.material.opacity || 1;
+          target.material.opacity = Math.max(origOp2 * 0.3, 0.15);
+          setTimeout(function(){ if(target && target.material){ target.material.opacity = origOp2; target.material.transparent = false; } }, 400 + E*20);
+        }
+      }
       // Let photon continue (don't remove)
       break;
 
     case 'reflect':
       // Photon bounces back — reverse velocity
-      if (msg) msg.textContent = scaleLabel() + ': E_γ = ' + E.toFixed(2) +
-        ' eV < E_gap — reflected (no available transition).';
+      if (hitType === 'nucleus') {
+        if (msg) msg.textContent = scaleLabel() + ': E_γ = ' + E.toFixed(2) +
+          ' eV — elastic scattering off nucleus (Rutherford-like).';
+      } else {
+        if (msg) msg.textContent = scaleLabel() + ': E_γ = ' + E.toFixed(2) +
+          ' eV < E_gap — reflected (no available transition).';
+      }
       photon.userData.velocity.negate();
       photon.userData.velocity.multiplyScalar(0.6); // loses energy on reflection
       photon.userData.state = 'reflected';
+      break;
+
+    case 'compton':
+      // Photon scatters off electron (elastic/inelastic scattering)
+      scene.remove(photon);
+      photons.splice(idx, 1);
+      if (msg) msg.textContent = scaleLabel() + ': Compton scattering! ' +
+        'Photon deflects off ' + hitType + ', loses some energy.';
+      // Spawn a scattered photon at reduced energy (Compton shift)
+      var scatteredE = E * 0.85; // simplified energy loss
+      var scColor = photonColorFromEnergy(scatteredE);
+      var scGeo = new THREE.SphereGeometry(0.045, 12, 12);
+      var scMat = new THREE.MeshBasicMaterial({ color: scColor });
+      var scPhoton = new THREE.Mesh(scGeo, scMat);
+      var origin = (target.position) ? target.position.clone() : new THREE.Vector3(0,0,0);
+      // Random deflection angle (Thomson/Compton scattering)
+      var theta = Math.random() * Math.PI;     // 0 to 180°
+      var phi = Math.random() * Math.PI * 2; // full azimuth
+      var scDir = new THREE.Vector3(
+        Math.sin(theta)*Math.cos(phi),
+        Math.sin(theta)*Math.sin(phi),
+        Math.cos(theta)
+      );
+      scPhoton.position.copy(origin);
+      scPhoton.userData = {
+        energy: scatteredE,
+        velocity: scDir.multiplyScalar(0.10),
+        life: 200,
+        color: scColor,
+        state: 'flying'
+      };
+      var scLight = new THREE.PointLight(scColor, 0.7, 3);
+      scPhoton.add(scLight);
+      scene.add(scPhoton);
+      photons.push(scPhoton);
       break;
 
     case 'absorb_vibrate':
@@ -907,12 +1597,13 @@
       }
     }
     else if (curScale === 'cluster') {
+      var cBoost = Math.min(E * 0.02, 0.06);
       clusterSprings.forEach(function(s){ s.k = Math.min(0.12 + E*0.04, 0.35); });
       clusterAtoms.forEach(function(a){
         a.userData.vel.add(new THREE.Vector3(
-          (Math.random()-0.5)*boost*2,
-          (Math.random()-0.5)*boost*2,
-          (Math.random()-0.5)*boost*2
+          (Math.random()-0.5)*cBoost*2,
+          (Math.random()-0.5)*cBoost*2,
+          (Math.random()-0.5)*cBoost*2
         ));
       });
       setTimeout(function(){ clusterSprings.forEach(function(s){ s.k = 0.08; }); }, 500 + E*80);
@@ -999,6 +1690,28 @@
       }
     }
 
+    // Radiation burst at target location
+    var burstGeo = new THREE.SphereGeometry(0.25, 16, 16);
+    var burstMat = new THREE.MeshBasicMaterial({
+      color: color, transparent: true, opacity: 0.6,
+      blending: THREE.AdditiveBlending, depthWrite: false
+    });
+    var burst = new THREE.Mesh(burstGeo, burstMat);
+    var bOrigin = target.position ? target.position.clone() : new THREE.Vector3(0,0,0);
+    burst.position.copy(bOrigin);
+    scene.add(burst);
+    // Animate burst: expand and fade
+    var bStart = Date.now();
+    function animateBurst() {
+      var elapsed = Date.now() - bStart;
+      var t = elapsed / 800;
+      if (t >= 1) { scene.remove(burst); return; }
+      burst.scale.setScalar(1 + t * 4);
+      burst.material.opacity = 0.6 * (1 - t);
+      requestAnimationFrame(animateBurst);
+    }
+    animateBurst();
+
     // Re-emit a photon after delay (fluorescence)
     var delayMs = 400 + Math.random() * 600;
     setTimeout(function(){
@@ -1036,14 +1749,21 @@
 
   // ── ABSORB + IONIZE: photoelectric / photoionization ──
   function ionizeTarget(target, E) {
-    emitElectron(target);
+    // Which shell gets ionized?
+    var shell = 'valence';
+    if (E >= 8.0) shell = 'deep';          // 2p / 2s / 1s
+    else if (E >= 4.5) shell = 'valence';  // 3s / 3p
+
+    emitElectron(target, shell);
+
     if (curScale === 'macro') {
-      macroCube.material.emissive.setHex(0xff4ecd);
-      macroCube.material.emissiveIntensity = 0.4;
-      setTimeout(function(){ macroCube.material.emissiveIntensity = 0; }, 800);
+      if (macroCube && macroCube.material && macroCube.material.emissive) {
+        macroCube.material.emissive.setHex(0xff4ecd);
+        macroCube.material.emissiveIntensity = 0.4;
+        setTimeout(function(){ if(macroCube.material) macroCube.material.emissiveIntensity = 0; }, 800);
+      }
     }
     else if (curScale === 'lattice') {
-      // Atom becomes ion (shrinks + turns pink briefly)
       var origScale = target.scale.x;
       target.scale.multiplyScalar(0.85);
       target.material.color.setHex(0xff4ecd);
@@ -1055,40 +1775,74 @@
       });
     }
     else if (curScale === 'bands') {
+      // Remove one electron from the band matching the ionized shell
+      var bandIdx = (shell === 'valence') ? 2 : 1; // 2=3s3p, 1=2s2p
+      var candidates = bandElectrons.filter(function(e){
+        return e.userData.type === 'bandElectron' && e.userData.bandIdx === bandIdx && !e.userData.ionized;
+      });
+      if (candidates.length > 0) {
+        var victim = candidates[Math.floor(Math.random() * candidates.length)];
+        victim.visible = false;
+        victim.userData.ionized = true;
+        setTimeout(function(){ victim.visible = true; victim.userData.ionized = false; }, 2000);
+      }
       bandPlanes.forEach(function(p){ p.scale.multiplyScalar(0.65); });
       setTimeout(function(){ bandPlanes.forEach(function(p){ p.scale.multiplyScalar(1/0.65); }); }, 700);
     }
     else if (curScale === 'atom') {
-      valenceShells.forEach(function(s){ s.scale.multiplyScalar(0.55); });
-      setTimeout(function(){ valenceShells.forEach(function(s){ s.scale.multiplyScalar(1/0.55); }); }, 900);
+      if (shell === 'valence') {
+        valenceShells.forEach(function(s){ s.scale.multiplyScalar(0.55); });
+        setTimeout(function(){ valenceShells.forEach(function(s){ s.scale.multiplyScalar(1/0.55); }); }, 900);
+      } else {
+        coreCloud.scale.multiplyScalar(0.55);
+        setTimeout(function(){ coreCloud.scale.multiplyScalar(1/0.55); }, 900);
+      }
     }
     else if (curScale === 'spin') {
+      // Eject outermost spin electron temporarily
+      var outer = spinElectrons.filter(function(e){ return e.userData.spin === 'up' && !e.userData.ionized; });
+      if (outer.length > 0) {
+        var victim = outer[Math.floor(Math.random() * outer.length)];
+        victim.visible = false;
+        victim.userData.ionized = true;
+        setTimeout(function(){ victim.visible = true; victim.userData.ionized = false; }, 1500);
+      }
       spinLevels.forEach(function(s){ s.scale.multiplyScalar(0.6); });
       setTimeout(function(){ spinLevels.forEach(function(s){ s.scale.multiplyScalar(1/0.6); }); }, 700);
     }
   }
 
   function flashAtom(atom, colorHex, durationSec) {
+    if (!atom || !atom.material) return;
     var orig = atom.material.color.getHex();
     atom.material.color.setHex(colorHex);
-    atom.material.emissive.setHex(colorHex);
-    atom.material.emissiveIntensity = 0.8;
+    var hadEmissive = !!(atom.material.emissive);
+    if (hadEmissive) {
+      atom.material.emissive.setHex(colorHex);
+      atom.material.emissiveIntensity = 0.8;
+    }
     setTimeout(function(){
+      if (!atom || !atom.material) return;
       atom.material.color.setHex(orig);
-      atom.material.emissive.setHex(0x000000);
-      atom.material.emissiveIntensity = 0;
+      if (hadEmissive) {
+        atom.material.emissive.setHex(0x000000);
+        atom.material.emissiveIntensity = 0;
+      }
     }, durationSec * 1000);
   }
 
   function exciteAtom(atom) {
-    atom.material.emissive.setHex(0x00f0ff);
-    atom.material.emissiveIntensity = 1.2;
+    if (!atom || !atom.material) return;
+    if (atom.material.emissive) {
+      atom.material.emissive.setHex(0x00f0ff);
+      atom.material.emissiveIntensity = 1.2;
+    }
     atom.userData.excited = true;
     excitedAtoms.push({ atom: atom, t0: time });
 
-    // If in bands view, animate electron jumping to conduction band
+    // If showing bands (atom or spin view), animate electron jumping to conduction band
     var conductionE = bandElectrons.filter(function(e){ return e.userData.type === 'conductionElectron'; });
-    if (conductionE.length > 0 && curScale === 'bands') {
+    if (conductionE.length > 0 && (curScale === 'bands' || curScale === 'atom')) {
       var ce = conductionE[0];
       ce.userData.active = true;
       ce.material.opacity = 1;
@@ -1110,19 +1864,22 @@
     });
   }
 
-  function emitElectron(atom) {
+  function emitElectron(atom, shell) {
     var geo = new THREE.SphereGeometry(0.07, 16, 16);
     var mat = new THREE.MeshBasicMaterial({ color: 0xff4ecd });
     var e = new THREE.Mesh(geo, mat);
-    e.position.copy(atom.position);
+    var origin = (atom && atom.position) ? atom.position.clone() : new THREE.Vector3(0,0,0);
+    e.position.copy(origin);
     var dir = new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, 1).normalize();
-    e.userData = { velocity: dir.multiplyScalar(0.18), life: 120, type: 'freeElectron' };
+    e.userData = { velocity: dir.multiplyScalar(0.18), life: 120, type: 'freeElectron', shell: shell || 'valence' };
     scene.add(e);
     photons.push(e);
 
-    atom.material.transparent = true;
-    atom.material.opacity = 0.6;
-    setTimeout(function(){ atom.material.opacity = 0.95; }, 2000);
+    if (atom && atom.material) {
+      atom.material.transparent = true;
+      atom.material.opacity = 0.6;
+      setTimeout(function(){ if(atom && atom.material) atom.material.opacity = 0.95; }, 2000);
+    }
   }
 
   /* ═══════════════════════════════════════════════════════════════
@@ -1130,7 +1887,8 @@
      ═══════════════════════════════════════════════════════════════ */
   function animate() {
     animId = requestAnimationFrame(animate);
-    time += 0.016;
+    var dt = 0.016;
+    time += dt;
 
     // Camera lerp
     currentCamZ += (targetCamZ - currentCamZ) * 0.04;
@@ -1140,6 +1898,7 @@
     camera.updateProjectionMatrix();
     currentLookAt.lerp(targetLookAt, 0.04);
     camera.lookAt(currentLookAt);
+    if (orbitControls) orbitControls.update();
 
     // Thermal vibration on lattice atoms
     var vib = Math.sin(time * 3) * thermalAmp;
@@ -1220,7 +1979,6 @@
 
     // Cluster spring dynamics: atoms pull on bonds, bonds pull back
     if (clusterAtoms[0] && clusterAtoms[0].visible) {
-      var dt = 0.016;
       var damping = 0.92;
       // Accumulate spring forces on atoms
       var forces = [];
@@ -1268,26 +2026,26 @@
       });
     }
 
-    // Hanging electrons shuttle back and forth along center-to-corner bonds
+    // Free electrons orbit their parent atom (valence = 4 − bonds)
     clusterElectrons.forEach(function(e){
       if (!e.visible) return;
       var d = e.userData;
-      var h = d.hang;
-      var bond = clusterBonds[h.bondIdx];
-      if (!bond) return;
-      var a = clusterAtoms[bond.userData.atomA];
-      var b = clusterAtoms[bond.userData.atomB];
-      if (!a || !b) return;
-      d.baseAngle += dt * h.speed;
-      var t = (Math.sin(d.baseAngle + h.phase) * h.amp + 1) * 0.5; // 0 → 1 along bond
-      e.position.lerpVectors(a.position, b.position, t);
-      // Perpendicular swing
-      var perp = new THREE.Vector3(
-        Math.cos(d.baseAngle * 3) * h.swing,
-        Math.sin(d.baseAngle * 2.7) * h.swing,
-        Math.cos(d.baseAngle * 2.1) * h.swing
-      );
-      e.position.add(perp);
+      if (d.type !== 'clusterElectron' || d.atomIdx === undefined) return;
+      var atom = clusterAtoms[d.atomIdx];
+      if (!atom) return;
+      d.angle += 0.016 * d.speed;
+      var x = Math.cos(d.angle) * d.orbitR;
+      var z = Math.sin(d.angle) * d.orbitR;
+      var y = 0;
+      // tiltX
+      var rx = x * Math.cos(d.tiltX) - y * Math.sin(d.tiltX);
+      var ry = x * Math.sin(d.tiltX) + y * Math.cos(d.tiltX);
+      // tiltZ
+      var rz = z * Math.cos(d.tiltZ) - ry * Math.sin(d.tiltZ);
+      ry = z * Math.sin(d.tiltZ) + ry * Math.cos(d.tiltZ);
+      e.position.set(atom.position.x + rx,
+                     atom.position.y + ry,
+                     atom.position.z + rz);
     });
 
     // Band electrons orbit the nucleus (in focusGroup, so local coords)
@@ -1324,6 +2082,7 @@
 
     // Photons & free electrons
     updatePhotons();
+    updateEMWaves();
     photons.forEach(function(p){
       if (p.userData.type === 'freeElectron') {
         p.position.add(p.userData.velocity);
@@ -1347,4 +2106,17 @@
   }
 
   window._cqScene = { setScale: window.setCrystalScale, fire: window.firePhoton };
+
+  /* ─── UI updater: material optical properties readout ─── */
+  window.updateMaterialPanel = function(E) {
+    var n = MAT_SI.n(E).toFixed(2);
+    var kappa = MAT_SI.kappa(E).toFixed(3);
+    var R = (MAT_SI.R(E) * 100).toFixed(0);
+    var el = document.getElementById('mat-props');
+    if (el) {
+      var λ = wavelengthFromEnergy(E).toFixed(0);
+      el.innerHTML = '<b>Si optical constants @ ' + E.toFixed(2) + ' eV</b><br>' +
+        'λ = ' + λ + ' nm · n = ' + n + ' · κ = ' + kappa + ' · R = ' + R + '%';
+    }
+  };
 })();

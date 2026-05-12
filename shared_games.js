@@ -8,10 +8,10 @@
 // ===== SESSION STATE =====
 var __GameState = (function() {
   var key = 'physics-playground-v1';
-  var data = JSON.parse(sessionStorage.getItem(key) || '{}');
+  var data = JSON.parse(localStorage.getItem(key) || '{}');
 
   function save() {
-    sessionStorage.setItem(key, JSON.stringify(data));
+    localStorage.setItem(key, JSON.stringify(data));
   }
 
   return {
@@ -40,7 +40,8 @@ var __GameState = (function() {
     setProgress: function(module, pct) {
       data['progress_' + module] = Math.max(data['progress_' + module] || 0, pct);
       save();
-    }
+    },
+    level: function() { return data.level || 1; }
   };
 })();
 

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Superconductivity Lab — Physics Playground</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<link rel="stylesheet" href="../../shared_styles.css">
+<style>
+  .challenge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .draggable-target { cursor: grab; border: 2px dashed var(--glass-border); border-radius: var(--radius-sm); padding: 0.8rem; transition: all 0.2s; text-align: center; background: var(--bg-elevated); }
+  .draggable-target:hover { border-color: var(--accent-cyan); background: rgba(0,240,255,0.04); }
+  .drop-zone { border: 2px dashed var(--glass-border); border-radius: var(--radius-sm); padding: 1rem; min-height: 50px; transition: all 0.2s; background: var(--bg-panel); }
+  .drop-zone.correct { border-color: var(--accent-green); background: rgba(74,222,128,0.08); }
+  .drop-zone.wrong { border-color: var(--accent-red); background: rgba(255,68,68,0.08); }
+  .timer-bar { height: 4px; background: var(--bg-elevated); border-radius: 2px; overflow: hidden; margin-bottom: 1rem; }
+  .timer-fill { height: 100%; background: var(--accent-cyan); transition: width 1s linear; }
+  .cooper-pair { display: inline-block; padding: 0.5rem 1rem; border-radius: 20px; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple)); color: #fff; font-family: var(--font-mono); font-size: 0.8rem; margin: 0.25rem; }
+  .phonon-wave { display: inline-block; padding: 0.3rem 0.8rem; border-radius: 12px; background: rgba(255,215,64,0.15); border: 1px solid var(--accent-yellow); color: var(--accent-yellow); font-family: var(--font-mono); font-size: 0.75rem; }
+  .energy-gap-viz { width: 100%; height: 40px; background: var(--bg-elevated); border-radius: var(--radius-sm); position: relative; overflow: hidden; margin: 1rem 0; }
+  .gap-bar { position: absolute; top: 50%; left: 30%; right: 30%; height: 4px; background: var(--accent-cyan); transform: translateY(-50%); }
+  .gap-particle { position: absolute; top: 50%; width: 12px; height: 12px; border-radius: 50%; background: var(--accent-pink); transform: translateY(-50%); transition: left 0.5s; }
+  .temp-readout { font-family: var(--font-mono); font-size: 1.2rem; color: var(--accent-cyan); }
+  .tc-badge { display: inline-block; padding: 0.3rem 0.6rem; border-radius: 6px; background: rgba(74,222,128,0.1); border: 1px solid var(--accent-green); color: var(--accent-green); font-family: var(--font-mono); font-size: 0.85rem; }
+  .normal-badge { display: inline-block; padding: 0.3rem 0.6rem; border-radius: 6px; background: rgba(255,68,68,0.1); border: 1px solid var(--accent-red); color: var(--accent-red); font-family: var(--font-mono); font-size: 0.85rem; }
+</style>
+</head>
+<body>
+
+<!-- AMBIENT ORBS -->
+<div class="orb orb-cyan"></div>
+<div class="orb orb-purple"></div>
+<div class="orb orb-pink"></div>
+
+<nav class="game-nav">
+  <div class="nav-brand"><a href="../../index.html" style="text-decoration:none;color:inherit;"><span class="nav-logo">⚛</span> Physics Playground</a></div>
+  <div class="nav-stats">
+    <div class="stat-badge"><span class="stat-icon">❄</span><span class="stat-value">Superconductivity Lab</span></div>
+    <div class="stat-badge"><span class="stat-icon">⭐</span><span class="stat-value" id="nav-xp">0 XP</span></div>
+  </div>
+</nav>
+
+<div class="game-hero" style="padding-bottom:0;">
+  <div class="level-badge">Module 08 · Level <span id="current-level">1</span> · Quantum Phase Master</div>
+  <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Superconductivity</span></h1>
+  <p class="hero-desc">Zero resistance. Perfect diamagnetism. Cooper pairs. Explore the quantum state that defies classical intuition.</p>
+</div>
+
+<div class="game-container">
+
+  <div class="game-mode-bar">
+    <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
+    <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">🎯 Challenges</button>
+    <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">🧩 Puzzles</button>
+  </div>
+
+  <!-- PLAYGROUND -->
+  <div class="mode-section" id="section-play">
+    <div class="playground-area">
+      <div class="playground-header">
+        <div class="playground-title">🔬 BCS Energy Gap & Meissner Effect</div>
+        <div class="playground-level">Tune temperature and magnetic field. Watch the superconducting state emerge or collapse.</div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 320px; gap: 1.5rem;">
+        <div>
+          <div class="plot-container" id="plot-gap-temp" style="min-height:280px;"></div>
+          <div class="plot-container" id="plot-magnetization" style="min-height:260px; margin-top:1.5rem;"></div>
+          <div class="plot-container" id="plot-penetration" style="min-height:260px; margin-top:1.5rem;"></div>
+        </div>
+        <div>
+          <div class="challenge-panel" style="margin-bottom:1rem;">
+            <div class="challenge-header">
+              <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙</span>
+              <span class="challenge-title">Controls</span>
+            </div>
+            <div class="control-row">
+              <span class="control-label">Temperature T</span>
+              <span class="control-value" id="val-T-sc">4.0</span><span class="unit-tag">K</span>
+            </div>
+            <input type="range" id="slider-T-sc" min="0.1" max="15" value="4.0" step="0.1">
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Below Tc: superconducting gap opens. Above Tc: normal metal.</p>
+
+            <div class="control-row" style="margin-top:0.8rem;">
+              <span class="control-label">Material Tc</span>
+              <span class="control-value" id="val-Tc">9.2</span><span class="unit-tag">K</span>
+            </div>
+            <select id="select-material-sc" style="width:100%;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.4rem;border-radius:6px;font-family:var(--font-mono);">
+              <option value="9.2">Niobium (Nb) — 9.2 K</option>
+              <option value="4.2">Mercury (Hg) — 4.2 K</option>
+              <option value="1.2">Aluminum (Al) — 1.2 K</option>
+              <option value="93">YBCO — 93 K</option>
+              <option value="23">Nb₃Sn — 23 K</option>
+            </select>
+
+            <div class="control-row" style="margin-top:0.8rem;">
+              <span class="control-label">Applied field H</span>
+              <span class="control-value" id="val-H">0.0</span><span class="unit-tag">T</span>
+            </div>
+            <input type="range" id="slider-H" min="0" max="0.5" value="0" step="0.01">
+          </div>
+
+          <div class="challenge-panel">
+            <div class="challenge-header">
+              <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">📊</span>
+              <span class="challenge-title">Live Readout</span>
+            </div>
+            <table>
+              <tr><th>Quantity</th><th>Value</th></tr>
+              <tr><td>Gap Δ(0)</td><td class="highlight-num" id="live-gap">1.76 meV</td></tr>
+              <tr><td>Δ(T)/Δ(0)</td><td class="highlight-pink" id="live-gap-ratio">1.00</td></tr>
+              <tr><td>State</td><td id="live-state"><span class="tc-badge">Superconducting</span></td></tr>
+              <tr><td>Penetration λ_L</td><td class="highlight-num" id="live-lambda">40 nm</td></tr>
+              <tr><td>χ (susceptibility)</td><td class="highlight-pink" id="live-chi">-1.0</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="insight-card" style="margin-top:1rem;">
+      <div class="insight-title">✨ Why does this matter?</div>
+      <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
+        Superconductivity is a <strong>macroscopic quantum phenomenon</strong>. Below Tc, electrons form Cooper pairs bound by phonon exchange.
+        The energy gap 2Δ prevents pair-breaking by thermal energy. The Meissner effect (χ = -1) is not just zero resistance — it is <em>active</em> field expulsion.
+        BCS theory predicts Δ(0) ≈ 1.76 k_B T_c. London theory gives λ_L = √(m/μ₀ n_s e²) for the magnetic penetration depth.
+      </p>
+      <div class="equation-box" style="font-size:0.85rem;">
+        $$H_c(T) = H_0\left[1 - \frac{T^2}{T_c^2}\right], \quad \lambda_L = \sqrt{\frac{m}{\mu_0 n_s e^2}}, \quad \Delta(0) \approx 1.76\,k_B T_c$$
+      </div>
+      <div class="btn-group" style="margin-top:1rem;">
+        <button class="btn" onclick="document.getElementById('theory-deep-sc').style.display='block';this.style.display='none';">📖 Dive Deeper</button>
+      </div>
+      <div id="theory-deep-sc" style="display:none;">
+        <p style="font-size:0.9rem;color:var(--text-main);line-height:1.7;margin-top:1rem;">
+          <strong>BCS ground state:</strong> All Cooper pairs occupy the same quantum state — a macroscopic wavefunction ψ = |ψ|e^{iφ}.
+          The phase φ is what enables the Josephson effect and flux quantization.
+        </p>
+        <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
+          <strong>Type I vs Type II:</strong> Type I expels all field below H_c. Type II allows partial penetration via Abrikosov vortices between H_{c1} and H_{c2}.
+          NbTi and Nb₃Sn are Type II — essential for MRI magnets (up to 15 T).
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHALLENGES -->
+  <div class="mode-section" id="section-challenge" style="display:none;">
+
+    <div class="challenge-panel">
+      <div class="challenge-header">
+        <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span>
+        <span class="challenge-title">Challenge 1: Critical Temperature Matcher</span>
+        <span class="challenge-difficulty easy">Easy</span>
+      </div>
+      <div class="challenge-desc">A superconductor is described. Is it superconducting at the given temperature?</div>
+      <div class="challenge-reward">🏆 Reward: 50 XP · Combo bonus: +5 XP per streak</div>
+      <div class="timer-bar"><div class="timer-fill" id="tc-timer" style="width:100%"></div></div>
+      <div id="tc-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+      <div style="display:flex; gap:0.5rem;">
+        <button class="btn" onclick="guessSCState(true)">Superconducting</button>
+        <button class="btn" onclick="guessSCState(false)">Normal</button>
+      </div>
+      <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;">
+        <strong>Score:</strong> <span id="tc-score">0</span> · <strong>Combo:</strong> <span id="tc-combo">0</span>
+      </div>
+      <div class="challenge-feedback" id="tc-feedback"></div>
+    </div>
+
+    <div class="challenge-panel">
+      <div class="challenge-header">
+        <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🧲</span>
+        <span class="challenge-title">Challenge 2: Type I or Type II?</span>
+        <span class="challenge-difficulty medium">Medium</span>
+      </div>
+      <div class="challenge-desc">Identify whether the described behavior matches Type I or Type II superconductivity.</div>
+      <div class="challenge-reward">🏆 Reward: 60 XP · "Phase Detective" badge</div>
+      <div id="type-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+      <div style="display:flex; gap:0.5rem;">
+        <button class="btn" onclick="guessType('I')">Type I</button>
+        <button class="btn" onclick="guessType('II')">Type II</button>
+      </div>
+      <div class="challenge-feedback" id="type-feedback"></div>
+    </div>
+
+    <div class="challenge-panel">
+      <div class="challenge-header">
+        <span class="challenge-icon" style="background:rgba(74,222,128,0.12);">⚖</span>
+        <span class="challenge-title">Challenge 3: Isotope Effect Calculator</span>
+        <span class="challenge-difficulty hard">Hard</span>
+      </div>
+      <div class="challenge-desc">Given isotopic mass ratio M₁/M₂, predict the ratio of critical temperatures Tc₁/Tc₂.</div>
+      <div class="challenge-reward">🏆 Reward: 80 XP + "Isotope Hunter" badge</div>
+      <div id="iso-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+      <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+        <input type="number" id="iso-answer" placeholder="Tc₁/Tc₂" step="0.01" style="width:120px;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
+        <button class="btn" onclick="checkIsotopeAnswer()">Submit</button>
+      </div>
+      <div class="challenge-feedback" id="iso-feedback"></div>
+    </div>
+  </div>
+
+  <!-- PUZZLES -->
+  <div class="mode-section" id="section-puzzle" style="display:none;">
+
+    <div class="challenge-panel">
+      <div class="challenge-header">
+        <span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🔧</span>
+        <span class="challenge-title">Puzzle 1: Cooper Pair Builder</span>
+        <span class="challenge-difficulty medium">Medium</span>
+      </div>
+      <div class="challenge-desc">Assemble the BCS interaction: two electrons exchange a phonon to form a bound Cooper pair.</div>
+      <div class="challenge-reward">🏆 Reward: 60 XP</div>
+      <div style="margin:1rem 0;">
+        <p style="font-size:0.85rem;color:var(--text-muted);">Drag components into the interaction sequence:</p>
+        <div id="cooper-pool" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0.5rem 0;"></div>
+      </div>
+      <div id="cooper-zones" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin:0.5rem 0;"></div>
+      <button class="btn" onclick="checkCooperBuilder()">✓ Verify Pair</button>
+      <div class="challenge-feedback" id="cooper-feedback"></div>
+    </div>
+
+    <div class="challenge-panel">
+      <div class="challenge-header">
+        <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">📐</span>
+        <span class="challenge-title">Puzzle 2: Critical Field Predictor</span>
+        <span class="challenge-difficulty hard">Hard</span>
+      </div>
+      <div class="challenge-desc">Calculate Hc(T) using the given H₀ and Tc at a target temperature.</div>
+      <div class="challenge-reward">🏆 Reward: 80 XP</div>
+      <div id="hc-puzzle-text" style="font-size:1rem;margin:1rem 0;font-family:var(--font-mono);"></div>
+      <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+        <input type="number" id="hc-answer" placeholder="Hc(T) in T" step="0.001" style="width:160px;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
+        <button class="btn" onclick="checkHCPuzzle()">Submit</button>
+      </div>
+      <div class="challenge-feedback" id="hc-feedback"></div>
+    </div>
+
+    <div class="challenge-panel">
+      <div class="challenge-header">
+        <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🛡</span>
+        <span class="challenge-title">Puzzle 3: Meissner vs Perfect Conductor</span>
+        <span class="challenge-difficulty master">Master</span>
+      </div>
+      <div class="challenge-desc">Classify each scenario: true superconductor (Meissner) or merely zero-resistance perfect conductor?</div>
+      <div class="challenge-reward">🏆 Reward: 120 XP</div>
+      <div id="meissner-list" style="margin-top:0.5rem;"></div>
+      <button class="btn" onclick="checkMeissnerPuzzle()">✓ Check Classification</button>
+      <div class="challenge-feedback" id="meissner-feedback"></div>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; margin-top:2rem;">
+    <div></div>
+    <div>
+      <div class="challenge-panel" style="position:sticky; top:5rem;">
+        <div class="challenge-header">
+          <span class="challenge-icon" style="background:rgba(0,240,255,0.08);">🗺</span>
+          <span class="challenge-title">Lab Navigator</span>
+        </div>
+        <div id="module-nav"></div>
+        <div class="section-divider" style="margin:1rem 0;"></div>
+        <div class="challenge-header">
+          <span class="challenge-icon" style="background:rgba(74,222,128,0.08);">🏆</span>
+          <span class="challenge-title">Your Badges</span>
+        </div>
+        <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
+        <div class="section-divider" style="margin:1rem 0;"></div>
+        <div class="scoreboard">
+          <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
+          <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
+          <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
+          <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="../../shared_ui.js"></script>
+<script src="../../shared_games.js"></script>
+<script src="../../shared_interactive.js"></script>
+<script src="sc_sim.js?v=1"></script>
+<script src="sc_apps_games.js?v=1"></script>
+<script src="../../shared_effects.js"></script>
+</body>
+</html>

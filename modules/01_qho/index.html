@@ -29,11 +29,12 @@
   .atom-target { width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--glass-border); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
   .atom-target.excited { border-color: var(--accent-pink); box-shadow: 0 0 20px rgba(255,78,205,0.3); animation: pulse 0.5s infinite alternate; }
   @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
+  .mode-btn-group { display:flex; gap:0.5rem; margin:0.75rem 0; }
+  .mode-btn-group button { flex:1; }
 </style>
 </head>
 <body>
 
-<!-- AMBIENT ORBS -->
 <div class="orb orb-cyan"></div>
 <div class="orb orb-purple"></div>
 <div class="orb orb-pink"></div>
@@ -49,7 +50,7 @@
 <div class="game-hero" style="padding-bottom:0;">
   <div class="level-badge">Module 01 · Level <span id="current-level">1</span> · Quantum Initiate</div>
   <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">The Quantum Harmonic Oscillator</span></h1>
-  <p class="hero-desc">Every vibration in nature — from guitar strings to molecular bonds — traces back to this equation. Your mission: master it through play.</p>
+  <p class="hero-desc">Every vibration in nature traces back to this equation. Drag the quantum number, watch the wave oscillate. Re(ψ) in cyan, Im(ψ) in pink, |ψ|² in gold. The coherent state oscillates like a classical particle.</p>
 </div>
 
 <div class="game-container">
@@ -72,18 +73,44 @@
     <div class="playground-area">
       <div class="playground-header">
         <div class="playground-title">🔬 Wavefunction Sandbox</div>
-        <div class="playground-level">Drag the quantum number n to sculpt the wave. Observe what happens.</div>
+        <div class="playground-level">Switch between eigenstate (C–F in the figure), superposition (G), and coherent state (H). Watch Re ψ, Im ψ, and |ψ|² evolve in time.</div>
       </div>
 
       <div style="display:grid; grid-template-columns: 1fr 320px; gap: 1.5rem;">
         <div>
-          <div class="plot-container" id="plot-playground" style="min-height:380px;"></div>
-          <div style="display:flex; justify-content:center; gap:1rem; margin-top:0.5rem; font-size:0.75rem; color:var(--text-dim);">
-            <span>Solid: Ψ(x)</span><span>Dashed: |Ψ|²</span><span>Yellow: V(x)</span>
+          <!-- Main wave plot: Re ψ, Im ψ, |ψ|² -->
+          <div class="plot-container" id="plot-psi" style="min-height:300px;"></div>
+          <div class="legend-bar" style="display:flex; justify-content:center; gap:1.5rem; margin-top:0.5rem; font-size:0.75rem; color:var(--text-dim);">
+            <span><span style="color:#00f0ff;">—</span> Re ψ(x)</span>
+            <span><span style="color:#ff4ecd;">—</span> Im ψ(x)</span>
+            <span><span style="color:#ffd54f;">—</span> |ψ(x)|²</span>
+            <span><span style="color:#4ade80;font-style:dashed;">···</span> classical turning point</span>
           </div>
+
+          <!-- Classical vs Quantum comparison -->
+          <div class="plot-container" id="plot-classical" style="min-height:260px; margin-top:1.5rem;"></div>
+
+          <!-- Energy levels -->
+          <div class="plot-container" id="plot-energy" style="min-height:200px; margin-top:1.5rem;"></div>
+
+          <!-- Wigner function -->
+          <div class="plot-container" id="plot-wigner" style="min-height:260px; margin-top:1.5rem;"></div>
         </div>
 
         <div>
+          <!-- State mode selector -->
+          <div class="challenge-panel" style="margin-bottom:1rem;">
+            <div class="challenge-header">
+              <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">🎭</span>
+              <span class="challenge-title">State Type</span>
+            </div>
+            <div class="mode-btn-group">
+              <button class="btn active" id="btn-eigen" onclick="setStateMode('eigenstate')">Eigen</button>
+              <button class="btn" id="btn-super" onclick="setStateMode('superposition')">Super</button>
+              <button class="btn" id="btn-coherent" onclick="setStateMode('coherent')">Coherent</button>
+            </div>
+          </div>
+
           <!-- Controls -->
           <div class="challenge-panel" style="margin-bottom:1rem;">
             <div class="challenge-header">
@@ -97,30 +124,47 @@
                 <span class="control-value" id="val-n">0</span>
               </div>
               <input type="range" id="slider-n" min="0" max="10" value="0" step="1">
-              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Each n adds one node to the wavefunction.</p>
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Eigenstate |n⟩ or component of superposition.</p>
             </div>
 
-            <div style="margin-bottom:1rem;">
+            <div id="m-control" style="margin-bottom:1rem; display:none;">
               <div class="control-row">
-                <span class="control-label">Superposition α</span>
-                <span class="control-value" id="val-alpha">0.0</span><span class="unit-tag"></span>
+                <span class="control-label">Second state m</span>
+                <span class="control-value" id="val-m">3</span>
               </div>
-              <input type="range" id="slider-alpha" min="0" max="1" value="0" step="0.05">
-              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Mix n=0 and n=1 states to create a breathing packet.</p>
+              <input type="range" id="slider-m" min="0" max="10" value="3" step="1">
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">For superposition: |Ψ⟩ = c₀|n⟩ + c₁|m⟩.</p>
             </div>
 
-            <div style="margin-bottom:1rem;">
+            <div id="alpha-controls" style="margin-bottom:1rem; display:none;">
               <div class="control-row">
-                <span class="control-label">Classical comparison</span>
-                <span class="control-value" id="val-classical">OFF</span>
+                <span class="control-label">Re(α)</span>
+                <span class="control-value" id="val-alpha-re">2.0</span>
               </div>
-              <div class="btn-group">
-                <button class="btn" id="btn-classical" onclick="toggleClassical()">Show classical turning point</button>
+              <input type="range" id="slider-alpha-re" min="0" max="5" value="2.0" step="0.1">
+              <div class="control-row" style="margin-top:0.6rem;">
+                <span class="control-label">Im(α)</span>
+                <span class="control-value" id="val-alpha-im">0.0</span>
               </div>
+              <input type="range" id="slider-alpha-im" min="-5" max="5" value="0.0" step="0.1">
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Displacement in phase space ⟨x⟩ = √2 Re α, ⟨p⟩ = √2 Im α.</p>
             </div>
 
-            <div class="btn-group">
-              <button class="btn active" id="btn-animate-play" onclick="toggleAnimation()">⏵ Animate time evolution</button>
+            <div class="control-row" style="margin-top:0.8rem;">
+              <span class="control-label">Speed</span>
+              <span class="control-value" id="val-speed">1.0</span>
+            </div>
+            <input type="range" id="slider-speed" min="0.1" max="3" value="1.0" step="0.1">
+
+            <!-- Animation buttons -->
+            <div class="btn-group" style="margin-top:1rem;">
+              <button class="btn" id="btn-play" onclick="startAnimation()">⏵ Play</button>
+              <button class="btn" id="btn-pause" onclick="stopAnimation()">⏸ Pause</button>
+              <button class="btn" id="btn-reset" onclick="resetTime()">↺ Reset</button>
+            </div>
+            <div class="control-row" style="margin-top:0.5rem;">
+              <span class="control-label">Time t</span>
+              <span class="control-value" id="val-time">0.00</span>
             </div>
           </div>
 
@@ -132,44 +176,38 @@
             </div>
             <table>
               <tr><th>Quantity</th><th>Value</th></tr>
-              <tr><td>Energy E_n</td><td class="highlight-num" id="live-E">0.5ℏω</td></tr>
-              <tr><td>Nodes</td><td class="highlight-pink" id="live-nodes">0</td></tr>
-              <tr><td>⟨x²⟩</td><td class="highlight-num" id="live-x2">0.5a₀²</td></tr>
-              <tr><td>Zero-point</td><td>E₀ = ½ℏω</td></tr>
-              <tr><td>ω (natural)</td><td>1.0</td></tr>
+              <tr><td>Energy E</td><td class="highlight-num" id="live-energy">0.500 ħω</td></tr>
+              <tr><td>Zero-point</td><td class="highlight-pink" id="live-zpe">0.500 ħω</td></tr>
+              <tr><td>Classical turning</td><td class="highlight-num" id="live-turning">±1.000</td></tr>
+              <tr><td>⟨x⟩</td><td class="highlight-num" id="live-x">0.000</td></tr>
+              <tr><td>⟨x²⟩</td><td class="highlight-num" id="live-x2">0.500</td></tr>
+              <tr><td>Δx</td><td class="highlight-pink" id="live-dx">Δx = 0.707 ħ/2</td></tr>
             </table>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- THEORY TAB (expandable) -->
+    <!-- THEORY TAB -->
     <div class="insight-card" style="margin-top:1rem;">
       <div class="insight-title">✨ Why does this matter?</div>
       <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
         The QHO is the <strong>training gym</strong> of quantum mechanics. Its energy is quantized because confinement forces standing waves.
         Every n adds a node. The zero-point energy E₀ = ½ℏω means even at absolute zero, the particle still vibrates.
-        This same math describes molecule vibrations (CO₂ at 2349 cm⁻¹), phonons in solids, and even the quantum uncertainty in microwave resonators.
+        The <strong>coherent state</strong> |α⟩ is a displaced Gaussian that oscillates back and forth like a classical particle — the closest quantum analog to a macroscopic oscillator.
       </p>
       <div class="equation-box" style="font-size:0.85rem;">
-        $$H = \frac{p^2}{2m} + \frac{1}{2}m\omega^2 x^2, \quad E_n = \hbar\omega\left(n + \frac{1}{2}\right)$$
+        $$H = \frac{p^2}{2m} + \frac{1}{2}m\omega^2 x^2, \quad E_n = \hbar\omega\left(n + \frac{1}{2}\right), \quad |\alpha(t)\rangle = |\alpha(0)e^{-i\omega t}\rangle$$
       </div>
-      <div class="btn-group" style="margin-top:1rem;">
-        <button class="btn" onclick="document.getElementById('theory-deep').style.display='block';this.style.display='none';">📖 Dive Deeper (read the full theory)</button>
-      </div>
-      <div id="theory-deep" style="display:none;">
-        <p style="font-size:0.9rem;color:var(--text-main);line-height:1.7;margin-top:1rem;">
-          <strong>From the Schrödinger equation:</strong> For a particle in a potential V(x) = ½mω²x², we solve:
-          $$-\frac{\hbar^2}{2m}\frac{d^2\psi}{dx^2} + \frac{1}{2}m\omega^2 x^2 \psi = E\psi$$
-          The solutions are Hermite polynomials H_n(y) × Gaussian e^{-y²/2}, where y = x√(mω/ℏ).
-        </p>
-        <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
-          <strong>Parity:</strong> Even n → symmetric ψ(x). Odd n → antisymmetric. This is why selection rules in spectroscopy (Δn = ±1) exist.
-        </p>
-        <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
-          <strong>Uncertainty:</strong> Δx·Δp = (n + ½)ℏ ≥ ℏ/2. At n = 0, Δx·Δp = ℏ/2 — the <em>minimum uncertainty state</em>.
-          This is why the QHO ground state is also a coherent state in quantum optics.
-        </p>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top:1rem;">
+        <div style="font-size:0.85rem; color:var(--text-muted);">
+          <strong style="color:var(--accent-cyan);">Eigenstate |n⟩</strong><br>
+          Stationary state: ψ(x,t) = ψₙ(x)e⁻ⁱᴱⁿᵗ/ℏ. Re and Im oscillate in place. |ψ|² is <em>time-independent</em>.
+        </div>
+        <div style="font-size:0.85rem; color:var(--text-muted);">
+          <strong style="color:var(--accent-pink);">Coherent state |α⟩</strong><br>
+          Displaced Gaussian: ⟨x(t)⟩ = x₀ cos(ωt). The packet shape doesn't spread — minimum uncertainty at all times.
+        </div>
       </div>
     </div>
   </div>
@@ -304,11 +342,9 @@
       </div>      <div class="challenge-reward">🏆 Reward: 60 XP</div>
 
       <div class="puzzle-board" id="energy-ladder">
-        <!-- Generated by JS -->
       </div>
 
       <div style="display:flex; gap:0.5rem; margin-top:1rem; flex-wrap:wrap;" id="particle-pool">
-        <!-- Draggable particles generated by JS -->
       </div>
 
       <div id="ladder-feedback" class="challenge-feedback"></div>
@@ -373,7 +409,6 @@
       <div class="plot-container" id="plot-selection" style="height:280px;"></div>
 
       <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:1rem;" id="transitions">
-        <!-- Generated by JS -->
       </div>      
       <div id="selection-feedback" class="challenge-feedback"></div>
       <button class="btn" onclick="checkSelection()">✓ Check Selections</button>
@@ -382,51 +417,31 @@
 
   <!-- RIGHT SIDEBAR -->
   <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; margin-top:2rem;">
+    <div></div>
     <div>
-      <!-- Left column has the modes -->
-    </div>    
-    <div>      <!-- Module Navigator -->
       <div class="challenge-panel" style="position:sticky; top:5rem;">
         <div class="challenge-header">
           <span class="challenge-icon" style="background:rgba(0,240,255,0.08);">🗺</span>
           <span class="challenge-title">Lab Navigator</span>
         </div>        
-        <div id="module-nav">
-          <!-- Generated by JS -->
-        </div>        
+        <div id="module-nav"></div>        
         <div class="section-divider" style="margin:1rem 0;"></div>        
         <div class="challenge-header">
           <span class="challenge-icon" style="background:rgba(74,222,128,0.08);">🏆</span>
           <span class="challenge-title">Your Badges</span>
-        </div>        
-        <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);line-height:1.6;">
-          Complete challenges to earn badges!
-        </div>        
-        <div class="section-divider" style="margin:1rem 0;"></div>
-        <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(255,215,64,0.08);">📊</span>
-          <span class="challenge-title">Progress</span>
-        </div>        
-        <div class="scoreboard">
-          <div class="score-cell">
-            <div class="score-num" id="stat-challenges">0</div>
-            <div class="score-label">Challenges</div>
-          </div>
-          <div class="score-cell">
-            <div class="score-num" id="stat-puzzles">0</div>
-            <div class="score-label">Puzzles</div>          
-          </div>          
-          <div class="score-cell">
-            <div class="score-num" id="stat-xp">0</div>
-            <div class="score-label">Total XP</div>          
-          </div>          
-          <div class="score-cell">
-            <div class="score-num" id="stat-badges">0</div>
-            <div class="score-label">Badges</div>          
-          </div>        
         </div>
-      </div>    
-    </div>  
+        <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
+
+        <div class="section-divider" style="margin:1rem 0;"></div>
+
+        <div class="scoreboard">
+          <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
+          <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
+          <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
+          <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -434,9 +449,25 @@
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
-<script src="qho_sim.js?v=1"></script>
-<script src="qho_apps_games.js?v=1"></script>
-
+<script src="qho_sim.js?v=3"></script>
+<script src="qho_apps.js"></script>
+<script src="qho_apps_games.js"></script>
 <script src="../../shared_effects.js"></script>
+
+<script>
+// Expose helper for state mode switching from buttons
+function setStateMode(mode) {
+  state.mode = mode;
+  // Update button styling
+  document.getElementById('btn-eigen').className = mode === 'eigenstate' ? 'btn active' : 'btn';
+  document.getElementById('btn-super').className = mode === 'superposition' ? 'btn active' : 'btn';
+  document.getElementById('btn-coherent').className = mode === 'coherent' ? 'btn active' : 'btn';
+  // Show/hide controls
+  document.getElementById('m-control').style.display = mode === 'superposition' ? 'block' : 'none';
+  document.getElementById('alpha-controls').style.display = mode === 'coherent' ? 'block' : 'none';
+  updateWavePlot();
+}
+</script>
+
 </body>
 </html>
