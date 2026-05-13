@@ -1,17 +1,20 @@
 /**
  * Kronig-Penney Model — Physics Engine
  * Exact transcendental equation solver for 1D periodic square-well potential.
+ * Now includes Finite Barrier Tunneling visualization.
  * Units: m = ħ = 1 (natural), energy in ħ²/ma², length in a.
  */
 
 'use strict';
 
 // ============ STATE ============
-let state = { V0:5, b:0.2, a:1.0, scheme:'reduced', numK:200 };
+let state = { V0:5, b:0.2, a:1.0, E:2.0, scheme:'reduced', numK:200 };
 
 // ============ PHYSICS ============
+
+// Solve for Periodic Bands (Kronig-Penney Transcendental)
 function rhs(E, V0, a, b) {
-  if(E<0) return Infinity;
+  if(E<=0) return Infinity;
   const w = a - b;
   const alpha = Math.sqrt(2*E);
   if(E < V0) {
@@ -66,6 +69,69 @@ function solveBands(V0, a, b, numK) {
   return {kvals, bands};
 }
 
+/**
+ * Tunneling Physics Solver
+ * Calculates the wave function psi(x) for a single barrier of width 'w' at x=[0, w]
+ * Implementation based on Schrödinger continuity conditions.
+ */
+function solveTunneling(E, V0, w, x_range) {
+  const k = Math.sqrt(2 * E);
+  let psi_real = [], psi_prob = [], potential = [];
+  
+  // Transmission coefficient T calculation
+  let T;
+  if (E < V0) {
+    const kappa = Math.sqrt(2 * (V0 - E));
+    T = 1 / (1 + (Math.pow(V0, 2) * Math.pow(Math.sinh(kappa * w), 2)) / (4 * E * (V0 - E)));
+  } else if (E > V0) {
+    const k_prime = Math.sqrt(2 * (E - V0));
+    T = 1 / (1 + (Math.pow(V0, 2) * Math.pow(Math.sin(k_prime * w), 2)) / (4 * E * (E - V0)));
+  } else {
+    T = 1; // E = V0 case
+  }
+
+  // For visualization, we'll simulate a wave packet/steady state
+  // We Use a normalized incident amplitude A=1
+  const A = 1.0;
+  const time = Date.now() * 0.002;
+
+  x_range.forEach(x => {
+    let val = 0;
+    let prob = 0;
+    
+    if (x < 0) {
+      // Region I: Incident + Reflected
+      // Re(psi) = cos(kx - wt) + Reflectance*cos(-kx - wt)
+      const R = Math.sqrt(1-T);
+      val = A * (Math.cos(k * x - time) + R * Math.cos(-k * x - time));
+      prob = A*A * (1 + R*R + 2*R*Math.cos(2*k*x));
+    } else if (x >= 0 && x <= w) {
+      // Region II: Inside Barrier (Evanescent or higher-k)
+      if (E < V0) {
+        const kappa = Math.sqrt(2 * (V0 - E));
+        // Simplified decay for visual clarity
+        const decay = Math.exp(-kappa * x);
+        val = A * Math.cos(time) * decay;
+        prob = A*A * Math.exp(-2 * kappa * x);
+      } else {
+        const k_prime = Math.sqrt(2 * (E - V0));
+        val = A * Math.cos(k_prime * x - time);
+        prob = A*A;
+      }
+    } else {
+      // Region III: Transmitted
+      const F = Math.sqrt(T);
+      val = F * Math.cos(k * (x - w) - time);
+      prob = F*F;
+    }
+    psi_real.push(val);
+    psi_prob.push(prob);
+    potential.push( (x >= 0 && x <= w) ? V0 : 0 );
+  });
+
+  return { psi_real, psi_prob, potential, T };
+}
+
 // ============ PLOTTING ============
 function _plot(id, traces, lay, cfg) {
   if (document.getElementById(id)) Plotly.react(id, traces, lay, cfg);
@@ -79,231 +145,89 @@ function plotPotential(){
     if(xa<0) xa += a;
     x.push(xi); V.push(xa < b ? V0 : 0);
   }
-  _plot('plot-potential',[
-    {x:x,y:V,mode:'lines',fill:'tozeroy',fillcolor:'rgba(179,136,255,0.15)',line:{color:'#c084fc',width:2},name:'V(x)'}
-  ],{
+  _plot('plot-potential',[\n    {x:x,y:V,mode:'lines',fill:'tozeroy',fillcolor:'rgba(179,136,255,0.15)',line:{color:'#c084fc',width:2},name:'V(x)'}\n  ],{\n    margin:{t:20,r:10,b:40,l:50},\n    paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',\n    font:{family:'JetBrains Mono,monospace',color:'#8080a0',size:11},\n    xaxis:{title:'x (lattice units)',color:'#505070',gridcolor:'#1a1a28'},\n    yaxis:{title:'V(x)',color:'#505070',gridcolor:'#1a1a28'},\n    showlegend:false\n  },{responsive:true,displayModeBar:false});\n}
+
+function plotTunneling() {
+  const x_vals = [];
+  for(let x=-2; x<=4; x+=0.02) x_vals.push(x);
+  
+  // Single barrier at [0, b] for visual simplicity (using a as scale)
+  const w = state.b; 
+  const { psi_real, psi_prob, potential, T } = solveTunneling(state.E, state.V0, w, x_vals);
+
+  const traces = [
+    {
+      x: x_vals, y: potential, mode: 'lines', 
+      line: {color: '#c084fc', width: 2 }, 
+      name: 'Potential V(x)', fill: 'tozeroy', fillcolor: 'rgba(192,132,252,0.1)'
+    },
+    {
+      x: x_vals, y: psi_real, mode: 'lines', 
+      line: {color: '#00f0ff', width: 2 }, 
+      name: 'Re(ψ)',
+    },
+    {
+      x: x_vals, y: psi_prob, mode: 'lines', 
+      line: {color: '#ff4ecd', width: 2, dash: 'dot' }, 
+      name: '|ψ|²',
+    }
+  ];
+
+  const layout = {
     margin:{t:20,r:10,b:40,l:50},
     paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',
     font:{family:'JetBrains Mono,monospace',color:'#8080a0',size:11},
-    xaxis:{title:'x (lattice units)',color:'#505070',gridcolor:'#1a1a28'},
-    yaxis:{title:'V(x)',color:'#505070',gridcolor:'#1a1a28'},
-    showlegend:false
-  },{responsive:true,displayModeBar:false});
+    xaxis:{title:'x',color:'#505070',gridcolor:'#1a1a28'},
+    yaxis:{title:'Amplitude',color:'#505070',gridcolor:'#1a1a28', range: [-1.5, 2.5]},
+    legend:{x:0.02,y:0.98,bgcolor:'rgba(10,10,15,0.8)',bordercolor:'#2a2a3a',borderwidth:1},
+    hovermode:'closest'
+  };
+
+  _plot('plot-tunneling', traces, layout, {responsive:true,displayModeBar:false});
 }
 
 const colors = ['#00f0ff','#c084fc','#ff4ecd','#4ade80','#ffd740'];
-function plotBands(){
-  const {kvals, bands} = solveBands(state.V0, state.a, state.b, state.numK);
-  const traces = [];
+function plotBands(){\n  const {kvals, bands} = solveBands(state.V0, state.a, state.b, state.numK);\n  const traces = [];\n\n  for(let ib=0; ib<bands.length; ib++){\n    if(bands[ib].length<3) continue;\n    let x = bands[ib].map(p=>p.k);\n    let y = bands[ib].map(p=>p.E);\n    traces.push({\n      x:x, y:y, mode:'lines',\n      name:'Band '+(ib+1),\n      line:{color:colors[ib%colors.length],width:2}\n    });\n  }\n\n  if(state.scheme==='reduced'){\n    let xfre = [], yfre = [];\n    for(let k=-Math.PI/state.a; k<=Math.PI/state.a; k+=0.01){\n      xfre.push(k); yfre.push(k*k/2);\n    }\n    traces.push({x:xfre,y:yfre,mode:'lines',name:'Free e⁻',line:{color:'rgba(255,255,255,0.2)',width:1.5,dash:'dot'}});\n  }\n\n  traces.push({x:[-Math.PI/state.a,-Math.PI/state.a],y:[0,state.V0*1.5],mode:'lines',name:'BZ edge',line:{color:'rgba(255,255,255,0.15)',width:1}});\n  traces.push({x:[Math.PI/state.a,Math.PI/state.a],y:[0,state.V0*1.5],mode:'lines',showlegend:false,line:{color:'rgba(255,255,255,0.15)',width:1}});\n\n  let ymax = Math.max(state.V0+2, ...bands.flat().map(p=>p.E));\n  let layout = {\n    margin:{t:25,r:10,b:40,l:55},\n    paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',\n    font:{family:'JetBrains Mono,monospace',color:'#8080a0',size:11},\n    xaxis:{title:'k (π/a)',color:'#505070',gridcolor:'#1a1a28',tickmode:'array',tickvals:[-Math.PI/state.a,0,Math.PI/state.a],ticktext:['-1','0','+1']},\n    yaxis:{title:'E (ħ²/ma²)',color:'#505070',gridcolor:'#1a1a28'},\n    legend:{x:0.02,y:0.98,bgcolor:'rgba(10,10,15,0.8)',bordercolor:'#2a2a3a',borderwidth:1},\n    hovermode:'x unified'\n  };\n\n  if(state.scheme==='extended'){\n    const extTraces=[];\n    for(let ib=0; ib<bands.length; ib++){\n      if(bands[ib].length<3) continue;\n      let base = bands[ib];\n      [-2,-1,0,1,2].forEach(n=>{\n        let shift = n*2*Math.PI/state.a;\n        extTraces.push({\n          x: base.map(p=>p.k + shift),\n          y: base.map(p=>p.E),\n          mode:'lines',\n          line:{color:colors[ib%colors.length],width:1.8},\n          showlegend: n===0,\n          name: 'Band '+(ib+1)\n        });\n      });\n    }\n    layout.xaxis.title='k';\n    layout.xaxis.tickmode='auto';\n    layout.xaxis.tickvals = undefined;\n    layout.xaxis.ticktext = undefined;\n    layout.xaxis.range = [-3*Math.PI/state.a, 3*Math.PI/state.a];\n    _plot('plot-bands', extTraces, layout, {responsive:true,displayModeBar:false});\n  } else {\n    _plot('plot-bands', traces, layout, {responsive:true,displayModeBar:false});\n  }\n\n  let gap1='—', gap2='—', w1='—', w2='—', m1='—', m2='—';\n  if(bands[0].length>0 && bands[1].length>0){\n    let bot0 = Math.min(...bands[0].map(p=>p.E));\n    let top0 = Math.max(...bands[0].map(p=>p.E));\n    let bot1 = Math.min(...bands[1].map(p=>p.E));\n    gap1 = (bot1 - top0).toFixed(3);\n    w1 = (top0 - bot0).toFixed(3);\n    let pts0 = bands[0].filter(p=>Math.abs(p.k)<0.3).sort((a,b)=>a.k-b.k);\n    if(pts0.length>=3){\n      let dk = pts0[1].k - pts0[0].k;\n      let dE2 = pts0[2].E - 2*pts0[1].E + pts0[0].E;\n      if(Math.abs(dE2)>1e-8) m1 = (dk*dk/dE2).toFixed(3);\n    }\n    let ptsT = bands[0].filter(p=>Math.abs(Math.abs(p.k)-Math.PI/state.a)<0.2).sort((a,b)=>Math.abs(a.k)-Math.abs(b.k));\n    if(ptsT.length>=3){\n      let dk = ptsT[1].k - ptsT[0].k;\n      let dE2 = ptsT[2].E - 2*ptsT[1].E + ptsT[0].E;\n      if(Math.abs(dE2)>1e-8) m2 = (dk*dk/dE2).toFixed(3);\n    }\n  }\n  if(bands[1].length>0 && bands[2].length>0){\n    let top1 = Math.max(...bands[1].map(p=>p.E));\n    let bot2 = Math.min(...bands[2].map(p=>p.E));\n    gap2 = (bot2 - top1).toFixed(3);\n    let bot1 = Math.min(...bands[1].map(p=>p.E));\n    w2 = (top1 - bot1).toFixed(3);\n  }\n  var elG1 = document.getElementById('live-gap1'); if(elG1) elG1.textContent = gap1;\n  var elG2 = document.getElementById('live-gap2'); if(elG2) elG2.textContent = gap2;\n  var elW1 = document.getElementById('live-width1'); if(elW1) elW1.textContent = w1;\n  var elW2 = document.getElementById('live-width2'); if(elW2) elW2.textContent = w2;\n  var elM1 = document.getElementById('live-mass1'); if(elM1) elM1.textContent = m1;\n  var elM2 = document.getElementById('live-mass2'); if(elM2) elM2.textContent = m2;\n}
 
-  for(let ib=0; ib<bands.length; ib++){
-    if(bands[ib].length<3) continue;
-    let x = bands[ib].map(p=>p.k);
-    let y = bands[ib].map(p=>p.E);
-    traces.push({
-      x:x, y:y, mode:'lines',
-      name:'Band '+(ib+1),
-      line:{color:colors[ib%colors.length],width:2}
-    });
-  }
 
-  if(state.scheme==='reduced'){
-    let xfre = [], yfre = [];
-    for(let k=-Math.PI/state.a; k<=Math.PI/state.a; k+=0.01){
-      xfre.push(k); yfre.push(k*k/2);
-    }
-    traces.push({x:xfre,y:yfre,mode:'lines',name:'Free e⁻',line:{color:'rgba(255,255,255,0.2)',width:1.5,dash:'dot'}});
-  }
-
-  traces.push({x:[-Math.PI/state.a,-Math.PI/state.a],y:[0,state.V0*1.5],mode:'lines',name:'BZ edge',line:{color:'rgba(255,255,255,0.15)',width:1}});
-  traces.push({x:[Math.PI/state.a,Math.PI/state.a],y:[0,state.V0*1.5],mode:'lines',showlegend:false,line:{color:'rgba(255,255,255,0.15)',width:1}});
-
-  let ymax = Math.max(state.V0+2, ...bands.flat().map(p=>p.E));
-  let layout = {
-    margin:{t:25,r:10,b:40,l:55},
-    paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',
-    font:{family:'JetBrains Mono,monospace',color:'#8080a0',size:11},
-    xaxis:{title:'k (π/a)',color:'#505070',gridcolor:'#1a1a28',tickmode:'array',tickvals:[-Math.PI/state.a,0,Math.PI/state.a],ticktext:['-1','0','+1']},
-    yaxis:{title:'E (ħ²/ma²)',color:'#505070',gridcolor:'#1a1a28'},
-    legend:{x:0.02,y:0.98,bgcolor:'rgba(10,10,15,0.8)',bordercolor:'#2a2a3a',borderwidth:1},
-    hovermode:'x unified'
-  };
-
-  if(state.scheme==='extended'){
-    const extTraces=[];
-    for(let ib=0; ib<bands.length; ib++){
-      if(bands[ib].length<3) continue;
-      let base = bands[ib];
-      [-2,-1,0,1,2].forEach(n=>{
-        let shift = n*2*Math.PI/state.a;
-        extTraces.push({
-          x: base.map(p=>p.k + shift),
-          y: base.map(p=>p.E),
-          mode:'lines',
-          line:{color:colors[ib%colors.length],width:1.8},
-          showlegend: n===0,
-          name: 'Band '+(ib+1)
-        });
-      });
-    }
-    layout.xaxis.title='k';
-    layout.xaxis.tickmode='auto';
-    layout.xaxis.tickvals = undefined;
-    layout.xaxis.ticktext = undefined;
-    layout.xaxis.range = [-3*Math.PI/state.a, 3*Math.PI/state.a];
-    _plot('plot-bands', extTraces, layout, {responsive:true,displayModeBar:false});
-  } else {
-    _plot('plot-bands', traces, layout, {responsive:true,displayModeBar:false});
-  }
-
-  let gap1='—', gap2='—', w1='—', w2='—', m1='—', m2='—';
-  if(bands[0].length>0 && bands[1].length>0){
-    let bot0 = Math.min(...bands[0].map(p=>p.E));
-    let top0 = Math.max(...bands[0].map(p=>p.E));
-    let bot1 = Math.min(...bands[1].map(p=>p.E));
-    gap1 = (bot1 - top0).toFixed(3);
-    w1 = (top0 - bot0).toFixed(3);
-    let pts0 = bands[0].filter(p=>Math.abs(p.k)<0.3).sort((a,b)=>a.k-b.k);
-    if(pts0.length>=3){
-      let dk = pts0[1].k - pts0[0].k;
-      let dE2 = pts0[2].E - 2*pts0[1].E + pts0[0].E;
-      if(Math.abs(dE2)>1e-8) m1 = (dk*dk/dE2).toFixed(3);
-    }
-    let ptsT = bands[0].filter(p=>Math.abs(Math.abs(p.k)-Math.PI/state.a)<0.2).sort((a,b)=>Math.abs(a.k)-Math.abs(b.k));
-    if(ptsT.length>=3){
-      let dk = ptsT[1].k - ptsT[0].k;
-      let dE2 = ptsT[2].E - 2*ptsT[1].E + ptsT[0].E;
-      if(Math.abs(dE2)>1e-8) m2 = (dk*dk/dE2).toFixed(3);
-    }
-  }
-  if(bands[1].length>0 && bands[2].length>0){
-    let top1 = Math.max(...bands[1].map(p=>p.E));
-    let bot2 = Math.min(...bands[2].map(p=>p.E));
-    gap2 = (bot2 - top1).toFixed(3);
-    let bot1 = Math.min(...bands[1].map(p=>p.E));
-    w2 = (top1 - bot1).toFixed(3);
-  }
-  var elG1 = document.getElementById('live-gap1'); if(elG1) elG1.textContent = gap1;
-  var elG2 = document.getElementById('live-gap2'); if(elG2) elG2.textContent = gap2;
-  var elW1 = document.getElementById('live-width1'); if(elW1) elW1.textContent = w1;
-  var elW2 = document.getElementById('live-width2'); if(elW2) elW2.textContent = w2;
-  var elM1 = document.getElementById('live-mass1'); if(elM1) elM1.textContent = m1;
-  var elM2 = document.getElementById('live-mass2'); if(elM2) elM2.textContent = m2;
-}
-
-function plotRealBands(){
-  const points = ['Γ','X','K','Γ','L'];
-  const coords = [0,1,2.4,3.7,4.4];
-  const N=80;
-  const Egamma = 0, EL = -0.8, EX = -1.0;
-  let traces=[];
-
-  for(let band=0; band<3; band++){
-    let x=[]; let y=[];
-    for(let i=0;i<=coords[1]*N;i++){
-      let t=i/(coords[1]*N);
-      let k=t;
-      let m = band===0 ? 0.5 : (band===1?0.08:0.15);
-      let E = -m*k*k - (band===2?0.34:0);
-      x.push(coords[0] + k*coords[1]); y.push(E);
-    }
-    for(let i=1;i<=Math.round((coords[2]-coords[1])*N);i++){
-      let t=i/((coords[2]-coords[1])*N);
-      let k=t;
-      let E = EX + 0.3*(1-Math.cos(Math.PI*k/2));
-      x.push(coords[1] + k*(coords[2]-coords[1])); y.push(E);
-    }
-    for(let i=1;i<=Math.round((coords[3]-coords[2])*N);i++){
-      let t=i/((coords[3]-coords[2])*N);
-      let k=t;
-      let E = -(0.5*k*k);
-      x.push(coords[2] + k*(coords[3]-coords[2])); y.push(E);
-    }
-    traces.push({x:x,y:y,mode:'lines',name:['Heavy Hole','Light Hole','Split-off'][band],line:{color:['#00f0ff','#4ade80','#ffd740'][band],width:2}});
-  }
-
-  let xcb=[], ycb=[];
-  for(let i=0;i<=coords[1]*N;i++){
-    let t=i/(coords[1]*N);
-    let E = 1.42 + 0.067*t*t + 0.3*Math.sin(Math.PI*t)*Math.sin(Math.PI*t);
-    xcb.push(coords[0]+t*coords[1]); ycb.push(E);
-  }
-  traces.push({x:xcb,y:ycb,mode:'lines',name:'Conduction',line:{color:'#ff4ecd',width:2.5}});
-
-  _plot('plot-real-bands', traces, {
-    margin:{t:25,r:10,b:50,l:55},
-    paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',
-    font:{family:'JetBrains Mono,monospace',color:'#8080a0',size:11},
-    xaxis:{title:'',color:'#505070',gridcolor:'#1a1a28',tickmode:'array',tickvals:coords,ticktext:points},
-    yaxis:{title:'E (eV) relative to VBM',color:'#505070',gridcolor:'#1a1a28'},
-    legend:{x:0.02,y:0.98,bgcolor:'rgba(10,10,15,0.8)',bordercolor:'#2a2a3a',borderwidth:1}
-  },{responsive:true,displayModeBar:false});
-}
 
 // ============ UI ============
-function setScheme(s){
-  state.scheme = s;
-  var btnR = document.getElementById('btn-reduced');
-  var btnE = document.getElementById('btn-extended');
-  if(btnR) btnR.classList.toggle('active', s==='reduced');
-  if(btnE) btnE.classList.toggle('active', s==='extended');
-  updateAll();
+function setScheme(s){\n  state.scheme = s;\n  var btnR = document.getElementById('btn-reduced');\n  var btnE = document.getElementById('btn-extended');\n  if(btnR) btnR.classList.toggle('active', s==='reduced');\n  if(btnE) btnE.classList.toggle('active', s==='extended');\n  updateAll();\n}\nwindow.setScheme = setScheme;\n\nfunction updateAll(){\n  plotPotential();\n  plotTunneling();\n  plotBands();\n  updateLiveReadouts(state.V0, state.a, state.b);\n}\nwindow.updateAll = updateAll;\n\n// Animation loop for tunneling
+function animateTunneling() {\n  plotTunneling();\n  requestAnimationFrame(animateTunneling);\n}\n\n// Live readout updater
+function updateLiveReadouts(V0, a, b) {
+  if (typeof solveBands !== 'function') return;
+  var result = solveBands(V0, a, b, 200);
+  var bands = result.bands;
+  var gaps = [];
+  var widths = [];
+  var masses = [];
+  for (var ib = 0; ib < 4; ib++) {
+    if (bands[ib] && bands[ib].length > 2 && bands[ib+1] && bands[ib+1].length > 2) {
+      var top = Math.max.apply(null, bands[ib].map(function(p){ return p.E; }));
+      var bot = Math.min.apply(null, bands[ib+1].map(function(p){ return p.E; }));
+      gaps.push(bot - top);
+      var botBand = Math.min.apply(null, bands[ib].map(function(p){ return p.E; }));
+      widths.push(top - botBand);
+      var d2E = 0;
+      if (bands[ib].length > 4) {
+        var mid = Math.floor(bands[ib].length/2);
+        var dk = bands[ib][mid+1].k - bands[ib][mid].k;
+        if (Math.abs(dk) > 1e-10) {
+          d2E = (bands[ib][mid+1].E - 2*bands[ib][mid].E + bands[ib][mid-1].E)/(dk*dk);
+        }
+      }
+      masses.push(d2E > 1e-10 ? (1/d2E).toFixed(3) : '—');
+    } else {
+      gaps.push(null); widths.push(null); masses.push('—');
+    }
+  }
+  var el1 = document.getElementById('live-gap1'); if (el1) el1.textContent = (gaps[0] !== null ? gaps[0].toFixed(3) : '—');
+  var el2 = document.getElementById('live-gap2'); if (el2) el2.textContent = (gaps[1] !== null ? gaps[1].toFixed(3) : '—');
+  var el3 = document.getElementById('live-width1'); if (el3) el3.textContent = (widths[0] !== null ? widths[0].toFixed(3) : '—');
+  var el4 = document.getElementById('live-width2'); if (el4) el4.textContent = (widths[1] !== null ? widths[1].toFixed(3) : '—');
+  var el5 = document.getElementById('live-mass1'); if (el5) el5.textContent = masses[0];
+  var el6 = document.getElementById('live-mass2'); if (el6) el6.textContent = masses[1];
 }
-window.setScheme = setScheme;
-
-function updateAll(){
-  plotPotential();
-  plotBands();
-}
-window.updateAll = updateAll;
-
-// ============ INIT ============
-function initKP() {
-  var sliderV0 = document.getElementById('slider-v0');
-  var sliderB = document.getElementById('slider-b');
-  var sliderA = document.getElementById('slider-a');
-
-  if(sliderV0){
-    sliderV0.addEventListener('input',function(){
-      state.V0 = parseFloat(this.value);
-      var el = document.getElementById('val-v0'); if(el) el.textContent = state.V0.toFixed(1);
-      updateAll();
-    });
-  }
-  if(sliderB){
-    sliderB.addEventListener('input',function(){
-      state.b = parseFloat(this.value) * state.a;
-      var el = document.getElementById('val-b'); if(el) el.textContent = (state.b/state.a).toFixed(2);
-      updateAll();
-    });
-  }
-  if(sliderA){
-    sliderA.addEventListener('input',function(){
-      let ratio = state.b / state.a;
-      state.a = parseFloat(this.value);
-      state.b = ratio * state.a;
-      var elA = document.getElementById('val-a'); if(elA) elA.textContent = state.a.toFixed(1);
-      var elB = document.getElementById('val-b'); if(elB) elB.textContent = ratio.toFixed(2);
-      updateAll();
-    });
-  }
-
-  var btnRed = document.getElementById('btn-reduced');
-  var btnExt = document.getElementById('btn-extended');
-  if (btnRed) {
-    btnRed.addEventListener('click', function() {
-      setScheme('reduced');
-    });
-  }
-  if (btnExt) {
-    btnExt.addEventListener('click', function() {
-      setScheme('extended');
-    });
-  }
-
-  updateAll();
-  plotRealBands();
-}
-
-initKP();
-window.initKP = initKP;
+window.updateLiveReadouts = updateLiveReadouts;
+\n// ============ INIT ============
+function initKP() {\n  var sliderV0 = document.getElementById('slider-v0');\n  var sliderB = document.getElementById('slider-b');\n  var sliderA = document.getElementById('slider-a');\n  var sliderE = document.getElementById('slider-e');\n\n  if(sliderV0){\n    sliderV0.addEventListener('input',function(){\n      state.V0 = parseFloat(this.value);\n      var el = document.getElementById('val-v0'); if(el) el.textContent = state.V0.toFixed(1);\n      updateAll();\n    });\n  }\n  if(sliderB){\n    sliderB.addEventListener('input',function(){\n      state.b = parseFloat(this.value) * state.a;\n      var el = document.getElementById('val-b'); if(el) el.textContent = (state.b/state.a).toFixed(2);\n      updateAll();\n    });\n  }\n  if(sliderA){\n    sliderA.addEventListener('input',function(){\n      let ratio = state.b / state.a;\n      state.a = parseFloat(this.value);\n      state.b = ratio * state.a;\n      var elA = document.getElementById('val-a'); if(elA) elA.textContent = state.a.toFixed(1);\n      var elB = document.getElementById('val-b'); if(elB) elB.textContent = ratio.toFixed(2);\n      updateAll();\n    });\n  }\n  if(sliderE){\n    sliderE.addEventListener('input',function(){\n      state.E = parseFloat(this.value);\n      var el = document.getElementById('val-e'); if(el) el.textContent = state.E.toFixed(1);\n      updateAll();\n    });\n  }\n\n  var btnRed = document.getElementById('btn-reduced');\n  var btnExt = document.getElementById('btn-extended');\n  if (btnRed) {\n    btnRed.addEventListener('click', function() {\n      setScheme('reduced');\n    });\n  }\n  if (btnExt) {\n    btnExt.addEventListener('click', function() {\n      setScheme('extended');\n    });\n  }\n\n  updateAll();\n  animateTunneling();\n}\n\nwindow.initKP = initKP;\n

@@ -2,7 +2,6 @@
  * eb_apps_games.js — Energy Bands & DOS Lab: gamified simulations
  * Module 05 — Energy Bands & Density of States
  */
-
 'use strict';
 
 var _dLayout = {
@@ -11,6 +10,7 @@ var _dLayout = {
   xaxis: { gridcolor: '#2a2a3a', zerolinecolor: '#3a3a5a' },
   yaxis: { gridcolor: '#2a2a3a', zerolinecolor: '#3a3a5a' }
 };
+
 function _ext(base, over) {
   var out = JSON.parse(JSON.stringify(base));
   for (var k in over) {
@@ -21,58 +21,13 @@ function _ext(base, over) {
 }
 
 var __EB = {
-  dim: '3D', t: 1.0, eps: 0, n: 1e28, T: 300,
   challenge: { active: false, score: 0, combo: 0, timeLeft: 60, streak: 0, timer: null },
-  dopingState: {},
-  diracState: {},
-  integralState: {}
 };
 
 function linspace(a, b, n) { var arr = new Array(n); for (var i = 0; i < n; i++) arr[i] = a + i * (b - a) / (n - 1); return arr; }
-function band1D(k) { return __EB.eps + 2 * __EB.t * Math.cos(k); }
-function band2D(kx, ky) { return __EB.eps + 2 * __EB.t * (Math.cos(kx) + Math.cos(ky)); }
-function band3D(kx, ky, kz) { return __EB.eps + 2 * __EB.t * (Math.cos(kx) + Math.cos(ky) + Math.cos(kz)); }
 
-// ===== PLAYGROUND: DOS Dimension Toggler =====
 function plotDOSPlayground(dim) {
-  __EB.dim = dim;
-  var E = linspace(0, 2, 100);
-  var dos1D = E.map(function(e) { return 1 / Math.sqrt(Math.max(e, 0.01)); });
-  var dos2D = E.map(function(e) { return e > 0.1 ? 0.5 : 0; });
-  var dos3D = E.map(function(e) { return Math.sqrt(Math.max(e, 0.01)); });
-  // Parabolic band DOS
-  var trace;
-  if (dim === '1D') trace = { x: E, y: dos1D, mode: 'lines', name: '1D DOS ∝ 1/√E', line: { color: '#00f0ff', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(0,212,255,0.08)' };
-  else if (dim === '2D') trace = { x: E, y: dos2D, mode: 'lines', name: '2D DOS ∝ const', line: { color: '#c084fc', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(179,136,255,0.08)' };
-  else if (dim === '3D') trace = { x: E, y: dos3D, mode: 'lines', name: '3D DOS ∝ √E', line: { color: '#4ade80', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(105,240,174,0.08)' };
-  else { // Dirac cone
-    var dirac = E.map(function(e) { return e; });
-    trace = { x: E, y: dirac, mode: 'lines', name: 'Graphene DOS ∝ E', line: { color: '#facc15', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(255,215,77,0.08)' };
-  }
-
-  Plotly.react('plot-dos-playground', [trace], _ext(_dLayout, {
-    title: { text: 'Density of States — ' + dim + ' (' + (__EB.dim === 'dirac' ? 'Graphene' : __EB.dim === '3D' ? 'Free-electron' : __EB.dim + ' electron gas') + ')', font: { size: 13 } },
-    xaxis: { title: 'E (eV)' }, yaxis: { title: 'D(E) (arb. units)' }
-  }), { responsive: true, displayModeBar: false });
-}
-
-function plotBandStructure() {
-  var k = linspace(-Math.PI, Math.PI, 200);
-  var E;
-  if (__EB.dim === '1D') E = k.map(function(ki) { return band1D(ki); });
-  else E = k.map(function(ki) { return band2D(ki, 0); });
-
-  Plotly.react('plot-band-structure', [
-    { x: k, y: E, mode: 'lines', name: 'E(k)', line: { color: '#00f0ff', width: 2.5 },
-      fill: 'tozeroy', fillcolor: 'rgba(0,212,255,0.06)' }
-  ], _ext(_dLayout, {
-    title: { text: 'Band Structure E(k) — tight-binding model', font: { size: 13 } },
-    xaxis: { title: 'k (π/a)', range: [-Math.PI, Math.PI] },
-    yaxis: { title: 'E (eV)' },
-    shapes: [
-      { type: 'line', x0: -Math.PI, x1: Math.PI, y0: __EB.eps, y1: __EB.eps, line: { color: '#8080a0', dash: 'dash', width: 1 } }
-    ]
-  }), { responsive: true, displayModeBar: false });
+  if (window.setEBDim) window.setEBDim(dim);
 }
 
 function plotDopingEffect(n) {
@@ -92,7 +47,7 @@ function plotDopingEffect(n) {
   }), { responsive: true, displayModeBar: false });
 }
 
-// ===== CHALLENGE 1: FERMI LEVEL HUNTER =====
+// ===== CHALLENGES =====
 var fermiMaterials = [
   { name: 'Si (n-type, 10²¹ m⁻³)', doping: 1e21, type: 'n-type', EF: 0.9 },
   { name: 'Si (p-type, 10²¹ m⁻³)', doping: 1e21, type: 'p-type', EF: 0.1 },
@@ -124,7 +79,7 @@ function nextFermiTarget() {
   var t = fermiMaterials[Math.floor(Math.random() * fermiMaterials.length)];
   __EB.challenge.target = t;
   var fb = document.getElementById('fermi-target-text');
-  if (fb) fb.innerHTML = '🔎 <strong>Material:</strong> ' + t.name + '<br/><span style="font-size:0.85rem;color:var(--text-muted);">Carrier density: n = ' + t.doping.toExponential(0) + ' m⁻³ · Is it n-type, p-type, intrinsic, metal, or insulator?</span>';
+  if (fb) fb.innerHTML = '🔎 <strong style="color:var(--text-main)">Material:</strong> ' + t.name + '<br/><span style="font-size:0.85rem;color:var(--text-muted);">Carrier density: n = ' + t.doping.toExponential(0) + ' m⁻³ · Is it n-type, p-type, intrinsic, metal, or insulator?</span>';
 }
 
 function guessFermiType(guess) {
@@ -143,31 +98,33 @@ function guessFermiType(guess) {
   } else {
     c.streak = 0; c.combo = 0;
     fb.className = 'challenge-feedback error'; fb.style.display = 'block';
-    fb.textContent = '✗ Not ' + guess + '. Hint: n-type → E_F near conduction band. p-type → E_F near valence band. Metal → E_F inside band. Insulator → large band gap.';
+    fb.textContent = '✗ Not ' + guess + '. Hint: n-type → E_F near conduction band. p-type → E_F near valence band. Metal → E_F inside band.';
   }
   document.getElementById('fermi-score').textContent = c.score;
   document.getElementById('fermi-combo').textContent = c.combo;
 }
 
-// ===== CHALLENGE 2: EFFECTIVE MASS CURVATURE =====
 function checkEffectiveMass() {
   var guess = parseFloat(document.getElementById('effmass-guess').value);
   var fb = document.getElementById('effmass-feedback');
-  // m* ≈ ℏ² / (2t a²) for tight-binding at band bottom: m* ∝ 1/t
-  var correctM = 0.5 / __EB.t; // arbitrary units
+  // Tie to the state.t from eb_sim.js
+  var t_val = (window.state && window.state.t) ? window.state.t : 1.0;
+  // E(k) ≈ ε + t*k² for small k, where k is in units of π/a. To get physical m*:
+  // E(k) = (ħ²π² / (2m*a²)) k², with ħ²/(2m_e*a²) = 0.00301 eV for a=0.5nm.
+  // Comparing to E(k)=t*k² gives t = ħ²π²/(2m*a²) → m*/m_e = ħ²π²/(2t*a²) ≈ 0.152/t.
+  var correctM = 0.152 / t_val; 
   if (Math.abs(guess - correctM) < 0.15) {
     fb.className = 'challenge-feedback success'; fb.style.display = 'block';
-    fb.innerHTML = '✓ Correct! At the band bottom, E(k) ≈ ε + 2t − ta²k², so m* = ℏ²/(2ta²). Higher t = narrower band = lighter mass. GaAs: m* = 0.067 mₑ. InSb: m* = 0.014 mₑ. Light mass → faster electrons → better transistors!';
+    fb.innerHTML = '✓ Correct! m* ≈ ℏ²/(2ta²). Higher t = narrower band = lighter mass. GaAs: m* = 0.067 mₑ.';
     __GameState.addXP(75, 'Effective mass from curvature!');
     __GameState.unlock({ id: 'dos_explorer', title: 'DOS Explorer', desc: 'Calculated effective mass from band curvature', icon: '📐', xp: 25 });
     particleBurst(window.innerWidth / 2, 350, '#c084fc');
   } else {
     fb.className = 'challenge-feedback error'; fb.style.display = 'block';
-    fb.textContent = '✗ Too far. Expand E(k) near k=0: E ≈ ε + 2t(1 − a²k²/2) = (ε+2t) − ta²k². Compare to free electron: E = ℏ²k²/2m*. So m* ≈ ℏ²/(2ta²).';
+    fb.textContent = '✗ Too far. Expanding E(k) near k=0 gives m* ≈ ℏ²/(2ta²). Check the hopping parameter t in the playground!';
   }
 }
 
-// ===== CHALLENGE 3: METAL/SEMICONDUCTOR/INSULATOR DETECTOR =====
 var bandgapMaterials = [
   { name: 'Copper (Cu)', gap: 0, type: 'metal' },
   { name: 'Silicon (Si)', gap: 1.12, type: 'semiconductor' },
@@ -189,36 +146,33 @@ function guessBandgapCat(cat) {
   var fb = document.getElementById('gap-feedback');
   if (cat === t.type) {
     fb.className = 'challenge-feedback success'; fb.style.display = 'block';
-    fb.innerHTML = '✓ Correct! ' + t.name + ' has E_g = ' + t.gap + ' eV → ' + t.type + '. Metals have no gap. Semiconductors: 0.1–3 eV. Insulators: >3 eV. This is what separates a conductor from your phone screen!';
+    fb.innerHTML = '✓ Correct! ' + t.name + ' has E_g = ' + t.gap + ' eV. Metals (0 eV), SC (0.1-3 eV), Insulators (>3 eV).';
     __GameState.addXP(60, 'Bandgap material detected!');
     __GameState.unlock({ id: 'graphene_disciple', title: 'Graphene Disciple', desc: 'Classified materials by bandgap', icon: '🔷', xp: 20 });
     particleBurst(window.innerWidth / 2, 300, '#4ade80');
     setTimeout(startBandgapDetective, 2000);
   } else {
     fb.className = 'challenge-feedback error'; fb.style.display = 'block';
-    fb.textContent = '✗ Not ' + cat + '. ' + t.name + ' has bandgap ' + t.gap + ' eV. Remember: metal ≈ 0 eV, semiconductor ~1 eV, insulator > 3 eV.';
+    fb.textContent = '✗ Not ' + cat + '. ' + t.name + ' has bandgap ' + t.gap + ' eV.';
   }
 }
 
-// ===== PUZZLE 1: DOPING LEVEL SLIDER PUZZLE =====
 function checkDopingSlider() {
   var targetType = document.getElementById('doping-target-type').textContent;
-  var n = parseFloat(document.getElementById('slider-doping-n').value);
+  var n = parseFloat(document.getElementById('slider-doping').value);
   var fb = document.getElementById('doping-feedback');
-  // n-type needs n > 1e22 (donors dominate), p-type needs n < 1e18 (acceptors dominate)
   var isNtype = n > 1e21;
   var isPtype = n < 1e19;
   if ((targetType === 'n-type' && isNtype) || (targetType === 'p-type' && isPtype)) {
     fb.className = 'challenge-feedback success'; fb.style.display = 'block';
-    fb.textContent = '✓ Correct! ' + (isNtype ? 'Donor concentration exceeds intrinsic. E_F shifts up toward CB.' : 'Acceptor concentration exceeds intrinsic. E_F shifts down toward VB.');
+    fb.textContent = '✓ Correct! E_F shifts toward the ' + (isNtype ? 'conduction' : 'valence') + ' band.';
     __GameState.addXP(60, 'Doping balance mastered!');
   } else {
     fb.className = 'challenge-feedback error'; fb.style.display = 'block';
-    fb.textContent = '✗ Wrong regime. For ' + targetType + ', adjust carrier density to shift E_F to the correct side.';
+    fb.textContent = '✗ Wrong regime. Adjust carrier density n to move E_F.';
   }
 }
 
-// ===== PUZZLE 2: DOS INTEGRAL EQUATION =====
 var integralTerms = [
   { label: '∫₀^∞ D(E) dE', correct: 'total-states' },
   { label: '∫₀^E_F D(E) dE', correct: 'electron-count' },
@@ -239,7 +193,7 @@ function initIntegralPuzzle() {
   var pool = document.getElementById('integral-pool');
   var targets = document.getElementById('integral-targets');
   pool.innerHTML = ''; targets.innerHTML = '';
-  integralTerms.forEach(function(t, i) {
+  integralTerms.forEach(function(t) {
     var el = document.createElement('div');
     el.className = 'draggable-target'; el.draggable = true;
     el.dataset.correct = t.correct;
@@ -264,28 +218,26 @@ function initIntegralPuzzle() {
 function checkIntegralPuzzle() {
   var correct = document.querySelectorAll('#integral-targets .drop-zone.correct').length;
   var fb = document.getElementById('integral-feedback');
-  if (correct === 4) {
+  if (correct === 5) {
     fb.className = 'challenge-feedback success'; fb.style.display = 'block';
-    fb.textContent = '✓ Perfect! The DOS integral is fundamental: n = ∫ D(E)f(E)dE. This connects band structure to carrier density — the heart of all semiconductor device physics.';
+    fb.textContent = '✓ Perfect! The DOS integral is the heart of device physics.';
     __GameState.addXP(100, 'Integral equations mastered!');
   } else {
     fb.className = 'challenge-feedback error'; fb.style.display = 'block';
-    fb.textContent = '✗ ' + (4 - correct) + ' mismatches. Think: what does integrating the DOS weighted by the Fermi function give you?';
+    fb.textContent = '✗ ' + (5 - correct) + ' mismatches. Review the physics of DOS weighting!';
   }
 }
-
-// ===== PUZZLE 3: DIRAC CONE vs PARABOLIC =====
-var diracPuzzles = [
-  { label: 'Free electron (3D)', shape: 'parabolic', mass: 'finite' },
-  { label: 'Graphene (2D)', shape: 'conical', mass: 'zero' },
-  { label: 'Quantum well (2D)', shape: 'parabolic', mass: 'finite' },
-  { label: 'Carbon nanotube (1D)', shape: 'parabolic', mass: 'finite' },
-  { label: 'Surface state (TI)', shape: 'conical', mass: 'zero' }
-];
 
 function initDiracPuzzle() {
   var c = document.getElementById('dirac-list');
   c.innerHTML = '';
+  var diracPuzzles = [
+    { label: 'Free electron (3D)', shape: 'parabolic' },
+    { label: 'Graphene (2D)', shape: 'conical' },
+    { label: 'Quantum well (2D)', shape: 'parabolic' },
+    { label: 'Carbon nanotube (1D)', shape: 'parabolic' },
+    { label: 'Surface state (TI)', shape: 'conical' }
+  ];
   diracPuzzles.forEach(function(p, i) {
     var row = document.createElement('div');
     row.style.cssText = 'display:flex;align-items:center;gap:1rem;padding:0.5rem;border-bottom:1px solid var(--border-subtle);';
@@ -294,7 +246,7 @@ function initDiracPuzzle() {
     label.textContent = p.label;
     var sel = document.createElement('select');
     sel.id = 'dirac-sel-' + i;
-    sel.style.cssText = 'background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.3rem;border-radius:4px;font-family:var(--mono);';
+    sel.style.cssText = 'background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.3rem;border-radius:4px;font-family:var(--font-mono);';
     [{v:'parabolic',t:'Parabolic (∝ k²)'},{v:'conical',t:'Conical (∝ |k|)'}].forEach(function(opt) {
       var o = document.createElement('option'); o.value = opt.v; o.textContent = opt.t; sel.appendChild(o);
     });
@@ -305,6 +257,13 @@ function initDiracPuzzle() {
 
 function checkDiracPuzzle() {
   var correct = 0;
+  var diracPuzzles = [
+    { label: 'Free electron (3D)', shape: 'parabolic' },
+    { label: 'Graphene (2D)', shape: 'conical' },
+    { label: 'Quantum well (2D)', shape: 'parabolic' },
+    { label: 'Carbon nanotube (1D)', shape: 'parabolic' },
+    { label: 'Surface state (TI)', shape: 'conical' }
+  ];
   diracPuzzles.forEach(function(p, i) {
     var v = document.getElementById('dirac-sel-' + i).value;
     if (v === p.shape) correct++;
@@ -312,40 +271,25 @@ function checkDiracPuzzle() {
   var fb = document.getElementById('dirac-feedback');
   if (correct === diracPuzzles.length) {
     fb.className = 'challenge-feedback success'; fb.style.display = 'block';
-    fb.textContent = '✓ Excellent! Graphene and topological insulators have Dirac cones: E ∝ |k|, zero effective mass at the Dirac point. This gives rise to Klein tunneling, half-integer quantum Hall effect, and spin-momentum locking.';
+    fb.textContent = '✓ Excellent! Linear E-k dispersion implies massless fermions.';
     __GameState.addXP(120, 'Dirac vs parabolic mastered!');
     __GameState.unlock({ id: 'dirac_master', title: 'Dirac Master', desc: 'Distinguished parabolic and Dirac dispersions', icon: '🌊', xp: 30 });
   } else {
     fb.className = 'challenge-feedback error'; fb.style.display = 'block';
-    fb.textContent = '✗ ' + (diracPuzzles.length - correct) + ' wrong. Graphene = conical (linear E-k). Quantum wells = parabolic (massive).';
+    fb.textContent = '✗ ' + (diracPuzzles.length - correct) + ' wrong. Graphene = conical.';
   }
 }
 
-// ===== INIT =====
 document.addEventListener('DOMContentLoaded', function() {
   var dSlider = document.getElementById('slider-doping');
   if (dSlider) {
     dSlider.addEventListener('input', function(e) {
-      __EB.n = parseFloat(e.target.value);
-      document.getElementById('val-doping').textContent = __EB.n.toExponential(1);
-      plotDopingEffect(__EB.n);
+      var n = parseFloat(e.target.value);
+      document.getElementById('val-doping').textContent = n.toExponential(1);
+      plotDopingEffect(n);
     });
   }
-  var tSlider = document.getElementById('slider-t');
-  if (tSlider) {
-    tSlider.addEventListener('input', function(e) {
-      __EB.t = parseFloat(e.target.value);
-      document.getElementById('val-t').textContent = __EB.t.toFixed(1);
-      plotBandStructure();
-    });
-  }
-
-  if (document.getElementById('plot-dos-playground')) {
-    plotDOSPlayground('3D');
-    plotBandStructure();
-    plotDopingEffect(1e28);
-  }
-
+  
   if (typeof setGameMode === 'function') {
     var orig = setGameMode;
     setGameMode = function(mode) {
@@ -362,13 +306,22 @@ document.addEventListener('DOMContentLoaded', function() {
   var nav = document.getElementById('module-nav');
   if (nav) {
     var modules = [
+      { num: '00', name: 'Intro', url: '../00_crystal_to_quantum/index.html' },
       { num: '01', name: 'QHO', url: '../01_qho/index.html' },
       { num: '02', name: 'Hydrogen', url: '../02_hydrogen/index.html' },
       { num: '03', name: 'Spin-1/2', url: '../03_spin/index.html' },
       { num: '04', name: 'KP Model', url: '../04_kronig_penney/index.html' },
       { num: '05', name: 'Bands', current: true },
       { num: '06', name: 'Fermi', url: '../06_fermi_surface/index.html' },
-      { num: '07', name: 'Conductivity', url: '../07_conductivity/index.html' }
+      { num: '07', name: 'Conductivity', url: '../07_conductivity/index.html' },
+      { num: '08', name: 'Supercon.', url: '../08_superconductivity/index.html' },
+      { num: '09', name: 'Intrinsic', url: '../09_intrinsic_semiconductors/index.html' },
+      { num: '10', name: 'Doped', url: '../10_doped_semiconductors/index.html' },
+      { num: '11', name: 'Junctions', url: '../11_junctions_devices/index.html' },
+      { num: '12', name: 'Optics', url: '../12_optics_dispersion/index.html' },
+      { num: '13', name: 'Laser', url: '../13_laser_physics/index.html' },
+      { num: '14', name: 'Magnetism', url: '../14_magnetism/index.html' },
+      { num: '15', name: 'Thermal', url: '../15_thermal_properties/index.html' }
     ];
     modules.forEach(function(m) {
       var el = document.createElement(m.current ? 'div' : 'a');

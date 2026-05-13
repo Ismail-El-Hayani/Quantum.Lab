@@ -42,7 +42,6 @@
 </head>
 <body>
 
-<!-- AMBIENT ORBS -->
 <div class="orb orb-cyan"></div>
 <div class="orb orb-purple"></div>
 <div class="orb orb-pink"></div>
@@ -58,12 +57,11 @@
 <div class="game-hero" style="padding-bottom:0;">
   <div class="level-badge">Module 04 · Level <span id="current-level">1</span> · Band Structure Initiate</div>
   <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-purple),var(--accent-pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">From Atoms to Bands</span></h1>
-  <p class="hero-desc">A single atom has discrete levels. Bring 10²³ atoms together and they blur into bands. Tune V₀ and b to sculpt bandgaps, compute Bloch frequencies, and master the Kronig-Penney equation.</p>
+  <p class="hero-desc">A single atom has discrete levels. Bring 10²³ atoms together and they blur into bands. Tune V₀ and b to sculpt bandgaps, and explore 1D tunneling leakage.</p>
 </div>
 
 <div class="game-container">
 
-  <!-- MODE SELECTOR -->
   <div class="game-mode-bar">
     <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">
       <span class="mode-icon">🔬</span> Playground
@@ -76,27 +74,26 @@
     </button>
   </div>
 
-  <!-- ===== PLAYGROUND MODE ===== -->
   <div class="mode-section" id="section-play">
     <div class="playground-area">
       <div class="playground-header">
         <div class="playground-title">🔬 Band Structure Sandbox</div>
-        <div class="playground-level">Drag V₀ and b/a to sculpt the periodic potential and watch E(k) bands reshape in real time.</div>
+        <div class="playground-level">Control the potential and observe the quantum tunneling leakage and the resulting band structure.</div>
       </div>
 
       <div style="display:grid; grid-template-columns: 1fr 320px; gap: 1.5rem;">
         <div>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom:1rem;">
             <div class="plot-container" id="plot-potential" style="min-height:240px;"></div>
-            <div class="plot-container" id="plot-bands" style="min-height:240px;"></div>
+            <div class="plot-container" id="plot-tunneling" style="min-height:240px;"></div>
           </div>
+          <div class="plot-container" id="plot-bands" style="min-height:240px; margin-bottom:1rem;"></div>
           <div style="display:flex; justify-content:center; gap:1rem; margin-top:0.5rem; font-size:0.75rem; color:var(--text-dim);">
-            <span>Left: V(x) periodic potential</span><span>Right: E(k) dispersion</span>
+            <span>Left: V(x) Periodic Potential</span><span class="mx-2">|</span><span>Right: Tunneling Leakage (Real-time ψ)</span><span class="mx-2">|</span><span>Bottom: E(k) Dispersion</span>
           </div>
         </div>
 
         <div>
-          <!-- Controls -->
           <div class="challenge-panel" style="margin-bottom:1rem;">
             <div class="challenge-header">
               <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">⚙</span>
@@ -114,11 +111,20 @@
 
             <div style="margin-bottom:1rem;">
               <div class="control-row">
+                <span class="control-label">Electron Energy E</span>
+                <span class="control-value" id="val-e">2.0</span>
+              </div>
+              <input type="range" id="slider-e" min="0.1" max="60" value="2.0" step="0.1">
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Tunneling "leakage" occurs when E < V₀ but the barrier is thin.</p>
+            </div>
+
+            <div style="margin-bottom:1rem;">
+              <div class="control-row">
                 <span class="control-label">Barrier width b/a</span>
                 <span class="control-value" id="val-b">0.20</span>
               </div>
               <input type="range" id="slider-b" min="0.05" max="0.40" value="0.20" step="0.01">
-              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Wider barriers push bands toward atomic levels.</p>
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Wider barriers increase confinement (less leak).</p>
             </div>
 
             <div style="margin-bottom:1rem;">
@@ -135,47 +141,42 @@
             </div>
           </div>
 
-          <!-- Live Parameters -->
           <div class="challenge-panel">
             <div class="challenge-header">
               <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">📊</span>
               <span class="challenge-title">Live Readout</span>
             </div>
-            <table>
-              <tr><th>Quantity</th><th>Value</th></tr>
-              <tr><td>First gap ΔE₁</td><td class="highlight-num" id="live-gap1">—</td></tr>
-              <tr><td>Second gap ΔE₂</td><td class="highlight-num" id="live-gap2">—</td></tr>
-              <tr><td>Band width 1st</td><td class="highlight-num" id="live-width1">—</td></tr>
-              <tr><td>Band width 2nd</td><td class="highlight-num" id="live-width2">—</td></tr>
-              <tr><td>m* (band bottom)</td><td class="highlight-num" id="live-mass1">—</td></tr>
-              <tr><td>m* (band top)</td><td class="highlight-num" id="live-mass2">—</td></tr>
+            <table style="width:100%">
+              <tr style="text-align:left"><th style="font-weight:normal; color:var(--text-dim)">Quantity</th><th style="text-align:right; font-weight:normal; color:var(--text-dim)">Value</th></tr>
+              <tr style="border-bottom:1px solid var(--glass-border)"><td style="padding:0.4rem 0">First gap ΔE₁</td><td class="highlight-num" id="live-gap1" style="text-align:right">—</td></tr>
+              <tr style="border-bottom:1px solid var(--glass-border)"><td style="padding:0.4rem 0">Second gap ΔE₂</td><td class="highlight-num" id="live-gap2" style="text-align:right">—</td></tr>
+              <tr style="border-bottom:1px solid var(--glass-border)"><td style="padding:0.4rem 0">Band width 1st</td><td class="highlight-num" id="live-width1" style="text-align:right">—</td></tr>
+              <tr style="border-bottom:1px solid var(--glass-border)"><td style="padding:0.4rem 0">Band width 2nd</td><td class="highlight-num" id="live-width2" style="text-align:right">—</td></tr>
+              <tr style="border-bottom:1px solid var(--glass-border)"><td style="padding:0.4rem 0">m* (bottom)</td><td class="highlight-num" id="live-mass1" style="text-align:right">—</td></tr>
+              <tr style="border-bottom:1px solid var(--glass-border)"><td style="padding:0.4rem 0">m* (top)</td><td class="highlight-num" id="live-mass2" style="text-align:right">—</td></tr>
             </table>
-            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.5rem;">* m* = ℏ²/(d²E/dk²). Negative at top of band → hole-like behavior.</p>
           </div>
         </div>
       </div>
     </div>
 
     <div class="insight-card" style="margin-top:1rem;">
-      <div class="insight-title">✨ Why does this matter?</div>
+      <div class="insight-title">✨ Physics Insight: Tunneling vs. Bands</div>
       <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
-        The Kronig-Penney model is the <strong>training gym</strong> of solid-state physics. Its exact transcendental equation shows how periodic potentials split free-electron parabolas into bands separated by forbidden gaps.
-        At the Brillouin zone boundary k = ±π/a, Bragg reflection creates standing waves — one peaked at barriers (higher E), one at wells (lower E) — and the energy difference is the bandgap.
-        Every semiconductor device, LED, and solar cell is engineered by tuning this gap.
+        The <strong style="color:var(--accent-cyan)">Tunneling Simulation</strong> shows a single electron encountering a barrier. When $E < V_0$, the wave function decays exponentially inside the barrier, but if the barrier is thin (small $b/a$), a non-zero amplitude "leaks" through.
+        The <strong style="color:var(--accent-purple)">Band Structure</strong> is the global result of this leakage across a periodic lattice. High tunneling (thin barriers) leads to wide energy bands; low tunneling (thick barriers) leads to narrow bands that mimic discrete atomic levels.
       </p>
       <div class="equation-box" style="font-size:0.85rem;">
-        $$\cos(ka) = \cos(\alpha w)\cosh(\beta b) + \frac{\beta^2 - \alpha^2}{2\alpha\beta}\sin(\alpha w)\sinh(\beta b)$$
-      </div>
+        $$\text{Transmission Probability } T \approx e^{-2\kappa w} \text{ where } \kappa = \sqrt{\frac{2m(V_0-E)}{\hbar^2}}$$
+      </div >
     </div>
   </div>
 
-  <!-- ===== CHALLENGE MODE ===== -->
   <div class="mode-section" id="section-challenge" style="display:none;">
-
     <!-- CHALLENGE 1: Crystal Designer -->
     <div class="challenge-panel">
       <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span>
+        <span class="challenge-icon" style="background:rgba(0,212,255,0.12);">🎮</span>
         <span class="challenge-title">Challenge 1: Crystal Designer</span>
         <span class="challenge-difficulty easy">Easy</span>
       </div>
@@ -184,9 +185,7 @@
         You have 60 seconds per round. Correct match earns 50 XP + combo bonus.
       </div>
       <div class="challenge-reward">🏆 Reward: 50 XP · Combo bonus: +5 XP per streak</div>
-
       <div class="timer-bar"><div class="timer-fill" id="timer-1" style="width:100%"></div></div>
-
       <div class="challenge-grid">
         <div>
           <div class="target-wave">
@@ -210,7 +209,6 @@
           </div>
         </div>
       </div>
-
       <div style="display:flex; align-items:center; gap:1.5rem; margin-top:1rem;">
         <div style="font-size:0.85rem;color:var(--text-muted);">
           <strong>Current gap:</strong> <span id="cd-current-gap">—</span> · 
@@ -226,7 +224,7 @@
     <!-- CHALLENGE 2: Bloch Oscillation -->
     <div class="challenge-panel">
       <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🎯</span>
+        <span class="challenge-icon" style="background:rgba(255,64,129,0.12);">🎯</span>
         <span class="challenge-title">Challenge 2: Bloch Oscillation Race</span>
         <span class="challenge-difficulty medium">Medium</span>
       </div>
@@ -235,7 +233,6 @@
         Given E-field and lattice constant, calculate ω_B (in THz) and T_B = 2π/ω_B (in ps).
       </div>
       <div class="challenge-reward">🏆 Reward: 75 XP · Hint cost: –5 XP</div>
-
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; margin-top:1rem;">
         <div>
           <div class="bloch-anim" id="bloch-anim">
@@ -272,16 +269,15 @@
     <!-- CHALLENGE 3: Bandgap Estimation -->
     <div class="challenge-panel">
       <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(74,222,128,0.12);">🏎</span>
+        <span class="challenge-icon" style="background:rgba(105,240,174,0.12);">🏎</span>
         <span class="challenge-title">Challenge 3: Bandgap Estimation</span>
         <span class="challenge-difficulty hard">Hard</span>
       </div>
       <div class="challenge-desc">
-        In the <strong>nearly-free electron</strong> limit (small V₀), the first bandgap at the zone boundary is approximately 2|V_G| where V_G is the Fourier component of the potential.
+        In the <strong style="color:var(--accent-cyan)">nearly-free electron</strong> limit (small V₀), the first bandgap at the zone boundary is approximately 2|V_G| where V_G is the Fourier component of the potential.
         For a square-well periodic potential, the first Fourier coefficient is V_G ≈ (2V₀/π) sin(πb/a). Predict the gap!
       </div>
       <div class="challenge-reward">🏆 Reward: 100 XP + "Bandgap Architect" badge</div>
-
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
         <div>
           <p style="font-size:0.9rem;color:var(--text-main);margin-bottom:1rem;">
@@ -301,20 +297,18 @@
         </div>
         <div>
           <div class="plot-container" id="plot-bandgap-est" style="height:240px;"></div>
-          <p style="font-size:0.75rem;color:var(--text-dim);text-align:center;margin-top:0.3rem;">Actual band structure for these parameters</p>
+          <p style="text-align:center;font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Actual band structure for these parameters</p>
         </div>
       </div>
       <div id="be-feedback" class="challenge-feedback"></div>
     </div>
   </div>
 
-  <!-- ===== PUZZLE MODE ===== -->
   <div class="mode-section" id="section-puzzle" style="display:none;">
-
     <!-- PUZZLE 1: Tight-Binding Chain -->
     <div class="challenge-panel">
       <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🧩</span>
+        <span class="challenge-icon" style="background:rgba(179,136,255,0.12);">🧩</span>
         <span class="challenge-title">Puzzle 1: Tight-Binding Chain</span>
         <span class="challenge-difficulty medium">Medium</span>
       </div>
@@ -323,13 +317,11 @@
         Drag the correct parameter chips into the equation slots below.
       </div>
       <div class="challenge-reward">🏆 Reward: 60 XP</div>
-
       <div style="text-align:center; font-family:var(--font-mono); font-size:1.1rem; color:var(--text-main); margin:1.5rem 0;">
         E(k) = <span id="tb-slot-0" class="equation-drop-zone" style="display:inline-block; min-width:80px;">?</span>
         − 2 <span id="tb-slot-1" class="equation-drop-zone" style="display:inline-block; min-width:80px;">?</span>
         cos(<span id="tb-slot-2" class="equation-drop-zone" style="display:inline-block; min-width:80px;">?</span>)
       </div>
-
       <div style="display:flex; justify-content:center; flex-wrap:wrap; gap:0.5rem; margin:1rem 0;" id="tb-pool">
         <div class="term-chip" draggable="true" data-val="ka">ka</div>
         <div class="term-chip" draggable="true" data-val="E0">E₀</div>
@@ -338,7 +330,6 @@
         <div class="term-chip" draggable="true" data-val="a">a</div>
         <div class="term-chip" draggable="true" data-val="pi">π</div>
       </div>
-
       <div id="tb-feedback" class="challenge-feedback"></div>
       <button class="btn" onclick="checkTightBinding()">✓ Verify Equation</button>
       <button class="btn" onclick="resetTightBinding()">↺ Reset</button>
@@ -347,7 +338,7 @@
     <!-- PUZZLE 2: K-P Equation Assembly -->
     <div class="challenge-panel">
       <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🧩</span>
+        <span class="challenge-icon" style="background:rgba(0,212,255,0.12);">🧩</span>
         <span class="challenge-title">Puzzle 2: K-P Equation Assembly</span>
         <span class="challenge-difficulty hard">Hard</span>
       </div>
@@ -355,14 +346,12 @@
         Drop the correct Kronig-Penney terms into place. The transcendental equation relates cos(ka) to the RHS.
       </div>
       <div class="challenge-reward">🏆 Reward: 80 XP + "Crystal Engineer" badge</div>
-
       <div style="text-align:center; font-family:var(--font-mono); font-size:1rem; color:var(--text-main); margin:1.5rem 0; line-height:2.2;">
         <span id="kp-slot-0" class="equation-drop-zone" style="display:inline-block; min-width:100px;">?</span> (ka) =
         <span id="kp-slot-1" class="equation-drop-zone" style="display:inline-block; min-width:120px;">?</span> (αw)
         <span id="kp-slot-2" class="equation-drop-zone" style="display:inline-block; min-width:120px;">?</span> (βb) +
         <span id="kp-slot-3" class="equation-drop-zone" style="display:inline-block; min-width:160px;">?</span>
       </div>
-
       <div style="display:flex; justify-content:center; flex-wrap:wrap; gap:0.5rem; margin:1rem 0;" id="kp-pool">
         <div class="term-chip" draggable="true" data-val="cos">cos</div>
         <div class="term-chip" draggable="true" data-val="cosh">cosh</div>
@@ -372,7 +361,6 @@
         <div class="term-chip" draggable="true" data-val="rhs2">(β²+α²)/(2αβ) · sin(αw)sin(βb)</div>
         <div class="term-chip" draggable="true" data-val="rhs3">(β²−α²)/(2αβ) · cos(αw)cosh(βb)</div>
       </div>
-
       <div id="kp-feedback" class="challenge-feedback"></div>
       <button class="btn" onclick="checkKPAssembly()">✓ Verify Equation</button>
       <button class="btn" onclick="resetKPAssembly()">↺ Reset</button>
@@ -381,7 +369,7 @@
     <!-- PUZZLE 3: Bragg Reflection -->
     <div class="challenge-panel">
       <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🧩</span>
+        <span class="challenge-icon" style="background:rgba(255,64,129,0.12);">🧩</span>
         <span class="challenge-title">Puzzle 3: Bragg Reflection Matcher</span>
         <span class="challenge-difficulty master">Master</span>
       </div>
@@ -390,7 +378,6 @@
         Select the reflection order n that satisfies Bragg for the given k.
       </div>
       <div class="challenge-reward">🏆 Reward: 120 XP + "Bragg Master" badge</div>
-
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
         <div>
           <div class="bragg-canvas" id="bragg-canvas"></div>
@@ -414,27 +401,23 @@
     </div>
   </div>
 
-  <!-- RIGHT SIDEBAR -->
   <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; margin-top:2rem;">
     <div></div>
     <div>
       <div class="challenge-panel" style="position:sticky; top:5rem;">
         <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(0,240,255,0.08);">🗺</span>
+          <span class="challenge-icon" style="background:rgba(0,212,255,0.08);">🗺</span>
           <span class="challenge-title">Lab Navigator</span>
         </div>
         <div id="module-nav"></div>
-
         <div class="section-divider" style="margin:1rem 0;"></div>
-
         <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(74,222,128,0.08);">🏆</span>
+          <span class="challenge-icon" style="background:rgba(105,240,174,0.08);">🏆</span>
           <span class="challenge-title">Your Badges</span>
         </div>
         <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);line-height:1.6;">
           Complete challenges to earn badges!
         </div>
-
         <div class="section-divider" style="margin:1rem 0;"></div>
         <div class="challenge-header">
           <span class="challenge-icon" style="background:rgba(255,215,64,0.08);">📊</span>
@@ -467,9 +450,8 @@
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
-<script src="kp_sim.js?v=1"></script>
+<script src="kp_sim.js?v=2"></script>
 <script src="kp_apps_games.js?v=1"></script>
-
 <script src="../../shared_effects.js"></script>
 </body>
 </html>

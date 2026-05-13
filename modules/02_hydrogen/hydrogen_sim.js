@@ -490,5 +490,206 @@ function initHydrogen() {
   updateLiveTable();
 }
 
-initHydrogen();
 window.initHydrogen = initHydrogen;
+
+
+
+
+
+
+
+
+// ============ 3D SIMULATION (Three.js) ============
+let scene, camera, renderer, atomGroup;
+let electronMesh;
+let energyRingsGroup;
+
+function init3DSimulation(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+  
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  container.appendChild(renderer.domElement);
+
+  const ambientLight = new THREE.AmbientLight(0x404040, 2);
+  scene.add(ambientLight);
+  const pointLight = new THREE.PointLight(0x00f0ff, 2, 100);
+  pointLight.position.set(10, 10, 10);
+  scene.add(pointLight);
+
+  atomGroup = new THREE.Group();
+  scene.add(atomGroup);
+
+  // Nucleus
+  const nucleusGeom = new THREE.SphereGeometry(0.4, 32, 32);
+  const nucleusMat = new THREE.MeshPhongMaterial({ color: 0xff4ecd, emissive: 0x330022 });
+  const nucleus = new THREE.Mesh(nucleusGeom, nucleusMat);
+  atomGroup.add(nucleus);
+
+  energyRingsGroup = new THREE.Group();
+  atomGroup.add(energyRingsGroup);
+
+  camera.position.z = 22;
+  animate3D();
+}
+
+function update3DOrbital() {
+  if (showWavefunction) { renderCloud(state.n, state.l); return; }
+  if (!atomGroup) return;
+  
+  // Clear electron and rings
+  if (electronMesh) atomGroup.remove(electronMesh);
+  energyRingsGroup.clear();
+
+  const n = state.n;
+  const l = state.l;
+  
+  // CREATE ENERGY LEVEL PREDICTION RINGS (n=1 to 6)
+  for (let i = 1; i <= 6; i++) {
+    const r = r_expectation(i, 0) * 0.5; // Base Bohr radius for scaling
+    const isActive = (i === n);
+    
+    const ringGeom = new THREE.TorusGeometry(r, 0.02, 16, 100);
+    const ringMat = new THREE.MeshBasicMaterial({ 
+      color: isActive ? 0x00f0ff : 0x222244, 
+      transparent: true, 
+      opacity: isActive ? 0.8 : 0.2
+    });
+    const ring = new THREE.Mesh(ringGeom, ringMat);
+    
+    // Set initial tilt for all rings based on current l
+    ring.rotation.x = Math.PI / (l + 1);
+    ring.rotation.y = (l * Math.PI) / 4;
+    
+    energyRingsGroup.add(ring);
+  }
+
+  // CREATE MOVING ELECTRON
+  const currentRadius = r_expectation(n, l) * 0.5;
+  const electronGeom = new THREE.SphereGeometry(0.18, 16, 16);
+  const electronMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+  electronMesh = new THREE.Mesh(electronGeom, electronMat);
+  
+  atomGroup.add(electronMesh);
+}
+
+function animate3D() {
+  requestAnimationFrame(animate3D);
+  
+  const time = Date.now() * 0.002;
+    if (electronMesh) {
+      if (!showWavefunction) {
+        const n = state.n;
+        const l = state.l;
+        const radius = r_expectation(n, l) * 0.5;
+        const speed = 1.0 / n;
+        const angle = time * speed;
+        
+        const tiltX = Math.PI / (l + 1);
+        const tiltY = (l * Math.PI) / 4;
+        
+        let pos = new THREE.Vector3(Math.cos(angle) * radius, Math.sin(angle) * radius, 0);
+        pos.applyAxisAngle(new THREE.Vector3(1, 0, 0), tiltX);
+        pos.applyAxisAngle(new THREE.Vector3(0, 1, 0), tiltY);
+        
+        electronMesh.position.copy(pos);
+      } else {
+        electronMesh.rotation.y += 0.005;
+      }
+    }
+
+  if (atomGroup) {
+    atomGroup.rotation.y += 0.002;
+  }
+  if (renderer) renderer.render(scene, camera);
+}
+
+function link3DControls() {
+    const sliderN = document.getElementById('slider-h2-n');
+    const sliderL = document.getElementById('slider-h2-l');
+    const valN = document.getElementById('val-h2-n');
+    const valL = document.getElementById('val-h2-l');
+
+    if(sliderN) {
+        sliderN.oninput = function() {
+            state.n = parseInt(this.value);
+            if(valN) valN.textContent = state.n;
+            update3DOrbital();
+            plotRadial(); 
+            updateLiveTable();
+        };
+    }
+    if(sliderL) {
+        sliderL.oninput = function() {
+            state.l = parseInt(this.value);
+            if(valL) valL.textContent = state.l;
+            update3DOrbital();
+            plotRadial(); 
+            updateLiveTable();
+        };
+    }
+}
+
+// BOOTSTRAP
+setTimeout(() => {
+    try {
+        initHydrogen(); 
+        init3DSimulation('canvas-3d');
+        update3DOrbital();
+        link3DControls();
+    } catch(e) {
+        console.error("Hydrogen Lab Boot Error: ", e);
+    }
+}, 200);
+
+
+// Wavefunction State
+let showWavefunction = false;
+
+function toggleWavefunctionView() {
+    showWavefunction = !showWavefunction;
+    const btn = document.getElementById('btn-reveal-wf');
+    if(btn) {
+        btn.textContent = showWavefunction ? '🎯 Back to Bohr' : '🌌 Reveal Wavefunction';
+        btn.style.background = showWavefunction ? 'var(--accent-cyan)' : 'var(--accent-purple)';
+    }
+    update3DOrbital();
+}
+
+
+function renderCloud(n, l) {
+    if (electronMesh) atomGroup.remove(electronMesh);
+    energyRingsGroup.clear();
+
+    const pointsCount = 3000;
+    const positions = new Float32Array(pointsCount * 3);
+    const radius = r_expectation(n, l) * 0.4; // Scale for visualization
+
+    for (let i = 0; i < pointsCount; i++) {
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+        
+        // Probability density approx: more points near the Bohr radius
+        const rDist = radius * (1 + (Math.random() - 0.5) * 0.4);
+        
+        positions[i * 3] = rDist * Math.sin(phi) * Math.cos(theta);
+        positions[i * 3 + 1] = rDist * Math.cos(phi);
+        positions[i * 3 + 2] = rDist * Math.sin(phi) * Math.sin(theta);
+    }
+
+    const pointsGeom = new THREE.BufferGeometry();
+    pointsGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const pointsMat = new THREE.PointsMaterial({ 
+        color: 0x00f0ff, 
+        size: 0.05, 
+        transparent: true, 
+        opacity: 0.6 
+    });
+    electronMesh = new THREE.Points(pointsGeom, pointsMat);
+    atomGroup.add(electronMesh);
+}

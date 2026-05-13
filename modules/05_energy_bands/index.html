@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,11 +23,43 @@
   .material-card { padding: 1rem; background: var(--bg-elevated); border-radius: var(--radius-sm); border: 1px solid var(--glass-border); text-align: center; cursor: pointer; transition: all 0.2s; }
   .material-card:hover { border-color: var(--accent-cyan); }
   .material-card.selected { border-color: var(--accent-purple); background: rgba(192,132,252,0.08); }
+  
+  .viz-hub { 
+    display: grid; 
+    grid-template-columns: 300px 1fr; 
+    gap: 1rem; 
+    background: rgba(10, 10, 20, 0.6);
+    border-radius: 15px;
+    border: 1px solid var(--glass-border);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .lattice-canvas-container {
+    background: radial-gradient(circle, #1a1a2e 0%, #0a0a14 100%);
+    border-radius: 12px;
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+    height: 350px;
+  }
+  .band-plot-container {
+    height: 350px;
+  }
+  .hub-label {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 0.7rem;
+    color: var(--accent-cyan);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    pointer-events: none;
+    z-index: 10;
+  }
 </style>
 </head>
 <body>
 
-<!-- AMBIENT ORBS -->
 <div class="orb orb-cyan"></div>
 <div class="orb orb-purple"></div>
 <div class="orb orb-pink"></div>
@@ -44,7 +75,7 @@
 <div class="game-hero" style="padding-bottom:0;">
   <div class="level-badge">Module 05 · Level <span id="current-level">1</span> · Material Tuner</div>
   <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Energy Bands & DOS</span></h1>
-  <p class="hero-desc">Free electrons live in bands. Their density of states shapes every semiconductor device.</p>
+  <p class="hero-desc">From 3D Bulk to Carbon Allotropes. See how structural confinement reshapes the electronic state.</p>
 </div>
 
 <div class="game-container">
@@ -55,54 +86,94 @@
     <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">🧩 Puzzles</button>
   </div>
 
-  <!-- PLAYGROUND -->
   <div class="mode-section" id="section-play">
     <div class="playground-area">
       <div class="playground-header">
-        <div class="playground-title">🔬 DOS Dimensionality Explorer</div>
-        <div class="playground-level">Toggle dimensions to see how quantum confinement changes the density of states.</div>
+        <div class="playground-title">🔬 Quantum State Spectrometer</div>
+        <div class="playground-level">Symmetry $\to$ Dispersion $\to$ Density of States.</div>
+      </div>
+
+      <div class="challenge-panel" style="margin-bottom: 1.5rem;">
+        <div class="challenge-header">
+          <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">💎</span>
+          <span class="challenge-title">Material Presets</span>
+        </div>
+        <div class="challenge-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));">
+          <div class="material-card" onclick="setEBMaterial('Cu')">Copper (Bulk)</div>
+          <div class="material-card" onclick="setEBMaterial('Si')">Silicon (SC)</div>
+          <div class="material-card" onclick="setEBMaterial('Diamond')">Diamond (Ins)</div>
+          <div class="material-card" onclick="setEBMaterial('Graphene')">Graphene</div>
+        </div>
+        <div class="challenge-header" style="margin-top:1rem; border-top:1px solid var(--glass-border); padding-top:1rem;">
+          <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">🌑</span>
+          <span class="challenge-title">Carbon Allotropes</span>
+        </div>
+        <div class="challenge-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));">
+          <div class="material-card" onclick="setEBMaterial('Graphite')">Graphite (2D)</div>
+          <div class="material-card" onclick="setEBMaterial('CNT')">Nanotube (1D)</div>
+          <div class="material-card" onclick="setEBMaterial('Fullerene')">Fullerene (0D)</div>
+        </div>
       </div>
 
       <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
-        <button class="dim-btn active" id="dim-3d" onclick="plotDOSPlayground('3D')">3D (√E)</button>
-        <button class="dim-btn" id="dim-2d" onclick="plotDOSPlayground('2D')">2D (const)</button>
-        <button class="dim-btn" id="dim-1d" onclick="plotDOSPlayground('1D')">1D (1/√E)</button>
-        <button class="dim-btn" id="dim-dirac" onclick="plotDOSPlayground('dirac')">Dirac (E)</button>
+        <button class="dim-btn active" id="dim-3d" onclick="setEBDim('3D')">3D (Bulk)</button>
+        <button class="dim-btn" id="dim-2d" onclick="setEBDim('2D')">2D (Layer)</button>
+        <button class="dim-btn" id="dim-1d" onclick="setEBDim('1D')">1D (Wire/Dot)</button>
+        <button class="dim-btn" id="dim-dirac" onclick="setEBDim('graphene')">Dirac (Graphene)</button>
       </div>
-      <div class="plot-container" id="plot-dos-playground" style="min-height:350px;"></div>
-      <div class="plot-container" id="plot-band-structure" style="min-height:280px; margin-top:1.5rem;"></div>
 
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top:1.5rem;">
-        <div class="challenge-panel">
-          <div class="challenge-header">
-            <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙</span>
-            <span class="challenge-title">Controls</span>
-          </div>
-          <div class="control-row">
-            <span class="control-label">Hopping t</span>
-            <span class="control-value" id="val-t">1.0</span><span class="unit-tag">eV</span>
-          </div>
-          <input type="range" id="slider-t" min="0.1" max="3" value="1.0" step="0.1">
+      <div class="viz-hub">
+        <div class="lattice-canvas-container">
+            <div class="hub-label">Structure Σ</div>
+            <canvas id="lattice-canvas" width="300" height="350"></canvas>
         </div>
-        <div class="challenge-panel">
-          <div class="challenge-header">
-            <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">📊</span>
-            <span class="challenge-title">Live Readout</span>
+        <div class="band-plot-container">
+            <div class="hub-label">Dispersion E(k)</div>
+            <div id="plot-band-structure" style="height:100%; width:100%;"></div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 320px 1fr; gap: 1rem; margin-bottom: 1rem;">
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+          <div class="challenge-panel">
+            <div class="challenge-header">
+              <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙️</span>
+              <span class="challenge-title">Quantum Controls</span>
+            </div>
+            <div class="control-row" style="margin-top:1rem;">
+              <span class="control-label">Hopping t</span>
+              <span class="control-value" id="val-t">1.0</span><span class="unit-tag">eV</span>
+            </div>
+            <input type="range" id="slider-t" min="0.1" max="3" value="1.0" step="0.1">
+            <div class="control-row" style="margin-top:1rem;">
+              <span class="control-label">Offset ε</span>
+              <span class="control-value" id="val-eps">0.0</span><span class="unit-tag">eV</span>
+            </div>
+            <input type="range" id="slider-eps" min="-2" max="2" value="0" step="0.1">
           </div>
-          <table>
-            <tr><th>Quantity</th><th>Value</th></tr>
-            <tr><td>Dimension</td><td class="highlight-num" id="live-dim">3D</td></tr>
-            <tr><td>DOS near E_F</td><td class="highlight-pink">∝ √E</td></tr>
-            <tr><td>Tight-binding t</td><td class="highlight-num">1.0 eV</td></tr>
-          </table>
+          <div class="challenge-panel">
+            <div class="challenge-header">
+              <span class="challenge-icon" style="background:rgba(74,222,128,0.1);">📊</span>
+              <span class="challenge-title">Live Readout</span>
+            </div>
+            <table style="width:100%; margin-top:0.5rem;">
+              <tr style="text-align:left;"><th style="color:var(--text-dim);font-weight:normal;">Metric</th><th style="color:var(--text-dim);font-weight:normal;">Value</th></tr>
+              <tr style="color:var(--accent-cyan)"><td id="live-dim-label">Symmetry</td><td class="highlight-num" id="live-dim">3D</td></tr>
+              <tr style="color:var(--text-main)"><td style="color:var(--text-main)">Hopping t</td><td class="highlight-num" id="live-t">1.0 eV</td></tr>
+              <tr style="color:var(--text-main)"><td style="color:var(--text-main)">Bandwidth</td><td class="highlight-num" id="live-bw">4.0 eV</td></tr>
+            </table>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="plot-container" id="plot-dos-playground" style="min-height:350px;"></div>
+          <div class="plot-container" id="plot-arpes-main" style="min-height:350px;"></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- CHALLENGES -->
+  <!-- Challenges and Puzzles -->
   <div class="mode-section" id="section-challenge" style="display:none;">
-
     <div class="challenge-panel">
       <div class="challenge-header">
         <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span>
@@ -120,7 +191,7 @@
         <button class="btn" onclick="guessFermiType('metal')">Metal</button>
         <button class="btn" onclick="guessFermiType('insulator')">Insulator</button>
       </div>
-      <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;"><strong>Score:</strong> <span id="fermi-score">0</span> · <strong>Combo:</strong> <span id="fermi-combo">0</span></div>
+      <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;"><strong style="color:var(--text-main)">Score:</strong> <span id="fermi-score">0</span> · <strong style="color:var(--text-main)">Combo:</strong> <span id="fermi-combo">0</span></div>
       <div class="challenge-feedback" id="fermi-feedback"></div>
     </div>
 
@@ -158,9 +229,7 @@
     </div>
   </div>
 
-  <!-- PUZZLES -->
   <div class="mode-section" id="section-puzzle" style="display:none;">
-
     <div class="challenge-panel">
       <div class="challenge-header">
         <span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🧩</span>
@@ -217,9 +286,26 @@
   </div>
 
   <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; margin-top:2rem;">
-    <div></div>
-    <div>
-      <div class="challenge-panel" style="position:sticky; top:5rem;">
+    <div style="display:flex; gap:1rem; align-items:flex-start;">
+       <div class="challenge-panel" style="flex:1;">
+         <div class="challenge-header">
+           <span class="challenge-icon" style="background:rgba(0,240,255,0.08);">📖</span>
+           <span class="challenge-title">Lab Notes</span>
+         </div>
+         <div class="insight-card" style="font-size:0.9rem; line-height:1.6; color:var(--text-dim);">
+           The Density of States (DOS), $g(E)$, describes the number of electronic states per unit energy.
+           <br><br>
+           1. <b style="color:var(--accent-cyan)">3D Bulk: la $	o$ Bulk</b> $g(E) \propto \sqrt{E}$.
+           <br>
+           2. <b style="color:var(--accent-cyan)">2D Layer: la $	o$ Layer</b> $g(E)$ is a step-function.
+           <br>
+           3. <b style="color:var(--accent-cyan)">1D Wire: la $	o$ Wire</b> $g(E) \propto 1/\sqrt{E}$.
+           <br>
+           4. <b style="color:var(--accent-purple)">Carbon Allotropes: Honeycomb/Tubes/Spheres</b>. $g(E)$ varies from linear (Graphene) to spiky (CNT) to discrete (Fullerene).
+         </div>
+       </div>
+    </div>
+    <div class="challenge-panel" style="position:sticky; top:5rem;">
         <div class="challenge-header">
           <span class="challenge-icon" style="background:rgba(0,240,255,0.08);">🗺</span>
           <span class="challenge-title">Lab Navigator</span>
@@ -243,17 +329,14 @@
           <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
         </div>
       </div>
-    </div>
   </div>
-
 </div>
 
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
-<script src="eb_sim.js?v=1"></script>
-<script src="eb_apps_games.js?v=1"></script>
-
+<script src="eb_sim.js?v=7"></script>
+<script src="eb_apps_games.js?v=7"></script>
 <script src="../../shared_effects.js"></script>
 </body>
 </html>

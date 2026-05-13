@@ -146,7 +146,7 @@ function animateSuperposition(n, alpha) {
   frame();
 }
 
-function stopAnimation() {
+function stopQHOGameAnim() {
   __QHO.animating = false;
   if (__QHO.animFrame) cancelAnimationFrame(__QHO.animFrame);
 }
@@ -154,7 +154,7 @@ function stopAnimation() {
 function toggleAnimation() {
   var btn = document.getElementById('btn-animate-play');
   if (__QHO.animating) {
-    stopAnimation();
+    stopQHOGameAnim();
     btn.textContent = '⏵ Animate time evolution';
     btn.classList.remove('active');
   } else {
@@ -664,32 +664,35 @@ function buildModuleNav() {
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', function() {
-  // Init sliders for playground
-  var nSlider = document.getElementById('slider-n');
-  var aSlider = document.getElementById('slider-alpha');
+  // If plot-playground exists (legacy standalone page), init playground
+  var hasPlayground = !!document.getElementById('plot-playground');
+  if (hasPlayground) {
+    var nSlider = document.getElementById('slider-n');
+    var aSlider = document.getElementById('slider-alpha');
 
-  if (nSlider) {
-    nSlider.addEventListener('input', function(e) {
-      __QHO.n = parseInt(e.target.value);
-      document.getElementById('val-n').textContent = __QHO.n;
-      updateLiveReadout(__QHO.n, __QHO.alpha);
-      plotPlayground(__QHO.n, __QHO.alpha, __QHO.showClassical);
-    });
+    if (nSlider) {
+      nSlider.addEventListener('input', function(e) {
+        __QHO.n = parseInt(e.target.value);
+        document.getElementById('val-n').textContent = __QHO.n;
+        updateLiveReadout(__QHO.n, __QHO.alpha);
+        plotPlayground(__QHO.n, __QHO.alpha, __QHO.showClassical);
+      });
+    }
+
+    if (aSlider) {
+      aSlider.addEventListener('input', function(e) {
+        __QHO.alpha = parseFloat(e.target.value);
+        document.getElementById('val-alpha').textContent = __QHO.alpha.toFixed(2);
+      });
+    }
+
+    plotPlayground(0, 0, false);
+    updateLiveReadout(0, 0);
   }
 
-  if (aSlider) {
-    aSlider.addEventListener('input', function(e) {
-      __QHO.alpha = parseFloat(e.target.value);
-      document.getElementById('val-alpha').textContent = __QHO.alpha.toFixed(2);
-    });
-  }
-
-  // Initial plot
-  plotPlayground(0, 0, false);
-  updateLiveReadout(0, 0);
-
-  // Init challenges when mode switches
-  if (typeof setGameMode === 'function') {
+  // Init challenges when mode switches (only if challenge elements exist)
+  var hasChallenge = !!document.getElementById('challenge-target-plot');
+  if (hasChallenge && typeof setGameMode === 'function') {
     var origSetGameMode = setGameMode;
     setGameMode = function(mode) {
       origSetGameMode(mode);
@@ -705,13 +708,22 @@ document.addEventListener('DOMContentLoaded', function() {
     };
   }
 
-  // Build nav and badges
+  // Build nav and badges (shared UI)
   buildModuleNav();
 
-  // Update stats
-  var badges = __GameState.get('achievements') || [];
-  document.getElementById('stat-badges').textContent = badges.length;
-  var xp = __GameState.xp();
-  document.getElementById('stat-xp').textContent = xp;
-  document.getElementById('nav-xp').textContent = xp + ' XP';
+  // Update stats if elements exist
+  var badgeListEl = document.getElementById('stat-badges');
+  if (badgeListEl) {
+    var badges = __GameState.get('achievements') || [];
+    badgeListEl.textContent = badges.length;
+  }
+  var xpEl = document.getElementById('stat-xp');
+  if (xpEl) {
+    var xp = __GameState.xp();
+    xpEl.textContent = xp;
+  }
+  var navXpEl = document.getElementById('nav-xp');
+  if (navXpEl) {
+    navXpEl.textContent = __GameState.xp() + ' XP';
+  }
 });

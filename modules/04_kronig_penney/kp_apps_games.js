@@ -68,33 +68,11 @@ var __KP = {
 
 // ===== PLAYGROUND =====
 function initPlayground() {
-  var sliderV0 = document.getElementById('slider-v0');
-  var sliderB = document.getElementById('slider-b');
-  var sliderA = document.getElementById('slider-a');
-
-  if (sliderV0) {
-    sliderV0.addEventListener('input', function() {
-      __KP.V0 = parseFloat(this.value);
-      document.getElementById('val-v0').textContent = __KP.V0.toFixed(1);
-      updatePlayground();
-    });
-  }
-  if (sliderB) {
-    sliderB.addEventListener('input', function() {
-      __KP.b_ratio = parseFloat(this.value);
-      document.getElementById('val-b').textContent = __KP.b_ratio.toFixed(2);
-      updatePlayground();
-    });
-  }
-  if (sliderA) {
-    sliderA.addEventListener('input', function() {
-      var ratio = __KP.b_ratio;
-      __KP.a = parseFloat(this.value);
-      document.getElementById('val-a').textContent = __KP.a.toFixed(1);
-      updatePlayground();
-    });
-  }
-
+  // Sliders wired in kp_sim.js; just sync scheme buttons and state
+  var btnR = document.getElementById('btn-reduced');
+  var btnE = document.getElementById('btn-extended');
+  if (btnR) btnR.classList.toggle('active', __KP.scheme === 'reduced');
+  if (btnE) btnE.classList.toggle('active', __KP.scheme === 'extended');
   if (typeof state !== 'undefined') {
     state.V0 = __KP.V0;
     state.b = __KP.b_ratio * __KP.a;
@@ -246,13 +224,13 @@ function checkCrystalDesign() {
     if (c.streak >= 2) points += c.streak * 5;
     c.score += points;
     c.combo++;
-    __GameState.addXP(points, 'Crystal designed!');
+    _GameState.addXP(points, 'Crystal designed!');
     celebrateCorrect();
     fb.className = 'challenge-feedback success';
     fb.textContent = '✓ Perfect! Gap = ' + c.currentGap.toFixed(3) + ' matches target. +' + points + ' XP!';
     fb.style.display = 'block';
     if (c.score >= 200) {
-      __GameState.unlock({ id: 'crystal_engineer', title: 'Crystal Engineer', desc: 'Scored 200+ in Crystal Designer', icon: '🔷', xp: 25 });
+      _GameState.unlock({ id: 'crystal_engineer', title: 'Crystal Engineer', desc: 'Scored 200+ in Crystal Designer', icon: '🔷', xp: 25 });
     }
     setTimeout(function() {
       fb.style.display = 'none';
@@ -273,7 +251,7 @@ function checkCrystalDesign() {
 function skipCrystalDesign() {
   newCrystalDesignRound();
   updateCrystalDesignerPlot();
-  __GameState.addXP(-10, 'Skipped design');
+  _GameState.addXP(-10, 'Skipped design');
 }
 
 // ===== CHALLENGE 2: BLOCH OSCILLATION =====
@@ -326,9 +304,9 @@ function checkBlochOscillation() {
     fb.className = 'challenge-feedback success';
     fb.style.display = 'block';
     fb.innerHTML = '✓ Correct! ω_B = ' + omega_THz.toFixed(2) + ' THz, T_B = ' + T_ps.toFixed(2) + ' ps. Bloch oscillations are periodic motion of electrons in a lattice under an electric field.';
-    __GameState.addXP(75, 'Bloch oscillation solved!');
+    _GameState.addXP(75, 'Bloch oscillation solved!');
     celebrateCorrect();
-    __GameState.unlock({ id: 'bloch_racer', title: 'Bloch Racer', desc: 'Computed Bloch frequency correctly', icon: '〰', xp: 25 });
+    _GameState.unlock({ id: 'bloch_racer', title: 'Bloch Racer', desc: 'Computed Bloch frequency correctly', icon: '〰', xp: 25 });
     initBlochOscillation();
   } else {
     fb.className = 'challenge-feedback error';
@@ -343,7 +321,7 @@ function showBlochHint() {
   fb.className = 'challenge-feedback hint';
   fb.style.display = 'block';
   fb.textContent = '💡 Remember: ω_B (rad/s) = eEa/ℏ. Then f = ω_B/(2π) in Hz. Divide by 10¹² for THz. T_B = 1/f in seconds, multiply by 10¹² for ps.';
-  __GameState.addXP(-5, 'Hint used');
+  _GameState.addXP(-5, 'Hint used');
 }
 
 // ===== CHALLENGE 3: BANDGAP ESTIMATION =====
@@ -387,9 +365,9 @@ function checkBandgapEstimation() {
     fb.className = 'challenge-feedback success';
     fb.style.display = 'block';
     fb.innerHTML = '✓ Excellent! Nearly-free gap ≈ 2|V_G| = ' + predictedGap.toFixed(3) + ' ℏ²/ma². The Fourier component V_G = (2V₀/π)sin(πb/a) captures the periodic perturbation strength.';
-    __GameState.addXP(100, 'Bandgap estimated!');
+    _GameState.addXP(100, 'Bandgap estimated!');
     celebrateCorrect();
-    __GameState.unlock({ id: 'bandgap_architect', title: 'Bandgap Architect', desc: 'Mastered nearly-free electron gap estimation', icon: '📐', xp: 30 });
+    _GameState.unlock({ id: 'bandgap_architect', title: 'Bandgap Architect', desc: 'Mastered nearly-free electron gap estimation', icon: '📐', xp: 30 });
   } else {
     fb.className = 'challenge-feedback error';
     fb.style.display = 'block';
@@ -456,7 +434,7 @@ function checkTightBinding() {
     fb.className = 'challenge-feedback success';
     fb.style.display = 'block';
     fb.innerHTML = '✓ Correct! E(k) = E₀ − 2t cos(ka). In the tight-binding limit, electrons hop between nearest-neighbor atoms with amplitude t. The cosine dispersion arises from translational symmetry.';
-    __GameState.addXP(60, 'Tight-binding chain solved!');
+    _GameState.addXP(60, 'Tight-binding chain solved!');
     celebrateCorrect();
     document.querySelectorAll('#tb-slot-0, #tb-slot-1, #tb-slot-2').forEach(function(el) { el.classList.add('correct'); });
   } else {
@@ -491,9 +469,9 @@ function checkKPAssembly() {
     fb.className = 'challenge-feedback success';
     fb.style.display = 'block';
     fb.innerHTML = '✓ Perfect! cos(ka) = cos(αw)cosh(βb) + [(β²−α²)/(2αβ)]sin(αw)sinh(βb). This is the exact transcendental equation for the Kronig-Penney model with E < V₀.';
-    __GameState.addXP(80, 'K-P equation assembled!');
+    _GameState.addXP(80, 'K-P equation assembled!');
     celebrateCorrect();
-    __GameState.unlock({ id: 'kp_assembler', title: 'Crystal Engineer', desc: 'Assembled the Kronig-Penney equation', icon: '⚙', xp: 25 });
+    _GameState.unlock({ id: 'kp_assembler', title: 'Crystal Engineer', desc: 'Assembled the Kronig-Penney equation', icon: '⚙', xp: 25 });
     document.querySelectorAll('#kp-slot-0, #kp-slot-1, #kp-slot-2, #kp-slot-3').forEach(function(el) { el.classList.add('correct'); });
   } else {
     fb.className = 'challenge-feedback error';
@@ -576,9 +554,9 @@ function checkBragg() {
     fb.className = 'challenge-feedback success';
     fb.style.display = 'block';
     fb.innerHTML = '✓ Correct! Bragg condition: nλ = 2a. With λ = 2π/k, this gives k = nπ/a. For a = ' + b.a.toFixed(2) + ' nm and k = ' + b.k.toFixed(2) + 'π nm⁻¹, n = ' + b.n_target + '.';
-    __GameState.addXP(120, 'Bragg reflection mastered!');
+    _GameState.addXP(120, 'Bragg reflection mastered!');
     celebrateCorrect();
-    __GameState.unlock({ id: 'bragg_master', title: 'Bragg Master', desc: 'Matched all Bragg reflections', icon: '💎', xp: 35 });
+    _GameState.unlock({ id: 'bragg_master', title: 'Bragg Master', desc: 'Matched all Bragg reflections', icon: '💎', xp: 35 });
     setTimeout(function() { initBraggPuzzle(); fb.style.display = 'none'; }, 2000);
   } else {
     fb.className = 'challenge-feedback error';
@@ -592,6 +570,46 @@ function newBraggRound() {
   document.getElementById('bragg-feedback').style.display = 'none';
 }
 
+// ===== BADGES & SCOREBOARD =====
+var KP_BADGES = [
+  { id: 'crystal_engineer', name: 'Crystal Engineer', desc: 'Scored 200+ in Crystal Designer', icon: '🔷', xp: 25 },
+  { id: 'bloch_racer', name: 'Bloch Racer', desc: 'Computed Bloch frequency correctly', icon: '〰', xp: 25 },
+  { id: 'bandgap_architect', name: 'Bandgap Architect', desc: 'Mastered nearly-free electron gap estimation', icon: '📐', xp: 30 },
+  { id: 'kp_assembler', name: 'K-P Assembler', desc: 'Assembled the Kronig-Penney equation', icon: '⚙', xp: 25 },
+  { id: 'bragg_master', name: 'Bragg Master', desc: 'Matched all Bragg reflections', icon: '💎', xp: 35 },
+  { id: 'tb_solver', name: 'Tight-Binding Solver', desc: 'Solved the tight-binding chain puzzle', icon: '🔗', xp: 20 }
+];
+
+function renderBadgesKP() {
+  var list = document.getElementById('badge-list');
+  if (!list) return;
+  var earned = _GameState.get('achievements') || [];
+  var earnedIds = earned.map(function(a){ return a.id; });
+  list.innerHTML = '';
+  KP_BADGES.forEach(function(b){
+    var isEarned = earnedIds.indexOf(b.id) >= 0;
+    var div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0;border-bottom:1px solid var(--glass-border);';
+    div.innerHTML = '<span style="font-size:1.1rem;">' + (isEarned ? b.icon : '🔒') + '</span>' +
+      '<div style="flex:1;"><div style="font-size:0.8rem;color:' + (isEarned ? 'var(--text-main)' : 'var(--text-dim)') + '">' + b.name + '</div>' +
+      '<div style="font-size:0.7rem;color:var(--text-dim)">' + b.desc + '</div></div>';
+    list.appendChild(div);
+  });
+}
+
+function updateScoreboardKP() {
+  var earned = _GameState.get('achievements') || [];
+  var xp = _GameState.xp();
+  var ch = _GameState.get('challengesCompleted') || 0;
+  var pz = _GameState.get('puzzlesCompleted') || 0;
+  var elCh = document.getElementById('stat-challenges'); if (elCh) elCh.textContent = ch;
+  var elPz = document.getElementById('stat-puzzles'); if (elPz) elPz.textContent = pz;
+  var elXp = document.getElementById('stat-xp'); if (elXp) elXp.textContent = xp;
+  var elBd = document.getElementById('stat-badges'); if (elBd) elBd.textContent = earned.length;
+  var elNav = document.getElementById('nav-xp'); if (elNav) elNav.textContent = xp + ' XP';
+  renderBadgesKP();
+}
+
 // ===== MODULE NAV =====
 function buildModuleNav() {
   var nav = document.getElementById('module-nav');
@@ -599,13 +617,22 @@ function buildModuleNav() {
   nav.innerHTML = '';
 
   var modules = [
+    { num: '00', name: 'Crystal to Quantum', url: '../00_crystal_to_quantum/index.html' },
     { num: '01', name: 'QHO', url: '../01_qho/index.html' },
     { num: '02', name: 'Hydrogen', url: '../02_hydrogen/index.html' },
     { num: '03', name: 'Spin-1/2', url: '../03_spin/index.html' },
     { num: '04', name: 'KP Model', current: true },
-    { num: '05', name: 'Bands', url: '../05_energy_bands/index.html' },
-    { num: '06', name: 'Fermi', url: '../06_fermi_surface/index.html' },
-    { num: '07', name: 'Conductivity', url: '../07_conductivity/index.html' }
+    { num: '05', name: 'Energy Bands', url: '../05_energy_bands/index.html' },
+    { num: '06', name: 'Fermi Surface', url: '../06_fermi_surface/index.html' },
+    { num: '07', name: 'Conductivity', url: '../07_conductivity/index.html' },
+    { num: '08', name: 'Doped Semiconductors', url: '../08_doped_semiconductors/index.html' },
+    { num: '09', name: 'Junctions & Devices', url: '../09_junctions_devices/index.html' },
+    { num: '10', name: 'Optics & Dispersion', url: '../10_optics_dispersion/index.html' },
+    { num: '11', name: 'Laser Physics', url: '../11_laser_physics/index.html' },
+    { num: '12', name: 'Magnetic Materials', url: '../12_magnetic_materials/index.html' },
+    { num: '13', name: 'Thermal Properties', url: '../13_thermal_properties/index.html' },
+    { num: '14', name: 'Superconductivity', url: '../14_superconductivity/index.html' },
+    { num: '15', name: 'Nanoscale Physics', url: '../15_nanoscale_physics/index.html' }
   ];
 
   modules.forEach(function(m) {
@@ -630,13 +657,9 @@ function buildModuleNav() {
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', function() {
   initPlayground();
+  if (typeof initKP === 'function') initKP();
   buildModuleNav();
-
-  var badges = __GameState.get('achievements') || [];
-  document.getElementById('stat-badges').textContent = badges.length;
-  var xp = __GameState.xp();
-  document.getElementById('stat-xp').textContent = xp;
-  document.getElementById('nav-xp').textContent = xp + ' XP';
+  updateScoreboardKP();
 
   // Register init hooks so shared setGameMode calls them
   window.initChallenges = function() {

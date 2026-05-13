@@ -189,3 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
   updateNavXP();
   updateNavBadges();
 });
+
+// Expose to window for module access (alias for backward compatibility)
+window.__GameState = __GameState;
+window._GameState = __GameState;

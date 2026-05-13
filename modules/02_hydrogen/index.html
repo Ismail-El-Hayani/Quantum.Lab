@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hydrogen Lab — Physics Playground</title>
-<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <link rel="stylesheet" href="../../shared_styles.css">
 <style>
   .challenge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
@@ -29,6 +30,56 @@
   .level-bar { height: 4px; border-radius: 2px; background: var(--accent-cyan); transition: all 0.3s; }
   .level-name { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-dim); width: 50px; text-align: right; }
   .level-energy { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-yellow); width: 70px; }
+  
+  /* NEW ORGANIZED LAYOUT */
+  .lab-container { 
+    display: grid; 
+    grid-template-columns: 1fr 350px; 
+    gap: 2rem; 
+    align-items: start; 
+  }
+  .viz-area { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 1.5rem; 
+  }
+  .viz-grid { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 1.5rem; 
+  }
+  .sim-card { 
+    background: rgba(0,0,0,0.4); 
+    border: 1px solid var(--glass-border); 
+    border-radius: var(--radius-md); 
+    position: relative; 
+    overflow: hidden; 
+    transition: border-color 0.3s;
+  }
+  .sim-card:hover { border-color: var(--accent-cyan); }
+  .sim-card-label { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    right: 0; 
+    background: rgba(0, 240, 255, 0.1); 
+    color: var(--accent-cyan); 
+    font-family: var(--font-mono); 
+    font-size: 0.65rem; 
+    text-transform: uppercase; 
+    padding: 4px 12px; 
+    letter-spacing: 1px;
+    z-index: 10; 
+  }
+  .sim-content { 
+    height: 400px; 
+    width: 100%; 
+    display: block;
+  }
+  .full-width-sim { 
+    height: 300px; 
+    width: 100%; 
+  }
 </style>
 </head>
 <body>
@@ -43,13 +94,13 @@
   <div class="nav-stats">
     <div class="stat-badge"><span class="stat-icon">🌠</span><span class="stat-value">Hydrogen Lab</span></div>
     <div class="stat-badge"><span class="stat-icon">⭐</span><span class="stat-value" id="nav-xp">0 XP</span></div>
-  </div>
+  </div
 </nav>
 
 <div class="game-hero" style="padding-bottom:0;">
   <div class="level-badge">Module 02 · Level <span id="current-level">1</span> · Atomic Designer</div>
   <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">The Hydrogen Atom</span></h1>
-  <p class="hero-desc">The simplest atom reveals the deepest truths: orbitals, spectra, Zeeman splitting. Build atoms. Decode starlight.</p>
+  <p class="hero-desc">The simplest atom reveals the deepest truths: orbitals, spectra, and the quantum leap.</p>
 </div>
 
 <div class="game-container">
@@ -72,91 +123,111 @@
     <div class="playground-area">
       <div class="playground-header">
         <div class="playground-title">🔬 Orbital Sandbox</div>
-        <div class="playground-level">Explore quantum numbers n, l and their effect on the radial wavefunction and spectrum.</div>
+        <div class="playground-level">Interact with quantum numbers to observe the shift from classical orbits to probability density.</div>
       </div>
 
-      <div style="display:grid; grid-template-columns: 1fr 320px; gap: 1.5rem;">
-        <div>
-          <div class="plot-container" id="plot-orbitals" style="min-height:380px;"></div>
-          <div style="display:flex; justify-content:center; gap:1rem; margin-top:0.5rem; font-size:0.75rem; color:var(--text-dim);">
-            <span>Solid: R_nl(r)</span><span>Dashed: |R|²r²</span><span>Gold: ⟨r⟩</span>
+      <div class="lab-container">
+        <!-- MAIN VISUALS -->
+        <div class="viz-area">
+          <div class="viz-grid">
+            <div class="sim-card">
+              <div class="sim-card-label">Radial Wavefunction</div>
+              <div class="sim-content" id="plot-orbitals"></div>
+            </div>
+            <div class="sim-card">
+              <div class="sim-card-label">3D Orbital state</div>
+              <div class="sim-content" id="canvas-3d" style="cursor:move;"></div>
+            </div>
+          </div>
+          
+          <div class="sim-card">
+            <div class="sim-card-label">Emission Spectrum</div>
+            <div class="sim-content full-width-sim" id="plot-spectrum"></div>
+          </div>
+
+          <div class="sim-card">
+            <div class="sim-card-label">Zeeman Splitting</div>
+            <div class="sim-content full-width-sim" id="plot-zeeman"></div>
           </div>
         </div>
 
-        <div>
-          <!-- Controls -->
-          <div class="challenge-panel" style="margin-bottom:1rem;">
+        <!-- SIDEBAR CONTROLS -->
+        <div style="display:flex; flex-direction:column; gap: 1.5rem;">
+          <div class="challenge-panel">
             <div class="challenge-header">
               <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙</span>
-              <span class="challenge-title">Controls</span>
+              <span class="challenge-title">Quantum State Setup</span>
+            </div>
+            
+            <div style="margin: 1rem 0; padding: 0.8rem; background:rgba(0,0,0,0.2); border-radius:var(--radius-sm); border-left:3px solid var(--accent-cyan);">
+              <p style="font-size:0.75rem; color:var(--text-main); line-height:1.4; margin-bottom:0.8rem;">
+                  Configure the <strong style="color:var(--accent-cyan)">quantum numbers</strong> to transition between the Planetary Model and Quantum Clouds.
+              </p>
             </div>
 
-            <div style="margin-bottom:1rem;">
-              <div class="control-row">
-                <span class="control-label">Principal n</span>
-                <span class="control-value" id="val-h2-n">3</span>
+            <div style="margin-bottom:1.5rem;">
+              <div class="control-row" style="justify-content: space-between; align-items: center;">
+                <span class="control-label" style="font-weight:bold;">Principal n</span>
+                <span class="control-value" id="val-h2-n" style="background:var(--bg-elevated); padding:2px 8px; border-radius:4px; border:1px solid var(--glass-border);">3</span>
               </div>
-              <input type="range" id="slider-h2-n" min="1" max="6" value="3" step="1">
-              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Shell number. Higher n = larger atom.</p>
+              <input type="range" id="slider-h2-n" min="1" max="6" value="3" step="1" style="width:100%; margin: 8px 0;">
+              <p style="font-size:0.7rem;color:var(--text-dim);margin-top:0.3rem;">Shell energy and average radius.</p>
             </div>
 
-            <div style="margin-bottom:1rem;">
-              <div class="control-row">
-                <span class="control-label">Angular l</span>
-                <span class="control-value" id="val-h2-l">1</span>
+            <div style="margin-bottom:1.5rem;">
+              <div class="control-row" style="justify-content: space-between; align-items: center;">
+                <span class="control-label" style="font-weight:bold;">Angular l</span>
+                <span class="control-value" id="val-h2-l" style="background:var(--bg-elevated); padding:2px 8px; border-radius:4px; border:1px solid var(--glass-border);">1</span>
               </div>
-              <input type="range" id="slider-h2-l" min="0" max="5" value="1" step="1">
-              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Orbital shape. l = 0,1,2,3,4 = s,p,d,f,g.</p>
+              <input type="range" id="slider-h2-l" min="0" max="5" value="1" step="1" style="width:100%; margin: 8px 0;">
+              <p style="font-size:0.7rem;color:var(--text-dim);margin-top:0.3rem;">Orbital shape (s, p, d, f).</p>
             </div>
 
-            <div class="btn-group">
-              <button class="btn" onclick="plotSpectrum(__H.ni, __H.nf)">📡 Show Spectrum</button>
+            <div class="btn-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:0.7rem;">
+              <button class="btn" style="width:100%;" onclick="plotSpectrum(__H.ni, __H.nf)">📡 Spectrum</button>
+              <button class="btn" id="btn-reveal-wf" style="width:100%; background:var(--accent-purple); cursor:pointer;" onclick="toggleWavefunctionView()">🌌 Orbit Cloud</button>
             </div>
           </div>
 
-          <!-- Live Parameters -->
           <div class="challenge-panel">
             <div class="challenge-header">
               <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">📊</span>
               <span class="challenge-title">Live Readout</span>
             </div>
-            <table>
-              <tr><th>Quantity</th><th>Value</th></tr>
-              <tr><td>Energy E_n</td><td class="highlight-num" id="live-E">-1.51 eV</td></tr>
-              <tr><td>Bohr radius ⟨r⟩</td><td class="highlight-pink" id="live-r">6.0 a₀</td></tr>
-              <tr><td>Nodes</td><td class="highlight-num" id="live-nodes">1</td></tr>
-              <tr><td>Ionization</td><td>13.6 eV</td></tr>
-              <tr><td>Rydberg constant</td><td>10973731 m⁻¹</td></tr>
+            <table style="margin-top:0.5rem; width:100%; border-collapse: collapse;">
+              <tr style="color:var(--text-dim); font-size:0.7rem;"><th align="left">Quantity</th><th align="right">Value</th></tr>
+              <tr style="font-size:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <td align="left" style="padding:4px 0;">Energy E<sub>n</sub></td><td class="highlight-num" id="live-E" align="right">-1.51 eV</td>
+              </tr>
+              <tr style="font-size:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <td align="left" style="padding:4px 0;">Bohr radius ⟨r⟩</td><td class="highlight-pink" id="live-r" align="right">6.0 a₀</td>
+              </tr>
+              <tr style="font-size:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <td align="left" style="padding:4px 0;">Radial Nodes</td><td class="highlight-num" id="live-nodes" align="right">1</td>
+              </tr>
+              <tr style="font-size:0.8rem;">
+                <td align="left" style="padding:4px 0;">Ionization</td><td align="right">13.6 eV</td>
+              </tr>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- Spectrum view -->
-      <div class="plot-container" id="plot-spectrum" style="min-height:280px;margin-top:1.5rem;"></div>
-
-      <!-- Zeeman view -->
-      <div class="plot-container" id="plot-zeeman" style="min-height:200px;margin-top:1.5rem;"></div>
-    </div>
-
-    <!-- THEORY TAB -->
-    <div class="insight-card" style="margin-top:1rem;">
-      <div class="insight-title">✨ Why does this matter?</div>
-      <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
-        The hydrogen atom is the <strong>template</strong> for all atomic structure. Its Schrödinger solution gives 
-        the orbital shapes that organize the periodic table. The spectral lines (Lyman, Balmer, Paschen) 
-        encode the energy ladder. Every spectral observation of a star begins here.
-      </p>
-      <div class="equation-box" style="font-size:0.85rem;">
-        $$\psi_{nlm}(r,\theta,\phi) = R_{nl}(r)Y_{lm}(\theta,\phi), \quad E_n = -\frac{13.6\ \text{eV}}{n^2}$$
+      <div class="insight-card" style="margin-top:2rem;">
+        <div class="insight-title">✨ Theory: From Bohr to Schrödinger</div>
+        <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
+          The transition observed by clicking <b style="color:var(--accent-purple)">"Orbit Cloud"</b> represents the shift from the Bohr model (classical particles in fixed rings) to the Quantum Mechanical model. In the latter, we describe electrons via the <b style="color:var(--accent-cyan)">Wavefunction</i> \(\psi\).
+          <div class="equation-box" style="margin: 1rem 0; text-align:center;">
+            $$\psi_{nlm}(r, \theta, \phi) = R_{nl}(r) Y_{lm}(\theta, \phi)$$
+          </div>
+          The 3D view visualizes \(|\psi|^2\), the probability density of finding the electron at a specific point in space.
+        </p>
       </div>
     </div>
   </div>
 
-  <!-- ===== CHALLENGE MODE ===== -->
+  <!-- CHALLENGE MODE -->
   <div class="mode-section" id="section-challenge" style="display:none;">
-
-    <!-- CHALLENGE 1: Spectral Detective -->
     <div class="challenge-panel">
       <div class="challenge-header">
         <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span>
@@ -168,15 +239,11 @@
         Each correct match earns 50 XP. Wrong answers break your combo streak.
       </div>
       <div class="challenge-reward">🏆 Reward: 50 XP · Combo bonus: +5 XP per streak</div>
-
       <div class="timer-bar"><div class="timer-fill" id="spec-timer" style="width:100%"></div></div>
-
       <div id="spec-target-text" style="font-size:1rem;margin-bottom:1rem;color:var(--text-main);">
         🔎 <strong>Target photon:</strong> <span id="spec-energy">?</span> eV · Which transition?
       </div>
-
       <div class="spectrum-strip" id="spectrum-strip"></div>
-
       <div style="display:flex; align-items:center; gap:1.5rem; margin-top:1rem;">
         <div style="font-size:0.85rem;color:var(--text-muted);">
           <strong>Score:</strong> <span id="spec-score">0</span> · 
@@ -184,11 +251,9 @@
         </div>
         <button class="btn" onclick="showSpecHint()">💡 Hint</button>
       </div>
-
       <div class="challenge-feedback" id="spec-feedback"></div>
     </div>
 
-    <!-- CHALLENGE 2: Fine Structure -->
     <div class="challenge-panel">
       <div class="challenge-header">
         <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🎯</span>
@@ -199,9 +264,7 @@
         Spin-orbit coupling splits each level into j = l ± ½. Identify which j is lower in energy for the n=2, l=1 state.
       </div>
       <div class="challenge-reward">🏆 Reward: 75 XP · "Fine Structure Analyst" badge</div>
-
       <div class="plot-container" id="plot-fine-structure" style="height:260px;"></div>
-
       <div style="display:flex; gap:1rem; margin-top:1rem;">
         <button class="btn" onclick="checkFineStructure('1/2')">j = 1/2 is lower</button>
         <button class="btn" onclick="checkFineStructure('3/2')">j = 3/2 is lower</button>
@@ -209,7 +272,6 @@
       <div class="challenge-feedback" id="fine-feedback"></div>
     </div>
 
-    <!-- CHALLENGE 3: Bohr Radius Scaling -->
     <div class="challenge-panel">
       <div class="challenge-header">
         <span class="challenge-icon" style="background:rgba(74,222,128,0.12);">🏎</span>
@@ -221,7 +283,6 @@
         how many times larger is the n=3 state?
       </div>
       <div class="challenge-reward">🏆 Reward: 100 XP + "Bohr Master" badge</div>
-
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
         <div>
           <div class="btn-group" style="flex-direction:column;gap:0.5rem;">
@@ -237,10 +298,8 @@
     </div>
   </div>
 
-  <!-- ===== PUZZLE MODE ===== -->
+  <!-- PUZZLE MODE -->
   <div class="mode-section" id="section-puzzle" style="display:none;">
-
-    <!-- PUZZLE 1: Aufbau Principle -->
     <div class="challenge-panel">
       <div class="challenge-header">
         <span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🧩</span>
@@ -252,7 +311,6 @@
         Drag electrons from the pool into the energy slots.
       </div>
       <div class="challenge-reward">🏆 Reward: 60 XP · "Aufbau Sage" badge</div>
-
       <div style="display:grid; grid-template-columns: 1fr 140px; gap:1rem;">
         <div class="level-diagram" id="aufbau-board"></div>
         <div style="background:var(--bg-elevated);border-radius:var(--radius-sm);padding:0.8rem;">
@@ -264,7 +322,6 @@
       <button class="btn" onclick="checkAufbau()">✓ Check Configuration</button>
     </div>
 
-    <!-- PUZZLE 2: Orbital Angular Momentum -->
     <div class="challenge-panel">
       <div class="challenge-header">
         <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🧩</span>
@@ -275,25 +332,22 @@
         Each orbital label corresponds to specific quantum numbers l and m. Match them correctly.
       </div>
       <div class="challenge-reward">🏆 Reward: 80 XP + "Orbital Master" badge</div>
-
       <div id="orbital-matches" style="margin-top:0.5rem;"></div>
       <div id="orbital-feedback" class="challenge-feedback"></div>
       <button class="btn" onclick="checkOrbitalPuzzle()">✓ Check Matches</button>
     </div>
 
-    <!-- PUZZLE 3: Hund's Rule -->
     <div class="challenge-panel">
       <div class="challenge-header">
         <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🧩</span>
-        <span class="challenge-title">Puzzle 3: Hund's Rule Ordering</span>
+        <span class="challenge-title">Puzzle 3: Hund' la Rule Ordering</span>
         <span class="challenge-difficulty master">Master</span>
       </div>
       <div class="challenge-desc">
         Ordering electron configurations by energy is NOT simply by n. 
         Click configurations in the correct filling order (lowest energy first).
       </div>
-      <div class="challenge-reward">🏆 Reward: 120 XP + "Hund's Wizard" badge</div>
-
+      <div class="challenge-reward">🏆 Reward: 120 XP + "Hund' la Wizard" badge</div>
       <div id="hund-list" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem;"></div>
       <div id="hund-feedback" class="challenge-feedback"></div>
       <button class="btn" onclick="checkHundPuzzle()">✓ Verify Order</button>
@@ -303,9 +357,7 @@
 
   <!-- RIGHT SIDEBAR -->
   <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; margin-top:2rem;">
-    <div>
-      <!-- Left column has the modes -->
-    </div>
+    <div></div>
     <div>
       <div class="challenge-panel" style="position:sticky; top:5rem;">
         <div class="challenge-header">
@@ -355,7 +407,6 @@
 <script src="../../shared_interactive.js"></script>
 <script src="hydrogen_sim.js?v=1"></script>
 <script src="hydrogen_apps_games.js?v=1"></script>
-
 <script src="../../shared_effects.js"></script>
 </body>
 </html>

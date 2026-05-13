@@ -50,7 +50,12 @@
 <div class="game-hero" style="padding-bottom:0;">
   <div class="level-badge">Module 01 · Level <span id="current-level">1</span> · Quantum Initiate</div>
   <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">The Quantum Harmonic Oscillator</span></h1>
-  <p class="hero-desc">Every vibration in nature traces back to this equation. Drag the quantum number, watch the wave oscillate. Re(ψ) in cyan, Im(ψ) in pink, |ψ|² in gold. The coherent state oscillates like a classical particle.</p>
+  <p class="hero-desc">
+    <b>Simulation 1: The Wavefunction Sandbox</b><br>
+    Explore the fundamental "building block" of quantum vibrations. This sandbox visualizes the <b>time evolution</b> of a particle in a parabolic potential. 
+    Switch between <b>Eigenstates</b> (stationary energy levels), <b>Superpositions</b> (interfering waves), and <b>Coherent States</b> (the bridge to classical physics).
+    <br>Re(ψ) in cyan, Im(ψ) in pink, |ψ|² in gold.
+  </p>
 </div>
 
 <div class="game-container">
@@ -77,9 +82,16 @@
       </div>
 
       <div style="display:grid; grid-template-columns: 1fr 320px; gap: 1.5rem;">
-        <div>
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
           <!-- Main wave plot: Re ψ, Im ψ, |ψ|² -->
           <div class="plot-container" id="plot-psi" style="min-height:300px;"></div>
+          
+          <!-- ATOMIC 3D Plot (Revealed when Atom mode active) -->
+          <div class="plot-container" id="plot-atom-3d" style="min-height:500px; display:none;"></div>
+          
+          <!-- PHASE SPACE: WIGNER PLOT (New Integration) -->
+          <div class="plot-container" id="plot-wigner" style="min-height:300px;"></div>
+
           <div class="legend-bar" style="display:flex; justify-content:center; gap:1.5rem; margin-top:0.5rem; font-size:0.75rem; color:var(--text-dim);">
             <span><span style="color:#00f0ff;">—</span> Re ψ(x)</span>
             <span><span style="color:#ff4ecd;">—</span> Im ψ(x)</span>
@@ -94,85 +106,84 @@
             <span id="caption-super" style="display:none;"><strong>Super mode:</strong> Two eigenstates interfere. The gold probability density breathes and sloshes left-right as the two phases run at different speeds.</span>
             <span id="caption-coherent" style="display:none;"><strong>Coherent mode:</strong> The whole Gaussian packet slides back and forth like a classical ball on a spring, hitting the green turning points and rebounding.</span>
           </div>
-
           <!-- Classical vs Quantum comparison -->
           <div class="plot-container" id="plot-classical" style="min-height:260px; margin-top:1.5rem;"></div>
-
           <!-- Energy levels -->
           <div class="plot-container" id="plot-energy" style="min-height:200px; margin-top:1.5rem;"></div>
-
-          <!-- Parameter Descriptions -->
-          <div class="insight-card" style="margin-top:1.5rem;">
-            <div class="insight-title">📘 Parameter Guide — What Each Slider Does</div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top:0.8rem; font-size:0.85rem; color:var(--text-muted); line-height:1.65;">
-              <div>
-                <strong style="color:var(--accent-cyan);">Quantum number n</strong> (0–10)
-                <br/>Chooses the eigenstate |n⟩. Each increment adds one node to ψ(x) and raises energy by exactly ℏω. At n = 0 the wave is a simple Gaussian with zero-point energy ½ℏω.
-              </div>
-              <div>
-                <strong style="color:var(--accent-purple);">Second state m</strong> (0–10)
-                <br/>Only active in <em>Superposition</em> mode. Builds |Ψ⟩ = c₀|n⟩ + c₁|m⟩. Interference between the two components makes |ψ|² breathe and slosh in time.
-              </div>
-              <div>
-                <strong style="color:var(--accent-cyan);">Re(α)</strong> (0–5)
-                <br/>Only active in <em>Coherent</em> mode. Shifts the Gaussian center in position: ⟨x⟩ = √2·Re(α). This is how far the classical oscillator is pulled from equilibrium.
-              </div>
-              <div>
-                <strong style="color:var(--accent-pink);">Im(α)</strong> (−5 to +5)
-                <br/>Only active in <em>Coherent</em> mode. Gives the packet an initial momentum kick: ⟨p⟩ = √2·Im(α). A purely imaginary α is a momentum-boosted state.
-              </div>
-              <div>
-                <strong style="color:#ffd54f;">Speed</strong> (0.1–3×)
-                <br/>Multiplies the real-time clock for the animation. 1× is natural oscillation at angular frequency ω. Higher values let you watch many periods quickly.
-              </div>
-              <div>
-                <strong style="color:#4ade80;">Time t</strong> (readout)
-                <br/>Current phase of the wavefunction evolution in units of 1/ω. Eigenstates only acquire a global phase (invisible in |ψ|²); superpositions and coherent states show real motion.
-              </div>
-            </div>
-
-            <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid var(--glass-border); font-size:0.85rem; color:var(--text-muted); line-height:1.65;">
-              <strong style="color:var(--text-main);">State Mode Switcher</strong> — Choose between three kinds of quantum motion:
-              <ul style="margin:0.4rem 0 0 1.2rem; padding:0;">
-                <li><strong>Eigen</strong>: Stationary state |n⟩. Re ψ and Im ψ oscillate in place; |ψ|² is frozen. The particle has definite energy but no definite position.</li>
-                <li><strong>Super</strong>: Mixture of two eigenstates. Energy is uncertain; the probability density breathes and travels as the two phases evolve at different rates.</li>
-                <li><strong>Coherent</strong>: A displaced Gaussian that slides back and forth like a classical ball on a spring — the closest quantum analog to macroscopic motion.</li>
-              </ul>
-            </div>
-
-            <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid var(--glass-border); font-size:0.85rem; color:var(--text-muted); line-height:1.65;">
-              <strong style="color:var(--text-main);">Live Readout Legend</strong>
-              <ul style="margin:0.4rem 0 0 1.2rem; padding:0;">
-                <li><strong>Energy E</strong>: Expectation value ⟨E⟩ for the current state. For eigenstates this is exactly (n+½)ℏω.</li>
-                <li><strong>Zero-point</strong>: The irreducible ½ℏω that remains even at T = 0 K — the uncertainty principle in action.</li>
-                <li><strong>Classical turning</strong>: ±√(2E) — the amplitude a classical oscillator with the same total energy would reach.</li>
-                <li><strong>⟨x⟩</strong>: Mean position. Zero for all eigenstates; oscillates sinusoidally for coherent states.</li>
-                <li><strong>⟨x²⟩</strong>: Second moment. Grows linearly with n because higher states spread farther.</li>
-                <li><strong>Δx</strong>: Position uncertainty √(⟨x²⟩−⟨x⟩²). For the ground state Δx = √(ℏ/2mω) ≈ 0.707 in these units.</li>
-              </ul>
-            </div>
-          </div>
         </div>
 
         <div>
-          <!-- State mode selector -->
-          <div class="challenge-panel" style="margin-bottom:1rem;">
-            <div class="challenge-header">
-              <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">🎭</span>
-              <span class="challenge-title">State Type</span>
-            </div>
-            <div class="mode-btn-group">
-              <button class="btn active" id="btn-eigen" onclick="setStateMode('eigenstate')">Eigen</button>
-              <button class="btn" id="btn-super" onclick="setStateMode('superposition')">Super</button>
-              <button class="btn" id="btn-coherent" onclick="setStateMode('coherent')">Coherent</button>
-            </div>
-          </div>
+    <div class="challenge-panel" style="margin-bottom:1rem;">
+      <div class="challenge-header">
+        <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">🌌</span>
+        <span class="challenge-title">System Selection</span>
+      </div>
+      <div class="mode-btn-group">
+        <button class="btn active" id="btn-sys-qho" onclick="setSystem('qho')">1D Harmonic</button>
+        <button class="btn" id="btn-sys-atom" onclick="setSystem('atom')">3D Hydrogen Atom</button>
+      </div>
+    </div>
+
+    <!-- QHO State selector -->
+    <div id="qho-controls-panel">
+      <div class="challenge-panel" style="margin-bottom:1rem;">
+        <div class="challenge-header">
+          <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">🎭</span>
+          <span class="challenge-title">State Type</span>
+        </div>
+        <div class="mode-btn-group">
+          <button class="btn active" id="btn-eigen" onclick="setStateMode('eigenstate')">Eigen</button>
+          <button class="btn" id="btn-super" onclick="setStateMode('superposition')">Super</button>
+          <button class="btn" id="btn-coherent" onclick="setStateMode('coherent')">Coherent</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ATOM State selector -->
+    <div id="atom-controls-panel" style="display:none;">
+      <div class="challenge-panel" style="margin-bottom:1rem;">
+        <div class="challenge-header">
+          <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">⚛️</span>
+          <span class="challenge-title">Orbital Quantum Numbers</span>
+        </div>
+        
+        <div class="control-row">
+          <span class="control-label">n (Principal)</span>
+          <span class="control-value" id="val-atom-n">1</span>
+        </div>
+        <input type="range" id="slider-atom-n" min="1" max="5" value="1" step="1">
+        <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Energy level and size of orbital.</p>
+
+        <div class="control-row" style="margin-top:0.6rem;">
+          <span class="control-label">l (Angular)</span>
+          <span class="control-value" id="val-atom-l">0</span>
+        </div>
+        <input type="range" id="slider-atom-l" min="0" max="4" value="0" step="1">
+        <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Orbital shape (s, p, d, f).</p>
+
+        <div class="control-row" style="margin-top:0.6rem;">
+          <span class="control-label">m (Magnetic)</span>
+          <span class="control-value" id="val-atom-m">0</span>
+        </div>
+        <input type="range" id="slider-atom-m" min="-4" max="4" value="0" step="1">
+        <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Orientation in space.</p>
+      </div>
+    </div>
 
           <!-- Controls -->
           <div class="challenge-panel" style="margin-bottom:1rem;">
             <div class="challenge-header">
               <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙</span>
               <span class="challenge-title">Controls</span>
+            </div>
+
+            <div id="omega-control" style="margin-bottom:1rem;">
+              <div class="control-row">
+                <span class="control-label">Frequency ω (K/m)</span>
+                <span class="control-value" id="val-omega">1.0</span>
+              </div>
+              <input type="range" id="slider-omega" min="0.5" max="2.0" value="1.0" step="0.1">
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Controls the curvature of the potential well and cycle speed.</p>
             </div>
 
             <div style="margin-bottom:1rem;">
@@ -254,7 +265,7 @@
         The <strong>coherent state</strong> |α⟩ is a displaced Gaussian that oscillates back and forth like a classical particle — the closest quantum analog to a macroscopic oscillator.
       </p>
       <div class="equation-box" style="font-size:0.85rem;">
-        $$H = \frac{p^2}{2m} + \frac{1}{2}m\omega^2 x^2, \quad E_n = \hbar\omega\left(n + \frac{1}{2}\right), \quad |\alpha(t)\rangle = |\alpha(0)e^{-i\omega t}\rangle$$
+        $$H = \\frac{p^2}{2m} + \\frac{1}{2}m\\omega^2 x^2, \\quad E_n = \\hbar\\omega\\left(n + \\frac{1}{2}\\right), \\quad |\\alpha(t)\\rangle = |\\alpha(0)e^{-i\\omega t}\\rangle$$
       </div>
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top:1rem;">
         <div style="font-size:0.85rem; color:var(--text-muted);">
@@ -500,35 +511,14 @@
       </div>
     </div>
   </div>
-
 </div>
 
-<script src="../../shared_ui.js"></script>
-<script src="../../shared_games.js"></script>
-<script src="../../shared_interactive.js"></script>
-<script src="qho_sim.js?v=3"></script>
+<script src="qho_sim.js"></script>
 <script src="qho_apps.js"></script>
-<script src="qho_apps_games.js"></script>
+<script src="../../shared_ui.js"></script>
+<script src="../../shared_interactive.js"></script>
+<script src="../../shared_games.js"></script>
 <script src="../../shared_effects.js"></script>
-
-<script>
-// Expose helper for state mode switching from buttons
-function setStateMode(mode) {
-  state.mode = mode;
-  // Update button styling
-  document.getElementById('btn-eigen').className = mode === 'eigenstate' ? 'btn active' : 'btn';
-  document.getElementById('btn-super').className = mode === 'superposition' ? 'btn active' : 'btn';
-  document.getElementById('btn-coherent').className = mode === 'coherent' ? 'btn active' : 'btn';
-  // Show/hide controls
-  document.getElementById('m-control').style.display = mode === 'superposition' ? 'block' : 'none';
-  document.getElementById('alpha-controls').style.display = mode === 'coherent' ? 'block' : 'none';
-  // Show/hide captions
-  document.getElementById('caption-eigen').style.display = mode === 'eigenstate' ? 'inline' : 'none';
-  document.getElementById('caption-super').style.display = mode === 'superposition' ? 'inline' : 'none';
-  document.getElementById('caption-coherent').style.display = mode === 'coherent' ? 'inline' : 'none';
-  updateWavePlot();
-}
-</script>
-
+<script src="qho_apps_games.js"></script>
 </body>
 </html>

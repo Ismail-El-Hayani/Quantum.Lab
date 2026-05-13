@@ -1,8 +1,6 @@
 /**
- * Quantum Harmonic Oscillator — Physics Engine (v3)
- * Hermite wavefunctions, time evolution, coherent states, superpositions.
- * Matches Wikipedia animation: Re(ψ) blue, Im(ψ) red, |ψ|² envelope,
- * classical ball-on-spring comparison, and coherent-state oscillation.
+ * Quantum Harmonic Oscillator & Hydrogen Atom Physics Engine (v4)
+ * Integrated 1D QHO and 3D Atomic Orbitals.
  * Natural units: m = omega = hbar = 1
  */
 'use strict';
@@ -38,10 +36,6 @@ function psi_n(n, xArr) {
 
 function energy_n(n) { return n + 0.5; }
 
-function classical_turning(n) { return Math.sqrt(2 * n + 1); }
-
-// ── COMPLEX TIME-EVOLVED EIGENSTATE ─────────────────────────
-// ψ_n(x,t) = ψ_n(x) * e^{-i E_n t}  (natural units)
 function psi_n_time(n, xArr, t) {
   const psi = psi_n(n, xArr);
   const E = energy_n(n);
@@ -53,12 +47,9 @@ function psi_n_time(n, xArr, t) {
     re[i] = psi[i] * cosEt;
     im[i] = -psi[i] * sinEt;
   }
-  return { re: re, im: im, prob: psi }; // |ψ|² is time-independent for eigenstates
+  return { re: re, im: im, prob: psi };
 }
 
-// ── SUPERPOSITION ───────────────────────────────────────────
-// |Ψ⟩ = c0 |n⟩ + c1 |m⟩  with time evolution
-// Ψ(x,t) = c0 ψ_n(x) e^{-iE_n t} + c1 ψ_m(x) e^{-iE_m t}
 function psi_superposition(n, m, cn, cm, xArr, t) {
   const psiN = psi_n(n, xArr);
   const psiM = psi_n(m, xArr);
@@ -79,9 +70,6 @@ function psi_superposition(n, m, cn, cm, xArr, t) {
   return { re: re, im: im, prob: prob };
 }
 
-// ── COHERENT STATE |α⟩ ──────────────────────────────────────
-// α(t) = α(0) e^{-iωt}  → x₀(t)=√2 Re[α(t)], p₀(t)=√2 Im[α(t)]
-// Position-space: displaced Gaussian oscillating in the well
 function coherentState(alpha_re, alpha_im, xArr, t) {
   const alpha_t_re = alpha_re * Math.cos(t) + alpha_im * Math.sin(t);
   const alpha_t_im = -alpha_re * Math.sin(t) + alpha_im * Math.cos(t);
@@ -95,7 +83,7 @@ function coherentState(alpha_re, alpha_im, xArr, t) {
   for (let i = 0; i < N; i++) {
     const dx = xArr[i] - x0;
     const envelope = pref * Math.exp(-dx * dx / 2);
-    const phase = p0 * xArr[i] - p0 * x0 / 2; // kinetic + displacement phase
+    const phase = p0 * xArr[i] - p0 * x0 / 2;
     re[i] = envelope * Math.cos(phase);
     im[i] = envelope * Math.sin(phase);
     prob[i] = envelope * envelope;
@@ -103,13 +91,6 @@ function coherentState(alpha_re, alpha_im, xArr, t) {
   return { re: re, im: im, prob: prob, x0: x0, p0: p0 };
 }
 
-// ── CLASSICAL OSCILLATOR ────────────────────────────────────
-// x_cl(t) = A cos(t),  p_cl(t) = -A sin(t)   (unit mass, ω=1)
-function classicalOscillator(A, t) {
-  return { x: A * Math.cos(t), p: -A * Math.cos(t - Math.PI / 2) };
-}
-
-// ── PLOTTING HELPERS ────────────────────────────────────────
 function _plot(id, traces, lay, cfg) {
   var el = document.getElementById(id);
   if (!el) return;
@@ -118,30 +99,31 @@ function _plot(id, traces, lay, cfg) {
 
 // ── STATE ───────────────────────────────────────────────────
 var state = {
-  mode: 'eigenstate',      // 'eigenstate' | 'superposition' | 'coherent'
-  n: 0, m: 3,             // for eigenstate and superposition
+  system: 'qho',               // 'qho' | 'atom'
+  mode: 'eigenstate',          // 'eigenstate' | 'superposition' | 'coherent'
+  n: 0, m: 3,
   cn: 1/Math.SQRT2, cm: 1/Math.SQRT2,
   alpha_re: 2.0, alpha_im: 0,
   time: 0,
   animating: false, animFrame: null,
   showClassical: true,
   speed: 1.0,
-  xRange: 7
+  omega: 1.0,
+  xRange: 7,
+  trajectory: []
 };
 
-// ── X GRID ──────────────────────────────────────────────────
 function makeX() {
   const arr = [];
   for (let i = 0; i < 500; i++) arr.push(-state.xRange + i * 2 * state.xRange / 499);
   return arr;
 }
 
-// ── MAIN WAVE PLOT (Re ψ, Im ψ, |ψ|²) ──────────────────────
 function updateWavePlot() {
+  if (state.system !== 'qho') return;
   const xArr = makeX();
-  const t = state.time;
+  const t = state.time * state.omega;
   let re, im, prob, x0 = 0, p0 = 0;
-
   if (state.mode === 'eigenstate') {
     const psi = psi_n_time(state.n, xArr, t);
     re = psi.re; im = psi.im; prob = psi.prob;
@@ -152,179 +134,116 @@ function updateWavePlot() {
     const cs = coherentState(state.alpha_re, state.alpha_im, xArr, t);
     re = cs.re; im = cs.im; prob = cs.prob; x0 = cs.x0; p0 = cs.p0;
   }
-
   const traces = [
-    { x: xArr, y: re, name: 'Re ψ(x)', mode: 'lines',
-      line: { color: '#00f0ff', width: 2 }, legendgroup: 're' },
-    { x: xArr, y: im, name: 'Im ψ(x)', mode: 'lines',
-      line: { color: '#ff4ecd', width: 2 }, legendgroup: 'im' },
-    { x: xArr, y: prob, name: '|ψ|²', mode: 'lines',
-      line: { color: '#ffd54f', width: 2 }, fill: 'tozeroy', fillcolor: 'rgba(255,213,79,0.15)' }
+    { x: xArr, y: re, name: 'Re ψ(x)', mode: 'lines', line: { color: '#00f0ff', width: 2 }, legendgroup: 're' },
+    { x: xArr, y: im, name: 'Im ψ(x)', mode: 'lines', line: { color: '#ff4ecd', width: 2 }, legendgroup: 'im' },
+    { x: xArr, y: prob, name: '|ψ|²', mode: 'lines', line: { color: '#ffd54f', width: 2 }, fill: 'tozeroy', fillcolor: 'rgba(255,213,79,0.15)' }
   ];
-
-  // Classical turning points
   const E = state.mode === 'eigenstate' ? energy_n(state.n) :
             state.mode === 'superposition' ? (state.cn*state.cn*energy_n(state.n) + state.cm*state.cm*energy_n(state.m)) :
             (state.alpha_re*state.alpha_re + state.alpha_im*state.alpha_im + 0.5);
   const xTP = Math.sqrt(2 * E);
-  traces.push(
-    { x: [xTP, xTP], y: [-2, 2], mode: 'lines',
-      line: { color: '#4ade80', width: 1.5, dash: 'dot' }, showlegend: false },
-    { x: [-xTP, -xTP], y: [-2, 2], mode: 'lines',
-      line: { color: '#4ade80', width: 1.5, dash: 'dot' }, showlegend: false }
-  );
-
-  // Coherent-state center marker
+  traces.push({ x: [xTP, xTP], y: [-2, 2], mode: 'lines', line: { color: '#4ade80', width: 1.5, dash: 'dot' }, showlegend: false });
+  traces.push({ x: [-xTP, -xTP], y: [-2, 2], mode: 'lines', line: { color: '#4ade80', width: 1.5, dash: 'dot' }, showlegend: false });
   if (state.mode === 'coherent') {
-    traces.push({
-      x: [x0], y: [0], mode: 'markers',
-      marker: { size: 16, color: '#ffd54f', symbol: 'diamond', line: { color: '#fff', width: 1 } },
-      name: '⟨x⟩', showlegend: true
-    });
+    traces.push({ x: [x0], y: [0], mode: 'markers', marker: { size: 16, color: '#ffd54f', symbol: 'diamond', line: { color: '#fff', width: 1 } }, name: '⟨x⟩', showlegend: true });
   }
-
   const layout = {
-    title: {
-      text: state.mode === 'eigenstate' ? 'Eigenstate |' + state.n + '⟩ — Re(ψ) blue, Im(ψ) red, |ψ|² gold' :
-            state.mode === 'superposition' ? 'Superposition (' + state.cn.toFixed(2) + '|' + state.n + '⟩ + ' + state.cm.toFixed(2) + '|' + state.m + '⟩)' :
-            'Coherent State |α=' + state.alpha_re.toFixed(1) + '+i' + state.alpha_im.toFixed(1) + '⟩ — oscillates like classical particle',
-      font: { size: 13, color: '#e0e0f0' }
-    },
-    xaxis: { title: 'x (ħ/mω)^{1/2}', gridcolor: '#2a2a3a', zerolinecolor: '#3a3a55', range: [-state.xRange, state.xRange] },
-    yaxis: { title: 'Amplitude / Probability', gridcolor: '#2a2a3a', range: [-1.2, 1.4] },
-    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
-    font: { color: '#e0e0f0', family: 'JetBrains Mono, monospace' },
-    legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(10,10,15,0.8)', bordercolor: '#2a2a3a', borderwidth: 1 },
-    margin: { l: 50, r: 20, t: 50, b: 40 },
-    shapes: [
-      { type: 'line', x0: 0, x1: 0, y0: -1.2, y1: 1.4,
-        line: { color: 'rgba(255,255,255,0.06)', width: 1 } }
-    ]
+    title: { text: state.mode === 'eigenstate' ? 'Eigenstate |' + state.n + '⟩' : state.mode === 'superposition' ? 'Superposition' : 'Coherent State', font: { size: 13, color: '#e0e0f0' } },
+    xaxis: { title: 'x', gridcolor: '#2a2a3a', zerolinecolor: '#3a3a55', range: [-state.xRange, state.xRange] },
+    yaxis: { title: 'Amplitude', gridcolor: '#2a2a3a', range: [-1.2, 1.4] },
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#e0e0f0', family: 'JetBrains Mono, monospace' },
+    margin: { l: 50, r: 20, t: 50, b: 40 }
   };
-
   _plot('plot-psi', traces, layout);
-
-  // Classical comparison plot
-  if (state.showClassical) updateClassicalPlot(E, x0);
-
-  // Update energy levels
+  updateWigner();
   updateEnergyPlot();
-
-  // Live readouts
+  updateClassicalPlot(E);
   updateReadouts(E, x0, p0, prob, xArr);
 }
 
-// ── CLASSICAL COMPARISON PLOT ────────────────────────────────
-function updateClassicalPlot(E, xCenter) {
-  const xTP = Math.sqrt(2 * E);
-  const xArr = makeX();
-
-  // Classical probability P(x) ∝ 1/√(xTP² - x²)
-  const xCl = [], pCl = [];
-  for (let i = 0; i < xArr.length; i++) {
-    const x = xArr[i];
-    if (Math.abs(x) < xTP - 0.01) {
-      xCl.push(x);
-      pCl.push(1 / (Math.PI * Math.sqrt(xTP * xTP - x * x)));
-    }
-  }
-
-  // Time trajectory: classical ball position vs time
-  const tArr = [], xTraj = [], xQuantum = [];
-  for (let i = 0; i <= 200; i++) {
-    const t = i * 4 * Math.PI / 200;
-    tArr.push(t);
-    xTraj.push(xTP * Math.cos(t));
-    if (state.mode === 'coherent') {
-      const cs = coherentState(state.alpha_re, state.alpha_im, [0], t);
-      xQuantum.push(cs.x0);
-    } else {
-      xQuantum.push(0);
-    }
-  }
-
-  _plot('plot-classical', [
-    { x: xArr, y: psi_n(state.n, xArr).map(v => v * v),
-      name: '|ψₙ|² (quantum)', mode: 'lines', line: { color: '#00f0ff', width: 2 },
-      xaxis: 'x', yaxis: 'y' },
-    { x: xCl, y: pCl,
-      name: 'P_classical(x)', mode: 'lines', line: { color: '#ffd54f', width: 2, dash: 'dot' },
-      xaxis: 'x', yaxis: 'y' },
-    { x: tArr, y: xTraj,
-      name: 'x_classical(t)', mode: 'lines', line: { color: '#4ade80', width: 2 },
-      xaxis: 'x2', yaxis: 'y2' },
-    { x: tArr, y: xQuantum,
-      name: '⟨x⟩_quantum(t)', mode: 'lines', line: { color: '#ff4ecd', width: 2, dash: 'dash' },
-      xaxis: 'x2', yaxis: 'y2' }
-  ], {
-    title: { text: 'Quantum vs Classical Oscillator', font: { size: 13, color: '#e0e0f0' } },
-    xaxis: { title: 'x', domain: [0, 0.48], gridcolor: '#2a2a3a', zerolinecolor: '#3a3a55' },
-    yaxis: { title: 'Probability density', gridcolor: '#2a2a3a', anchor: 'x' },
-    xaxis2: { title: 'time t', domain: [0.52, 1], gridcolor: '#2a2a3a', anchor: 'y2' },
-    yaxis2: { title: '⟨x⟩', gridcolor: '#2a2a3a', anchor: 'x2' },
-    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
-    font: { color: '#e0e0f0', family: 'JetBrains Mono, monospace' },
-    legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(10,10,15,0.8)', bordercolor: '#2a2a3a', borderwidth: 1 },
-    margin: { l: 50, r: 20, t: 50, b: 40 },
-    grid: { rows: 1, columns: 2, pattern: 'independent' }
-  });
-}
-
-// ── ENERGY LEVELS ───────────────────────────────────────────
 function updateEnergyPlot() {
+  if (state.system !== 'qho') return;
   const n = state.n;
   const maxN = Math.max(10, n + 3);
   const levels = [];
   for (let k = 0; k <= maxN; k++) {
-    const active = (state.mode === 'eigenstate' && k === n) ||
-                   (state.mode === 'superposition' && (k === state.n || k === state.m));
-    levels.push({
-      x: [0, 1], y: [k + 0.5, k + 0.5], mode: 'lines',
-      line: { color: active ? '#00f0ff' : '#2a2a3a', width: active ? 3 : 1 },
-      showlegend: false
-    });
+    const active = (state.mode === 'eigenstate' && k === n) || (state.mode === 'superposition' && (k === state.n || k === state.m));
+    levels.push({ x: [0, 1], y: [k + 0.5, k + 0.5], mode: 'lines', line: { color: active ? '#00f0ff' : '#2a2a3a', width: active ? 3 : 1 }, showlegend: false });
   }
-  levels.push({
-    x: [0.45, 0.55], y: [n + 0.5, n + 0.5], mode: 'markers',
-    marker: { size: 14, color: '#00f0ff', symbol: 'diamond' }, showlegend: false
-  });
-
   _plot('plot-energy', levels, {
-    title: { text: 'Energy eigenvalues Eₙ = (n+½)ħω', font: { size: 13, color: '#e0e0f0' } },
+    title: { text: 'Energy eigenvalues Eₙ', font: { size: 13, color: '#e0e0f0' } },
     xaxis: { visible: false, range: [0, 1] },
     yaxis: { title: 'E / ħω', gridcolor: '#2a2a3a', dtick: 1, range: [-0.2, maxN + 1] },
-    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
-    font: { color: '#e0e0f0', family: 'JetBrains Mono, monospace' },
-    margin: { l: 50, r: 20, t: 40, b: 20 },
-    annotations: [{
-      x: 0.7, y: n + 0.5,
-      text: 'E_' + n + ' = ' + (n + 0.5).toFixed(2) + 'ħω',
-      font: { color: '#00f0ff', size: 12 }, showarrow: false
-    }]
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#e0e0f0', family: 'JetBrains Mono, monospace' },
+    margin: { l: 50, r: 20, t: 40, b: 20 }
   });
 }
 
-// ── WIGNER FUNCTION (unchanged) ─────────────────────────────
-function laguerreL(n, x) {
-  if (n === 0) return 1;
-  if (n === 1) return 1 - x;
-  let L0 = 1, L1 = 1 - x, L2;
-  for (let k = 1; k < n; k++) {
-    L2 = ((2 * k + 1 - x) * L1 - k * L0) / (k + 1);
-    L0 = L1; L1 = L2;
-  }
-  return L1;
+function updateClassicalPlot(E) {
+  if (state.system !== 'qho') return;
+  const t = state.time * state.omega;
+  const A = Math.sqrt(2 * E / state.omega);
+  const period = 2 * Math.PI / state.omega;
+  const xCl = A * Math.cos(t);
+  const xArr = makeX();
+  const xQuantum = xArr.map(xi => {
+    const Hn = hermiteArray(state.n, [xi]);
+    const norm = 1 / Math.sqrt(Math.pow(2, state.n) * factorial(state.n) * Math.sqrt(Math.PI));
+    const psi = norm * Hn[0] * Math.exp(-xi * xi / 2);
+    return psi * psi;
+  });
+  _plot('plot-classical', [
+    { x: xArr, y: xQuantum, mode: 'lines', name: '|ψ|² (quantum)', line: { color: '#ffd54f', width: 2 }, fill: 'tozeroy', fillcolor: 'rgba(255,213,79,0.1)' },
+    { x: [xCl, xCl], y: [-0.5, 1.5], mode: 'lines', name: 'Classical x(t)', line: { color: '#4ade80', width: 2, dash: 'dot' } },
+    { x: [A, A], y: [-0.5, 1.5], mode: 'lines', line: { color: '#8080a0', width: 1 }, showlegend: false },
+    { x: [-A, -A], y: [-0.5, 1.5], mode: 'lines', line: { color: '#8080a0', width: 1 }, showlegend: false }
+  ], {
+    title: { text: 'Quantum vs Classical turning points', font: { size: 13, color: '#e0e0f0' } },
+    xaxis: { title: 'x', gridcolor: '#2a2a3a', range: [-state.xRange, state.xRange] },
+    yaxis: { title: 'Probability / Position', gridcolor: '#2a2a3a', range: [-0.5, 1.5] },
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#e0e0f0', family: 'JetBrains Mono, monospace' },
+    margin: { l: 50, r: 20, t: 50, b: 40 },
+    legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(10,10,15,0.8)' }
+  });
 }
-function assocLaguerre(n, k, x) {
-  if (n === 0) return 1;
-  if (n === 1) return -x + k + 1;
-  let L0 = 1, L1 = -x + k + 1, L2;
-  for (let j = 1; j < n; j++) {
-    L2 = ((2 * j + k + 1 - x) * L1 - (j + k) * L0) / (j + 1);
-    L0 = L1; L1 = L2;
+
+function updateWigner() {
+  if (state.system !== 'qho') return;
+  const n = state.n, m = state.m;
+  const xG = [], pG = [];
+  for (let i = 0; i < 80; i++) xG.push(-5 + i * 10 / 79);
+  for (let j = 0; j < 80; j++) pG.push(-5 + j * 10 / 79);
+  let W;
+  if (state.mode === 'coherent') {
+    const t = state.time * state.omega;
+    const x0 = Math.SQRT2 * (state.alpha_re * Math.cos(t) + state.alpha_im * Math.sin(t));
+    const p0 = Math.SQRT2 * (-state.alpha_re * Math.sin(t) + state.alpha_im * Math.cos(t));
+    state.trajectory.push({x: x0, p: p0});
+    if (state.trajectory.length > 100) state.trajectory.shift();
+    W = new Array(xG.length);
+    for (let i = 0; i < xG.length; i++) {
+      W[i] = new Float64Array(pG.length);
+      for (let j = 0; j < pG.length; j++) {
+        W[i][j] = (1 / Math.PI) * Math.exp(-(xG[i] - x0)**2 - (pG[j] - p0)**2);
+      }
+    }
+  } else {
+    state.trajectory = [];
+    W = wignerFunction(n, m, xG, pG);
   }
-  return L1;
+  const traces = [{ x: xG, y: pG, z: W, type: 'heatmap', colorscale: [[0, '#0a051a'], [0.2, '#1a0a3a'], [0.5, 'rgba(0,0,0,0)'], [0.8, '#00d4ff'], [1, '#fff']], zmid: 0, colorbar: { title: 'W(x,p)' } }];
+  if (state.mode === 'coherent' && state.trajectory.length > 1) {
+    traces.push({ x: state.trajectory.map(p => p.x), y: state.trajectory.map(p => p.p), mode: 'lines', line: { color: '#ffd54f', width: 2 }, showlegend: false });
+  }
+  _plot('plot-wigner', traces, {
+    title: { text: 'Wigner Phase Space', font: { size: 13, color: '#e0e0f0' } },
+    xaxis: { title: 'x', gridcolor: '#2a2a3a' }, yaxis: { title: 'p', gridcolor: '#2a2a3a' },
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#e0e0f0', family: 'JetBrains Mono, monospace' },
+    margin: { l: 50, r: 80, t: 40, b: 40 }
+  });
 }
+
 function wignerFunction(n, m, xGrid, pGrid) {
   const Nx = xGrid.length, Np = pGrid.length;
   const W = new Array(Nx);
@@ -347,91 +266,156 @@ function wignerFunction(n, m, xGrid, pGrid) {
   }
   return W;
 }
-function updateWigner() {
-  const n = state.n, m = state.m;
-  const xG = [], pG = [];
-  for (let i = 0; i < 80; i++) xG.push(-5 + i * 10 / 79);
-  for (let j = 0; j < 80; j++) pG.push(-5 + j * 10 / 79);
-  const W = wignerFunction(n, m, xG, pG);
-  const zFlat = [];
-  for (let i = 0; i < 80; i++) for (let j = 0; j < 80; j++) zFlat.push(W[i][j]);
-  const zmin = Math.min(...zFlat), zmax = Math.max(...zFlat);
-  const absMax = Math.max(Math.abs(zmin), Math.abs(zmax));
-  _plot('plot-wigner', [{
-    x: xG, y: pG, z: W, type: 'heatmap',
-    colorscale: [[0, '#1a0a2e'], [0.25, '#3a1a5e'], [0.5, 'rgba(0,0,0,0)'], [0.75, '#1a4a5e'], [1, '#00f0ff']],
-    zmid: 0, zmin: -absMax, zmax: absMax,
-    colorbar: { title: 'W(x,p)', titleside: 'right', titlefont: { color: '#e0e0f0', size: 11 }, tickfont: { color: '#8080a0', size: 10 } }
-  }], {
-    title: { text: 'Wigner Phase Space W(x,p)', font: { size: 13, color: '#e0e0f0' } },
-    xaxis: { title: 'x', gridcolor: '#2a2a3a' },
-    yaxis: { title: 'p', gridcolor: '#2a2a3a' },
-    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
-    font: { color: '#e0e0f0', family: 'JetBrains Mono, monospace' },
-    margin: { l: 50, r: 80, t: 40, b: 40 }
-  });
+
+function laguerreL(n, x) {
+  if (n === 0) return 1;
+  if (n === 1) return 1 - x;
+  let L0 = 1, L1 = 1 - x, L2;
+  for (let k = 1; k < n; k++) { L2 = ((2 * k + 1 - x) * L1 - k * L0) / (k + 1); L0 = L1; L1 = L2; }
+  return L1;
 }
 
-// ── IR SPECTRUM ────────────────────────────────────────────
-function plotIR() {
-  const xe = state.anharm || 0.015;
-  const nu = [];
-  for (let v = 0; v <= 10; v++) nu.push(v + 0.5 - xe * Math.pow(v + 0.5, 2));
-  const transitions = [];
-  for (let v = 1; v <= 10; v++) transitions.push({ from: v, to: v - 1, e: nu[v] - nu[v - 1] });
-  _plot('app-ir', [
-    { x: transitions.map(t => t.e), y: transitions.map((_, i) => i + 1), type: 'bar',
-      orientation: 'h', marker: { color: transitions.map((_, i) => i === 0 ? '#00f0ff' : '#4ade80') },
-      text: transitions.map(t => 'ΔE=' + t.e.toFixed(3) + 'ħω'), textposition: 'outside',
-      hovertemplate: 'v=%{y}: ΔE=%{x:.3f}ħω<extra></extra>'
+function assocLaguerre(n, k, x) {
+  if (n === 0) return 1;
+  if (n === 1) return -x + k + 1;
+  let L0 = 1, L1 = -x + k + 1, L2;
+  for (let j = 1; j < n; j++) { L2 = ((2 * j + k + 1 - x) * L1 - (j + k) * L0) / (j + 1); L0 = L1; L1 = L2; }
+  return L1;
+}
+
+// ── HYDROGEN ATOM LOGIC ──────────────────────────────────────
+function l_m_phi(l, m, theta, phi) {
+    // Rough approximation for orbital shapes (S, P, D)
+    if (l === 0) return 1.0;
+    if (l === 1) {
+        if (m === 0) return Math.cos(theta);
+        if (m === 1) return Math.sin(theta) * Math.cos(phi);
+        if (m === -1) return Math.sin(theta) * Math.sin(phi);
     }
-  ], {
-    title: { text: 'IR Transitions (v → v-1) with anharmonicity', font: { size: 13, color: '#e0e0f0' } },
-    xaxis: { title: 'ΔE / ħω', gridcolor: '#2a2a3a', range: [0.5, 1.2] },
-    yaxis: { title: 'Initial v', gridcolor: '#2a2a3a', dtick: 1 },
-    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
-    font: { color: '#e0e0f0', family: 'JetBrains Mono, monospace' },
-    margin: { l: 50, r: 100, t: 40, b: 40 },
-    annotations: [{
-      x: 0.95, y: 0.95, xref: 'paper', yref: 'paper',
-      text: 'xₑ=' + xe.toFixed(3) + '<br>H₂: xₑ≈0.03<br>CO: xₑ≈0.006',
-      font: { size: 10, color: '#8080a0' }, showarrow: false, align: 'left',
-      bgcolor: 'rgba(10,10,15,0.8)', bordercolor: '#2a2a3a', borderwidth: 1, borderpad: 4
-    }]
-  });
+    if (l === 2) {
+        if (m === 0) return 3 * Math.pow(Math.cos(theta), 2) - 1;
+        if (m === 1) return Math.sin(theta) * Math.cos(theta);
+        if (m === -1) return Math.sin(theta) * Math.cos(theta);
+        if (m === 2) return Math.pow(Math.sin(theta), 2) * Math.cos(2 * phi);
+        if (m === -2) return Math.pow(Math.sin(theta), 2) * Math.sin(2 * phi);
+    }
+    return Math.cos(theta); 
 }
 
-// ── LIVE READOUTS ──────────────────────────────────────────
+function updateAtomPlot() {
+    const n = parseInt(document.getElementById('val-atom-n').textContent) || 1;
+    const l = parseInt(document.getElementById('val-atom-l').textContent) || 0;
+    const m = parseInt(document.getElementById('val-atom-m').textContent) || 0;
+    
+    const step = 1.0;
+    const limit = 15;
+    const x = [], y = [], z = [], val = [];
+    
+    for(let i = -limit; i <= limit; i += step) {
+        for(let j = -limit; j <= limit; j += step) {
+            for(let k = -limit; k <= limit; k += step) {
+                const r = Math.sqrt(i*i + j*j + k*k);
+                if (r < 0.1) continue;
+                const theta = Math.acos(k / r);
+                const phi = Math.atan2(j, i);
+                
+                // Density approx: R(r)^2 * Y(theta, phi)^2
+                const radial = Math.exp(-r / n) * Math.pow(r, l);
+                const angular = l_m_phi(l, m, theta, phi);
+                const density = Math.pow(radial * angular, 2);
+                
+                if (density > 0.001) {
+                    x.push(i); y.push(j); z.push(k); val.push(density);
+                }
+            }
+        }
+    }
+    
+    _plot('plot-atom-3d', [{
+        type: 'isosurface',
+        x: x, y: y, z: z, value: val,
+        isomin: 0.01, isomax: Math.max(...val) * 0.5 || 0.1,
+        opacity: 0.4,
+        colorscale: 'Viridis',
+        caps: { x: {show: false}, y: {show: false}, z: {show: false} }
+    }], {
+        title: { text: `Hydrogen Orbital |n=${n}, l=${l}, m=${m}⟩`, font: { color: '#e0e0f0' } },
+        scene: {
+            xaxis: { gridcolor: '#2a2a3a', zerolinecolor: '#3a3a55' },
+            yaxis: { gridcolor: '#2a2a3a', zerolinecolor: '#3a3a55' },
+            zaxis: { gridcolor: '#2a2a3a', zerolinecolor: '#3a3a55' },
+            paper_bgcolor: 'rgba(0,0,0,0)', bgcolor: 'rgba(0,0,0,0)'
+        },
+        margin: { l: 0, r: 0, b: 0, t: 40 },
+        font: { color: '#e0e0f0' }
+    });
+}
+
+function validateAtomQuantumNumbers() {
+    const nEl = document.getElementById('val-atom-n');
+    const lEl = document.getElementById('val-atom-l');
+    const mEl = document.getElementById('val-atom-m');
+    if (!nEl || !lEl || !mEl) return;
+    let n = parseInt(nEl.textContent) || 1;
+    let l = parseInt(lEl.textContent) || 0;
+    let m = parseInt(mEl.textContent) || 0;
+    // Clamp l to [0, n-1]
+    if (l >= n) {
+        l = n - 1;
+        document.getElementById('slider-atom-l').value = l;
+        lEl.textContent = l;
+    }
+    // Clamp m to [-l, l]
+    if (m < -l) { m = -l; document.getElementById('slider-atom-m').value = m; mEl.textContent = m; }
+    if (m > l)  { m = l;  document.getElementById('slider-atom-m').value = m; mEl.textContent = m; }
+    return { n, l, m };
+}
+
+function setSystem(sys) {
+    state.system = sys;
+    document.getElementById('btn-sys-qho').classList.toggle('active', sys === 'qho');
+    document.getElementById('btn-sys-atom').classList.toggle('active', sys === 'atom');
+    
+    document.getElementById('qho-controls-panel').style.display = (sys === 'qho') ? 'block' : 'none';
+    document.getElementById('atom-controls-panel').style.display = (sys === 'atom') ? 'block' : 'none';
+    
+    document.getElementById('plot-psi').style.display = (sys === 'qho') ? 'block' : 'none';
+    document.getElementById('plot-wigner').style.display = (sys === 'qho') ? 'block' : 'none';
+    document.getElementById('plot-classical').style.display = (sys === 'qho') ? 'block' : 'none';
+    document.getElementById('plot-energy').style.display = (sys === 'qho') ? 'block' : 'none';
+    document.getElementById('plot-atom-3d').style.display = (sys === 'atom') ? 'block' : 'none';
+    
+    if (sys === 'atom') updateAtomPlot();
+    else updateWavePlot();
+}
+
 function updateReadouts(E, x0, p0, prob, xArr) {
-  let xExpect = 0, x2Expect = 0, norm = 0;
-  const dx = xArr[1] - xArr[0];
-  for (let i = 0; i < xArr.length; i++) {
-    norm += prob[i] * dx;
-    xExpect += xArr[i] * prob[i] * dx;
-    x2Expect += xArr[i] * xArr[i] * prob[i] * dx;
-  }
-  xExpect /= norm; x2Expect /= norm;
-  const sigmaX = Math.sqrt(Math.max(0, x2Expect - xExpect * xExpect));
-
-  const elE = document.getElementById('live-energy');
-  if (elE) elE.textContent = E.toFixed(3) + ' ħω';
-  const elZ = document.getElementById('live-zpe');
-  if (elZ) elZ.textContent = '0.500 ħω';
-  const elTP = document.getElementById('live-turning');
-  if (elTP) elTP.textContent = '±' + Math.sqrt(2 * E).toFixed(3);
-  const elX = document.getElementById('live-x');
-  if (elX) elX.textContent = xExpect.toFixed(3);
-  const elX2 = document.getElementById('live-x2');
-  if (elX2) elX2.textContent = x2Expect.toFixed(3);
-  const elDx = document.getElementById('live-dx');
-  if (elDx) elDx.textContent = 'Δx = ' + sigmaX.toFixed(3) + ' ħ/2';
-  const elN = document.getElementById('val-n');
-  if (elN) elN.textContent = state.n;
-  const elT = document.getElementById('val-time');
-  if (elT) elT.textContent = state.time.toFixed(2);
+    let xExpect = 0, x2Expect = 0, norm = 0;
+    const dx = xArr[1] - xArr[0];
+    for (let i = 0; i < xArr.length; i++) {
+        norm += prob[i] * dx;
+        xExpect += xArr[i] * prob[i] * dx;
+        x2Expect += xArr[i] * xArr[i] * prob[i] * dx;
+    }
+    xExpect /= norm; x2Expect /= norm;
+    const sigmaX = Math.sqrt(Math.max(0, x2Expect - xExpect * xExpect));
+    const elE = document.getElementById('live-energy');
+    if (elE) elE.textContent = E.toFixed(3) + ' ħω';
+    const elX = document.getElementById('live-x');
+    if (elX) elX.textContent = xExpect.toFixed(3);
+    const elDx = document.getElementById('live-dx');
+    if (elDx) elDx.textContent = 'Δx = ' + sigmaX.toFixed(3);
+    const elZpe = document.getElementById('live-zpe');
+    if (elZpe) elZpe.textContent = (0.5 * state.omega).toFixed(3) + ' ħω';
+    const elTurning = document.getElementById('live-turning');
+    if (elTurning) {
+        const xTP = Math.sqrt(2 * E / state.omega);
+        elTurning.textContent = '±' + (isFinite(xTP) ? xTP.toFixed(3) : '∞');
+    }
+    const elX2 = document.getElementById('live-x2');
+    if (elX2) elX2.textContent = x2Expect.toFixed(3);
 }
 
-// ── ANIMATION LOOP ─────────────────────────────────────────
 function animateLoop() {
   if (!state.animating) return;
   state.time += 0.03 * state.speed;
@@ -443,63 +427,98 @@ function startAnimation() { if (!state.animating) { state.animating = true; anim
 function stopAnimation() { state.animating = false; if (state.animFrame) cancelAnimationFrame(state.animFrame); }
 function resetTime() { state.time = 0; updateWavePlot(); }
 
-// ── INIT ────────────────────────────────────────────────────
+function setStateMode(mode) {
+  state.mode = mode;
+  document.getElementById('btn-eigen').classList.toggle('active', mode === 'eigenstate');
+  document.getElementById('btn-super').classList.toggle('active', mode === 'superposition');
+  document.getElementById('btn-coherent').classList.toggle('active', mode === 'coherent');
+  document.getElementById('m-control').style.display = (mode === 'superposition') ? 'block' : 'none';
+  document.getElementById('alpha-controls').style.display = (mode === 'coherent') ? 'block' : 'none';
+  updateWavePlot();
+}
+
 function initQHO() {
   const sliderN = document.getElementById('slider-n');
-  const sliderM = document.getElementById('slider-m');
+  const sliderOmega = document.getElementById('slider-omega');
   if (!sliderN) { setTimeout(initQHO, 100); return; }
-
-  sliderN.addEventListener('input', function() {
-    state.n = parseInt(this.value);
-    const el = document.getElementById('val-n');
-    if (el) el.textContent = state.n;
-    if (!state.animating) updateWavePlot();
-  });
-  if (sliderM) {
-    sliderM.addEventListener('input', function() {
-      state.m = parseInt(this.value);
-      const el = document.getElementById('val-m');
-      if (el) el.textContent = state.m;
+  if (sliderOmega) {
+    sliderOmega.addEventListener('input', function() {
+      state.omega = parseFloat(this.value);
+      document.getElementById('val-omega').textContent = state.omega.toFixed(1);
       if (!state.animating) updateWavePlot();
     });
   }
-
-  // Mode buttons
-  const btnEigen = document.getElementById('btn-eigen');
-  const btnSuper = document.getElementById('btn-super');
-  const btnCoherent = document.getElementById('btn-coherent');
-  if (btnEigen) btnEigen.addEventListener('click', function() { state.mode = 'eigenstate'; updateWavePlot(); });
-  if (btnSuper) btnSuper.addEventListener('click', function() { state.mode = 'superposition'; updateWavePlot(); });
-  if (btnCoherent) btnCoherent.addEventListener('click', function() { state.mode = 'coherent'; updateWavePlot(); });
-
-  // Animation controls
-  const btnPlay = document.getElementById('btn-play');
-  const btnPause = document.getElementById('btn-pause');
-  const btnReset = document.getElementById('btn-reset');
-  const sliderSpeed = document.getElementById('slider-speed');
-  if (btnPlay) btnPlay.addEventListener('click', startAnimation);
-  if (btnPause) btnPause.addEventListener('click', stopAnimation);
-  if (btnReset) btnReset.addEventListener('click', resetTime);
-  if (sliderSpeed) sliderSpeed.addEventListener('input', function() { state.speed = parseFloat(this.value); });
-
-  // Coherent state alpha sliders
+  sliderN.addEventListener('input', function() {
+    state.n = parseInt(this.value);
+    document.getElementById('val-n').textContent = state.n;
+    if (!state.animating) updateWavePlot();
+  });
+  
+  const sliderM = document.getElementById('slider-m');
+  if (sliderM) {
+    sliderM.addEventListener('input', function() {
+      state.m = parseInt(this.value);
+      document.getElementById('val-m').textContent = state.m;
+      if (!state.animating) updateWavePlot();
+    });
+  }
+  
   const sliderAlphaRe = document.getElementById('slider-alpha-re');
   const sliderAlphaIm = document.getElementById('slider-alpha-im');
-  if (sliderAlphaRe) sliderAlphaRe.addEventListener('input', function() {
-    state.alpha_re = parseFloat(this.value);
-    const el = document.getElementById('val-alpha-re');
-    if (el) el.textContent = state.alpha_re.toFixed(1);
-    if (state.mode === 'coherent' && !state.animating) updateWavePlot();
+  if (sliderAlphaRe) {
+    sliderAlphaRe.addEventListener('input', function() {
+      state.alpha_re = parseFloat(this.value);
+      document.getElementById('val-alpha-re').textContent = state.alpha_re.toFixed(1);
+      if (!state.animating) updateWavePlot();
+    });
+  }
+  if (sliderAlphaIm) {
+    sliderAlphaIm.addEventListener('input', function() {
+      state.alpha_im = parseFloat(this.value);
+      document.getElementById('val-alpha-im').textContent = state.alpha_im.toFixed(1);
+      if (!state.animating) updateWavePlot();
+    });
+  }
+  
+  const sliderSpeed = document.getElementById('slider-speed');
+  if (sliderSpeed) {
+    sliderSpeed.addEventListener('input', function() {
+      state.speed = parseFloat(this.value);
+      document.getElementById('val-speed').textContent = state.speed.toFixed(1);
+    });
+  }
+  
+  // Atom Sliders
+  const sN = document.getElementById('slider-atom-n');
+  const sL = document.getElementById('slider-atom-l');
+  const sM = document.getElementById('slider-atom-m');
+  if (sN) sN.addEventListener('input', function() {
+    document.getElementById('val-atom-n').textContent = this.value;
+    validateAtomQuantumNumbers();
+    updateAtomPlot();
   });
-  if (sliderAlphaIm) sliderAlphaIm.addEventListener('input', function() {
-    state.alpha_im = parseFloat(this.value);
-    const el = document.getElementById('val-alpha-im');
-    if (el) el.textContent = state.alpha_im.toFixed(1);
-    if (state.mode === 'coherent' && !state.animating) updateWavePlot();
+  if (sL) sL.addEventListener('input', function() {
+    document.getElementById('val-atom-l').textContent = this.value;
+    validateAtomQuantumNumbers();
+    updateAtomPlot();
+  });
+  if (sM) sM.addEventListener('input', function() {
+    document.getElementById('val-atom-m').textContent = this.value;
+    validateAtomQuantumNumbers();
+    updateAtomPlot();
   });
 
+  document.getElementById('btn-play').addEventListener('click', startAnimation);
+  document.getElementById('btn-pause').addEventListener('click', stopAnimation);
+  document.getElementById('btn-reset').addEventListener('click', resetTime);
+  
   updateWavePlot();
 }
 
 initQHO();
 window.initQHO = initQHO;
+window.setSystem = setSystem;
+window.setStateMode = setStateMode;
+window.startAnimation = startAnimation;
+window.stopAnimation = stopAnimation;
+window.resetTime = resetTime;
