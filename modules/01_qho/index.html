@@ -93,8 +93,57 @@
           <!-- Energy levels -->
           <div class="plot-container" id="plot-energy" style="min-height:200px; margin-top:1.5rem;"></div>
 
-          <!-- Wigner function -->
-          <div class="plot-container" id="plot-wigner" style="min-height:260px; margin-top:1.5rem;"></div>
+          <!-- Parameter Descriptions -->
+          <div class="insight-card" style="margin-top:1.5rem;">
+            <div class="insight-title">📘 Parameter Guide — What Each Slider Does</div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top:0.8rem; font-size:0.85rem; color:var(--text-muted); line-height:1.65;">
+              <div>
+                <strong style="color:var(--accent-cyan);">Quantum number n</strong> (0–10)
+                <br/>Chooses the eigenstate |n⟩. Each increment adds one node to ψ(x) and raises energy by exactly ℏω. At n = 0 the wave is a simple Gaussian with zero-point energy ½ℏω.
+              </div>
+              <div>
+                <strong style="color:var(--accent-purple);">Second state m</strong> (0–10)
+                <br/>Only active in <em>Superposition</em> mode. Builds |Ψ⟩ = c₀|n⟩ + c₁|m⟩. Interference between the two components makes |ψ|² breathe and slosh in time.
+              </div>
+              <div>
+                <strong style="color:var(--accent-cyan);">Re(α)</strong> (0–5)
+                <br/>Only active in <em>Coherent</em> mode. Shifts the Gaussian center in position: ⟨x⟩ = √2·Re(α). This is how far the classical oscillator is pulled from equilibrium.
+              </div>
+              <div>
+                <strong style="color:var(--accent-pink);">Im(α)</strong> (−5 to +5)
+                <br/>Only active in <em>Coherent</em> mode. Gives the packet an initial momentum kick: ⟨p⟩ = √2·Im(α). A purely imaginary α is a momentum-boosted state.
+              </div>
+              <div>
+                <strong style="color:#ffd54f;">Speed</strong> (0.1–3×)
+                <br/>Multiplies the real-time clock for the animation. 1× is natural oscillation at angular frequency ω. Higher values let you watch many periods quickly.
+              </div>
+              <div>
+                <strong style="color:#4ade80;">Time t</strong> (readout)
+                <br/>Current phase of the wavefunction evolution in units of 1/ω. Eigenstates only acquire a global phase (invisible in |ψ|²); superpositions and coherent states show real motion.
+              </div>
+            </div>
+
+            <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid var(--glass-border); font-size:0.85rem; color:var(--text-muted); line-height:1.65;">
+              <strong style="color:var(--text-main);">State Mode Switcher</strong> — Choose between three kinds of quantum motion:
+              <ul style="margin:0.4rem 0 0 1.2rem; padding:0;">
+                <li><strong>Eigen</strong>: Stationary state |n⟩. Re ψ and Im ψ oscillate in place; |ψ|² is frozen. The particle has definite energy but no definite position.</li>
+                <li><strong>Super</strong>: Mixture of two eigenstates. Energy is uncertain; the probability density breathes and travels as the two phases evolve at different rates.</li>
+                <li><strong>Coherent</strong>: A displaced Gaussian that slides back and forth like a classical ball on a spring — the closest quantum analog to macroscopic motion.</li>
+              </ul>
+            </div>
+
+            <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid var(--glass-border); font-size:0.85rem; color:var(--text-muted); line-height:1.65;">
+              <strong style="color:var(--text-main);">Live Readout Legend</strong>
+              <ul style="margin:0.4rem 0 0 1.2rem; padding:0;">
+                <li><strong>Energy E</strong>: Expectation value ⟨E⟩ for the current state. For eigenstates this is exactly (n+½)ℏω.</li>
+                <li><strong>Zero-point</strong>: The irreducible ½ℏω that remains even at T = 0 K — the uncertainty principle in action.</li>
+                <li><strong>Classical turning</strong>: ±√(2E) — the amplitude a classical oscillator with the same total energy would reach.</li>
+                <li><strong>⟨x⟩</strong>: Mean position. Zero for all eigenstates; oscillates sinusoidally for coherent states.</li>
+                <li><strong>⟨x²⟩</strong>: Second moment. Grows linearly with n because higher states spread farther.</li>
+                <li><strong>Δx</strong>: Position uncertainty √(⟨x²⟩−⟨x⟩²). For the ground state Δx = √(ℏ/2mω) ≈ 0.707 in these units.</li>
+              </ul>
+            </div>
+          </div>
         </div>
 
         <div>

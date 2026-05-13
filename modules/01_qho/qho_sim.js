@@ -499,8 +499,6 @@ function initQHO() {
   });
 
   updateWavePlot();
-  updateWigner();
-  plotIR();
 }
 
 initQHO();
