@@ -1,129 +1,221 @@
 /**
- * hydrogen_apps_games.js — Hydrogen Lab: gamified simulations
- * Module 02 — Hydrogen Atom
+ * Hydrogen Apps & Games — Module 02 UI + Gamification
+ * Delegates physics to HydrogenLab. No duplicate math.
  */
 
 'use strict';
 
-// ===== MATH UTILITIES =====
-function hFactorial(n) { var r = 1; for (var i = 2; i <= n; i++) r *= i; return r; }
-function hLaguerre(n, k, x) {
-  if (n === 0) return 1;
-  if (n === 1) return -x + k + 1;
-  var L0 = 1, L1 = -x + k + 1, L2;
-  for (var i = 1; i < n; i++) { L2 = ((2 * i + k + 1 - x) * L1 - (i + k) * L0) / (i + 1); L0 = L1; L1 = L2; }
-  return L1;
-}
-function hRnl(n, l, r) {
-  var rho = 2 * r / n;
-  var norm = Math.sqrt(Math.pow(2/n, 3) * hFactorial(n - l - 1) / (2 * n * hFactorial(n + l)));
-  var L = hLaguerre(n - l - 1, 2*l + 1, rho);
-  return norm * Math.pow(rho, l) * Math.exp(-rho/2) * L;
-}
-function hProb(n, l, r) { var R = hRnl(n, l, r); return r * r * R * R; }
-function hEnergy(n) { return -13.6057 / (n * n); }
-function hLinspace(a, b, n) { var arr = new Array(n); for (var i = 0; i < n; i++) arr[i] = a + i * (b - a) / (n - 1); return arr; }
-var Ryd_eV = 13.6057, alpha = 1/137.036;
+/* ---------- Shortcuts ---------- */
+var H = window.HydrogenLab;
 
-var _dLayout = {
-  paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#e0e0f0', size: 11 },
-  margin: { l: 50, r: 20, t: 40, b: 40 },
-  xaxis: { gridcolor: '#2a2a3a', zerolinecolor: '#3a3a5a' },
-  yaxis: { gridcolor: '#2a2a3a', zerolinecolor: '#3a3a5a' }
-};
+function _plotApp(id, traces, layout, cfg) {
+  var el = document.getElementById(id);
+  if (!el || typeof Plotly === 'undefined') return;
+  Plotly.react(id, traces, layout, cfg || { responsive: true, displayModeBar: false });
+}
+
 function _ext(base, over) {
   var out = JSON.parse(JSON.stringify(base));
   for (var k in over) {
-    if (typeof over[k] === 'object' && over[k] !== null && !Array.isArray(over[k]) && k in out && typeof out[k] === 'object') { for (var j in over[k]) out[k][j] = over[k][j]; }
-    else out[k] = over[k];
+    if (typeof over[k] === 'object' && over[k] !== null && !Array.isArray(over[k]) && k in out && typeof out[k] === 'object') {
+      for (var j in over[k]) out[k][j] = over[k][j];
+    } else {
+      out[k] = over[k];
+    }
   }
   return out;
 }
 
+var _dLayout = {
+  paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+  font: { color: '#e0e0f0', size: 11 },
+  margin: { l: 50, r: 20, t: 40, b: 40 },
+  xaxis: { gridcolor: '#2a2a3a', zerolinecolor: '#3a3a5a' },
+  yaxis: { gridcolor: '#2a2a3a', zerolinecolor: '#3a3a5a' }
+};
+
+/* ---------- Module State ---------- */
 var __H = {
   n: 3, l: 1, ni: 3, nf: 2, B: 0,
+  cloudMode: false,
   challenge: { active: false, targetN: 0, score: 0, combo: 0, timer: null, timeLeft: 60, streak: 0, round: 0 },
   fine: { givenN: 2 },
   bohr: {},
   aufbauState: {},
   orbitalState: {},
-  hundState: {},
-  selectedTransitions: {}
+  hundState: {}
 };
 
-// ===== PLAYGROUND =====
-function plotHydrogen(n, l) {
-  var r = hLinspace(0, 20, 200);
-  var R = r.map(function(ri) { return hRnl(n, l, ri); });
-  var P = r.map(function(ri) { return hProb(n, l, ri); });
-  var expR = 0.5 * (3*n*n - l*(l+1));
+function linspace(a, b, n) {
+  var arr = new Array(n);
+  for (var i = 0; i < n; i++) arr[i] = a + i * (b - a) / (n - 1);
+  return arr;
+}
 
-  Plotly.react('plot-orbitals', [
-    { x: r, y: R, mode: 'lines', name: 'R_n' + n + l + '(r)', line: { color: '#00f0ff', width: 2 } },
-    { x: r, y: P, mode: 'lines', name: '|R|²r²', line: { color: '#c084fc', width: 2, dash: 'dash' }, fill: 'tozeroy', fillcolor: 'rgba(179,136,255,0.06)' },
-    { x: [expR, expR], y: [0, Math.max.apply(null, P)], mode: 'lines', line: { color: '#facc15', width: 2, dash: 'dot' }, name: '⟨r⟩=' + expR.toFixed(1) } ],
-    _ext(_dLayout, {
-      title: { text: 'Hydrogen: n=' + n + ', l=' + l + ', E=' + hEnergy(n).toFixed(2) + ' eV', font: { size: 13 } },
-      xaxis: { title: 'r (a₀)' }, yaxis: { title: 'Amplitude' },
-      legend: { x: 1.02, y: 1, bgcolor: 'rgba(10,10,15,0.8)' }
-    }), { responsive: true, displayModeBar: false });
+/* ---------- Playground Plots ---------- */
+function plotHydrogen(n, l) {
+  var r = linspace(0, 20, 200);
+  var R = r.map(function(ri) { return H.R_nl(n, l, ri); });
+  var P = r.map(function(ri) { return H.P_radial(n, l, ri); });
+  var expR = H.r_expectation(n, l);
+  var E = H.energy_eV(n);
+
+  _plotApp('plot-orbitals', [
+    {
+      x: r, y: R, mode: 'lines', name: 'R_' + n + getLabel(l) + '(r)',
+      line: { color: '#00f0ff', width: 2 },
+      yaxis: 'y'
+    },
+    {
+      x: r, y: P, mode: 'lines', name: '|R|²r²',
+      line: { color: '#c084fc', width: 2, dash: 'dash' },
+      fill: 'tozeroy', fillcolor: 'rgba(179,136,255,0.06)',
+      yaxis: 'y2'
+    },
+    {
+      x: [expR, expR], y: [0, 1.1], mode: 'lines',
+      line: { color: '#facc15', width: 2, dash: 'dot' },
+      name: '⟨r⟩=' + expR.toFixed(1),
+      yaxis: 'y2'
+    }
+  ], _ext(_dLayout, {
+    title: { text: 'Radial: n=' + n + ', l=' + l + ', E=' + E.toFixed(2) + ' eV', font: { size: 13 } },
+    xaxis: { title: 'r (a₀)' },
+    yaxis: { title: 'R(r)', color: '#00f0ff', side: 'left' },
+    yaxis2: { title: 'r²|R|²', color: '#c084fc', overlaying: 'y', side: 'right' },
+    legend: { x: 1.02, y: 1, bgcolor: 'rgba(10,10,15,0.8)' }
+  }), { responsive: true, displayModeBar: false });
 }
 
 function plotSpectrum(ni, nf) {
-  var photon = hEnergy(ni) - hEnergy(nf);
+  var photon = H.energy_eV(ni) - H.energy_eV(nf);
   var series = nf === 1 ? 'Lyman' : nf === 2 ? 'Balmer' : nf === 3 ? 'Paschen' : nf === 4 ? 'Brackett' : 'Pfund';
-  var color = photon > 10 ? '#ff4ecd' : photon > 2 ? '#facc15' : photon > 0.5 ? '#4ade80' : '#00f0ff';
 
-  var energies = [], labels = [], colors = [];
-  for (var n = 2; n <= 6; n++) {
-    energies.push(hEnergy(n) - hEnergy(1)); labels.push('n=' + n + '→1'); colors.push('#ff4ecd');
-  }
-  for (n = 3; n <= 6; n++) {
-    energies.push(hEnergy(n) - hEnergy(2)); labels.push('n=' + n + '→2'); colors.push('#facc15');
-  }
-  for (n = 4; n <= 6; n++) {
-    energies.push(hEnergy(n) - hEnergy(3)); labels.push('n=' + n + '→3'); colors.push('#4ade80');
-  }
-  // User selected
-  energies.push(photon); labels.push('YOUR: ' + ni + '→' + nf); colors.push(color);
+  var seriesData = [
+    { name: 'Lyman (UV)',  n_f: 1, color: '#ff4ecd', range: [10, 13.6] },
+    { name: 'Balmer (Vis)', n_f: 2, color: '#facc15', range: [1.9, 3.4] },
+    { name: 'Paschen (IR)', n_f: 3, color: '#4ade80', range: [0.6, 1.5] },
+    { name: 'Brackett (IR)',n_f: 4, color: '#00f0ff', range: [0.3, 0.75] }
+  ];
 
-  Plotly.react('plot-spectrum', [
-    { x: energies, y: labels.map(function() { return 1; }),
-      mode: 'markers', type: 'bar', orientation: 'h',
-      marker: { color: colors, width: 0.6 },
-      text: energies.map(function(e) { return e.toFixed(2) + ' eV'; }),
-      textposition: 'outside', textfont: { color: '#e0e0f0', size: 9 } },
-    { x: [photon, photon], y: [0, labels.length], mode: 'lines',
-      line: { color: color, width: 2 }, name: 'Selected' } ],
-    _ext(_dLayout, {
-      title: { text: series + ' Series · Photon = ' + photon.toFixed(2) + ' eV', font: { size: 13 } },
-      xaxis: { title: 'Photon energy (eV)', range: [0, 15] },
-      yaxis: { showticklabels: false },
-      margin: { l: 10, r: 80, t: 40, b: 40 }, showlegend: false
-    }), { responsive: true, displayModeBar: false });
+  var energies = [], names = [], colors = [], yidx = [];
+  seriesData.forEach(function(s, idx) {
+    for (var n = s.n_f + 1; n <= 8; n++) {
+      var de = H.energy_eV(n) - H.energy_eV(s.n_f);
+      if (de >= s.range[0] && de <= s.range[1]) {
+        energies.push(de);
+        names.push(s.name + ': ' + n + '→' + s.n_f);
+        colors.push(s.color);
+        yidx.push(idx);
+      }
+    }
+  });
+
+  var userColor = photon > 10 ? '#ff4ecd' : photon > 2 ? '#facc15' : photon > 0.5 ? '#4ade80' : '#00f0ff';
+  energies.push(photon);
+  names.push('YOUR: ' + ni + '→' + nf);
+  colors.push(userColor);
+  yidx.push(seriesData.length);
+
+  var yLabels = seriesData.map(function(s) { return s.name; });
+  yLabels.push('Your transition');
+
+  _plotApp('plot-spectrum', [
+    {
+      x: energies, y: yidx.map(function(v) { return v + 0.5; }),
+      mode: 'markers', type: 'scatter',
+      marker: { size: 16, color: colors, line: { color: '#fff', width: 1 } },
+      text: names, textposition: 'top center', textfont: { size: 9, color: '#e0e0f0' },
+      hovertemplate: '%{text}<br>E = %{x:.2f} eV<extra></extra>'
+    },
+    {
+      x: [photon, photon], y: [0, yLabels.length], mode: 'lines',
+      line: { color: userColor, width: 2, dash: 'dash' }, name: 'Selected',
+      hoverinfo: 'skip'
+    }
+  ], _ext(_dLayout, {
+    title: { text: series + ' Series · Photon = ' + photon.toFixed(2) + ' eV', font: { size: 13 } },
+    xaxis: { title: 'Photon energy (eV)', range: [0, 14] },
+    yaxis: {
+      tickmode: 'array',
+      tickvals: yLabels.map(function(_, i) { return i + 0.5; }),
+      ticktext: yLabels,
+      range: [0, yLabels.length]
+    },
+    showlegend: false
+  }), { responsive: true, displayModeBar: false });
 }
 
 function plotZeeman(n, l, B) {
-  // Simple Zeeman: ΔE = μ_B B (in eV)
   var muB = 5.788e-5;
-  var base = hEnergy(n);
-  var split = muB * B; // eV, simplified
+  var base = H.energy_eV(n);
+  var split = muB * B;
   var mj = [];
   for (var m = -l; m <= l; m++) mj.push(m);
-  var energies = mj.map(function(m) { return base + m * split; });
 
-  Plotly.react('plot-zeeman', [
-    { x: energies, y: energies.map(function() { return 1; }), mode: 'markers',
-      marker: { color: '#00f0ff', size: 16 }, text: mj.map(function(m) { return 'm=' + m; }),
-      textposition: 'top', textfont: { size: 10 } } ],
-    _ext(_dLayout, {
-      title: { text: 'Zeeman Splitting · B=' + B.toFixed(1) + ' T · ΔE=' + (split*1e6).toFixed(1) + ' μeV', font: { size: 13 } },
-      xaxis: { title: 'Energy (eV)', range: [base - l*split*1.5, base + l*split*1.5] },
-      yaxis: { showticklabels: false }, showlegend: false
-    }), { responsive: true, displayModeBar: false });
+  var traces = [];
+  var colors = ['#ff4ecd', '#c084fc', '#00f0ff', '#4ade80', '#facc15'];
+
+  mj.forEach(function(m, idx) {
+    var E = base + m * split;
+    traces.push({
+      x: [0, 1], y: [E, E], mode: 'lines',
+      line: { color: colors[idx % colors.length], width: 3 },
+      name: 'm=' + m + '  E=' + E.toFixed(6) + ' eV',
+      hoverinfo: 'name'
+    });
+    traces.push({
+      x: [1.05], y: [E], mode: 'text',
+      text: ['m=' + (m > 0 ? '+' : '') + m],
+      textposition: 'middle left',
+      textfont: { color: colors[idx % colors.length], size: 11 },
+      showlegend: false, hoverinfo: 'skip'
+    });
+  });
+
+  _plotApp('plot-zeeman', traces, _ext(_dLayout, {
+    title: { text: 'Zeeman Splitting · B=' + B.toFixed(1) + ' T · ΔE=' + (split * 1e6).toFixed(1) + ' μeV', font: { size: 13 } },
+    xaxis: { visible: false, range: [-0.2, 1.5] },
+    yaxis: { title: 'Energy (eV)', range: [base - l * split * 1.5, base + l * split * 1.5] },
+    showlegend: false
+  }), { responsive: true, displayModeBar: false });
 }
 
-// ===== CHALLENGE 1: SPECTRAL DETECTIVE =====
+function getLabel(l) {
+  var labels = ['s', 'p', 'd', 'f', 'g'];
+  return labels[l] || 'l' + l;
+}
+
+function updateLiveTable() {
+  var n = __H.n, l = __H.l;
+  var E = H.energy_eV(n);
+  var r = H.r_expectation(n, l);
+  var nodes = n - l - 1;
+
+  var elE = document.getElementById('live-E');
+  if (elE) elE.textContent = E.toFixed(2) + ' eV';
+  var elR = document.getElementById('live-r');
+  if (elR) elR.textContent = r.toFixed(1) + ' a₀';
+  var elN = document.getElementById('live-nodes');
+  if (elN) elN.textContent = nodes;
+}
+
+/* ---------- 3D Sync ---------- */
+function sync3D() {
+  H.Hydrogen3D.update({ n: __H.n, l: __H.l });
+}
+
+function toggleWavefunctionView() {
+  __H.cloudMode = !__H.cloudMode;
+  var btn = document.getElementById('btn-reveal-wf');
+  if (btn) {
+    btn.textContent = __H.cloudMode ? '🎯 Back to Bohr' : '🌌 Reveal Wavefunction';
+    btn.style.background = __H.cloudMode ? 'var(--accent-cyan)' : 'var(--accent-purple)';
+  }
+  H.Hydrogen3D.setCloudMode(__H.cloudMode);
+}
+
+/* ---------- Challenge 1: Spectral Detective ---------- */
 var specTargets = [
   { from: 3, to: 2 }, { from: 4, to: 2 }, { from: 5, to: 2 },
   { from: 2, to: 1 }, { from: 3, to: 1 }, { from: 4, to: 1 },
@@ -131,20 +223,26 @@ var specTargets = [
 ];
 
 function startSpectralChallenge() {
-  var c = __H.challenge; c.active = true; c.score = 0; c.combo = 0;
-  c.timeLeft = 60; c.streak = 0; c.round = 0;
+  var c = __H.challenge;
+  c.active = true; c.score = 0; c.combo = 0; c.timeLeft = 60; c.streak = 0; c.round = 0;
   nextSpectralTarget();
-  document.getElementById('spec-score').textContent = '0';
-  document.getElementById('spec-combo').textContent = '0';
+  var elS = document.getElementById('spec-score');
+  if (elS) elS.textContent = '0';
+  var elC = document.getElementById('spec-combo');
+  if (elC) elC.textContent = '0';
   if (c.timer) clearInterval(c.timer);
   c.timer = setInterval(function() {
     if (!c.active) return;
     c.timeLeft--;
     var bar = document.getElementById('spec-timer');
-    if (bar) { bar.style.width = (c.timeLeft/60*100) + '%'; if (c.timeLeft < 12) bar.classList.add('urgent'); }
-    if (c.timeLeft <= 0) { clearInterval(c.timer); c.active = false;
+    if (bar) {
+      bar.style.width = (c.timeLeft / 60 * 100) + '%';
+      if (c.timeLeft < 12) bar.classList.add('urgent');
+    }
+    if (c.timeLeft <= 0) {
+      clearInterval(c.timer); c.active = false;
       var fb = document.getElementById('spec-feedback');
-      fb.className = 'challenge-feedback'; fb.style.display = 'block'; fb.textContent = '⏰ Time\'s up! Final score: ' + c.score;
+      if (fb) { fb.className = 'challenge-feedback'; fb.style.display = 'block'; fb.textContent = "⏰ Time's up! Final score: " + c.score; }
     }
   }, 1000);
 }
@@ -152,7 +250,7 @@ function startSpectralChallenge() {
 function nextSpectralTarget() {
   __H.challenge.targetN = specTargets[Math.floor(Math.random() * specTargets.length)];
   var t = __H.challenge.targetN;
-  var energy = hEnergy(t.from) - hEnergy(t.to);
+  var energy = H.energy_eV(t.from) - H.energy_eV(t.to);
   var fb = document.getElementById('spec-target-text');
   if (fb) fb.innerHTML = '🔎 <strong>Target photon:</strong> ' + energy.toFixed(2) + ' eV · Which transition?';
 }
@@ -162,45 +260,49 @@ function guessTransition(guessFrom, guessTo) {
   if (!c.active) return;
   var t = c.targetN;
   var fb = document.getElementById('spec-feedback');
+  if (!fb) return;
   if (guessFrom === t.from && guessTo === t.to) {
     c.streak++;
     var pts = 50 + c.streak * 5;
     c.score += pts; c.combo++;
-    __GameState.addXP(pts, 'Spectral line matched!');
+    if (typeof __GameState !== 'undefined') __GameState.addXP(pts, 'Spectral line matched!');
     fb.className = 'challenge-feedback success'; fb.style.display = 'block';
-    fb.textContent = '✓ Correct! ' + t.from + '→' + t.to + ' gives ' + (hEnergy(t.from)-hEnergy(t.to)).toFixed(2) + ' eV. +' + pts + ' XP';
-    particleBurst(window.innerWidth/2, 300);
-    if (c.score >= 200) __GameState.unlock({ id: 'spectral_analyst', title: 'Spectral Analyst', desc: 'Scored 200+ on spectral detective', icon: '🌈', xp: 25 });
+    fb.textContent = '✓ Correct! ' + t.from + '→' + t.to + ' gives ' + (H.energy_eV(t.from) - H.energy_eV(t.to)).toFixed(2) + ' eV. +' + pts + ' XP';
+    if (typeof particleBurst === 'function') particleBurst(window.innerWidth / 2, 300);
+    if (c.score >= 200 && typeof __GameState !== 'undefined') __GameState.unlock({ id: 'spectral_analyst', title: 'Spectral Analyst', desc: 'Scored 200+ on spectral detective', icon: '🌈', xp: 25 });
     setTimeout(nextSpectralTarget, 1500);
   } else {
     c.streak = 0; c.combo = 0;
     fb.className = 'challenge-feedback error'; fb.style.display = 'block';
     fb.textContent = '✗ Not this one. Hint: ΔE = 13.6(1/n_f² − 1/n_i²) eV';
   }
-  document.getElementById('spec-score').textContent = c.score;
-  document.getElementById('spec-combo').textContent = c.combo;
+  var elS = document.getElementById('spec-score');
+  if (elS) elS.textContent = c.score;
+  var elC = document.getElementById('spec-combo');
+  if (elC) elC.textContent = c.combo;
 }
 
 function showSpecHint() {
   var t = __H.challenge.targetN;
   var fb = document.getElementById('spec-feedback');
+  if (!fb) return;
   var series = t.to === 1 ? 'Lyman (UV)' : t.to === 2 ? 'Balmer (visible)' : t.to === 3 ? 'Paschen (IR)' : 'higher series';
   fb.className = 'challenge-feedback hint'; fb.style.display = 'block';
   fb.textContent = '💡 This is in the ' + series + '. n_f = ' + t.to + '. Try different n_i values.';
 }
 
-// ===== CHALLENGE 2: FINE STRUCTURE =====
+/* ---------- Challenge 2: Fine Structure ---------- */
 function plotFineStructure() {
-  var n = 2, l = 1; // n=2, p orbital
-  var j1 = 0.5, j2 = 1.5;
-  // ΔE = α⁴ mc² / (2 n³) [j(j+1) − l(l+1) − s(s+1)] / [2l(l+½)(l+1)]
-  // Simplified: ΔE ≈ 4.53e⁻⁵ eV for n=2
-  var deltaE = 4.53e-5; // eV
+  var n = 2, l = 1;
+  var deltaE = 4.53e-5;
 
-  Plotly.react('plot-fine-structure', [
-    { x: [0, 1], y: [hEnergy(n), hEnergy(n)], mode: 'lines', line: { color: '#8080a0', width: 3 }, name: 'n=2, unperturbed' },
-    { x: [1.2, 2.2], y: [hEnergy(n) + deltaE/2, hEnergy(n) + deltaE/2], mode: 'lines', line: { color: '#00f0ff', width: 3 }, name: 'j=1/2 (spin ∥)' },
-    { x: [2.4, 3.4], y: [hEnergy(n) - deltaE/2, hEnergy(n) - deltaE/2], mode: 'lines', line: { color: '#ff4ecd', width: 3 }, name: 'j=3/2 (spin anti)' }
+  _plotApp('plot-fine-structure', [
+    { x: [0, 1], y: [H.energy_eV(n), H.energy_eV(n)], mode: 'lines',
+      line: { color: '#8080a0', width: 3 }, name: 'n=2, unperturbed' },
+    { x: [1.2, 2.2], y: [H.energy_eV(n) + deltaE / 2, H.energy_eV(n) + deltaE / 2], mode: 'lines',
+      line: { color: '#00f0ff', width: 3 }, name: 'j=1/2 (spin ∥)' },
+    { x: [2.4, 3.4], y: [H.energy_eV(n) - deltaE / 2, H.energy_eV(n) - deltaE / 2], mode: 'lines',
+      line: { color: '#ff4ecd', width: 3 }, name: 'j=3/2 (spin anti)' }
   ], _ext(_dLayout, {
     title: { text: 'Fine Structure: n=2 splits into j=1/2 and j=3/2', font: { size: 13 } },
     xaxis: { showticklabels: false, range: [-0.5, 4] },
@@ -209,54 +311,56 @@ function plotFineStructure() {
   }), { responsive: true, displayModeBar: false });
 }
 
-function checkFineStructure(guess_j, guess_delta) {
+function checkFineStructure(guess_j) {
   var fb = document.getElementById('fine-feedback');
-  var correct_j = 0.5; // The j=1/2 is higher, j=3/2 is lower (in hydrogen)
-  // Actually in H, 2P_1/2 is slightly lower than 2P_3/2 (Lamb shift reverses this)
-  // For our simplified model: 2P_1/2 is lower
-  var correctLower = '1/2';
-  var correctUpper = '3/2';
-
+  if (!fb) return;
   if (guess_j === '1/2') {
     fb.className = 'challenge-feedback success'; fb.style.display = 'block';
     fb.innerHTML = '✓ Correct! j = l ± 1/2 = 1/2 and 3/2. The splitting ΔE ≈ α⁴ mc² / n³ ≈ 4.5×10⁻⁵ eV. In hydrogen, the 2P_1/2 state is slightly lower (Dirac theory). The Lamb shift (QED) makes 2S_1/2 higher than 2P_1/2 — discovered in 1947.';
-    __GameState.addXP(75, 'Fine structure solved!');
-    __GameState.unlock({ id: 'fine_analyst', title: 'Fine Structure Analyst', desc: 'Resolved spin-orbit splitting', icon: '⚡', xp: 25 });
-    particleBurst(window.innerWidth/2, 300, '#facc15');
+    if (typeof __GameState !== 'undefined') {
+      __GameState.addXP(75, 'Fine structure solved!');
+      __GameState.unlock({ id: 'fine_analyst', title: 'Fine Structure Analyst', desc: 'Resolved spin-orbit splitting', icon: '⚡', xp: 25 });
+    }
+    if (typeof particleBurst === 'function') particleBurst(window.innerWidth / 2, 300, '#facc15');
   } else {
     fb.className = 'challenge-feedback error'; fb.style.display = 'block';
     fb.textContent = '✗ For l=1, j = l ± s = 1 ± 1/2 = 1/2 or 3/2. Both are possible. Look at the plot again.';
   }
 }
 
-// ===== CHALLENGE 3: BOHR RADIUS SCALING =====
+/* ---------- Challenge 3: Bohr Radius Scaling ---------- */
 function checkBohrAnswer(ans) {
   var fb = document.getElementById('bohr-feedback');
   var anim = document.getElementById('bohr-anim');
+  if (!fb) return;
 
   if (ans === '9') {
     fb.className = 'challenge-feedback success'; fb.style.display = 'block';
     fb.innerHTML = '✓ Exactly! ⟨r⟩ ∝ n², so n=3 gives ⟨r⟩ = 9 × ⟨r⟩_ground. But WAIT — the electron is also delocalized quantum mechanically! The probability spreads across all radii. This is why Rydberg atoms (n~50) have radii of ~2500 a₀ and interact strongly with each other.';
-    __GameState.addXP(100, 'Bohr scaling mastered!');
-    __GameState.unlock({ id: 'bohr_master', title: 'Bohr Master', desc: 'Understood quantum orbital scaling', icon: '🌠', xp: 30 });
-    particleBurst(window.innerWidth/2, 400, '#00f0ff');
-
-    // Animation: expanding orbit
-    var canvas = document.createElement('canvas'); canvas.width = 200; canvas.height = 200;
-    anim.innerHTML = ''; anim.appendChild(canvas); anim.style.display = 'flex';
-    var ctx = canvas.getContext('2d');
-    var frame = 0;
-    function drawOrbit() {
-      frame++;
-      ctx.clearRect(0, 0, 200, 200);
-      var r = 10 + (frame % 120) * 1.5;
-      ctx.beginPath(); ctx.arc(100, 100, r, 0, Math.PI*2);
-      ctx.strokeStyle = '#00f0ff'; ctx.lineWidth = 2; ctx.stroke();
-      ctx.beginPath(); ctx.arc(100, 100, 3, 0, Math.PI*2);
-      ctx.fillStyle = '#facc15'; ctx.fill();
-      if (frame < 180) requestAnimationFrame(drawOrbit);
+    if (typeof __GameState !== 'undefined') {
+      __GameState.addXP(100, 'Bohr scaling mastered!');
+      __GameState.unlock({ id: 'bohr_master', title: 'Bohr Master', desc: 'Understood quantum orbital scaling', icon: '🌠', xp: 30 });
     }
-    drawOrbit();
+    if (typeof particleBurst === 'function') particleBurst(window.innerWidth / 2, 400, '#00f0ff');
+
+    if (anim) {
+      var canvas = document.createElement('canvas');
+      canvas.width = 200; canvas.height = 200;
+      anim.innerHTML = ''; anim.appendChild(canvas); anim.style.display = 'flex';
+      var ctx = canvas.getContext('2d');
+      var frame = 0;
+      function drawOrbit() {
+        frame++;
+        ctx.clearRect(0, 0, 200, 200);
+        var r = 10 + (frame % 120) * 1.5;
+        ctx.beginPath(); ctx.arc(100, 100, r, 0, Math.PI * 2);
+        ctx.strokeStyle = '#00f0ff'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.beginPath(); ctx.arc(100, 100, 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#facc15'; ctx.fill();
+        if (frame < 180) requestAnimationFrame(drawOrbit);
+      }
+      drawOrbit();
+    }
   } else if (ans === '3') {
     fb.className = 'challenge-feedback error'; fb.style.display = 'block';
     fb.textContent = '✗ Close! The energy scales as 1/n², but the radius scales differently. Think about ⟨r⟩ = a₀/2 [3n² − l(l+1)]. For large n, this ∝ n².';
@@ -266,7 +370,7 @@ function checkBohrAnswer(ans) {
   }
 }
 
-// ===== PUZZLE 1: AUFBAU PRINCIPLE =====
+/* ---------- Puzzle 1: Aufbau Principle ---------- */
 var aufbauLevels = [
   { n: 1, l: 0, name: '1s', capacity: 2, energy: 1 },
   { n: 2, l: 0, name: '2s', capacity: 2, energy: 2 },
@@ -280,6 +384,7 @@ var aufbauLevels = [
 function initAufbau() {
   var board = document.getElementById('aufbau-board');
   var pool = document.getElementById('aufbau-pool');
+  if (!board || !pool) return;
   board.innerHTML = ''; pool.innerHTML = '';
 
   aufbauLevels.forEach(function(lvl, i) {
@@ -300,12 +405,11 @@ function initAufbau() {
     board.appendChild(slot);
   });
 
-  // Pool of electrons
   for (var i = 0; i < 18; i++) {
     var e = document.createElement('div');
     e.id = 'e-' + i;
     e.className = 'energy-particle';
-    e.style.width = '28px'; e.style.height = '28px'; e.style.fontSize = '0.6rem';
+    e.style.cssText = 'width:28px;height:28px;font-size:0.6rem;';
     e.textContent = 'e⁻';
     e.draggable = true;
     e.ondragstart = function(ev) { ev.dataTransfer.setData('electron', this.id); };
@@ -324,19 +428,22 @@ function checkAufbau() {
     else correct += Math.min(count, lvl.capacity);
   }
   var fb = document.getElementById('aufbau-feedback');
+  if (!fb) return;
   if (correct === total && total > 0) {
     fb.className = 'challenge-feedback success'; fb.style.display = 'block';
     fb.textContent = '✓ Perfect! Aufbau principle: fill lowest energy first. 1s→2s→2p→3s→3p→4s→3d. This is why the periodic table has its shape!';
-    __GameState.addXP(60, 'Aufbau principle mastered!');
-    __GameState.unlock({ id: 'aufbau_sage', title: 'Aufbau Sage', desc: 'Filled electron shells correctly', icon: '🏛', xp: 20 });
-    particleBurst(window.innerWidth/2, 300, '#4ade80');
+    if (typeof __GameState !== 'undefined') {
+      __GameState.addXP(60, 'Aufbau principle mastered!');
+      __GameState.unlock({ id: 'aufbau_sage', title: 'Aufbau Sage', desc: 'Filled electron shells correctly', icon: '🏛', xp: 20 });
+    }
+    if (typeof particleBurst === 'function') particleBurst(window.innerWidth / 2, 300, '#4ade80');
   } else {
     fb.className = 'challenge-feedback error'; fb.style.display = 'block';
     fb.textContent = '✗ ' + (total - correct) + ' electrons misplaced. Remember: fill lowest n first, then within same n, lower l first. The energy ordering is NOT simply by n!';
   }
 }
 
-// ===== PUZZLE 2: ORBITAL ANGULAR MOMENTUM =====
+/* ---------- Puzzle 2: Orbital Matching ---------- */
 var orbitalPuzzles = [
   { label: 'Y₀₀ (s orbital)', l: 0, m: 0 },
   { label: 'Y₁₀ (p_z)', l: 1, m: 0 },
@@ -348,15 +455,25 @@ var orbitalPuzzles = [
 
 function initOrbitalPuzzle() {
   var c = document.getElementById('orbital-matches');
+  if (!c) return;
   c.innerHTML = '';
   orbitalPuzzles.forEach(function(p, i) {
-    var row = document.createElement('div'); row.style.cssText = 'display:flex;align-items:center;gap:1rem;padding:0.5rem;border-bottom:1px solid var(--border-subtle);';
-    var label = document.createElement('div'); label.style.cssText = 'font-family:var(--mono);font-size:0.85rem;color:var(--text-main);width:180px;';
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:1rem;padding:0.5rem;border-bottom:1px solid var(--border-subtle);';
+    var label = document.createElement('div');
+    label.style.cssText = 'font-family:var(--mono);font-size:0.85rem;color:var(--text-main);width:180px;';
     label.textContent = p.label;
-    var inputL = document.createElement('select'); inputL.id = 'orb-l-' + i; inputL.style.cssText = 'background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.3rem;border-radius:4px;font-family:var(--mono);';
+
+    var inputL = document.createElement('select');
+    inputL.id = 'orb-l-' + i;
+    inputL.style.cssText = 'background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.3rem;border-radius:4px;font-family:var(--mono);';
     [0, 1, 2, 3].forEach(function(v) { var o = document.createElement('option'); o.value = v; o.textContent = 'l=' + v; inputL.appendChild(o); });
-    var inputM = document.createElement('select'); inputM.id = 'orb-m-' + i; inputM.style.cssText = inputL.style.cssText;
+
+    var inputM = document.createElement('select');
+    inputM.id = 'orb-m-' + i;
+    inputM.style.cssText = inputL.style.cssText;
     ['0', '±1', '±2', '±3'].forEach(function(v) { var o = document.createElement('option'); o.value = v; o.textContent = 'm=' + v; inputM.appendChild(o); });
+
     row.appendChild(label); row.appendChild(inputL); row.appendChild(inputM);
     c.appendChild(row);
   });
@@ -370,30 +487,30 @@ function checkOrbitalPuzzle() {
     if (gl === p.l && gm === ('' + p.m)) correct++;
   });
   var fb = document.getElementById('orbital-feedback');
+  if (!fb) return;
   if (correct === orbitalPuzzles.length) {
     fb.className = 'challenge-feedback success'; fb.style.display = 'block';
     fb.textContent = '✓ Excellent! l = 0(s), 1(p), 2(d), 3(f). |m| ≤ l. The spherical harmonics Y_lm describe the angular part of the wavefunction. Together with R_nl(r), they form the complete orbital.';
-    __GameState.addXP(80, 'Orbitals matched!');
-    __GameState.unlock({ id: 'orbital_master', title: 'Orbital Master', desc: 'Matched all spherical harmonics', icon: '🌍', xp: 25 });
+    if (typeof __GameState !== 'undefined') {
+      __GameState.addXP(80, 'Orbitals matched!');
+      __GameState.unlock({ id: 'orbital_master', title: 'Orbital Master', desc: 'Matched all spherical harmonics', icon: '🌍', xp: 25 });
+    }
   } else {
     fb.className = 'challenge-feedback error'; fb.style.display = 'block';
     fb.textContent = '✗ ' + (orbitalPuzzles.length - correct) + ' wrong. Rule: |m| ≤ l. s: l=0,m=0 · p: l=1,m=0,±1 · d: l=2,m=0,±1,±2.';
   }
 }
 
-// ===== PUZZLE 3: HUND'S RULE =====
+/* ---------- Puzzle 3: Hund's Rule ---------- */
 var hundConfigs = [
-  { config: '1s²', order: 1 },
-  { config: '2s²', order: 2 },
-  { config: '2p²', order: 3 },
-  { config: '3s²', order: 4 },
-  { config: '3p²', order: 5 },
-  { config: '4s²', order: 6 },
+  { config: '1s²', order: 1 }, { config: '2s²', order: 2 }, { config: '2p²', order: 3 },
+  { config: '3s²', order: 4 }, { config: '3p²', order: 5 }, { config: '4s²', order: 6 },
   { config: '3d²', order: 7 }
 ];
 
 function initHundPuzzle() {
   var c = document.getElementById('hund-list');
+  if (!c) return;
   c.innerHTML = '';
   var shuffled = hundConfigs.slice().sort(function() { return Math.random() - 0.5; });
   shuffled.forEach(function(cfg, i) {
@@ -409,60 +526,91 @@ function initHundPuzzle() {
 
 function checkHundPuzzle() {
   var selected = document.querySelectorAll('#hund-list .draggable-target');
+  if (!selected.length) return;
   var ordered = Array.from(selected).sort(function(a, b) { return parseInt(a.dataset.order) - parseInt(b.dataset.order); });
   var correct = true;
   selected.forEach(function(el, i) { if (el.dataset.order != ordered[i].dataset.order) correct = false; });
 
   var fb = document.getElementById('hund-feedback');
-  if (correct && selected.length > 0) {
+  if (!fb) return;
+  if (correct) {
     fb.className = 'challenge-feedback success'; fb.style.display = 'block';
-    fb.textContent = '✓ Perfect! Energy ordering: 1s < 2s < 2p < 3s < 3p < 4s < 3d. Hund\'s rule: within a subshell, maximize parallel spins. This gives magnetism in transition metals!';
-    __GameState.addXP(120, 'Hund\'s rule mastered!');
-    __GameState.unlock({ id: 'hund_wizard', title: 'Hund\'s Wizard', desc: 'Ordered electron configurations', icon: '🧲', xp: 30 });
-    particleBurst(window.innerWidth/2, 300, '#facc15');
+    fb.textContent = "✓ Perfect! Energy ordering: 1s < 2s < 2p < 3s < 3p < 4s < 3d. Hund's rule: within a subshell, maximize parallel spins. This gives magnetism in transition metals!";
+    if (typeof __GameState !== 'undefined') {
+      __GameState.addXP(120, "Hund's rule mastered!");
+      __GameState.unlock({ id: 'hund_wizard', title: "Hund's Wizard", desc: 'Ordered electron configurations', icon: '🧲', xp: 30 });
+    }
+    if (typeof particleBurst === 'function') particleBurst(window.innerWidth / 2, 300, '#facc15');
   } else {
     fb.className = 'challenge-feedback error'; fb.style.display = 'block';
-    fb.textContent = '✗ Order is wrong. Remember: lower (n+l) = lower energy. For same (n+l), lower n wins. 4s (n+l=4) fills before 3d (n+l=5).';
+    fb.textContent = "✗ Order is wrong. Remember: lower (n+l) = lower energy. For same (n+l), lower n wins. 4s (n+l=4) fills before 3d (n+l=5).";
   }
 }
 
-// ===== INIT =====
-document.addEventListener('DOMContentLoaded', function() {
-  // Playground sliders
+/* ---------- Sliders & Boot ---------- */
+function attachSliders() {
   var nSlider = document.getElementById('slider-h2-n');
   var lSlider = document.getElementById('slider-h2-l');
+  var valN = document.getElementById('val-h2-n');
+  var valL = document.getElementById('val-h2-l');
+
   if (nSlider) {
     nSlider.addEventListener('input', function(e) {
       __H.n = parseInt(e.target.value);
-      document.getElementById('val-h2-n').textContent = __H.n;
+      if (valN) valN.textContent = __H.n;
+      if (lSlider) {
+        lSlider.max = String(__H.n - 1);
+        if (__H.l >= __H.n) {
+          __H.l = __H.n - 1;
+          lSlider.value = String(__H.l);
+          if (valL) valL.textContent = __H.l;
+        }
+      }
       plotHydrogen(__H.n, __H.l);
       plotSpectrum(__H.n, __H.nf);
+      updateLiveTable();
+      sync3D();
     });
   }
+
   if (lSlider) {
     lSlider.addEventListener('input', function(e) {
       __H.l = parseInt(e.target.value);
-      document.getElementById('val-h2-l').textContent = __H.l;
+      if (valL) valL.textContent = __H.l;
       plotHydrogen(__H.n, __H.l);
+      updateLiveTable();
+      sync3D();
     });
   }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  attachSliders();
+
+  if (H.Hydrogen3D.init('canvas-3d')) {
+    sync3D();
+  }
+
   if (document.getElementById('plot-orbitals')) {
     plotHydrogen(3, 1);
     plotSpectrum(3, 2);
     plotZeeman(3, 1, 0);
+    updateLiveTable();
   }
 
-  // Override setGameMode
+  /* Mode switch hook */
   if (typeof setGameMode === 'function') {
     var orig = setGameMode;
     setGameMode = function(mode) {
       orig(mode);
-      if (mode === 'challenge' && typeof startSpectralChallenge === 'function') { startSpectralChallenge(); plotFineStructure(); }
+      if (mode === 'challenge' && typeof startSpectralChallenge === 'function') {
+        startSpectralChallenge(); plotFineStructure();
+      }
       if (mode === 'puzzle') { initAufbau(); initOrbitalPuzzle(); initHundPuzzle(); }
     };
   }
 
-  // Nav and stats
+  /* Nav */
   var nav = document.getElementById('module-nav');
   if (nav) {
     var modules = [
@@ -488,6 +636,12 @@ document.addEventListener('DOMContentLoaded', function() {
       nav.appendChild(el);
     });
   }
-  var xpEl = document.getElementById('stat-xp'); if (xpEl) xpEl.textContent = __GameState.xp();
-  var navXp = document.getElementById('nav-xp'); if (navXp) navXp.textContent = __GameState.xp() + ' XP';
+
+  /* Stats */
+  if (typeof __GameState !== 'undefined') {
+    var xpEl = document.getElementById('stat-xp');
+    if (xpEl) xpEl.textContent = __GameState.xp();
+    var navXp = document.getElementById('nav-xp');
+    if (navXp) navXp.textContent = __GameState.xp() + ' XP';
+  }
 });
