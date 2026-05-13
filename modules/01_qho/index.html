@@ -86,6 +86,14 @@
             <span><span style="color:#ffd54f;">—</span> |ψ(x)|²</span>
             <span><span style="color:#4ade80;font-style:dashed;">···</span> classical turning point</span>
           </div>
+          <!-- Dynamic plot caption -->
+          <div id="plot-caption" style="margin-top:0.6rem; padding:0.6rem 1rem; background:rgba(10,10,18,0.6); border:1px solid var(--glass-border); border-radius:var(--radius-sm); font-size:0.82rem; color:var(--text-muted); line-height:1.6;">
+            <strong style="color:var(--accent-cyan);">x</strong> = position in units of √(ℏ/mω) — the natural width of the ground-state Gaussian.
+            The <strong style="color:#4ade80;">green dashed lines</strong> mark the classical turning points ±√(2E): the farthest a classical oscillator with the same energy would swing.
+            <span id="caption-eigen"><strong>Eigen mode:</strong> The wave is frozen in shape (|ψ|² gold does not move). Only Re and Im swap places as the global phase e⁻ⁱᴱᵗ/ℏ rotates.</span>
+            <span id="caption-super" style="display:none;"><strong>Super mode:</strong> Two eigenstates interfere. The gold probability density breathes and sloshes left-right as the two phases run at different speeds.</span>
+            <span id="caption-coherent" style="display:none;"><strong>Coherent mode:</strong> The whole Gaussian packet slides back and forth like a classical ball on a spring, hitting the green turning points and rebounding.</span>
+          </div>
 
           <!-- Classical vs Quantum comparison -->
           <div class="plot-container" id="plot-classical" style="min-height:260px; margin-top:1.5rem;"></div>
@@ -514,6 +522,10 @@ function setStateMode(mode) {
   // Show/hide controls
   document.getElementById('m-control').style.display = mode === 'superposition' ? 'block' : 'none';
   document.getElementById('alpha-controls').style.display = mode === 'coherent' ? 'block' : 'none';
+  // Show/hide captions
+  document.getElementById('caption-eigen').style.display = mode === 'eigenstate' ? 'inline' : 'none';
+  document.getElementById('caption-super').style.display = mode === 'superposition' ? 'inline' : 'none';
+  document.getElementById('caption-coherent').style.display = mode === 'coherent' ? 'inline' : 'none';
   updateWavePlot();
 }
 </script>
