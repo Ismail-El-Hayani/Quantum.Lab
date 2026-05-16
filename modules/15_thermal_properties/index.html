@@ -45,18 +45,8 @@
       </div>
       <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem;">
         <div>
-          <div class="plot-container" id="plot-cv" style="min-height:280px;"></div>
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
-            <strong>What it shows:</strong> How heat capacity evolves from low-temperature phonon and electron contributions up to the classical Dulong-Petit limit.<br>
-            <strong>Why it matters:</strong> The slope and intercept at low T directly reveal the Debye temperature and electronic density of states — key calibration points for every solid-state model.
-          </div>
-          <div class="plot-container" id="plot-kappa" style="min-height:260px; margin-top:1.5rem;"></div>
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
-            <strong>What it shows:</strong> Thermal conductivity versus temperature, separating phonon and electron contributions.<br>
-            <strong>Why it matters:</strong> The Wiedemann-Franz ratio κ/σT links heat and charge transport — a cornerstone for designing thermoelectrics and heat sinks.
-          </div>
-          <!-- Phonon Lattice Canvas -->
-          <div style="margin-top:1.5rem;border:1px solid var(--border-subtle);border-radius:12px;overflow:hidden;background:var(--bg-elevated);">
+          <!-- Phonon Lattice Canvas (primary visual) -->
+          <div style="border:1px solid var(--border-subtle);border-radius:12px;overflow:hidden;background:var(--bg-elevated);margin-bottom:1rem;">
             <div style="padding:0.75rem 1rem;border-bottom:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center;">
               <span style="font-weight:700;color:var(--text-main);">🌡️ Phonon Lattice Sandbox</span>
               <div style="display:flex;gap:0.4rem;">
@@ -67,6 +57,16 @@
             </div>
             <canvas id="tp-lattice" style="display:block;width:100%;height:280px;background:var(--bg-elevated);"></canvas>
             <div id="tp-lattice-tooltip" style="position:absolute;padding:4px 8px;background:rgba(10,10,18,0.9);border:1px solid var(--border-subtle);border-radius:6px;font-size:0.78rem;color:var(--text-main);pointer-events:none;opacity:0;transition:opacity 0.15s;z-index:10;"></div>
+          </div>
+          <div class="plot-container" id="plot-cv" style="min-height:280px;"></div>
+          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
+            <strong>What it shows:</strong> How heat capacity evolves from low-temperature phonon and electron contributions up to the classical Dulong-Petit limit.<br>
+            <strong>Why it matters:</strong> The slope and intercept at low T directly reveal the Debye temperature and electronic density of states — key calibration points for every solid-state model.
+          </div>
+          <div class="plot-container" id="plot-kappa" style="min-height:260px; margin-top:1.5rem;"></div>
+          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
+            <strong>What it shows:</strong> Thermal conductivity versus temperature, separating phonon and electron contributions.<br>
+            <strong>Why it matters:</strong> The Wiedemann-Franz ratio κ/σT links heat and charge transport — a cornerstone for designing thermoelectrics and heat sinks.
           </div>
         </div>
         <div>
