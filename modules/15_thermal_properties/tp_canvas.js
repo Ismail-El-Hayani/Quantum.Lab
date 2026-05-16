@@ -282,12 +282,12 @@ function drawFrame() {
   var mat = getCanvasMat();
 
   // Bond springs
-  ctx.lineWidth = 1.2;
+  ctx.lineWidth = 1.5;
   for (var k = 0; k < atoms.length; k++) {
     var a = atoms[k];
     var rC = { r: 120, g: 120, b: 160 };
     var tRatio = Math.min(a.T / Math.max(mat.thetaD, 50), 3);
-    ctx.strokeStyle = 'rgba(' + Math.round(rC.r + tRatio * 60) + ',' + Math.round(rC.g + tRatio * 40) + ',' + Math.round(rC.b + tRatio * 20) + ',0.25)';
+    ctx.strokeStyle = 'rgba(' + Math.round(rC.r + tRatio * 60) + ',' + Math.round(rC.g + tRatio * 40) + ',' + Math.round(rC.b + tRatio * 20) + ',0.38)';
     var right = atomAt(a.i + 1, a.j);
     var down  = atomAt(a.i, a.j + 1);
     if (right) { ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(right.x, right.y); ctx.stroke(); }
@@ -298,9 +298,9 @@ function drawFrame() {
   for (var k = 0; k < atoms.length; k++) {
     var a = atoms[k];
     var col = tempToColor(a.T, mat.thetaD);
-    var cloudR = 6 + Math.min((a.T / 300) * 2, 12);
+    var cloudR = 8 + Math.min((a.T / 300) * 2.5, 14);
 
-    ctx.globalAlpha = 0.22;
+    ctx.globalAlpha = 0.28;
     var g = ctx.createRadialGradient(a.x, a.y, 1, a.x, a.y, cloudR);
     g.addColorStop(0, 'rgba(' + Math.round(col.r) + ',' + Math.round(col.g) + ',' + Math.round(col.b) + ',0.45)');
     g.addColorStop(1, 'rgba(' + Math.round(col.r) + ',' + Math.round(col.g) + ',' + Math.round(col.b) + ',0)');
