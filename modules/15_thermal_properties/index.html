@@ -55,6 +55,19 @@
             <strong>What it shows:</strong> Thermal conductivity versus temperature, separating phonon and electron contributions.<br>
             <strong>Why it matters:</strong> The Wiedemann-Franz ratio κ/σT links heat and charge transport — a cornerstone for designing thermoelectrics and heat sinks.
           </div>
+          <!-- Phonon Lattice Canvas -->
+          <div style="margin-top:1.5rem;border:1px solid var(--border-subtle);border-radius:12px;overflow:hidden;background:var(--bg-elevated);">
+            <div style="padding:0.75rem 1rem;border-bottom:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-weight:700;color:var(--text-main);">🌡️ Phonon Lattice Sandbox</span>
+              <div style="display:flex;gap:0.4rem;">
+                <button class="btn tool-btn" id="btn-heat" onclick="setTPCursor('heat')">🔥 Heat</button>
+                <button class="btn tool-btn" id="btn-cool" onclick="setTPCursor('cool')">❄️ Cool</button>
+                <button class="btn tool-btn active-tool" id="btn-probe" onclick="setTPCursor('probe')">🌡️ Probe</button>
+              </div>
+            </div>
+            <canvas id="tp-lattice" style="display:block;width:100%;height:280px;background:var(--bg-elevated);"></canvas>
+            <div id="tp-lattice-tooltip" style="position:absolute;padding:4px 8px;background:rgba(10,10,18,0.9);border:1px solid var(--border-subtle);border-radius:6px;font-size:0.78rem;color:var(--text-main);pointer-events:none;opacity:0;transition:opacity 0.15s;z-index:10;"></div>
+          </div>
         </div>
         <div>
           <div class="challenge-panel" style="margin-bottom:1rem;">
@@ -174,6 +187,7 @@
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
+<script src="tp_canvas.js?v=1"></script>
 <script src="tp_sim.js?v=1"></script>
 <script src="tp_apps.js?v=1"></script>
 <script src="tp_apps_games.js?v=1"></script>

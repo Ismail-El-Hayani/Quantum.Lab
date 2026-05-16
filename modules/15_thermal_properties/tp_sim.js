@@ -135,8 +135,15 @@ function initThermal() {
   if (sT) { sT.addEventListener('input', function() { tpState.T = parseFloat(this.value); var el = document.getElementById('val-T-tp'); if (el) el.textContent = tpState.T; plotCv(); plotThermalConductivity(); updateLiveTP(); }); }
   if (sTheta) { sTheta.addEventListener('input', function() { tpState.thetaD = parseFloat(this.value); var el = document.getElementById('val-thetaD'); if (el) el.textContent = tpState.thetaD; plotCv(); plotThermalConductivity(); updateLiveTP(); }); }
   if (sGamma) { sGamma.addEventListener('input', function() { tpState.gammaEl = parseFloat(this.value); var el = document.getElementById('val-gamma'); if (el) el.textContent = tpState.gammaEl; plotCv(); plotThermalConductivity(); updateLiveTP(); }); }
-  if (selType) { selType.addEventListener('change', function() { tpState.type = this.value; plotCv(); plotThermalConductivity(); updateLiveTP(); }); }
+  if (selType) { selType.addEventListener('change', function() { 
+    tpState.type = this.value; 
+    plotCv(); plotThermalConductivity(); updateLiveTP(); 
+    if (typeof setTPCanvasMaterial === 'function') {
+      setTPCanvasMaterial(this.value === 'metal' ? 'Cu' : 'Quartz');
+    }
+  }); }
   plotCv(); plotThermalConductivity(); updateLiveTP();
+  if (typeof initTPCanvas === 'function') { initTPCanvas(); }
 }
 
 initThermal();

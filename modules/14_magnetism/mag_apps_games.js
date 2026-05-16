@@ -62,7 +62,7 @@ function startMagChallenge() {
     { desc: 'χ < 0 at all T', answer: 'diamagnet' },
     { desc: 'χ > 0 and χ ∝ 1/T', answer: 'paramagnet' },
     { desc: 'Spontaneous M even at H=0 below Tc', answer: 'ferromagnet' },
-    { desc: 'Antiparallel ordering with zero net M', answer: 'diamagnet' }
+    { desc: 'χ peaks at TN then drops with T', answer: 'paramagnet' }
   ];
   magCh.current = opts[Math.floor(Math.random() * opts.length)];
   txt.innerHTML = '<strong>' + magCh.current.desc + '</strong><br><span style="font-size:1.2rem;">Which magnetic class?</span>';
