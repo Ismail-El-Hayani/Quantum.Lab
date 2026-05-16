@@ -97,7 +97,7 @@ function plotMagnetizationCurve() {
     T.push(t);
     M.push(magnetization(t, tc, magState.Ms));
   }
-  _plotMAG('plot-M-T', [
+  _plot('plot-M-T', [
     { x: T, y: M, mode: 'lines', name: 'M(T)', line: { color: '#00f0ff', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.06)' },
     { x: [tc, tc], y: [0, magState.Ms], mode: 'lines', line: { color: '#facc15', width: 1.5, dash: 'dash' }, showlegend: false, hoverinfo: 'skip' }
   ], magLayout(null, 'Temperature (K)', 'M / M_s', {
