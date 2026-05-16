@@ -5,6 +5,14 @@
 
 'use strict';
 
+function _qhoPlotCheck() {
+  if (typeof Plotly === 'undefined') {
+    console.error('[QHO Games] Plotly not available — plot skipped');
+    return false;
+  }
+  return true;
+}
+
 // ===== MATH UTILITIES (self-contained) =====
 function qhoFactorial(n) {
   if (n <= 1) return 1;
@@ -106,7 +114,7 @@ function plotPlayground(n, alpha, showClassical) {
     );
   }
 
-  Plotly.react('plot-playground', traces, _extend(_darkLayout, {
+  if (_qhoPlotCheck()) Plotly.react('plot-playground', traces, _extend(_darkLayout, {
     title: { text: 'QHO Wavefunction n=' + n, font: { size: 13 } },
     xaxis: { title: 'x (natural units)' },
     yaxis: { title: 'Amplitude' },
@@ -138,7 +146,7 @@ function animateSuperposition(n, alpha) {
     });
     var prob = combined.map(function(p) { return p * p; });
 
-    Plotly.animate('plot-playground', {
+    if (_qhoPlotCheck()) Plotly.animate('plot-playground', {
       data: [{ y: combined }, { y: prob }]
     }, { transition: { duration: 0 }, frame: { duration: 0 } });
     __QHO.animFrame = requestAnimationFrame(frame);
@@ -207,7 +215,7 @@ function startWaveMatch() {
 function plotTargetWave(n) {
   var x = linspace(-5, 5, 200);
   var target = x.map(function(xi) { return qhoPsi(n, xi); });
-  Plotly.react('challenge-target-plot', [
+  if (_qhoPlotCheck()) Plotly.react('challenge-target-plot', [
     { x: x, y: target, mode: 'lines', line: { color: '#8080a0', width: 2, dash: 'dash' } }
   ], _extend(_darkLayout, {
     xaxis: { showticklabels: false }, yaxis: { showticklabels: false, range: [-0.8, 0.8] },
@@ -218,7 +226,7 @@ function plotTargetWave(n) {
 function plotUserWave(n) {
   var x = linspace(-5, 5, 200);
   var user = x.map(function(xi) { return qhoPsi(n, xi); });
-  Plotly.react('challenge-user-plot', [
+  if (_qhoPlotCheck()) Plotly.react('challenge-user-plot', [
     { x: x, y: user, mode: 'lines', line: { color: '#00f0ff', width: 2 } }
   ], _extend(_darkLayout, {
     xaxis: { showticklabels: false }, yaxis: { showticklabels: false, range: [-0.8, 0.8] },
@@ -314,7 +322,7 @@ function plotLaserLevels() {
       textposition: 'right', textfont: { color: '#505070', size: 10 }, showlegend: false
     });
   }
-  Plotly.react('plot-laser-levels', levels, _extend(_darkLayout, {
+  if (_qhoPlotCheck()) Plotly.react('plot-laser-levels', levels, _extend(_darkLayout, {
     title: { text: 'Energy Levels', font: { size: 12 } },
     xaxis: { range: [0, 1], showticklabels: false },
     yaxis: { title: 'E / ℏω', gridcolor: '#2a2a3a' },
@@ -582,7 +590,7 @@ function initSelectionRules() {
     });
   });
 
-  Plotly.react('plot-selection', traces, _extend(_darkLayout, {
+  if (_qhoPlotCheck()) Plotly.react('plot-selection', traces, _extend(_darkLayout, {
     title: { text: 'QHO Energy Levels', font: { size: 12 } },
     xaxis: { range: [0, 1], showticklabels: false },
     yaxis: { title: 'E / ℏω', range: [0, 6], gridcolor: '#2a2a3a' },

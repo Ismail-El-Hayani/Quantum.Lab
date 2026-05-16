@@ -625,14 +625,14 @@ function buildModuleNav() {
     { num: '05', name: 'Energy Bands', url: '../05_energy_bands/index.html' },
     { num: '06', name: 'Fermi Surface', url: '../06_fermi_surface/index.html' },
     { num: '07', name: 'Conductivity', url: '../07_conductivity/index.html' },
-    { num: '08', name: 'Doped Semiconductors', url: '../08_doped_semiconductors/index.html' },
-    { num: '09', name: 'Junctions & Devices', url: '../09_junctions_devices/index.html' },
-    { num: '10', name: 'Optics & Dispersion', url: '../10_optics_dispersion/index.html' },
-    { num: '11', name: 'Laser Physics', url: '../11_laser_physics/index.html' },
-    { num: '12', name: 'Magnetic Materials', url: '../12_magnetic_materials/index.html' },
-    { num: '13', name: 'Thermal Properties', url: '../13_thermal_properties/index.html' },
-    { num: '14', name: 'Superconductivity', url: '../14_superconductivity/index.html' },
-    { num: '15', name: 'Nanoscale Physics', url: '../15_nanoscale_physics/index.html' }
+    { num: '08', name: 'Superconductivity', url: '../08_superconductivity/index.html' },
+    { num: '09', name: 'Intrinsic Semiconductors', url: '../09_intrinsic_semiconductors/index.html' },
+    { num: '10', name: 'Doped Semiconductors', url: '../10_doped_semiconductors/index.html' },
+    { num: '11', name: 'Junctions & Devices', url: '../11_junctions_devices/index.html' },
+    { num: '12', name: 'Optics & Dispersion', url: '../12_optics_dispersion/index.html' },
+    { num: '13', name: 'Laser Physics', url: '../13_laser_physics/index.html' },
+    { num: '14', name: 'Magnetism', url: '../14_magnetism/index.html' },
+    { num: '15', name: 'Thermal Properties', url: '../15_thermal_properties/index.html' }
   ];
 
   modules.forEach(function(m) {

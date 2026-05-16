@@ -55,14 +55,53 @@
         <div class="playground-level">Tune field, scattering time, and temperature. Watch electrons drift.</div>
       </div>
 
-      <div style="display:grid; grid-template-columns: 1fr 320px; gap: 1.5rem;">
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
         <div>
           <div class="plot-container" id="plot-drift" style="min-height:300px;"></div>
-          <div class="plot-container" id="plot-rho-T" style="min-height:260px; margin-top:1.5rem;"></div>
-          <div class="plot-container" id="plot-iv" style="min-height:260px; margin-top:1.5rem;"></div>
+          <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
+            ⚡ <b>Drift Velocity</b> — v_d = eEτ/m*. Linear with field; saturation at high E.
+          </div>
         </div>
         <div>
-          <div class="challenge-panel" style="margin-bottom:1rem;">
+          <div class="plot-container" id="plot-rho-T" style="min-height:300px;"></div>
+          <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
+            📈 <b>Resistivity vs T</b> — Bloch-Grüneisen: ρ ∝ T⁵ (low T) → ρ ∝ T (high T).
+          </div>
+        </div>
+        <div>
+          <div class="plot-container" id="plot-iv" style="min-height:300px;"></div>
+          <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
+            🔌 <b>I-V Curves</b> — Ohmic (linear) vs Diode (exponential). Log scale highlights turn-on.
+          </div>
+        </div>
+        <div>
+          <div class="plot-container" id="plot-mfp" style="min-height:300px;"></div>
+          <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
+            🎯 <b>Mean Free Path</b> — Matthiessen's rule: 1/λ_total = 1/λ_ph + 1/λ_imp.
+          </div>
+        </div>
+        <div>
+          <div class="plot-container" id="plot-hall" style="min-height:300px;"></div>
+          <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
+            🧲 <b>Hall Effect</b> — Sign of V_H distinguishes n-type (negative) vs p-type (positive).
+          </div>
+        </div>
+        <div>
+          <div class="plot-container" id="plot-ioffe" style="min-height:300px;"></div>
+          <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
+            🧊 <b>Ioffe–Regel Criterion</b> — k_F λ > 1 marks the metallic limit. Below → localization.
+          </div>
+        </div>
+        <div>
+          <div class="plot-container" id="plot-wf" style="min-height:300px;"></div>
+          <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
+            🔥 <b>Wiedemann–Franz Law</b> — L = κ/(σT). Approaches 2.44×10⁻⁸ WΩ/K² for Fermi liquids.
+          </div>
+        </div>
+      </div>
+
+      <div style="max-width: 320px; margin: 1.5rem auto 0;">
+        <div class="challenge-panel" style="margin-bottom:1rem;">
             <div class="challenge-header">
               <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙</span>
               <span class="challenge-title">Controls</span>
@@ -247,9 +286,7 @@
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
-<script src="cond_sim.js?v=1"></script>
-<script src="cond_apps_games.js?v=1"></script>
-
+<script src="cond_apps_games.js?v=2"></script>
 <script src="../../shared_effects.js"></script>
 </body>
 </html>

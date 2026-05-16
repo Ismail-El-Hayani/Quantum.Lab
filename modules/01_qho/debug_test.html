@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>QHO Debug Test</title>
+<script src="plotly-2.27.0.min.js"></script>
+<style>
+  body { background: #111; color: #0f0; font-family: monospace; padding: 20px; }
+  #log { white-space: pre-wrap; }
+  #test-plot { width: 100%; height: 300px; background: #222; border: 1px solid #444; }
+</style>
+</head>
+<body>
+<h2>QHO Debug Test</h2>
+<div id="log">Loading...</div>
+<div id="test-plot"></div>
+
+<script>
+var log = [];
+function out(msg) { log.push(msg); document.getElementById('log').textContent = log.join('\n'); }
+
+out('Step 1: Plotly loaded = ' + (typeof Plotly !== 'undefined'));
+
+// Try to load qho_sim.js dynamically and see if it defines updateWavePlot
+var script = document.createElement('script');
+script.src = 'qho_sim.js';
+script.onload = function() {
+  out('Step 2: qho_sim.js loaded successfully');
+  out('Step 3: updateWavePlot defined = ' + (typeof updateWavePlot !== 'undefined'));
+  out('Step 4: _plot defined = ' + (typeof _plot !== 'undefined'));
+  out('Step 5: state defined = ' + (typeof state !== 'undefined'));
+  
+  if (typeof updateWavePlot !== 'undefined') {
+    try {
+      updateWavePlot();
+      out('Step 6: updateWavePlot() executed OK');
+    } catch(e) {
+      out('Step 6: updateWavePlot() ERROR: ' + e.message);
+    }
+  } else {
+    out('Step 6: SKIPPED — updateWavePlot not available');
+  }
+  
+  // Try a direct Plotly render
+  try {
+    Plotly.react('test-plot', [
+      { x: [1,2,3], y: [1,4,9], mode: 'lines', line: { color: '#00f0ff' } }
+    ], {
+      paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+      font: { color: '#e0e0f0' }, margin: { l:40, r:20, t:30, b:30 }
+    });
+    out('Step 7: Direct Plotly render OK — check below for cyan parabola');
+  } catch(e) {
+    out('Step 7: Direct Plotly render ERROR: ' + e.message);
+  }
+};
+script.onerror = function() {
+  out('Step 2: qho_sim.js FAILED TO LOAD (404 or network error)');
+};
+document.head.appendChild(script);
+</script>
+</body>
+</html>

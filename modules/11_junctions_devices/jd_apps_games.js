@@ -31,7 +31,10 @@ var JD_BADGES = [
   { id: 'solar-engineer', name: 'Solar Engineer', desc: 'Solved solar cell challenge', icon: '☀' },
   { id: 'device-master', name: 'Device Master', desc: 'Device classifier done', icon: '📱' },
   { id: 'barrier-architect', name: 'Barrier Architect', desc: 'Built diode equation', icon: '🏗' },
-  { id: 'band-matcher', name: 'Band Matcher', desc: 'Band diagram puzzle solved', icon: '📊' }
+  { id: 'band-matcher', name: 'Band Matcher', desc: 'Band diagram puzzle solved', icon: '📊' },
+  { id: 'zener-engineer', name: 'Zener Engineer', desc: 'Mastered voltage regulation', icon: '🔧' },
+  { id: 'esaki-explorer', name: 'Esaki Explorer', desc: 'Discovered negative resistance', icon: '🔄' },
+  { id: 'mos-wizard', name: 'MOS Wizard', desc: 'Tuned gate-controlled channels', icon: '⚙' }
 ];
 function renderBadgesJD() {
   var el = document.getElementById('badge-list'); if (!el || !window._GameState) return;

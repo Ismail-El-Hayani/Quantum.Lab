@@ -10,6 +10,10 @@
 function _plotApp(id, traces, layout, cfg) {
   var el = document.getElementById(id);
   if (!el) return;
+  if (typeof Plotly === 'undefined') {
+    console.error('[QHO Apps] Plotly not available — cannot render plot #' + id);
+    return;
+  }
   Plotly.react(id, traces, layout, cfg || {responsive: true, displayModeBar: false});
 }
 

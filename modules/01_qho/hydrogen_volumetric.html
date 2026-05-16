@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hydrogen 5g Orbital — Volumetric Visualization</title>
+<style>
+  body { margin: 0; overflow: hidden; background: #000; font-family: 'JetBrains Mono', 'Segoe UI', monospace; }
+  #info {
+    position: absolute; top: 16px; left: 16px; color: #e0e0f0;
+    background: rgba(5, 5, 12, 0.75); padding: 14px 20px; border-radius: 10px;
+    pointer-events: none; z-index: 10; backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.08); line-height: 1.6; max-width: 340px;
+  }
+  #info h1 { margin: 0 0 6px 0; font-size: 15px; color: #ffaa44; letter-spacing: 1.5px; text-transform: uppercase; }
+  #info p { margin: 0; font-size: 12.5px; color: #aaa; }
+  #info .qnum { color: #00f0ff; font-weight: 600; }
+  #loading {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    color: #00f0ff; font-size: 16px; letter-spacing: 3px; pointer-events: none;
+    transition: opacity 0.6s; text-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+  }
+  #diag {
+    position: fixed; bottom: 8px; left: 8px; padding: 10px 14px;
+    background: rgba(0,0,0,0.8); color: #0f0; font: 12px monospace;
+    z-index: 99; border-radius: 6px; border: 1px solid #0f0;
+    white-space: pre; line-height: 1.5; max-width: 420px;
+  }
+</style>
+</head>
+<body>
+<div id="loading">COMPUTING ORBITAL FIELD...</div>
+<div id="info">
+  <h1>⚛️ Hydrogen 5g Orbital</h1>
+  <p>
+    <span class="qnum">n = 5</span> · <span class="qnum">l = 4 (g)</span> · <span class="qnum">m = 2</span><br>
+    Probability density |ψ|² rendered as volumetric particle cloud.<br>
+    <span style="color:#4ade80;">Drag</span> to rotate · <span style="color:#4ade80;">Scroll</span> to zoom
+  </p>
+</div>
+<div id="diag"></div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+
+const diagLines = [];
+function log(msg) {
+  diagLines.push(msg);
+  const el = document.getElementById('diag');
+  if (el) el.textContent = diagLines.join('\n');
+  console.log(msg);
+}
+
+/* ── EXACT DENSITY: n=5, l=4, m=2 ───────────────────────────
+ *  R_54²(r) ∝ r⁸ · e^(-0.4r)        [atomic units, a₀=1]
+ *  Y_4^2²(θ,φ)  ∝ sin⁴θ · cos²(2φ) · (7cos²θ-1)²
+ *  Cartesian: let c=cosθ=z/r, s=sinθ=ρ/r, then
+ *  sin⁴θ = (ρ/r)⁴ = (x²+y²)²/r⁴
+ *  cos²(2φ) = (cos²φ-sin²φ)² = (x²-y²)²/(x²+y²)²
+ *  (7cos²θ-1)² = (7z²/r²-1)²
+ *  Multiplying:
+ *    Y² ∝ (x²+y²)²/r⁴ · (x²-y²)²/(x²+y²)² · (7z²/r²-1)²
+ *        = (x²-y²)²/r⁴ · (7z²/r²-1)²
+ *  So the combined angular factor used below is correct.
+ */
+function orbitalDensity(x, y, z) {
+  const r2 = x*x + y*y + z*z;
+  if (r2 < 0.001) return 0;
+  const r = Math.sqrt(r2);
+  const radial = Math.pow(r, 8) * Math.exp(-0.4 * r);
+  const angular = Math.pow(7*z*z/r2 - 1, 2) * Math.pow(x*x - y*y, 2) / (r2 * r2);
+  return radial * angular;
+}
+
+/* ── HEATMAP ───────────────────────────────────────────────── */
+function densityToColor(t) {
+  const stops = [
+    {p: 0.00, c:[0.02, 0.02, 0.35]},
+    {p: 0.06, c:[0.00, 0.12, 0.75]},
+    {p: 0.16, c:[0.00, 0.55, 1.00]},
+    {p: 0.28, c:[0.00, 0.90, 0.35]},
+    {p: 0.42, c:[0.50, 1.00, 0.00]},
+    {p: 0.56, c:[1.00, 1.00, 0.00]},
+    {p: 0.72, c:[1.00, 0.35, 0.00]},
+    {p: 0.86, c:[1.00, 0.02, 0.05]},
+    {p: 1.00, c:[1.00, 1.00, 1.00]}
+  ];
+  for (let i = 0; i < stops.length - 1; i++) {
+    if (t <= stops[i+1].p) {
+      const s = (t - stops[i].p) / (stops[i+1].p - stops[i].p);
+      const a = stops[i].c, b = stops[i+1].c;
+      return [a[0]+(b[0]-a[0])*s, a[1]+(b[1]-a[1])*s, a[2]+(b[2]-a[2])*s];
+    }
+  }
+  return stops[stops.length-1].c;
+}
+
+/* ── GENERATE POINT CLOUD ──────────────────────────────────── */
+function buildCloud() {
+  log('buildCloud start');
+  const box = 30;
+  const step = 1.0;
+  const n = Math.floor(2 * box / step) + 1;
+  const maxParticles = 200000;
+
+  const posArr = new Float32Array(maxParticles * 3);
+  const colArr = new Float32Array(maxParticles * 3);
+  const sizArr = new Float32Array(maxParticles);
+  let count = 0;
+  let maxD  = 0;
+
+  for (let ix = 0; ix < n; ix++) {
+    const x = -box + ix * step;
+    for (let iy = 0; iy < n; iy++) {
+      const y = -box + iy * step;
+      for (let iz = 0; iz < n; iz++) {
+        const z = -box + iz * step;
+        const d = orbitalDensity(x, y, z);
+        if (d > maxD) maxD = d;
+        if (d > 0 && count < maxParticles) {
+          posArr[count * 3] = x;
+          posArr[count * 3 + 1] = y;
+          posArr[count * 3 + 2] = z;
+          sizArr[count] = d;
+          count++;
+        }
+      }
+    }
+  }
+
+  log(`raw count=${count}  maxD=${maxD.toExponential(2)}`);
+
+  if (count === 0) {
+    log('ERROR: zero particles');
+    return { positions: posArr, colors: colArr, sizes: sizArr, count: 0, maxD };
+  }
+
+  const logMin = Math.log(maxD * 1e-7 + 1e-18);
+  const logMax = Math.log(maxD);
+  const lrm = 1 / (logMax - logMin + 1e-12);
+
+  for (let i = 0; i < count; i++) {
+    const density = sizArr[i];
+    const t = Math.max(0, Math.min(1, (Math.log(density) - logMin) * lrm));
+    const c = densityToColor(Math.pow(t, 0.45));
+    colArr[i * 3] = c[0];
+    colArr[i * 3 + 1] = c[1];
+    colArr[i * 3 + 2] = c[2];
+    sizArr[i] = 2.0 + 22.0 * t;
+  }
+
+  return {
+    positions: posArr.subarray(0, count * 3),
+    colors:    colArr.subarray(0, count * 3),
+    sizes:     sizArr.subarray(0, count),
+    count,
+    maxD
+  };
+}
+
+try {
+  /* ── SCENE & RENDERER ───────────────────────────────────── */
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x000000);
+
+  log('Three.js loaded');
+
+  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 500);
+  camera.position.set(50, 30, 60);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.15;
+  document.body.appendChild(renderer.domElement);
+
+  const gl = renderer.getContext();
+  log(`WebGL ${gl instanceof WebGL2RenderingContext ? '2' : '1'}`);
+  log(`GPU: ${gl.getParameter(gl.RENDERER)}`);
+  log(`Canvas ${renderer.domElement.width}x${renderer.domElement.height}`);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.05;
+  controls.autoRotate = true; controls.autoRotateSpeed = 0.5;
+  controls.target.set(0, 0, 0);
+
+  /* ── FALLBACK SPHERE (always visible) ────────────────────── */
+  const sphereGeo = new THREE.IcosahedronGeometry(15, 2);
+  const sphereMat = new THREE.MeshBasicMaterial({ color: 0x333333, wireframe: true });
+  scene.add(new THREE.Mesh(sphereGeo, sphereMat));
+  log('Fallback wireframe sphere added');
+
+  /* ── BUILD CLOUD ─────────────────────────────────────────── */
+  const data = buildCloud();
+  log(`Final particles: ${data.count}`);
+
+  if (data.count > 0) {
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(data.positions, 3));
+    geometry.setAttribute('color',    new THREE.BufferAttribute(data.colors, 3));
+
+    /* ── POINTS MATERIAL (standard, no custom shader) ─────── */
+    const material = new THREE.PointsMaterial({
+      color: 0xffffff,
+      size: 12.0,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.75,
+      sizeAttenuation: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+
+    const points = new THREE.Points(geometry, material);
+    scene.add(points);
+    log('Points cloud added');
+  }
+
+  /* ── STARFIELD ──────────────────────────────────────────── */
+  const starGeo = new THREE.BufferGeometry();
+  const starCount = 4000;
+  const starPos = new Float32Array(starCount * 3);
+  for (let i = 0; i < starCount * 3; i++) starPos[i] = (Math.random() - 0.5) * 500;
+  starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+  scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({
+    color: 0xffffff, size: 0.35, transparent: true, opacity: 0.25, sizeAttenuation: true
+  })));
+
+  /* ── FADE LOADING ───────────────────────────────────────── */
+  const loadingEl = document.getElementById('loading');
+  if (loadingEl) { loadingEl.style.opacity = '0'; setTimeout(() => loadingEl.remove(), 700); }
+
+  /* ── ANIMATE ────────────────────────────────────────────── */
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  /* ── RESIZE ─────────────────────────────────────────────── */
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+} catch (err) {
+  log('FATAL: ' + err.name + ': ' + err.message);
+  console.error(err);
+}
+</script>
+</body>
+</html>

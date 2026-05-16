@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>SC Cooper Test</title>
+<style>
+body { background: #0a0a12; color: #ccc; font-family: monospace; padding: 20px; }
+canvas { border: 1px solid #333; display: block; margin: 10px 0; }
+#log { white-space: pre; font-size: 12px; color: #0f0; }
+</style>
+</head>
+<body>
+<h3>Superconductivity Canvas Diagnostic</h3>
+<canvas id="canvas-cooper" width="340" height="180"></canvas>
+<div id="log">Loading sc_sim.js ...</div>
+
+<script src="sc_sim.js?v=3"></script>
+<script>
+const log = document.getElementById('log');
+function out(s) { log.textContent += '\n' + s; }
+
+try {
+  out('typeof scState = ' + typeof scState);
+  out('typeof gapRatio = ' + typeof gapRatio);
+  out('typeof initCooperAnimation = ' + typeof initCooperAnimation);
+  out('typeof initSuperconductivityV2 = ' + typeof initSuperconductivityV2);
+  out('typeof glowCircle = ' + typeof glowCircle);
+  out('typeof niceText = ' + typeof niceText);
+  out('typeof drawScaleBar = ' + typeof drawScaleBar);
+  out('scState.T = ' + scState.T);
+  out('scState.Tc = ' + scState.Tc);
+
+  const canvas = document.getElementById('canvas-cooper');
+  out('canvas found: ' + !!canvas);
+  out('canvas w/h: ' + canvas.width + 'x' + canvas.height);
+
+  // Only run the animation init
+  initCooperAnimation('canvas-cooper');
+  out('initCooperAnimation called — check canvas above');
+
+  // Try to draw one frame manually
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#f00';
+  ctx.fillRect(10, 10, 20, 20);
+  out('Red square drawn at (10,10) — if visible, canvas works');
+
+} catch(e) {
+  out('ERROR: ' + e.message);
+  out(e.stack);
+}
+</script>
+</body>
+</html>

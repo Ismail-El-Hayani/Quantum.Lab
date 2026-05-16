@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>12 — Optics & Dispersion (Lattice Prototype)</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<link rel="stylesheet" href="../../shared_styles.css">
+<style>
+  body { margin:0; background:var(--bg-deep); color:var(--text-main); font-family:var(--font-body); }
+  .navbar {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:0.6rem 1.2rem; border-bottom:1px solid var(--glass-border); background:var(--bg-panel); backdrop-filter:blur(12px);
+    position:sticky; top:0; z-index:20;
+  }
+  .home-link { text-decoration:none; color:var(--accent-cyan); font-weight:700; }
+  .nav-title { font-family:var(--font-display); font-size:1.05rem; font-weight:600; }
+  .nav-xp { font-family:var(--font-mono); font-size:0.82rem; color:var(--accent-cyan); }
+
+  .hero { text-align:center; padding:2rem 1rem 1rem; }
+  .gradient-title { font-size:2rem; margin:0.4rem 0; background:var(--grad-hero); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .hero-desc { max-width:700px; margin:0 auto; color:var(--text-muted); font-size:0.95rem; line-height:1.6; }
+
+  .mode-bar {
+    display:flex; gap:0.5rem; justify-content:center; padding:0.6rem 1rem;
+    position:sticky; top:52px; z-index:10; background:rgba(0,0,0,0.35); backdrop-filter:blur(8px);
+  }
+  .mode-btn { padding:0.5rem 1.2rem; border-radius:var(--radius-pill); border:none; cursor:pointer; font-weight:700; color:#fff; background:var(--grad-hero); transition:transform .15s; }
+  .mode-btn:hover { transform:translateY(-1px); }
+  .mode-btn:active { transform:scale(0.98); }
+
+  .container { max-width:1200px; margin:0 auto; padding:1rem; }
+  .grid { display:grid; gap:1.2rem; }
+  @media (min-width:960px) { .grid { grid-template-columns: 1fr 320px; } }
+
+  .panel { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; }
+  .panel h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
+
+  .lattice-frame {
+    width:100%; height:520px; border-radius:16px; overflow:hidden;
+    background:linear-gradient(135deg,#060e1f,#0a0e1a);
+    border:1px solid var(--glass-border); box-shadow:var(--shadow-lg);
+    position:relative;
+  }
+  .lattice-frame canvas { display:block; }
+  .lattice-overlay {
+    position:absolute; top:12px; left:12px; z-index:2;
+    background:rgba(10,12,24,0.72); backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,0.08); border-radius:10px;
+    padding:8px 12px; font-family:var(--font-mono); font-size:0.72rem;
+    color:var(--accent-cyan); pointer-events:none;
+  }
+  .beam-legend {
+    position:absolute; bottom:12px; right:12px; z-index:2;
+    background:rgba(10,12,24,0.72); backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,0.08); border-radius:10px;
+    padding:8px 12px; font-size:0.72rem; color:var(--text-dim);
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .beam-legend span { display:flex; align-items:center; gap:6px; }
+  .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+
+  .preset-grid { display:grid; grid-template-columns: repeat(auto-fill,minmax(100px,1fr)); gap:0.5rem; }
+  .preset-btn { padding:0.5rem; border-radius:var(--radius-md); border:1px solid var(--glass-border); background:var(--bg-deep); color:var(--text-main); cursor:pointer; font-weight:600; transition:all .2s; }
+  .preset-btn:hover { border-color:var(--accent-cyan); }
+  .preset-btn.active { background:var(--grad-hero); border-color:transparent; color:#fff; }
+
+  .control-row { display:flex; flex-wrap:wrap; gap:1rem; margin-top:0.6rem; }
+  .slider-group { flex:1 1 240px; }
+  .slider-group label { display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:0.3rem; }
+  .slider-group input[type=range] { width:100%; }
+  .slider-value { font-family:var(--font-mono); color:var(--accent-cyan); font-weight:700; }
+  .slider-desc { font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; }
+  .msg { font-size:0.82rem; color:var(--text-muted); margin-top:0.5rem; min-height:1.2em; font-style:italic; }
+  .msg strong { color:var(--accent-cyan); font-style:normal; }
+
+  .readout-table { width:100%; border-collapse:collapse; font-size:0.82rem; margin-top:0.4rem; }
+  .readout-table th, .readout-table td { padding:6px 8px; border-bottom:1px solid var(--glass-border); text-align:center; }
+  .readout-table th { color:var(--accent-cyan); font-weight:600; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em; }
+  .readout-table td { color:var(--text-bright); font-family:var(--font-mono); }
+  .badge-label { display:inline-block; padding:2px 8px; border-radius:12px; font-size:0.72rem; font-weight:700; border:1px solid; }
+
+  .insights { display:grid; grid-template-columns:1fr; gap:1rem; margin-top:1rem; }
+  @media (min-width:768px) { .insights { grid-template-columns:1fr 1fr; } }
+  .insight-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; }
+  .insight-card h4 { margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright); }
+  .insight-card p { font-size:0.88rem; color:var(--text-muted); line-height:1.55; margin:0.4rem 0; }
+  .insight-card code { background:rgba(0,240,255,0.08); padding:2px 6px; border-radius:4px; font-size:0.85rem; }
+
+  .sidebar { display:flex; flex-direction:column; gap:1rem; }
+  .sidebar-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; }
+  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; }
+  .lab-nav { display:flex; flex-direction:column; gap:0.3rem; font-size:0.82rem; }
+  .lab-nav a { color:var(--text-dim); text-decoration:none; padding:3px 0; border-bottom:1px solid transparent; }
+  .lab-nav a:hover { color:var(--accent-cyan); border-bottom-color:var(--glass-border); }
+  .lab-nav a.current { color:var(--accent-cyan); font-weight:700; }
+
+  @media (max-width:720px) {
+    .grid { grid-template-columns: 1fr; }
+    .lattice-frame { height:380px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="../../index.html" class="home-link">← Quantum Lab</a>
+  <span class="nav-title">12 — Optics & Dispersion (Lattice Prototype)</span>
+  <span class="nav-xp" id="nav-xp">0 XP</span>
+</nav>
+
+<header class="hero">
+  <h1 class="gradient-title">Lattice Optics — 5 Å</h1>
+  <p class="hero-desc">
+    Fire a photon into a crystal lattice and watch reflection, refraction, and absorption unfold
+    governed by real optical laws: the Drude model for metals, the bandgap for semiconductors,
+    and phonon excitation for insulators.
+  </p>
+</header>
+
+<div class="mode-bar">
+  <button class="mode-btn" id="btn-fire" onclick="firePhoton()">🔥 Fire Photon</button>
+</div>
+
+<div class="container grid">
+
+<main>
+
+  <section class="panel">
+    <h3>🧪 Material Preset</h3>
+    <div class="preset-grid" id="preset-grid">
+      <button class="preset-btn active" onclick="setMaterial('Si')">Silicon</button>
+      <button class="preset-btn" onclick="setMaterial('GaAs')">GaAs</button>
+      <button class="preset-btn" onclick="setMaterial('NaCl')">NaCl</button>
+      <button class="preset-btn" onclick="setMaterial('Cu')">Copper</button>
+      <button class="preset-btn" onclick="setMaterial('Al')">Aluminium</button>
+    </div>
+  </section>
+
+  <section class="panel" style="margin-top:1rem;">
+    <h3>🔬 Lattice View — 5 Å</h3>
+    <div class="lattice-frame" id="lattice-viewport"></div>
+    <div class="lattice-overlay" id="lattice-info">Si · diamond cubic · a = 5.43 Å · T = 300 K</div>
+    <div class="beam-legend">
+      <span><span class="dot" style="background:#ffdd44;"></span> Incident</span>
+      <span><span class="dot" style="background:#00f0ff;"></span> Reflected</span>
+      <span><span class="dot" style="background:#4ade80;"></span> Refracted</span>
+      <span><span class="dot" style="background:#ff4ecd;"></span> Absorption glow</span>
+      <span><span class="dot" style="background:#ff6b35;"></span> Phonon wave</span>
+    </div>
+  </section>
+
+  <section class="panel" style="margin-top:1rem;">
+    <h3>⚙️ Controls</h3>
+    <div class="control-row">
+      <div class="slider-group">
+        <label>Photon Energy E (eV)</label>
+        <input id="slider-E" type="range" min="0.1" max="20" step="0.1" value="2.0" oninput="onEnergyInput(this.value)">
+        <div><span class="slider-value" id="val-E">2.00</span> eV · <span class="slider-value" id="val-lam">620</span> nm</div>
+        <p class="slider-desc">Below the bandgap the lattice is transparent; above it photons are absorbed and create e–h pairs.</p>
+      </div>
+      <div class="slider-group">
+        <label>Incident Angle θ₁ (°)</label>
+        <input id="slider-angle" type="range" min="0" max="89" step="1" value="0" oninput="onAngleInput(this.value)">
+        <div><span class="slider-value" id="val-angle">0</span>°</div>
+        <p class="slider-desc">Snell’s law bends the transmitted beam. Fresnel reflectivity grows with angle.</p>
+      </div>
+    </div>
+    <div class="msg" id="msg">Set material and energy, then fire.</div>
+  </section>
+
+  <section class="panel" style="margin-top:1rem;">
+    <h3>📊 Live Readout</h3>
+    <table class="readout-table">
+      <thead>
+        <tr><th>Mat</th><th>E</th><th>λ</th><th>θ₁</th><th>n</th><th>κ</th><th>R%</th><th>T%</th><th>A%</th><th>θ₂</th><th>T_lat (K)</th><th>Outcome</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td id="live-material">Si</td>
+          <td id="live-E">2.00</td>
+          <td id="live-lam">620</td>
+          <td id="live-theta">0°</td>
+          <td id="live-n">—</td>
+          <td id="live-k">—</td>
+          <td id="live-R">—</td>
+          <td id="live-T">—</td>
+          <td id="live-A">—</td>
+          <td id="live-theta2">—</td>
+          <td id="live-phonon">300</td>
+          <td><span id="live-outcome" class="badge-label">—</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="insights" style="margin-top:1rem;">
+    <div class="insight-card">
+      <h4>🔍 Snell’s Law & Fresnel</h4>
+      <p>When a photon crosses from air <code>n₁=1</code> into a material <code>n₂=n(E)+iκ(E)</code>:</p>
+      <p><code>n₁ sin θ₁ = n₂ sin θ₂</code></p>
+      <p>The reflected intensity follows Fresnel. For complex <code>n₂</code> the wave is inhomogeneous; we show the real-angle approximation for clarity, while the absorption coefficient <code>κ</code> controls the glow strength.</p>
+    </div>
+    <div class="insight-card">
+      <h4>⚛️ Why does the outcome change?</h4>
+      <p><strong>Semiconductors / insulators:</strong> transparent below <code>Eg</code> (no states to absorb to). Above <code>Eg</code>, electrons jump across the gap — absorption dominates and no coherent refracted beam survives.</p>
+      <p><strong>Metals:</strong> free electrons screen the field. Below the plasma edge the refractive index is imaginary → total reflection. Above the edge the metal becomes partially transparent.</p>
+    </div>
+    <div class="insight-card" style="grid-column:1 / -1;">
+      <h4>🔊 Phonon Excitation & Lattice Heating</h4>
+      <p>Every absorbed photon dumps a fraction of its energy into <strong>phonons</strong> (quantised lattice vibrations). The phonon bath temperature rises following the Einstein model: <code>T_lat = 300 K + c·E_phonon</code>.</p>
+      <p>As <code>T_lat</code> grows, atoms oscillate with larger amplitude (Debye–Waller factor), and free electrons in metals scatter more strongly off the distorted lattice → <strong>resistivity rises</strong>. Phonons anharmonically decay over ~1 s in this toy model.</p>
+    </div>
+  </section>
+
+</main>
+
+<aside class="sidebar">
+  <div class="sidebar-card">
+    <h4>🧭 Lab Navigator</h4>
+    <nav class="lab-nav">
+      <a href="../00_crystal_to_quantum/index.html">00 Crystal → Quantum</a>
+      <a href="../01_qho/index.html">01 Quantum Harmonic Osc.</a>
+      <a href="../02_hydrogen/index.html">02 Hydrogen Atom</a>
+      <a href="../03_spin/index.html">03 Spin & Stern–Gerlach</a>
+      <a href="../04_wave_packets/index.html">04 Wave Packets</a>
+      <a href="../05_periodic_potential/index.html">05 Periodic Potential</a>
+      <a href="../06_tunneling/index.html">06 Tunneling</a>
+      <a href="../07_kronig_penney/index.html">07 Kronig–Penney</a>
+      <a href="../08_phonons/index.html">08 Phonons & T-dep</a>
+      <a href="../09_semiconductors/index.html">09 Semiconductors</a>
+      <a href="../10_doped_semiconductors/index.html">10 Doped Semiconductors</a>
+      <a href="../11_junctions_devices/index.html">11 Junctions & Devices</a>
+      <a href="./lattice_optics.html" class="current">12 Optics (prototype)</a>
+    </nav>
+  </div>
+</aside>
+
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   LATTICE OPTICS — Inline physics + Three.js engine
+   Merged: lattice_optics.html organisation + prototype_3d_lattice visuals
+   + PHONON EXCITATION on repeated high-energy absorption
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+
+/* ─── MATERIAL DATABASE ─── */
+var MATERIALS = {
+  'Si':   { type:'semiconductor', Eg:1.12, n0:3.50, label:'Silicon',   atomColor:0x7da4c4, bondColor:0x556677 },
+  'GaAs': { type:'semiconductor', Eg:1.42, n0:3.30, label:'GaAs',      atomColor:0xaabb88, bondColor:0x667755 },
+  'NaCl': { type:'insulator',     Eg:8.50, n0:1.54, label:'NaCl',      atomColor:0xff8844, bondColor:0x44aaff },
+  'Cu':   { type:'metal',         Ep:8.80, damp:0.05, interband:true,  label:'Copper',    atomColor:0xd4a574, bondColor:0x554433 },
+  'Al':   { type:'metal',         Ep:15.0, damp:0.35, interband:false, label:'Aluminium', atomColor:0xc0c8d0, bondColor:0x556677 }
+};
+
+var state = { mat:'Si', E:2.0, angleDeg:0, n:3.50, k:0, R:0, T:0, A:0, outcome:'', theta2:0 };
+
+/* ─── PHONON STATE ─── */
+var phonon = {
+  energy: 0,        // eV deposited into lattice phonon bath
+  T0: 300,          // base temperature (K)
+  coupling: 0.35,   // fraction of absorbed photon energy → phonons
+  decayRate: 0.6,   // eV/s anharmonic decay
+  wavePool: [],     // visual ring meshes
+  scatterScale: 0   // 0..1 metric of lattice distortion
+};
+
+/* ─── THREE.JS GLOBALS ─── */
+var scene, camera, renderer, orbitControls;
+var atoms=[], bonds=[], freeElectrons=[];
+var frameLines;
+var photonPacket, photonGlow;
+var animId, time=0;
+var photonState='idle', photonT=0;
+var photonSource, photonTarget, reflectedDest, transmitDest;
+var absorbEffects = [];
+
+/* ─── INIT ─── */
+function initScene() {
+  var container = document.getElementById('lattice-viewport');
+  if (!container) return;
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x05050a);
+  scene.fog = new THREE.FogExp2(0x05050a, 0.012);
+
+  camera = new THREE.PerspectiveCamera(45, container.clientWidth/container.clientHeight, 0.01, 100);
+  camera.position.set(3, 2.5, 4);
+
+  renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  container.appendChild(renderer.domElement);
+
+  orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+  orbitControls.enableDamping = true;
+  orbitControls.dampingFactor = 0.05;
+  orbitControls.minDistance = 0.5;
+  orbitControls.maxDistance = 18;
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+  var dir = new THREE.DirectionalLight(0xffffff, 0.8);
+  dir.position.set(5, 8, 6);
+  scene.add(dir);
+  var pt = new THREE.PointLight(0x00f0ff, 0.5, 20);
+  pt.position.set(2, 3, 2);
+  scene.add(pt);
+
+  buildLattice(1.0);
+  buildFrame();
+  buildLaser();
+  buildHitMarker();
+  buildPhotonPacket();
+  updateOptics();
+  animate();
+  window.addEventListener('resize', onResize);
+}
+
+/* ─── LASER SOURCE STRUCTURE ─── */
+var laserGroup, laserBarrel, laserEmitter, laserIndicator;
+
+function buildLaser() {
+  if (laserGroup) { scene.remove(laserGroup); }
+  laserGroup = new THREE.Group();
+
+  // barrel — aligned to local +Z so lookAt aims it at the lattice
+  var bGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.9, 16);
+  var bMat = new THREE.MeshStandardMaterial({ color:0x00aaff, metalness:0.6, roughness:0.3, emissive:0x001133 });
+  laserBarrel = new THREE.Mesh(bGeo, bMat);
+  laserBarrel.rotation.x = Math.PI / 2;
+  laserGroup.add(laserBarrel);
+
+  // emitter ring at barrel tip
+  var eGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.06, 16);
+  var eMat = new THREE.MeshBasicMaterial({ color:0x00f0ff, transparent:true, opacity:0.7 });
+  laserEmitter = new THREE.Mesh(eGeo, eMat);
+  laserEmitter.rotation.x = Math.PI / 2;
+  laserEmitter.position.z = 0.48;
+  laserGroup.add(laserEmitter);
+
+  // glow light on emitter
+  var laserLight = new THREE.PointLight(0x00f0ff, 1.0, 10);
+  laserLight.position.set(0, 0, 0.5);
+  laserGroup.add(laserLight);
+
+  // base block (stock)
+  var baseGeo = new THREE.BoxGeometry(0.22, 0.22, 0.35);
+  var baseMat = new THREE.MeshStandardMaterial({ color:0x445566, metalness:0.5, roughness:0.4, emissive:0x001122 });
+  var base = new THREE.Mesh(baseGeo, baseMat);
+  base.position.z = -0.32;
+  laserGroup.add(base);
+
+  // power indicator
+  var iGeo = new THREE.SphereGeometry(0.045, 8, 8);
+  var iMat = new THREE.MeshBasicMaterial({ color:0x00ff88 });
+  laserIndicator = new THREE.Mesh(iGeo, iMat);
+  laserIndicator.position.set(0.09, 0.09, -0.32);
+  laserGroup.add(laserIndicator);
+
+  // stand leg
+  var legGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.6, 8);
+  var legMat = new THREE.MeshStandardMaterial({ color:0x556677 });
+  var leg = new THREE.Mesh(legGeo, legMat);
+  leg.position.set(0, -0.41, -0.32);
+  laserGroup.add(leg);
+
+  // position: if photonSource exists aim it, otherwise start at default (angle=0)
+  var src = photonSource ? photonSource.clone() : new THREE.Vector3(-3.2, 0, 0);
+  laserGroup.position.copy(src);
+  laserGroup.lookAt(photonTarget || new THREE.Vector3(-0.79, 0, 0));
+  scene.add(laserGroup);
+}
+
+function updateLaserPosition(thetaDeg) {
+  if (!laserGroup) return;
+  var theta = thetaDeg * Math.PI / 180;
+  var d = 3.2;
+  var src = new THREE.Vector3(-d*Math.cos(theta), -d*Math.sin(theta), 0);
+  laserGroup.position.copy(src);
+  laserGroup.lookAt(photonTarget || new THREE.Vector3(-0.79, 0, 0));
+}
+
+/* ─── HIT MARKER (impact crosshair on lattice surface) ─── */
+var hitMarker;
+
+function buildHitMarker() {
+  if (hitMarker) { scene.remove(hitMarker); hitMarker.geometry.dispose(); hitMarker.material.dispose(); }
+  var g = new THREE.RingGeometry(0.08, 0.11, 32);
+  var m = new THREE.MeshBasicMaterial({ color:0xffdd44, transparent:true, opacity:0.35, side:THREE.DoubleSide, blending:THREE.AdditiveBlending });
+  hitMarker = new THREE.Mesh(g, m);
+  var pt = photonTarget || new THREE.Vector3(-0.79, 0, 0);
+  hitMarker.position.copy(pt);
+  hitMarker.lookAt(camera.position);
+  scene.add(hitMarker);
+}
+
+function updateHitMarker() {
+  if (!hitMarker) return;
+  var pt = photonTarget || new THREE.Vector3(-0.79, 0, 0);
+  hitMarker.position.copy(pt);
+  hitMarker.lookAt(camera.position);
+}
+
+/* ─── LATTICE BUILDER (diamond-cubic, ~5 Å visual) ─── */
+function buildLattice(a) {
+  atoms.forEach(function(m){ scene.remove(m); });
+  bonds.forEach(function(m){ scene.remove(m); });
+  freeElectrons.forEach(function(m){ scene.remove(m); });
+
+  atoms=[]; bonds=[]; freeElectrons=[];
+
+  var matDef = MATERIALS[state.mat];
+  var atomCol = matDef.atomColor;
+  var bondCol = matDef.bondColor;
+
+  var basis = [
+    [0,0,0],[0.5,0.5,0],[0.5,0,0.5],[0,0.5,0.5],
+    [0.25,0.25,0.25],[0.75,0.75,0.25],[0.75,0.25,0.75],[0.25,0.75,0.75]
+  ];
+  var nx=2, ny=2, nz=2;
+  var positions=[];
+  for (var ix=0; ix<nx; ix++){
+    for (var iy=0; iy<ny; iy++){
+      for (var iz=0; iz<nz; iz++){
+        for (var b=0; b<basis.length; b++){
+          var p = basis[b];
+          positions.push(new THREE.Vector3(
+            (ix+p[0])*a - (nx*a)/2,
+            (iy+p[1])*a - (ny*a)/2,
+            (iz+p[2])*a - (nz*a)/2
+          ));
+        }
+      }
+    }
+  }
+
+  var atomGeo = new THREE.SphereGeometry(0.12, 20, 20);
+  var atomMat = new THREE.MeshStandardMaterial({ color:atomCol, metalness:0.4, roughness:0.4 });
+
+  for (var i=0; i<positions.length; i++){
+    var mesh = new THREE.Mesh(atomGeo, atomMat.clone());
+    mesh.position.copy(positions[i]);
+    mesh.userData = { basePos: positions[i].clone(), idx:i };
+    atoms.push(mesh);
+    scene.add(mesh);
+  }
+
+  // bonds
+  var maxBond = 0.45*a;
+  var bondGeo = new THREE.CylinderGeometry(0.022, 0.022, 1, 8);
+  var bondMat = new THREE.MeshStandardMaterial({ color:bondCol, metalness:0.3, roughness:0.5 });
+  for (var i=0; i<positions.length; i++){
+    for (var j=i+1; j<positions.length; j++){
+      var d = positions[i].distanceTo(positions[j]);
+      if (d < maxBond && d > 0.01){
+        var mid = new THREE.Vector3().addVectors(positions[i], positions[j]).multiplyScalar(0.5);
+        var bond = new THREE.Mesh(bondGeo, bondMat.clone());
+        bond.position.copy(mid);
+        bond.lookAt(positions[j]);
+        bond.rotateX(Math.PI/2);
+        bond.scale.set(1, d, 1);
+        bond.userData = { basePos: mid.clone(), baseScaleY: d };
+        bonds.push(bond);
+        scene.add(bond);
+      }
+    }
+  }
+
+  // free-electron sea for metals
+  if (matDef.type === 'metal'){
+    var eGeo = new THREE.SphereGeometry(0.022, 8, 8);
+    var eMat = new THREE.MeshBasicMaterial({ color:0x00f0ff, transparent:true, opacity:0.35 });
+    for (var i=0; i<60; i++){
+      var mesh = new THREE.Mesh(eGeo, eMat.clone());
+      var rx = (Math.random()-0.5)*2.6;
+      var ry = (Math.random()-0.5)*2.6;
+      var rz = (Math.random()-0.5)*2.6;
+      mesh.position.set(rx, ry, rz);
+      mesh.userData = {
+        basePos: new THREE.Vector3(rx, ry, rz),
+        speed: 0.6 + Math.random()*1.8,
+        phase: Math.random()*Math.PI*2
+      };
+      freeElectrons.push(mesh);
+      scene.add(mesh);
+    }
+  }
+}
+
+/* ─── 3D FRAME (glowing cage around lattice) ─── */
+function buildFrame() {
+  if (frameLines) { scene.remove(frameLines); frameLines.geometry.dispose(); }
+  var size = 1.6;
+  var geometry = new THREE.BoxGeometry(size, size, size);
+  var edges = new THREE.EdgesGeometry(geometry);
+  var material = new THREE.LineBasicMaterial({ color: 0x00f0ff, transparent:true, opacity:0.25 });
+  frameLines = new THREE.LineSegments(edges, material);
+  scene.add(frameLines);
+}
+
+/* ─── OPTICS PHYSICS ─── */
+function computeOptics(name, E, thetaDeg) {
+  var mat = MATERIALS[name];
+  var theta = thetaDeg * Math.PI / 180;
+  var n=1, k=0, R=0, T=0, A=0, outcome='', theta2=0;
+
+  if (mat.type === 'metal') {
+    var wp = mat.Ep, g = mat.damp;
+    var ep1 = 1 - wp*wp / (E*E + g*g);
+    var ep2 = wp*wp * g / (E * (E*E + g*g));
+    // Interband absorption for Cu (d-band → Fermi) — Hummel Ch. 11
+    if (mat.interband && E > 2.0) {
+      ep2 += 2.5 * Math.exp(-(E-3.5)*(E-3.5)/2.0);
+    }
+    var mag = Math.sqrt(ep1*ep1 + ep2*ep2);
+    n = Math.sqrt((mag + ep1) / 2);
+    k = Math.sqrt((mag - ep1) / 2);
+    R = ((n-1)*(n-1) + k*k) / ((n+1)*(n+1) + k*k);
+    if (E < wp) {
+      outcome = 'reflect';
+      T = 0;
+      A = Math.max(0, 1 - R);
+    } else {
+      T = Math.max(0, 1 - R - 0.08);
+      A = Math.max(0, 1 - R - T);
+      outcome = (T > 0.15) ? 'transmit' : 'reflect';
+    }
+  } else {
+    n = mat.n0;
+    if (E >= mat.Eg) {
+      k = 0.35 * Math.exp((E - mat.Eg) / 0.45);
+      n = mat.n0 + 0.18 * (E - mat.Eg);
+      R = ((n-1)*(n-1)+k*k)/((n+1)*(n+1)+k*k);
+      T = 0;
+      A = Math.max(0, 1 - R);
+      outcome = 'absorb';
+    } else {
+      R = Math.pow((n-1)/(n+1), 2);
+      if (thetaDeg > 0) {
+        R = R + (1 - R) * Math.pow(Math.sin(theta), 4);
+      }
+      T = Math.max(0, 1 - R);
+      A = 0;
+      outcome = 'transmit';
+    }
+  }
+
+  // Total external reflection guard
+  if (n < 1.0 && Math.sin(theta) > n) {
+    outcome = 'reflect'; T = 0; A = 0; R = 1; theta2 = 90;
+  } else {
+    var sin2 = Math.sin(theta) / n;
+    theta2 = (sin2 >= 1) ? 90 : Math.asin(sin2) * 180 / Math.PI;
+  }
+
+  return { n:n, k:k, R:R, T:T, A:A, outcome:outcome, theta2:theta2 };
+}
+
+function wavelengthNm(E) {
+  return Math.round(1240 / Math.max(E, 0.01));
+}
+
+function colorFromEnergy(E) {
+  if (E < 0.5) return 0xff2200;
+  if (E < 1.5) return 0xffaa00;
+  if (E < 2.5) return 0xaaff00;
+  if (E < 3.5) return 0x00aaff;
+  if (E < 5.0) return 0xaa00ff;
+  return 0x00f0ff;
+}
+
+function buildPhotonPacket() {
+  var geo = new THREE.SphereGeometry(0.055, 16, 16);
+  var mat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.95, blending:THREE.AdditiveBlending });
+  photonPacket = new THREE.Mesh(geo, mat);
+  photonPacket.visible = false;
+  scene.add(photonPacket);
+
+  photonGlow = new THREE.PointLight(0xffffff, 0, 5);
+  photonGlow.position.copy(photonPacket.position);
+  scene.add(photonGlow);
+}
+
+function setupPhotonPath(thetaDeg) {
+  var theta = thetaDeg * Math.PI / 180;
+  var d = 3.2;
+  photonSource = new THREE.Vector3(-d*Math.cos(theta), -d*Math.sin(theta), 0);
+  photonTarget = new THREE.Vector3(-0.79, 0, 0);
+  reflectedDest = new THREE.Vector3(-d*Math.cos(theta), d*Math.sin(theta), 0);
+  updateLaserPosition(thetaDeg);
+  updateHitMarker();
+}
+
+/* ─── PHONON HELPERS ─── */
+function phononTempK() {
+  return Math.round(phonon.T0 + phonon.energy * 1800);
+}
+
+function phononAmplitudeFactor() {
+  return 1 + phonon.energy * 2.5;
+}
+
+function phononScatterFactor() {
+  return 1 + phonon.energy * 3.0;
+}
+
+function spawnPhononWave() {
+  var rg = new THREE.RingGeometry(0.15, 0.25, 48);
+  var rm = new THREE.MeshBasicMaterial({ color:0xff6b35, transparent:true, opacity:0.55, side:THREE.DoubleSide, blending:THREE.AdditiveBlending });
+  var ring = new THREE.Mesh(rg, rm);
+  ring.position.set(0, 0, 0);
+  ring.lookAt(camera.position);
+  scene.add(ring);
+  phonon.wavePool.push({ mesh:ring, t:0, life:1.6 });
+}
+
+/* ─── INTERACTION LOGIC ─── */
+function updateOptics() {
+  var res = computeOptics(state.mat, state.E, state.angleDeg);
+  state.n = res.n; state.k = res.k; state.R = res.R; state.T = res.T; state.A = res.A; state.outcome = res.outcome; state.theta2 = res.theta2;
+
+  var col = colorFromEnergy(state.E);
+  photonPacket.material.color.setHex(col);
+  photonGlow.color.setHex(col);
+
+  updateReadout(res);
+  updateOverlay();
+}
+
+function updateReadout(res) {
+  document.getElementById('live-material').textContent = state.mat;
+  document.getElementById('live-E').textContent = state.E.toFixed(2);
+  document.getElementById('live-lam').textContent = wavelengthNm(state.E);
+  document.getElementById('live-theta').textContent = state.angleDeg + '°';
+  document.getElementById('live-n').textContent = res.n.toFixed(2);
+  document.getElementById('live-k').textContent = res.k.toFixed(3);
+  document.getElementById('live-R').textContent = (res.R*100).toFixed(1);
+  document.getElementById('live-T').textContent = (res.T*100).toFixed(1);
+  document.getElementById('live-A').textContent = (res.A*100).toFixed(1);
+  document.getElementById('live-theta2').textContent = res.theta2.toFixed(1);
+  document.getElementById('live-phonon').textContent = phononTempK();
+
+  var outEl = document.getElementById('live-outcome');
+  outEl.textContent = res.outcome;
+  var clr = res.outcome==='reflect' ? '#00f0ff' : res.outcome==='transmit' ? '#4ade80' : '#ff4ecd';
+  outEl.style.color = clr;
+  outEl.style.borderColor = clr;
+  outEl.style.background = clr.replace('rgb','rgba').replace(')','') + '0.12)';
+}
+
+function updateOverlay() {
+  var def = MATERIALS[state.mat];
+  var struct = (state.mat==='NaCl') ? 'rocksalt' : 'diamond cubic';
+  var tK = phononTempK();
+  document.getElementById('lattice-info').textContent = def.label + ' · ' + struct + ' · a ≈ 5.43 Å · T = ' + tK + ' K';
+}
+
+/* ─── FIRE PHOTON ─── */
+window.firePhoton = function() {
+  if (photonState !== 'idle') return;
+  setupPhotonPath(state.angleDeg);
+  var col = colorFromEnergy(state.E);
+  photonPacket.material.color.setHex(col);
+  photonGlow.color.setHex(col);
+  photonPacket.visible = true;
+  photonPacket.position.copy(photonSource);
+  photonGlow.position.copy(photonSource);
+  photonGlow.intensity = 1.3;
+  photonState = 'firing';
+  photonT = 0;
+  // laser indicator → fire color
+  if (laserIndicator) laserIndicator.material.color.setHex(col);
+  document.getElementById('msg').textContent = 'Photon travelling toward lattice...';
+};
+
+function resolveHit() {
+  var res = computeOptics(state.mat, state.E, state.angleDeg);
+  if (res.outcome === 'reflect') {
+    photonState = 'reflecting';
+    photonT = 0;
+    document.getElementById('msg').innerHTML = 'Photon <strong>reflected</strong> — surface electrons / lattice ions elastically scatter.';
+  } else if (res.outcome === 'transmit') {
+    photonState = 'transmitting';
+    photonT = 0;
+    var theta = state.angleDeg * Math.PI / 180;
+    var sin2 = Math.sin(theta) / res.n;
+    var th2 = (sin2 >= 1) ? (Math.PI/2 - 0.02) : Math.asin(sin2);
+    transmitDest = new THREE.Vector3(2.5*Math.cos(th2), 2.5*Math.sin(th2), 0);
+    document.getElementById('msg').innerHTML = 'Photon <strong>refracted</strong> through lattice — no absorption below gap.';
+  } else {
+    photonState = 'idle';
+    photonPacket.visible = false;
+    photonGlow.intensity = 0;
+    spawnAbsorbEffect(res);
+    // deposit phonon energy
+    var deposit = state.E * phonon.coupling * res.A;
+    phonon.energy += deposit;
+    phonon.scatterScale = Math.min(1, phonon.energy * 0.4);
+    if (deposit > 0.3) spawnPhononWave();
+    var tK = phononTempK();
+    document.getElementById('msg').innerHTML = 'Photon <strong>absorbed</strong> — ' + deposit.toFixed(2) + ' eV → phonons. Lattice now T = ' + tK + ' K.';
+    updateReadout(res);
+    updateOverlay();
+  }
+}
+
+function spawnAbsorbEffect(res) {
+  var pt = photonTarget.clone();
+  var def = MATERIALS[state.mat];
+  if (def.type === 'metal') {
+    // Plasmon ring
+    var rg = new THREE.RingGeometry(0.1, 0.18, 32);
+    var rm = new THREE.MeshBasicMaterial({ color:0x00f0ff, transparent:true, opacity:0.8, side:THREE.DoubleSide });
+    var ring = new THREE.Mesh(rg, rm);
+    ring.position.copy(pt);
+    ring.lookAt(camera.position);
+    scene.add(ring);
+    absorbEffects.push({ mesh:ring, t:0, life:1.0, isRing:true });
+  } else {
+    // e-h pair burst
+    var eGeo = new THREE.SphereGeometry(0.05, 12, 12);
+    var eMat = new THREE.MeshBasicMaterial({ color:0x00f0ff, transparent:true, opacity:0.9 });
+    var hMat = new THREE.MeshBasicMaterial({ color:0xff4ecd, transparent:true, opacity:0.9 });
+    var ePart = new THREE.Mesh(eGeo, eMat);
+    var hPart = new THREE.Mesh(eGeo, hMat);
+    ePart.position.copy(pt); hPart.position.copy(pt);
+    scene.add(ePart); scene.add(hPart);
+    absorbEffects.push({ mesh:ePart, t:0, life:1.2, dx:0.25, dy:0.35, dz:0.1 });
+    absorbEffects.push({ mesh:hPart, t:0, life:1.2, dx:-0.15, dy:-0.25, dz:-0.1 });
+  }
+}
+
+function resetPhoton() {
+  photonState = 'idle';
+  photonPacket.visible = false;
+  photonGlow.intensity = 0;
+  // reset laser indicator to standby green
+  if (laserIndicator) laserIndicator.material.color.setHex(0x00ff88);
+}
+
+/* ─── ANIMATION LOOP ─── */
+function animate() {
+  animId = requestAnimationFrame(animate);
+  var dt = 0.016;
+  time += dt;
+
+  // ── PHONON DECAY ──
+  if (phonon.energy > 0) {
+    phonon.energy = Math.max(0, phonon.energy - phonon.decayRate * dt);
+    phonon.scatterScale = Math.min(1, phonon.energy * 0.4);
+    if (phonon.energy < 0.01) { phonon.energy = 0; phonon.scatterScale = 0; }
+  }
+
+  var ampFactor = phononAmplitudeFactor();
+  var scatFactor = phononScatterFactor();
+
+  // ── THERMAL LATTICE VIBRATION (phonon-enhanced) ──
+  atoms.forEach(function(a, i){
+    var bp = a.userData.basePos;
+    if (!bp) return;
+    var t = time + i*1.3;
+    a.position.x = bp.x + Math.sin(t*2.3)*0.018 * ampFactor;
+    a.position.y = bp.y + Math.cos(t*1.7)*0.018 * ampFactor;
+    a.position.z = bp.z + Math.sin(t*3.1)*0.018 * ampFactor;
+  });
+
+  // ── BOND VISUAL RESPONSE TO PHONONS ──
+  bonds.forEach(function(b, i){
+    var bp = b.userData.basePos;
+    if (!bp) return;
+    var t = time + i*0.7;
+    var stretch = 1 + Math.sin(t*4.2)*0.004 * ampFactor;
+    b.position.x = bp.x + Math.sin(t*1.9)*0.008 * ampFactor;
+    b.position.y = bp.y + Math.cos(t*2.7)*0.008 * ampFactor;
+    b.position.z = bp.z + Math.sin(t*3.3)*0.008 * ampFactor;
+    b.scale.y = b.userData.baseScaleY * stretch;
+  });
+
+  // ── FREE ELECTRON SEA (phonon scattering) ──
+  freeElectrons.forEach(function(e){
+    var bp = e.userData.basePos;
+    var ph = e.userData.phase;
+    var sp = e.userData.speed;
+    // base thermal wander
+    e.position.x = bp.x + Math.sin(time*sp + ph)*0.14;
+    e.position.y = bp.y + Math.cos(time*sp*0.7 + ph)*0.14;
+    e.position.z = bp.z + Math.sin(time*sp*1.3 + ph)*0.14;
+    // phonon scattering: extra chaotic displacement
+    if (phonon.scatterScale > 0) {
+      e.position.x += (Math.random()-0.5)*0.12 * phonon.scatterScale * scatFactor;
+      e.position.y += (Math.random()-0.5)*0.12 * phonon.scatterScale * scatFactor;
+      e.position.z += (Math.random()-0.5)*0.12 * phonon.scatterScale * scatFactor;
+    }
+  });
+
+  // ── FRAME PULSE ──
+  if (frameLines) frameLines.material.opacity = 0.18 + Math.sin(time*1.5)*0.07;
+
+  // ── LASER EMITTER PULSE ──
+  if (laserEmitter) laserEmitter.material.opacity = 0.4 + Math.sin(time*4)*0.2;
+
+  // ── HIT MARKER PULSE ──
+  if (hitMarker) {
+    hitMarker.material.opacity = 0.2 + Math.sin(time*3)*0.15;
+    hitMarker.lookAt(camera.position);
+  }
+
+  // ── PHOTON PACKET ──
+  var speed = 2.6;
+  if (photonState === 'firing') {
+    photonT += dt * speed;
+    if (photonT >= 1) { photonT = 1; resolveHit(); }
+    else { photonPacket.position.lerpVectors(photonSource, photonTarget, photonT); photonGlow.position.copy(photonPacket.position); }
+  } else if (photonState === 'reflecting') {
+    photonT += dt * speed;
+    if (photonT >= 1) { resetPhoton(); }
+    else { photonPacket.position.lerpVectors(photonTarget, reflectedDest, photonT); photonGlow.position.copy(photonPacket.position); }
+  } else if (photonState === 'transmitting') {
+    photonT += dt * speed;
+    if (photonT >= 1) { resetPhoton(); }
+    else { photonPacket.position.lerpVectors(photonTarget, transmitDest, photonT); photonGlow.position.copy(photonPacket.position); }
+  }
+
+  // glow follows packet
+  if (photonPacket.visible) photonGlow.position.copy(photonPacket.position);
+
+  // ── ABSORB EFFECTS ──
+  for (var i=absorbEffects.length-1; i>=0; i--){
+    var fx = absorbEffects[i];
+    fx.t += dt;
+    if (fx.t >= fx.life) {
+      scene.remove(fx.mesh);
+      if (fx.mesh.geometry) fx.mesh.geometry.dispose();
+      if (fx.mesh.material) fx.mesh.material.dispose();
+      absorbEffects.splice(i, 1);
+      continue;
+    }
+    var p = fx.t / fx.life;
+    if (fx.isRing) {
+      var s = 1 + p*5;
+      fx.mesh.scale.set(s, s, 1);
+      fx.mesh.material.opacity = 0.8*(1-p);
+    } else {
+      fx.mesh.position.x = photonTarget.x + fx.dx * p;
+      fx.mesh.position.y = photonTarget.y + fx.dy * p;
+      fx.mesh.position.z = photonTarget.z + fx.dz * p;
+      fx.mesh.material.opacity = 0.9*(1-p);
+    }
+  }
+
+  // ── PHONON WAVE RINGS ──
+  for (var i=phonon.wavePool.length-1; i>=0; i--){
+    var w = phonon.wavePool[i];
+    w.t += dt;
+    if (w.t >= w.life) {
+      scene.remove(w.mesh);
+      if (w.mesh.geometry) w.mesh.geometry.dispose();
+      if (w.mesh.material) w.mesh.material.dispose();
+      phonon.wavePool.splice(i, 1);
+      continue;
+    }
+    var prog = w.t / w.life;
+    var s = 1 + prog * 7;
+    w.mesh.scale.set(s, s, 1);
+    w.mesh.material.opacity = 0.55 * (1 - prog);
+    w.mesh.lookAt(camera.position);
+  }
+
+  // update readout if phonon decay changed temperature
+  if (Math.round(time*10) % 6 === 0) {
+    document.getElementById('live-phonon').textContent = phononTempK();
+    updateOverlay();
+  }
+
+  orbitControls.update();
+  renderer.render(scene, camera);
+}
+
+/* ─── UI HANDLERS ─── */
+window.setMaterial = function(name) {
+  if (!MATERIALS[name]) return;
+  state.mat = name;
+  document.querySelectorAll('.preset-btn').forEach(function(b){ b.classList.remove('active'); });
+  var btn = Array.from(document.querySelectorAll('.preset-btn')).find(function(b){ return b.textContent.trim() === MATERIALS[name].label; });
+  if (btn) btn.classList.add('active');
+
+  var struct = (name==='NaCl') ? 'rocksalt' : 'diamond cubic';
+  document.getElementById('lattice-info').textContent = MATERIALS[name].label + ' · ' + struct + ' · a ≈ 5.43 Å · T = 300 K';
+
+  // reset phonon bath on material switch
+  phonon.energy = 0;
+  phonon.scatterScale = 0;
+  phonon.wavePool.forEach(function(w){ scene.remove(w.mesh); if(w.mesh.geometry)w.mesh.geometry.dispose(); if(w.mesh.material)w.mesh.material.dispose(); });
+  phonon.wavePool = [];
+
+  buildLattice(1.0);
+  buildFrame();
+  buildLaser();
+  buildHitMarker();
+  updateOptics();
+};
+
+window.onEnergyInput = function(v) {
+  state.E = parseFloat(v);
+  document.getElementById('val-E').textContent = state.E.toFixed(2);
+  document.getElementById('val-lam').textContent = wavelengthNm(state.E);
+  updateOptics();
+};
+
+window.onAngleInput = function(v) {
+  state.angleDeg = parseFloat(v);
+  document.getElementById('val-angle').textContent = state.angleDeg;
+  updateLaserPosition(state.angleDeg);
+  updateHitMarker();
+  updateOptics();
+};
+
+function onResize() {
+  var container = document.getElementById('lattice-viewport');
+  if (!container || !renderer || !camera) return;
+  camera.aspect = container.clientWidth / container.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(container.clientWidth, container.clientHeight);
+}
+
+/* ─── BOOT ─── */
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initScene);
+} else {
+  initScene();
+}
+
+})();
+/* ─── SELF DIAGNOSTIC ─── */
+(function diag() {
+  var errs=[];
+  if (typeof THREE==='undefined') errs.push('THREE.js not loaded');
+  var vp = document.getElementById('lattice-viewport');
+  if (!vp) errs.push('viewport missing');
+  else if (vp.clientWidth===0 || vp.clientHeight===0) errs.push('viewport 0x0');
+  if (errs.length) {
+    var el = document.createElement('div');
+    el.style.cssText='position:fixed;bottom:12px;right:12px;z-index:9999;background:#1a1a2e;border:1px solid #ff4444;border-radius:10px;padding:12px;color:#ff6666;font-family:monospace;font-size:12px;max-width:320px;';
+    el.innerHTML='<strong>DIAG:</strong> '+errs.join('; ');
+    document.body.appendChild(el);
+  }
+})();
+</script>
+</body>
+</html>

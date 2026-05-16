@@ -83,89 +83,6 @@
   .tooltip-container:hover::after { opacity: 1; visibility: visible; transform: translateY(0); }
   .tooltip-container:hover { color: var(--accent-cyan); border-bottom-color: var(--accent-cyan); }
 
-  .challenge-panel, .puzzle-panel {
-    background: var(--bg-panel);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-lg);
-    padding: var(--space-lg);
-    margin-bottom: var(--space-lg);
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  .challenge-panel:hover, .puzzle-panel:hover {
-    border-color: rgba(0,240,255,0.12);
-    box-shadow: var(--shadow-md);
-  }
-  .challenge-header, .puzzle-header {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    margin-bottom: var(--space-md);
-  }
-  .challenge-icon, .puzzle-icon {
-    width: 32px; height: 32px;
-    display: inline-flex; align-items: center; justify-content: center;
-    border-radius: var(--radius-sm);
-    font-size: 1rem;
-  }
-  .challenge-title, .puzzle-title {
-    flex: 1;
-    font-family: var(--font-display);
-    font-size: 1.1rem; font-weight: 600;
-    color: var(--text-main);
-  }
-  .challenge-difficulty {
-    font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
-    padding: 0.25rem 0.6rem; border-radius: var(--radius-pill);
-    border: 1px solid;
-  }
-  .challenge-difficulty.easy   { color: var(--accent-green); border-color: rgba(74,222,128,0.3); background: rgba(74,222,128,0.08); }
-  .challenge-difficulty.medium { color: var(--accent-yellow); border-color: rgba(250,204,21,0.3); background: rgba(250,204,21,0.08); }
-  .challenge-difficulty.hard   { color: var(--accent-red); border-color: rgba(255,85,85,0.3); background: rgba(255,85,85,0.08); }
-  .challenge-difficulty.master { color: var(--accent-pink); border-color: rgba(255,78,205,0.3); background: rgba(255,78,205,0.08); }
-
-  .challenge-desc, .puzzle-desc {
-    font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; margin-bottom: var(--space-md);
-  }
-  .challenge-reward, .puzzle-reward {
-    display: inline-flex; align-items: center; gap: 0.4rem;
-    font-size: 0.8rem; font-weight: 500; color: var(--accent-yellow);
-    background: rgba(250,204,21,0.06);
-    border: 1px solid rgba(250,204,21,0.15);
-    padding: 0.35rem 0.8rem; border-radius: var(--radius-pill);
-    margin-bottom: var(--space-md);
-  }
-  .challenge-controls, .puzzle-controls { margin-bottom: var(--space-md); }
-  .challenge-plot, .puzzle-plot {
-    background: var(--bg-deep);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-md);
-    min-height: 260px;
-    margin-bottom: var(--space-md);
-    overflow: hidden;
-  }
-  .challenge-plot:empty, .puzzle-plot:empty { display: none; }
-  .challenge-feedback, .puzzle-feedback {
-    font-size: 0.9rem; line-height: 1.6; padding: var(--space-md) var(--space-lg);
-    border-radius: var(--radius-sm); border-left: 3px solid transparent;
-    margin-top: var(--space-sm);
-    display: none;
-  }
-  .challenge-feedback.success, .puzzle-feedback.success { background: rgba(74,222,128,0.08); border-left-color: var(--accent-green); color: var(--accent-green); display: block; }
-  .challenge-feedback.error, .puzzle-feedback.error   { background: rgba(255,85,85,0.08); border-left-color: var(--accent-red); color: var(--accent-red); display: block; }
-  .challenge-feedback.hint, .puzzle-feedback.hint     { background: rgba(250,204,21,0.08); border-left-color: var(--accent-yellow); color: var(--accent-yellow); display: block; }
-
-  .timer-bar { height: 4px; background: var(--bg-elevated); border-radius: 2px; overflow: hidden; margin-bottom: var(--space-md); }
-  .timer-fill { height: 100%; background: var(--accent-cyan); transition: width 1s linear; }
-  .timer-fill.urgent { background: var(--accent-red); }
-
-  .hud-badge { display:inline-flex; align-items:center; gap:0.35rem; font-family:var(--font-mono); font-size:0.78rem; padding:0.3rem 0.7rem; border-radius:var(--radius-sm); background:var(--bg-deep); border:1px solid var(--glass-border); color:var(--text-dim); }
-  .hud-timer { color:var(--accent-cyan); border-color:rgba(0,240,255,0.25); }
-  .hud-streak { color:var(--accent-purple); border-color:rgba(192,132,252,0.25); }
-
-  .section-header { margin-bottom: var(--space-lg); }
-  .section-header h2 { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.4rem; }
-  .section-header p { font-size: 0.9rem; color: var(--text-muted); max-width: 600px; line-height: 1.6; }
-
   @media(max-width:700px){.scoreboard{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -187,7 +104,7 @@
 </nav>
 
 <!-- HERO -->
-<div class="hero game-hero">
+<div class="hero">
   <div class="topic-badge">Module 03 · Level N · Spin-1/2 &amp; Quantum Measurement</div>
   <h1><span class="gradient-cyan">The Quantum Bit</span></h1>
   <p class="hero-subtitle">
@@ -197,7 +114,7 @@
 </div>
 
 <!-- GAME MODE BAR -->
-<div class="container game-container" style="padding-bottom:0.5rem;">
+<div class="container" style="padding-bottom:0.5rem;">
   <div class="game-mode-bar" style="width:100%;">
     <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
     <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">🎯 Challenges</button>
@@ -205,7 +122,7 @@
   </div>
 </div>
 
-<div class="container game-container">
+<div class="container">
   <div class="left-col">
 
     <!-- ===== PLAYGROUND ===== -->
@@ -281,6 +198,43 @@
             When you measure Sz, the state <strong>collapses</strong> to either |↑z⟩ or |↓z⟩ with probabilities |cos(θ/2)|² and |sin(θ/2)|². After the measurement, the state <em>is</em> the result — not a mixture. This is why you cannot measure Sx and Sz simultaneously: measuring one destroys information about the other.
           </div>
           <p><strong>The commutation relation</strong> $[S_x, S_y] = i\hbar S_z$ (and cyclic permutations) is the mathematical root of uncertainty. It means the spin operators do not share eigenstates — there is no state that is simultaneously an eigenstate of Sx and Sz.</p>
+        </div>
+      </div>
+
+      <!-- Classic sim apps -->
+      <div class="card">
+        <div class="card-title">🔭 Classic Simulations</div>
+        <div style="margin-bottom:1.5rem;">
+          <h4 style="font-size:1rem;color:var(--text-main);margin-bottom:0.5rem;">Stern-Gerlach — Measurement Probabilities</h4>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:0.8rem;">
+            <div>
+              <div class="control-row"><span class="control-label">Polar angle θ</span><span class="control-value" id="val-sg-theta">60</span><span class="unit-tag">°</span></div>
+              <input type="range" id="slider-sg-theta" min="0" max="180" value="60" step="1">
+            </div>
+            <div style="font-size:0.8rem;color:var(--text-muted);background:var(--bg-panel);padding:0.8rem;border-radius:8px;line-height:1.5;">
+              <strong style="color:var(--accent-cyan);">Formula:</strong> P(↑) = cos²(θ/2)<br>P(↓) = sin²(θ/2)
+            </div>
+          </div>
+          <div id="app-sg" style="min-height:300px;"></div>
+        </div>
+        <div class="section-divider"></div>
+        <div style="margin-bottom:1.5rem;">
+          <h4 style="font-size:1rem;color:var(--text-main);margin-bottom:0.5rem;">ESR — Resonance Sweep</h4>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:0.8rem;">
+            <div>
+              <div class="control-row"><span class="control-label">B field</span><span class="control-value" id="val-esr-b">1.00</span><span class="unit-tag">T</span></div>
+              <input type="range" id="slider-esr-b" min="0.1" max="5" value="1" step="0.1">
+            </div>
+            <div style="font-size:0.8rem;color:var(--text-muted);background:var(--bg-panel);padding:0.8rem;border-radius:8px;line-height:1.5;">
+              <strong>g = 2.0023</strong><br>f₀ = 28.024 GHz/T × B
+            </div>
+          </div>
+          <div id="app-esr" style="min-height:300px;"></div>
+        </div>
+        <div class="section-divider"></div>
+        <div style="margin-bottom:1.5rem;">
+          <h4 style="font-size:1rem;color:var(--text-main);margin-bottom:0.5rem;">Quantum Gates — State Evolution</h4>
+          <div id="app-gates" style="min-height:300px;"></div>
         </div>
       </div>
     </div>

@@ -65,6 +65,66 @@
 
       <div style="display:grid; grid-template-columns: 1fr 320px; gap: 1.5rem;">
         <div>
+          <!-- Animation Canvases -->
+          <style>
+            .viz-grid { display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:1rem; }
+            .viz-card { background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); overflow:hidden; }
+            .viz-canvas { width:100%; height:180px; display:block; background:var(--bg-elevated); }
+            .viz-meta { padding:0.55rem 0.75rem; border-top:1px solid var(--border-subtle); }
+            .viz-meta h4 { margin:0 0 0.25rem; font-size:0.82rem; color:var(--text-main); }
+            .viz-meta p { margin:0 0 0.35rem; font-size:0.71rem; color:var(--text-dim); line-height:1.35; }
+            .viz-legend { display:flex; flex-wrap:wrap; gap:0.4rem 0.9rem; font-size:0.66rem; color:var(--text-muted); }
+            .viz-legend span { display:inline-flex; align-items:center; gap:0.3rem; }
+            .viz-legend .dot { width:7px; height:7px; border-radius:50%; display:inline-block; flex-shrink:0; }
+            .dot-cyan { background:#00f0ff; box-shadow:0 0 4px #00f0ff; }
+            .dot-silver { background:#a09080; }
+            .dot-amber { background:#ffd54f; box-shadow:0 0 4px #ffd54f; }
+            .dot-purple { background:#c084fc; box-shadow:0 0 4px #c084fc; }
+            .dot-cyan2 { background:#00f0ff; }
+            .dot-red { background:#ff5555; }
+            .dot-green { background:#00ff88; }
+          </style>
+          <div class="viz-grid">
+            <div class="viz-card">
+              <div id="cooper-wrap" class="viz-canvas" style="position:relative; overflow:hidden;"></div>
+              <div class="viz-meta">
+                <h4>Cooper Pair Formation</h4>
+                <p>Below Tc, two electrons in the lattice exchange a phonon: Electron 1 pulls positive ions inward, creating a wake of positive charge. This wake attracts Electron 2, binding them into a Cooper pair that moves through the lattice without resistance.</p>
+                <div class="viz-legend">
+                  <span><span class="dot dot-cyan"></span> Electron (e⁻)</span>
+                  <span><span class="dot dot-silver"></span> Positive ion</span>
+                  <span><span class="dot dot-amber"></span> Phonon wake</span>
+                  <span><span class="dot dot-purple"></span> Cooper pair</span>
+                </div>
+              </div>
+            </div>
+            <div class="viz-card">
+              <canvas id="canvas-meissner" width="340" height="180" class="viz-canvas"></canvas>
+              <div class="viz-meta">
+                <h4>Meissner Effect</h4>
+                <p>Cooled below Tc in a magnetic field, a superconductor expels all magnetic flux — B = 0 inside the bulk. Shielding supercurrents circulate at the surface within the London penetration depth λ_L.</p>
+                <div class="viz-legend">
+                  <span><span class="dot dot-cyan2"></span> Magnetic field line</span>
+                  <span><span class="dot dot-amber"></span> Expelled flux region</span>
+                  <span><span class="dot dot-cyan"></span> Shielding current</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="viz-card" style="margin-bottom:1rem;">
+            <canvas id="canvas-gap" width="700" height="140" class="viz-canvas" style="height:140px;"></canvas>
+            <div class="viz-meta">
+              <h4>Density of States near the Energy Gap</h4>
+              <p>Below Tc, a forbidden energy gap 2Δ opens symmetrically around the Fermi level E_F. No single-particle states exist inside the gap. Only Cooper-pair condensate and thermally excited quasiparticles live outside it.</p>
+              <div class="viz-legend">
+                <span><span class="dot dot-purple"></span> Superconducting gap 2Δ</span>
+                <span><span class="dot dot-cyan"></span> Quasiparticle excitation</span>
+                <span><span class="dot dot-green"></span> Filled states</span>
+                <span><span class="dot dot-red"></span> Empty states</span>
+              </div>
+            </div>
+          </div>
+
           <div class="plot-container" id="plot-gap-temp" style="min-height:280px;"></div>
           <div class="plot-container" id="plot-magnetization" style="min-height:260px; margin-top:1.5rem;"></div>
           <div class="plot-container" id="plot-penetration" style="min-height:260px; margin-top:1.5rem;"></div>
@@ -282,8 +342,9 @@
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
-<script src="sc_sim.js?v=1"></script>
-<script src="sc_apps_games.js?v=1"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="sc_sim.js?v=4"></script>
+  <script src="sc_apps_games.js?v=4"></script>
 <script src="../../shared_effects.js"></script>
 </body>
 </html>

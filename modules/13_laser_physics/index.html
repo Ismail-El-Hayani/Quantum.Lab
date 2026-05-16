@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,9 +10,45 @@
 <style>
   .timer-bar { height:4px;background:var(--bg-elevated);border-radius:2px;overflow:hidden;margin-bottom:1rem; }
   .timer-fill { height:100%;background:var(--accent-cyan);transition:width 1s linear; }
+  .timer-fill.urgent { background:#ff4ecd; }
   .draggable-target { cursor:grab; border:2px dashed var(--glass-border); border-radius:var(--radius-sm); padding:0.5rem 0.8rem; background:var(--bg-elevated); display:inline-block; }
   .drop-zone { border:2px dashed var(--glass-border); border-radius:var(--radius-sm); padding:0.6rem; min-height:40px; min-width:50px; display:inline-block; background:var(--bg-panel); }
   .drop-zone.dragover { border-color:var(--accent-cyan); background:rgba(0,240,255,0.04); }
+  .section-divider { height:1px; background:linear-gradient(90deg, transparent, var(--glass-border), transparent); margin:1.2rem 0; }
+  .mini-bar-bg { width:60px; height:4px; background:var(--bg-elevated); border-radius:2px; display:inline-block; vertical-align:middle; margin-left:6px; overflow:hidden; }
+  .mini-bar-fill { height:100%; background:linear-gradient(90deg, var(--accent-cyan), var(--accent-green)); border-radius:2px; transition:width 0.3s ease; }
+  .preset-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:0.5rem; margin-bottom:1rem; }
+  .preset-btn { padding:0.4rem 0.6rem; font-size:0.75rem; border-radius:6px; background:var(--bg-elevated); border:1px solid var(--border-subtle); color:var(--text-muted); cursor:pointer; transition:all 0.2s; font-family:var(--font-mono); }
+  .preset-btn:hover { border-color:var(--accent-cyan); color:var(--text-main); }
+  .preset-btn.active { background:rgba(0,240,255,0.08); border-color:var(--accent-cyan); color:var(--accent-cyan); }
+  .material-badge { display:inline-block; padding:0.25rem 0.6rem; border-radius:4px; background:rgba(74,222,128,0.08); border:1px solid rgba(74,222,128,0.2); color:var(--accent-green); font-size:0.75rem; font-family:var(--font-mono); }
+  .lasing-on { background:rgba(74,222,128,0.12); border-color:rgba(74,222,128,0.3); color:var(--accent-green); }
+  .lasing-off { background:rgba(255,78,205,0.08); border-color:rgba(255,78,205,0.2); color:var(--accent-pink); }
+
+  /* Canvas laser cavity */
+  .cavity-wrap { position:relative; width:100%; background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-md); overflow:hidden; }
+  #laser-canvas { display:block; width:100%; height:360px; }
+  .cavity-overlay { position:absolute; top:0.5rem; left:0.5rem; font-size:0.7rem; color:var(--text-dim); font-family:var(--font-mono); pointer-events:none; }
+
+  /* Material cards */
+  .mat-card-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:1rem; margin-top:1.2rem; }
+  .mat-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-md); padding:1rem; }
+  .mat-card-title { font-size:0.95rem; font-weight:700; color:var(--text-main); margin-bottom:0.3rem; }
+  .mat-card-lam { font-size:0.78rem; color:var(--accent-cyan); font-family:var(--font-mono); margin-bottom:0.4rem; }
+  .mat-card-desc { font-size:0.82rem; color:var(--text-muted); line-height:1.5; }
+
+  /* Legend */
+  .legend-panel { margin-top:0.8rem; padding:0.7rem 1rem; background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-sm); }
+  .legend-row { display:flex; justify-content:flex-start; gap:1.2rem; flex-wrap:wrap; font-size:0.78rem; color:var(--text-dim); }
+  .legend-item { display:flex; align-items:center; gap:0.35rem; }
+  .legend-swatch { display:inline-block; width:12px; height:12px; border-radius:50%; }
+
+  /* Population bars */
+  .pop-bar-wrap { margin-top:0.6rem; }
+  .pop-bar-row { display:flex; align-items:center; gap:0.5rem; margin-bottom:0.3rem; }
+  .pop-bar-label { font-size:0.72rem; color:var(--text-dim); width:30px; }
+  .pop-bar-track { flex:1; height:8px; background:var(--bg-elevated); border-radius:4px; overflow:hidden; }
+  .pop-bar-fill { height:100%; border-radius:4px; transition:width 0.3s ease; }
 </style>
 </head>
 <body>
@@ -28,7 +63,7 @@
 <div class="game-hero" style="padding-bottom:0;">
   <div class="level-badge">Module 13 · Level <span id="current-level">1</span> · Coherent Light Engineer</div>
   <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-green),var(--accent-pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Laser Physics</span></h1>
-  <p class="hero-desc">From stimulated emission to semiconductor lasers. Engineer gain, cavity modes, and telecom wavelengths.</p>
+  <p class="hero-desc">Build a laser cavity, pump electrons, and watch stimulated emission create a coherent beam. Interact with real photon dynamics at the micrometer scale.</p>
 </div>
 <div class="game-container">
   <div class="game-mode-bar">
@@ -36,63 +71,165 @@
     <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">🎯 Challenges</button>
     <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">🧩 Puzzles</button>
   </div>
+
+  <!-- PLAYGROUND -->
   <div class="mode-section" id="section-play">
     <div class="playground-area">
       <div class="playground-header">
-        <div class="playground-title">🔬 Semiconductor Laser Cavity Designer</div>
-        <div class="playground-level">Adjust band gap, cavity length, and refractive index. Match gain peak to a cavity mode.</div>
+        <div class="playground-title">🔬 Interactive Laser Cavity</div>
+        <div class="playground-level">Real-time photon simulation inside a Fabry-Pérot cavity. Watch spontaneous seed photons trigger stimulated emission cascades as pumping drives population inversion. Photons reflect off mirrors; those that transmit through the right mirror form the output beam. Scale bar ≈ 10 µm.</div>
       </div>
       <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem;">
+        <!-- LEFT: Canvas + material cards -->
         <div>
-          <div class="plot-container" id="plot-cavity" style="min-height:280px;"></div>
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
-            <strong>What it shows:</strong> Allowed longitudinal cavity modes superimposed on the gain spectrum, revealing which wavelengths satisfy the round-trip phase condition.<br>
-            <strong>Why it matters:</strong> Only modes that overlap with gain can reach threshold — this is the mode-selection physics behind every diode laser and telecom emitter.
+          <div class="cavity-wrap">
+            <canvas id="laser-canvas"></canvas>
+            <div class="cavity-overlay">
+              <div>Photons: <span id="cv-photons">0</span> | Output: <span id="cv-output">0</span> | Status: <span id="cv-status">—</span></div>
+              <div style="margin-top:2px;">Scale: 1 px ≈ <span id="cv-scale">25</span> nm</div>
+            </div>
           </div>
-          <div class="plot-container" id="plot-gain" style="min-height:260px; margin-top:1.5rem;"></div>
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
-            <strong>What it shows:</strong> Gain coefficient versus wavelength, including the threshold line set by mirror losses and internal absorption.<br>
-            <strong>Why it matters:</strong> Lasing begins only when gain exceeds losses — the threshold condition determines pump power, efficiency, and linewidth.
+
+          <!-- Material cards -->
+          <div class="mat-card-grid">
+            <div class="mat-card">
+              <div class="mat-card-title">GaAs</div>
+              <div class="mat-card-lam">λ = 870 nm · Eg = 1.42 eV · Direct gap</div>
+              <div class="mat-card-desc">Gallium arsenide is the classic III–V direct-gap laser material. Used in CD/DVD drives, optical mice, and short-range telecom its cleaved crystal facets provide the natural cavity mirrors (R≈0.30) without external coating.</div>
+            </div>
+            <div class="mat-card">
+              <div class="mat-card-title">InGaAsP</div>
+              <div class="mat-card-lam">λ = 1550 nm · Eg = 0.80 eV · Quaternary alloy</div>
+              <div class="mat-card-desc">Indium gallium arsenide phosphide dominates long-haul fiber optics. By tuning the In/Ga and As/P ratios the band gap is dialled to match either the 1.3 µm (O-band) or 1.55 µm (C-band) telecom windows with minimal dispersion or attenuation as shown in the lecture fiber-absorption curve.</div>
+            </div>
+            <div class="mat-card">
+              <div class="mat-card-title">GaN</div>
+              <div class="mat-card-lam">λ = 405 nm · Eg = 3.40 eV · Direct gap · Wurtzite</div>
+              <div class="mat-card-desc">Gallium nitride enabled the solid-state lighting revolution. Its wide direct gap produces violet/blue light used in Blu-ray disc lasers (405 nm) and, when combined with a yellow phosphor, white LEDs. Typically grown on sapphire or SiC substrates; lattice matching is a major engineering challenge.</div>
+            </div>
+            <div class="mat-card">
+              <div class="mat-card-title">GaInNAs(Sb)</div>
+              <div class="mat-card-lam">λ ≈ 1.3 µm · Dilute-nitride quantum well · Direct gap</div>
+              <div class="mat-card-desc">A dilute-nitride quantum-well active layer inside a VCSEL emitting at 1.3 µm. Used in 10 GHz telecom devices and as an optical amplifier from 1.2–1.6 µm. Adding small amounts of nitrogen to GaInAs strongly reduces the band gap while keeping the lattice parameter close to GaAs — a key trick for fabricating long-wavelength devices on GaAs substrates.</div>
+            </div>
           </div>
         </div>
+
+        <!-- RIGHT: Controls + Legend + Readout -->
         <div>
           <div class="challenge-panel" style="margin-bottom:1rem;">
             <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙</span><span class="challenge-title">Controls</span></div>
+
+            <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:0.4rem;">Material preset</div>
+            <div class="preset-grid" id="lp-presets">
+              <button class="preset-btn active" onclick="setLaserMaterial('GaAs')" data-mat="GaAs">GaAs</button>
+              <button class="preset-btn" onclick="setLaserMaterial('InGaAsP')" data-mat="InGaAsP">InGaAsP</button>
+              <button class="preset-btn" onclick="setLaserMaterial('GaN')" data-mat="GaN">GaN</button>
+              <button class="preset-btn" onclick="setLaserMaterial('CO2')" data-mat="CO2">CO₂</button>
+              <button class="preset-btn" onclick="setLaserMaterial('HeNe')" data-mat="HeNe">HeNe</button>
+            </div>
+
             <div class="control-row"><span class="control-label">Band gap Eg</span><span class="control-value" id="val-Eg">1.42</span><span class="unit-tag">eV</span></div>
-            <input type="range" id="slider-Eg" min="0.5" max="3.0" value="1.42" step="0.05">
-            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Cavity length L</span><span class="control-value" id="val-L">500</span><span class="unit-tag">nm</span></div>
-            <input type="range" id="slider-L" min="200" max="2000" value="500" step="50">
-            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Refractive index n</span><span class="control-value" id="val-n-lp">3.5</span></div>
-            <input type="range" id="slider-n-lp" min="1.5" max="5" value="3.5" step="0.1">
-            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Mirror reflectivity R</span><span class="control-value" id="val-R">0.30</span></div>
+            <input type="range" id="slider-Eg" min="0.5" max="3.5" value="1.42" step="0.05">
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.2rem;margin-bottom:0.6rem;">Sets emission wavelength via λ = 1240/Eg. Direct-gap materials lase efficiently.</p>
+
+            <div class="control-row"><span class="control-label">Cavity length L</span><span class="control-value" id="val-L">2000</span><span class="unit-tag">nm</span></div>
+            <input type="range" id="slider-L" min="500" max="10000" value="2000" step="100">
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.2rem;margin-bottom:0.6rem;">Distance between mirrors. Longer cavities host more modes and more photons.</p>
+
+            <div class="control-row"><span class="control-label">Refractive index n</span><span class="control-value" id="val-n-lp">3.5</span></div>
+            <input type="range" id="slider-n-lp" min="1.0" max="5" value="3.5" step="0.1">
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.2rem;margin-bottom:0.6rem;">Slows light inside the medium (v = c/n) and changes optical path length.</p>
+
+            <div class="control-row"><span class="control-label">Mirror reflectivity R</span><span class="control-value" id="val-R">0.30</span></div>
             <input type="range" id="slider-R" min="0.05" max="0.99" value="0.30" step="0.05">
-            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Loss α</span><span class="control-value" id="val-alpha">100</span><span class="unit-tag">cm⁻¹</span></div>
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.2rem;margin-bottom:0.6rem;">Higher R traps photons longer, lowering threshold. Cleaved facets ≈ 0.30; DBR > 0.99.</p>
+
+            <div class="control-row"><span class="control-label">Loss α</span><span class="control-value" id="val-alpha">100</span><span class="unit-tag">cm⁻¹</span></div>
             <input type="range" id="slider-alpha" min="10" max="500" value="100" step="10">
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.2rem;margin-bottom:0.6rem;">Internal absorption and scattering. Free-carrier absorption rises with doping.</p>
+
+            <div class="control-row"><span class="control-label">Pumping factor</span><span class="control-value" id="val-pumping">1.5</span></div>
+            <input type="range" id="slider-pumping" min="0.5" max="5.0" value="1.5" step="0.1">
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.2rem;margin-bottom:0;">Controls electron injection rate. Above 1.0, population inversion begins and stimulated emission overtakes spontaneous.</p>
           </div>
+
+          <!-- Legend -->
+          <div class="challenge-panel" style="margin-bottom:1rem;">
+            <div class="challenge-header"><span class="challenge-icon" style="background:rgba(192,132,252,0.1);">📖</span><span class="challenge-title">Legend</span></div>
+            <div class="legend-row">
+              <span class="legend-item"><span class="legend-swatch" style="background:#ffffff;box-shadow:0 0 4px rgba(255,255,255,0.6);"></span><b>Spontaneous</b> random direction</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#00f0ff;box-shadow:0 0 4px rgba(0,240,255,0.6);"></span><b>Stimulated</b> clone of seed</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#ffd54f;"></span><b>Output</b> emerges left</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:rgba(239,68,68,0.4);"></span><b>n-type</b></span>
+              <span class="legend-item"><span class="legend-swatch" style="background:rgba(59,130,246,0.4);"></span><b>p-type</b></span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#facc15;"></span><b>Active region</b></span>
+            </div>
+            <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem;margin-bottom:0;">
+              The semiconductor stack shows n-type (red), p-type (blue), and the thin active region (yellow) where stimulated emission occurs. Photons zigzag inside the cavity; those that transmit the left polished facet become the coherent output beam. In gas mode the OC/HR labels swap and Brewster windows polarize the output.
+            </p>
+          </div>
+
+          <!-- Live Readout -->
           <div class="challenge-panel">
-            <div class="challenge-header"><span class="challenge-icon" style="background:rgba(192,132,252,0.1);">📊</span><span class="challenge-title">Live Readout</span></div>
+            <div class="challenge-header"><span class="challenge-icon" style="background:rgba(74,222,128,0.1);">📊</span><span class="challenge-title">Live Readout</span></div>
             <table>
               <tr><th>Quantity</th><th>Value</th></tr>
               <tr><td>λ (gain)</td><td class="highlight-num" id="live-lam">—</td></tr>
-              <tr><td>Closest mode</td><td class="highlight-pink" id="live-mode">—</td></tr>
-              <tr><td>Linewidth Δν</td><td class="highlight-num" id="live-linewidth">—</td></tr>
+              <tr><td>Cavity photons</td><td class="highlight-num" id="live-photons">—</td></tr>
+              <tr><td>Output rate</td><td class="highlight-pink" id="live-output">—</td></tr>
               <tr><td>Threshold gain</td><td class="highlight-pink" id="live-threshold">—</td></tr>
-              <tr><td>Regime</td><td id="live-regime-lp"><span class="tc-badge">Visible</span></td></tr>
+              <tr><td>Available g₀</td><td class="highlight-num" id="live-g0">—</td></tr>
+              <tr><td>Lasing status</td><td id="live-lasing"><span class="normal-badge">Below threshold</span></td></tr>
+              <tr><td>Material</td><td id="live-material"><span class="material-badge">GaAs</span></td></tr>
             </table>
+
+            <!-- Population inversion bars -->
+            <div class="pop-bar-wrap">
+              <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:0.3rem;">Population inversion</div>
+              <div class="pop-bar-row">
+                <span class="pop-bar-label">N₂</span>
+                <div class="pop-bar-track"><div class="pop-bar-fill" id="bar-n2" style="width:0%;background:var(--accent-cyan);"></div></div>
+                <span style="font-size:0.72rem;color:var(--text-dim);width:40px;text-align:right;" id="txt-n2">0%</span>
+              </div>
+              <div class="pop-bar-row">
+                <span class="pop-bar-label">N₁</span>
+                <div class="pop-bar-track"><div class="pop-bar-fill" id="bar-n1" style="width:100%;background:var(--accent-pink);"></div></div>
+                <span style="font-size:0.72rem;color:var(--text-dim);width:40px;text-align:right;" id="txt-n1">100%</span>
+              </div>
+              <div class="pop-bar-row">
+                <span class="pop-bar-label">Inv.</span>
+                <div class="pop-bar-track"><div class="pop-bar-fill" id="bar-inv" style="width:0%;background:linear-gradient(90deg,var(--accent-green),var(--accent-cyan));"></div></div>
+                <span style="font-size:0.72rem;color:var(--text-dim);width:40px;text-align:right;" id="txt-inv">0%</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
+
     <div class="insight-card" style="margin-top:1rem;">
-      <div class="insight-title">✨ Why does this matter?</div>
+      <div class="insight-title">✨ How does a laser actually work?</div>
       <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
-        A laser needs <strong>population inversion</strong> and an optical cavity. Stimulated emission produces coherent photons matching the energy gap. The cavity selects discrete modes λm = 2nL/m. For lasing, a mode must lie within the gain spectrum.
+        A laser is an <strong>optical amplifier inside a resonator</strong>. The lecture distinguishes between <strong>three-step</strong> and <strong>four-level</strong> lasers; here we show the three-step idea in action. The animation displays the three essential ingredients:
+        <strong>(1) Pumping</strong> injects energy to excite electrons from level N₁ to higher levels (N₂, N₃). In a four-level scheme the lower laser level is quickly depopulated, making inversion easier. The slider controls pumping strength; below threshold electrons relax spontaneously, while above threshold population inversion (N₂>N₁) enables a cascade.
+        <strong>(2) Stimulated emission</strong> (page 2): a seed photon with hν = E₂−E₁ passing through the inverted medium triggers an excited electron to drop down. The emitted photon is <em>identical</em> in phase, direction, and polarization to the seed — unlike spontaneous emission which has a wide angular distribution and broad spectrum. Cyan photons in the animation represent this coherent clone.
+        <strong>(3) The cavity</strong> recycles photons on each round trip. Mirrors are either cleaved crystal facets (reflectivity R≈0.30 in III–V semiconductors) or dielectric Bragg reflectors (R>0.99 in VCSELs). One mirror is intentionally leaky — escaping photons form the <strong>output beam</strong>.
+      </p>
+      <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;margin-top:0.6rem;">
+        <strong>Direct vs indirect gap</strong> (page 8) is crucial for semiconductor lasers. In <em>direct-gap</em> materials (GaAs, GaN, InP, InGaAsP), an electron losing energy creates a photon directly. In <em>indirect-gap</em> materials (Si, Ge), the transition requires a <em>k</em>-vector change and emits a phonon instead — almost no light. This is why lasers use III–V or III–N compounds and never bulk silicon.
+        <strong>Homojunction vs heterojunction</strong> (page 13): early diode lasers were homojunctions (equal band gap, different doping) — they had to be cooled because electrons and holes spread out and recombined non-radiatively. Modern devices use <strong>double heterojunctions</strong>: wide-gap cladding layers (e.g. AlGaAs around GaAs) confine both the carriers and the optical mode inside the thin active region, acting as a waveguide.
+        <strong>Quantum wells</strong> (page 14): if the active layer is extremely thin (nanometers), the electrons are confined in one dimension, splitting the bands into discrete sub-bands — this dramatically changes the density of states and produces sharper emission linewidths than bulk lasers.
+        <strong>Telecom windows</strong> (page 9): fiber-optic glass has minimum absorption near 1.3 µm (zero dispersion) and 1.55 µm (minimum attenuation). That is why InGaAsP lasers are tuned precisely to those wavelengths.
+        <strong>Brewster angle</strong> (page 6): gas lasers like HeNe use external Brewster windows to polarize the intracavity light. Photons polarized in the plane of incidence pass with zero reflection loss; the orthogonal polarization is rejected, producing a strongly polarized output.
       </p>
       <div class="equation-box" style="font-size:0.85rem;">
-        $$h\nu = E_g \qquad \lambda_m = \frac{2nL}{m} \qquad \text{Gain} \propto N_2 - N_1$$
+        $$N_2 > N_1 \;\;\text{(inversion)} \qquad \frac{dN_{\gamma}}{dt} = R_{\text{stim}} - \frac{N_{\gamma}}{\tau_{\text{cav}}} \qquad g_{\text{th}} = \alpha + \frac{1}{2L}\ln\frac{1}{R^2}$$
       </div>
     </div>
   </div>
+
+  <!-- CHALLENGES -->
   <div class="mode-section" id="section-challenge" style="display:none;">
     <div class="challenge-panel">
       <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span><span class="challenge-title">Challenge 1: Direct or Indirect?</span><span class="challenge-difficulty easy">Easy</span></div>
@@ -122,6 +259,8 @@
       <div class="challenge-feedback" id="tel-feedback"></div>
     </div>
   </div>
+
+  <!-- PUZZLES -->
   <div class="mode-section" id="section-puzzle" style="display:none;">
     <div class="challenge-panel">
       <div class="challenge-header"><span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🔧</span><span class="challenge-title">Puzzle 1: Stimulated vs Spontaneous</span><span class="challenge-difficulty medium">Medium</span></div>
@@ -149,6 +288,8 @@
       <div class="challenge-feedback" id="laser-feedback"></div>
     </div>
   </div>
+
+  <!-- SIDEBAR -->
   <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; margin-top:2rem;">
     <div></div>
     <div>
@@ -172,9 +313,9 @@
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
-<script src="lp_sim.js?v=1"></script>
-<script src="lp_apps.js?v=1"></script>
-<script src="lp_apps_games.js?v=1"></script>
+<script src="lp_sim.js?v=3"></script>
+<script src="lp_apps.js?v=3"></script>
+<script src="lp_apps_games.js?v=3"></script>
 <script src="../../shared_effects.js"></script>
 </body>
 </html>

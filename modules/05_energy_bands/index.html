@@ -104,14 +104,17 @@
           <div class="material-card" onclick="setEBMaterial('Diamond')">Diamond (Ins)</div>
           <div class="material-card" onclick="setEBMaterial('Graphene')">Graphene</div>
         </div>
-        <div class="challenge-header" style="margin-top:1rem; border-top:1px solid var(--glass-border); padding-top:1rem;">
-          <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">🌑</span>
-          <span class="challenge-title">Carbon Allotropes</span>
-        </div>
-        <div class="challenge-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));">
-          <div class="material-card" onclick="setEBMaterial('Graphite')">Graphite (2D)</div>
-          <div class="material-card" onclick="setEBMaterial('CNT')">Nanotube (1D)</div>
-          <div class="material-card" onclick="setEBMaterial('Fullerene')">Fullerene (0D)</div>
+        <!-- Carbon Allotropes subsection (hidden until Graphene selected) -->
+        <div id="carbon-subsection" class="challenge-panel" style="display:none; margin-top:1rem; background:rgba(0,0,0,0.0);">
+          <div class="challenge-header" style="border-top:1px solid var(--glass-border); padding-top:1rem;">
+            <span class="challenge-icon" style="background:rgba(255,78,205,0.1);">🌑</span>
+            <span class="challenge-title">Carbon Allotropes</span>
+          </div>
+          <div class="challenge-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));">
+            <div class="material-card" onclick="setEBMaterial('Graphite')">Graphite (2D)</div>
+            <div class="material-card" onclick="setEBMaterial('CNT')">Nanotube (1D)</div>
+            <div class="material-card" onclick="setEBMaterial('Fullerene')">Fullerene (0D)</div>
+          </div>
         </div>
       </div>
 
@@ -146,6 +149,11 @@
             </div>
             <input type="range" id="slider-t" min="0.1" max="3" value="1.0" step="0.1">
             <div class="control-row" style="margin-top:1rem;">
+              <span class="control-label">Gap E_g</span>
+              <span class="control-value" id="val-gap">0.0</span><span class="unit-tag">eV</span>
+            </div>
+            <input type="range" id="slider-gap" min="0" max="6" value="0" step="0.1">
+            <div class="control-row" style="margin-top:1rem;">
               <span class="control-label">Offset ε</span>
               <span class="control-value" id="val-eps">0.0</span><span class="unit-tag">eV</span>
             </div>
@@ -160,13 +168,24 @@
               <tr style="text-align:left;"><th style="color:var(--text-dim);font-weight:normal;">Metric</th><th style="color:var(--text-dim);font-weight:normal;">Value</th></tr>
               <tr style="color:var(--accent-cyan)"><td id="live-dim-label">Symmetry</td><td class="highlight-num" id="live-dim">3D</td></tr>
               <tr style="color:var(--text-main)"><td style="color:var(--text-main)">Hopping t</td><td class="highlight-num" id="live-t">1.0 eV</td></tr>
+              <tr style="color:var(--text-main)"><td style="color:var(--text-main)">Bandgap E_g</td><td class="highlight-num" id="live-gap">0.00 eV</td></tr>
               <tr style="color:var(--text-main)"><td style="color:var(--text-main)">Bandwidth</td><td class="highlight-num" id="live-bw">4.0 eV</td></tr>
             </table>
           </div>
         </div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <div class="plot-container" id="plot-dos-playground" style="min-height:350px;"></div>
-          <div class="plot-container" id="plot-arpes-main" style="min-height:350px;"></div>
+          <div>
+            <div class="plot-container" id="plot-dos-playground" style="min-height:350px;"></div>
+            <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
+              🔬 <b>DOS g(E)</b> — number of states per unit energy. Gap size reveals metal vs semiconductor.
+            </div>
+          </div>
+          <div>
+            <div class="plot-container" id="plot-arpes-main" style="min-height:350px;"></div>
+            <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
+              🔬 <b>ARPES intensity</b> — photoemission map of occupied states vs momentum.
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -201,7 +220,7 @@
         <span class="challenge-title">Challenge 2: Effective Mass from Curvature</span>
         <span class="challenge-difficulty medium">Medium</span>
       </div>
-      <div class="challenge-desc">At the bottom of a tight-binding band, m* = ℏ²/(2ta²). Given t = <span id="effmass-t">1.0</span> eV, what is m* (in units of mₑ, assuming a=0.5 nm)?</div>
+      <div class="challenge-desc">At the bottom of a tight-binding band, m* = ℏ²/(2ta²). Given hopping t = <span id="effmass-t">1.0</span> eV and lattice constant a = 0.5 nm, what is m* (in units of mₑ)?</div>
       <div class="challenge-reward">🏆 Reward: 75 XP · "DOS Explorer" badge</div>
       <div class="plot-container" id="plot-effmass" style="height:260px;"></div>
       <div style="display:flex; gap:1rem; align-items:center; margin-top:1rem;">
@@ -239,11 +258,14 @@
       <div class="challenge-desc">Set the carrier density to achieve the target doping type. Watch E_F shift!</div>
       <div class="challenge-reward">🏆 Reward: 60 XP</div>
       <div style="font-size:1rem;margin-bottom:1rem;">Target: <strong id="doping-target-type">n-type</strong></div>
-      <div class="control-row">
-        <span class="control-label">Carrier density n</span>
-        <span class="control-value" id="val-doping">1.0e28</span><span class="unit-tag">m⁻³</span>
-      </div>
-      <input type="range" id="slider-doping" min="1e15" max="1e29" value="1e28" step="1e15" style="width:100%;">
+        <div class="control-row">
+          <span class="control-label">Carrier density n</span>
+          <span class="control-value" id="val-doping">1.0e22</span><span class="unit-tag">m⁻³</span>
+        </div>
+        <input type="range" id="slider-doping" min="15" max="29" value="22" step="0.1" style="width:100%;">
+        <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted); margin-top:0.2rem;">
+          <span>10¹⁵</span><span>10²² (intrinsic)</span><span>10²⁹</span>
+        </div>
       <div class="plot-container" id="plot-doping" style="height:220px; margin-top:1rem;"></div>
       <button class="btn" onclick="checkDopingSlider()">✓ Check Doping</button>
       <div class="challenge-feedback" id="doping-feedback"></div>
@@ -293,15 +315,15 @@
            <span class="challenge-title">Lab Notes</span>
          </div>
          <div class="insight-card" style="font-size:0.9rem; line-height:1.6; color:var(--text-dim);">
-           The Density of States (DOS), $g(E)$, describes the number of electronic states per unit energy.
+           The Density of States, \( g(E) \), describes the number of available electronic states per unit energy per unit volume.
            <br><br>
-           1. <b style="color:var(--accent-cyan)">3D Bulk: la $	o$ Bulk</b> $g(E) \propto \sqrt{E}$.
+           1. <b style="color:var(--accent-cyan)">3D Bulk</b>: \( g(E) \propto \sqrt{E - E_c} \) — parabolic dispersion near the conduction-band edge.
            <br>
-           2. <b style="color:var(--accent-cyan)">2D Layer: la $	o$ Layer</b> $g(E)$ is a step-function.
+           2. <b style="color:var(--accent-cyan)">2D Layer (Quantum Well)</b>: \( g(E) \) is a step-function — constant for each sub-band.
            <br>
-           3. <b style="color:var(--accent-cyan)">1D Wire: la $	o$ Wire</b> $g(E) \propto 1/\sqrt{E}$.
+           3. <b style="color:var(--accent-cyan)">1D Wire (Quantum Wire)</b>: \( g(E) \propto 1/\sqrt{E - E_c} \) — Van Hove singularities at sub-band edges.
            <br>
-           4. <b style="color:var(--accent-purple)">Carbon Allotropes: Honeycomb/Tubes/Spheres</b>. $g(E)$ varies from linear (Graphene) to spiky (CNT) to discrete (Fullerene).
+           4. <b style="color:var(--accent-purple)">Carbon Allotropes</b>: Graphene → linear \( g(E) \propto |E| \); CNT → spiky Van Hove peaks; Fullerene → discrete delta-like spikes.
          </div>
        </div>
     </div>

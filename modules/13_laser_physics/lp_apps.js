@@ -1,33 +1,37 @@
 /**
- * Laser Physics — Apps wiring (lp_apps.js)
- * Playground wiring: cavity modes, gain spectrum, linewidth overlays.
+ * Laser Physics — Apps wiring (lp_apps.js v4)
+ * XP hooks, playground interaction wiring, mode switching.
  */
 'use strict';
 
-function lpExtraPlot(id, traces, layout, cfg) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  Plotly.react(id, traces, layout, cfg || { responsive: true, displayModeBar: false });
-}
-
-function animateLPPlots() {
-  var ids = ['plot-cavity','plot-gain'];
-  ids.forEach(function(id) {
-    var el = document.getElementById(id); if (!el) return;
-    Plotly.animate(id, null, { transition: { duration: 300, easing: 'cubic-in-out' }, frame: { duration: 300 } }).catch(function(){});
+function setGameMode(mode) {
+  ['play','challenge','puzzle'].forEach(function(m) {
+    var sec = document.getElementById('section-' + m);
+    var btn = document.getElementById('mode-' + m);
+    if (sec) sec.style.display = (m === mode) ? 'block' : 'none';
+    if (btn) {
+      if (m === mode) btn.classList.add('active');
+      else btn.classList.remove('active');
+    }
   });
+  if (window.lpStartAnim && window.lpStopAnim) {
+    if (mode === 'play') lpStartAnim();
+    else lpStopAnim();
+  }
 }
 
 function setupLPPlayground() {
-  var sliders = ['slider-Eg','slider-L','slider-n-lp','slider-R','slider-alpha'];
+  // XP on any slider movement (pumping included)
+  var sliders = ['slider-Eg','slider-L','slider-n-lp','slider-R','slider-alpha','slider-pumping'];
   sliders.forEach(function(k) {
-    var el = document.getElementById(k); if (!el) return;
+    var el = document.getElementById(k);
+    if (!el) return;
     el.addEventListener('input', function() {
-      try { animateLPPlots(); } catch(e){}
       if (window.__GameState) __GameState.addXP(1, 'lp_playground');
     });
   });
 
+  // First explore badge after 5s
   var firstExplore = true;
   setTimeout(function() {
     if (firstExplore && window.__GameState) {

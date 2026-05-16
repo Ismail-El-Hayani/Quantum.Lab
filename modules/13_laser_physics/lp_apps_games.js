@@ -31,7 +31,8 @@ var LP_BADGES = [
   { id: 'wavelength-sage', name: 'Wavelength Sage', desc: 'λ calculator solved', icon: '📏' },
   { id: 'telecom-master', name: 'Telecom Master', desc: 'Telecom window matcher done', icon: '📡' },
   { id: 'stimulated-builder', name: 'Stimulated Builder', desc: 'Emission puzzle solved', icon: '🔧' },
-  { id: 'mode-architect', name: 'Mode Architect', desc: 'Cavity mode puzzle done', icon: '🏗' }
+  { id: 'mode-architect', name: 'Mode Architect', desc: 'Cavity mode puzzle done', icon: '🏗' },
+  { id: 'laser-physicist', name: 'Laser Physicist', desc: 'Completed all laser challenges and puzzles', icon: '🔬' }
 ];
 function renderBadgesLP() {
   var el = document.getElementById('badge-list'); if (!el || !window._GameState) return;
@@ -51,6 +52,13 @@ function updateScoreboardLP() {
   if (elXP) elXP.textContent = _GameState.xp;
   if (elBad) elBad.textContent = _GameState.earnedBadges.size;
   var elNav = document.getElementById('nav-xp'); if (elNav) elNav.textContent = _GameState.xp + ' XP';
+  // Master badge: laser-physicist if >=3 challenges solved and >=3 puzzles solved
+  var chScore = _GameState.moduleScores['lp_challenges'] || 0;
+  var puzScore = _GameState.moduleScores['lp_puzzles'] || 0;
+  if (chScore >= 150 && puzScore >= 150) {
+    _GameState.earnedBadges.add('laser-physicist');
+    _GameState.save();
+  }
   renderBadgesLP();
 }
 
@@ -69,7 +77,14 @@ function startLPChallenge() {
   clearInterval(lpCh.timer);
   lpCh.timer = setInterval(function() { lpCh.timeLeft -= 1; updateLPTimer(); if (lpCh.timeLeft <= 0) { clearInterval(lpCh.timer); showLPFB(false, 'Time up!'); nextLP(); } }, 1000);
 }
-function updateLPTimer() { var el = document.getElementById('lp-timer'); if (el) el.style.width = (lpCh.timeLeft / 15 * 100) + '%'; }
+function updateLPTimer() {
+  var el = document.getElementById('lp-timer');
+  if (!el) return;
+  var pct = lpCh.timeLeft / 15 * 100;
+  el.style.width = pct + '%';
+  if (lpCh.timeLeft <= 5) el.classList.add('urgent');
+  else el.classList.remove('urgent');
+}
 function guessLP(g) {
   clearInterval(lpCh.timer);
   var ok = g === lpCh.current.answer;

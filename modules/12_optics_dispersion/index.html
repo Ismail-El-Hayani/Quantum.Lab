@@ -3,174 +3,440 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Optics & Dispersion Lab — Physics Playground</title>
-<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<title>Module 12 — Optics &amp; Dispersion</title>
 <link rel="stylesheet" href="../../shared_styles.css">
 <style>
-  .timer-bar { height:4px;background:var(--bg-elevated);border-radius:2px;overflow:hidden;margin-bottom:1rem; }
-  .timer-fill { height:100%;background:var(--accent-cyan);transition:width 1s linear; }
-  .draggable-target { cursor:grab; border:2px dashed var(--glass-border); border-radius:var(--radius-sm); padding:0.5rem 0.8rem; background:var(--bg-elevated); display:inline-block; }
-  .drop-zone { border:2px dashed var(--glass-border); border-radius:var(--radius-sm); padding:0.6rem; min-height:40px; min-width:50px; display:inline-block; background:var(--bg-panel); }
-  .drop-zone.dragover { border-color:var(--accent-cyan); background:rgba(0,240,255,0.04); }
+.mode-bar { display:flex; gap:0.5rem; justify-content:center; padding:0.6rem 1rem; position:sticky; top:52px; z-index:10; background:rgba(0,0,0,0.35); backdrop-filter:blur(8px); }
+  .macro-panel { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-top:1rem; }
+  body { zoom: 1.25; }
+  .macro-panel h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
+  .material-presets { margin-bottom:0.5rem; }
+  .material-presets h3 { font-size:1rem; margin-bottom:0.6rem; color:var(--text-bright); }
+  .preset-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap:0.5rem; }
+  .preset-btn { padding:0.5rem; border-radius:var(--radius-md); border:1px solid var(--glass-border); background:var(--bg-deep); color:var(--text-main); cursor:pointer; font-weight:600; transition:all .2s; }
+  .preset-btn:hover { border-color:var(--accent-cyan); }
+  .preset-btn.active { background:var(--grad-hero); border-color:transparent; color:#fff; }
+  .control-row { display:flex; flex-wrap:wrap; gap:1rem; margin-top:0.6rem; }
+  .slider-group { flex:1 1 240px; }
+  .slider-group label { display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:0.3rem; }
+  .slider-group input[type=range] { width:100%; }
+  .slider-value { font-family:var(--font-mono); color:var(--accent-cyan); font-weight:700; }
+  .slider-desc { font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; }
+  .msg { font-size:0.82rem; color:var(--text-muted); margin-top:0.5rem; min-height:1.2em; font-style:italic; }
+  .readout-section { margin-top:1rem; }
+  .readout-section h3 { font-size:1rem; margin-bottom:0.6rem; color:var(--text-bright); }
+  .readout-table { width:100%; border-collapse:collapse; font-size:0.82rem; margin-top:0.4rem; }
+  .readout-table th, .readout-table td { padding:6px 8px; border-bottom:1px solid var(--glass-border); text-align:center; }
+  .readout-table th { color:var(--accent-cyan); font-weight:600; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em; }
+  .readout-table td { color:var(--text-bright); font-family:var(--font-mono); }
+  .insights { display:grid; grid-template-columns:1fr; gap:1rem; margin-top:1rem; }
+  @media (min-width:768px) { .insights { grid-template-columns:1fr 1fr; } }
+  .insight-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; }
+  .insight-card h4 { margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright); }
+  .insight-card p { font-size:0.88rem; color:var(--text-muted); line-height:1.55; margin:0.4rem 0; }
+  .insight-card code { background:rgba(0,240,255,0.08); padding:2px 6px; border-radius:4px; font-size:0.85rem; }
+  .sidebar-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-bottom:1rem; }
+  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
+  .stats { list-style:none; padding:0; font-size:0.85rem; color:var(--text-muted); }
+  .stats li { display:flex; justify-content:space-between; margin-bottom:0.4rem; }
+  .badge-grid { display:flex; flex-wrap:wrap; gap:0.4rem; }
+  .material-badge { display:inline-block; padding:2px 8px; border-radius:12px; font-size:0.72rem; font-weight:700; border:1px solid; }
+  .material-badge.reflect { color:#00f0ff; border-color:#00f0ff; background:rgba(0,240,255,0.08); }
+  .material-badge.transmit { color:#4ade80; border-color:#4ade80; background:rgba(74,222,128,0.08); }
+  .material-badge.absorb { color:#ff4ecd; border-color:#ff4ecd; background:rgba(255,78,205,0.08); }
+  .physics-note { margin-bottom:0.6rem; }
+  .physics-note summary { font-size:0.9rem; color:var(--accent-cyan); cursor:pointer; font-weight:600; }
+  .physics-note .note-body { font-size:0.85rem; color:var(--text-muted); line-height:1.6; margin-top:0.4rem; }
+  .challenge-interface, .puzzle-interface { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1.5rem; margin-top:1rem; }
+  .ch-question { font-size:1rem; margin-bottom:1rem; color:var(--text-main); }
+  .ch-options { display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:1rem; }
+  .ch-score { font-size:1rem; color:var(--accent-cyan); font-family:var(--font-mono); margin-top:1rem; }
+  .puz-list { margin:1rem 0; }
+  .submit-btn { padding:0.5rem 1.2rem; border-radius:var(--radius-md); border:1px solid var(--glass-border); background:var(--bg-elevated); color:var(--text-main); cursor:pointer; font-weight:600; }
+  .submit-btn:hover { border-color:var(--accent-cyan); }
+  .feedback { font-size:0.9rem; margin-top:0.5rem; min-height:1.2em; }
+  #macro-canvas-container { position:relative; width:100%; height:420px; }
+  #macro-canvas-container canvas { display:block; width:100% !important; height:100% !important; touch-action:none; }
+  .lattice-overlay { position:absolute; top:12px; left:12px; z-index:2; background:rgba(10,12,24,0.72); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:8px 12px; font-family:var(--font-mono); font-size:0.72rem; color:var(--accent-cyan); pointer-events:none; }
+  .beam-legend { position:absolute; bottom:12px; right:12px; z-index:2; background:rgba(10,12,24,0.72); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:8px 12px; font-size:0.72rem; color:var(--text-dim); display:flex; flex-direction:column; gap:4px; pointer-events:none; }
+  .beam-legend span { display:flex; align-items:center; gap:6px; }
+  .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+  @media (max-width:720px) { .preset-grid { grid-template-columns: repeat(2,1fr); } #macro-canvas-container { height:320px !important; } .insights { grid-template-columns:1fr; } }
 </style>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js" crossorigin></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.min.js" async crossorigin></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" crossorigin></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js" crossorigin></script>
 </head>
 <body>
-<div class="orb orb-cyan"></div><div class="orb orb-purple"></div><div class="orb orb-pink"></div>
+
 <nav class="game-nav">
-  <div class="nav-brand"><a href="../../index.html" style="text-decoration:none;color:inherit;"><span class="nav-logo">⚛</span> Physics Playground</a></div>
+  <div class="nav-brand"><a href="../../index.html" style="text-decoration:none;color:inherit;"><span class="nav-logo">&#9883;</span> Physics Playground</a></div>
   <div class="nav-stats">
-    <div class="stat-badge"><span class="stat-icon">🔮</span><span class="stat-value">Optics</span></div>
-    <div class="stat-badge"><span class="stat-icon">⭐</span><span class="stat-value" id="nav-xp">0 XP</span></div>
+    <div class="stat-badge"><span class="stat-icon">&#128301;</span><span class="stat-value">12 — Optics &amp; Dispersion</span></div>
+    <div class="stat-badge"><span class="stat-icon">&#11088;</span><span class="stat-value" id="nav-xp">0 XP</span></div>
   </div>
 </nav>
+
 <div class="game-hero" style="padding-bottom:0;">
-  <div class="level-badge">Module 12 · Level <span id="current-level">1</span> · Wave-Response Designer</div>
-  <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-pink),var(--accent-cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Optics & Dispersion</span></h1>
-  <p class="hero-desc">How an electromagnetic wave enters a material, how it polarizes, and how that governs reflection, absorption, and color.</p>
+  <div class="level-badge">LEVEL 12</div>
+  <h1 style="font-size:2.4rem;"><span style="background:var(--grad-hero);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Optics, Dispersion &amp; Material Response</span></h1>
+  <p class="hero-desc">
+    Explore how light interacts with matter across the optical spectrum. From Drude metals to
+    semiconductors and insulators, observe how photon energy governs reflection, absorption,
+    and transmission — and dive into the lattice to see why.
+  </p>
 </div>
-<div class="game-container">
-  <div class="game-mode-bar">
-    <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
-    <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">🎯 Challenges</button>
-    <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">🧩 Puzzles</button>
-  </div>
-  <div class="mode-section" id="section-play">
-    <div class="playground-area">
-      <div class="playground-header">
-        <div class="playground-title">🔬 Drude Model & Reflectivity Lab</div>
-        <div class="playground-level">Tune plasma frequency and damping. See ε(ω) and how reflectivity changes.</div>
+
+<div class="mode-bar">
+  <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">&#128300; Playground</button>
+  <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">&#127919; Challenges</button>
+  <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">&#129513; Puzzle</button>
+</div>
+
+<div class="game-layout" style="max-width:1400px;margin:0 auto;padding:0 2rem 3rem;">
+
+<div class="game-main">
+
+
+<!-- ═════════════════════ PLAYGROUND ═════════════════════ -->
+<div class="mode-section" id="section-play">
+
+  <section class="material-presets">
+    <h3>🧪 Material Preset</h3>
+    <div class="preset-grid">
+      <button class="preset-btn active" onclick="odSetMaterial('Cu')">Copper</button>
+      <button class="preset-btn" onclick="odSetMaterial('Ag')">Silver</button>
+      <button class="preset-btn" onclick="odSetMaterial('Al')">Aluminium</button>
+      <button class="preset-btn" onclick="odSetMaterial('Si')">Silicon</button>
+      <button class="preset-btn" onclick="odSetMaterial('GaAs')">GaAs</button>
+      <button class="preset-btn" onclick="odSetMaterial('NaCl')">NaCl</button>
+    </div>
+  </section>
+
+  <!-- Macroscopic Panel — 3D photon stream -->
+  <section class="macro-panel">
+    <h3>🔭 Macroscopic View — Photon Beam Interacting with Material</h3>
+    <div class="physics-note">
+      <details>
+        <summary>What you are seeing</summary>
+        <div class="note-body">
+          A <strong>crystal lattice</strong> (structure &amp; lattice parameter set by material) sits at the centre of the viewport.
+          A laser on the left fires a <strong>photon packet</strong> (additive-glowing sphere) whose colour tracks photon energy:
+          red (IR, ~1 eV) → yellow-green (visible, ~2.5 eV) → violet (UV, &gt;3 eV).
+          <br><br>
+          • <strong style="color:#ffdd44">Incident</strong> — photon travels from source toward the lattice left face.
+          <br>
+          • <strong style="color:#00f0ff">Reflected</strong> — electrons screen the field (metals) or atoms elastically scatter (semiconductors); the packet bounces back.
+          <br>
+          • <strong style="color:#4ade80">Refracted</strong> — below the bandgap / above the plasma edge the packet bends through via Snell’s law.
+          <br>
+          • <strong style="color:#ff4ecd">Absorption glow</strong> — above-gap photons excite e–h pairs (semiconductors), excite the electron sea (metals), or launch phonon waves (insulators).
+          <br>
+          • <strong style="color:#ff6b35">Phonon wave</strong> — high-energy absorption deposits energy into quantized lattice vibrations (orange ring expanding).
+          <br><br>
+          <strong>Snell’s law:</strong> n₁ sin θ₁ = n(E) sin θ₂.  <strong>Fresnel:</strong> reflectivity grows with angle and with k(E).  <strong>Phonons:</strong> repeated absorption heats the lattice; atoms vibrate harder and bonds stretch until energy decays back to 300 K.
+        </div>
+      </details>
+    </div>
+    <div id="macro-canvas-container" style="width:100%;height:420px;border-radius:12px;overflow:hidden;background:linear-gradient(135deg,#060e1f,#0a0e1a);position:relative;"></div>
+    <div style="display:flex;align-items:center;gap:1rem;margin-top:0.8rem;flex-wrap:wrap;">
+      <button class="preset-btn" onclick="odStartPhotonAnimation()" style="font-size:1.05rem;padding:8px 22px;">🔥 Fire Laser</button>
+      <span style="color:#8899aa;font-size:0.9rem;">Photon color = energy (red→green→violet)</span>
+    </div>
+  </section>
+
+  <!-- Microscopic View — Crystal lattice &amp; mechanism -->
+  <section class="macro-panel">
+    <h3>🔬 Microscopic View — What Happens at the Atomic Scale?</h3>
+    <div class="physics-note">
+      <details>
+        <summary>Expand mechanism by material type</summary>
+        <div class="note-body">
+          <strong>Metal lattice (Cu, Ag, Al):</strong> Ion cores sit in a <strong>free-electron sea</strong> (cyan dots).
+          Below the plasma edge, surface electrons screen the incoming E-field almost perfectly → total reflection.
+          The reflected packet carries the incident colour because no energy is absorbed.
+          Above the plasma edge, electrons can no longer follow the field → partial transmission.
+          Absorption in metals heats the electron gas; electrons then thermalize via phonon scattering, raising lattice temperature.
+          <br><br>
+          <strong>Semiconductor lattice (Si, GaAs):</strong> Covalent bonds (grey cylinders) hold shared valence electrons (grey dots).
+          Below the bandgap <code>E &lt; E_g</code> there are no empty states to accept an electron → the lattice is transparent.
+          Above the bandgap a photon breaks a bond: a valence electron jumps to the conduction band (cyan <code>e⁻</code>), leaving a hole behind (magenta <code>h⁺</code>).
+          The e–h pair drifts apart; recombination later releases light (electroluminescence) or heat (phonons).
+          <br><br>
+          <strong>Insulator lattice (NaCl):</strong> Ionic crystal with alternating Na⁺ (orange) and Cl⁻ (blue) sites.
+          The bandgap is enormous (&gt;8 eV) so visible photons cannot excite electrons across it.
+          At far-IR energies phonon modes resonate: the lattice absorbs photons as <strong>quantized vibrations</strong>.
+          You see an expanding orange phonon wave ring. Energy is stored as lattice heat and gradually dissipates.
+          <br><br>
+          <em>Damping γ</em> = electron–phonon + impurity scattering rate.  
+          <em>Interband transitions</em> (Cu d-band → Fermi) add extra absorption in the red, giving copper its colour.
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- Controls -->
+  <section class="controls">
+    <h3>⚙️ Controls</h3>
+    <div class="control-row">
+      <div class="slider-group">
+        <label for="slider-E">Laser Energy E (eV)</label>
+        <input id="slider-E" type="range" min="0.01" max="20" step="0.01" value="2.0"
+               oninput="odChangeSliderE(this.value)">
+        <span id="val-E" class="slider-value">2.00</span> eV · <span id="val-lam" class="slider-value">620</span> nm
+        <p class="slider-desc">Photon energy determines whether you sit below or above the plasma edge (metals) or bandgap (semiconductors). Try NaCl below 0.1 eV to see phonon absorption.</p>
       </div>
-      <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem;">
-        <div>
-          <div class="plot-container" id="plot-drude" style="min-height:280px;"></div>
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
-            <strong>What it shows:</strong> The real and imaginary parts of the dielectric function across photon energy, capturing free-electron plasma response.<br>
-            <strong>Why it matters:</strong> The plasma edge marks where a material switches from a mirror (reflective) to a window (transparent) — essential for designing optical coatings and plasmonic devices.
-          </div>
-          <div class="plot-container" id="plot-reflectivity" style="min-height:260px; margin-top:1.5rem;"></div>
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
-            <strong>What it shows:</strong> Reflectance versus wavelength, driven by the complex refractive index n + iκ.<br>
-            <strong>Why it matters:</strong> Reflectivity curves explain why metals appear shiny, why anti-reflection coatings work, and how solar cells trap light.
-          </div>
+      <div class="slider-group">
+        <label for="slider-angle">Incident Angle θ (°)</label>
+        <input id="slider-angle" type="range" min="0" max="89" step="1" value="0"
+               oninput="odChangeSliderAngle(this.value)">
+        <span id="val-angle" class="slider-value">0</span>°
+        <p class="slider-desc">Angle affects Fresnel reflectivity and total external reflection when n < 1.</p>
+      </div>
+  </div>
+</section>
+
+  <!-- ═══════════════════ SPECTRAL RESPONSE ═══════════════════ -->
+  <section class="macro-panel">
+    <h3>📈 Spectral Response — ε(ω), n, κ, R, T, A</h3>
+    <div class="physics-note">
+      <details>
+        <summary>What these curves show</summary>
+        <div class="note-body">
+          The optical response of any material is governed by the <strong>complex dielectric function</strong>
+          ε(ω) = ε₁(ω) + iε₂(ω), or equivalently the <strong>complex refractive index</strong> ñ = n + iκ where ε = ñ².
+          <strong>n</strong> is the refractive index (bending / slowing of light); <strong>κ</strong> is the extinction coefficient (absorption / attenuation).
+          <br><br>
+          <strong>Drude metals:</strong> ε₁ < 0 below the plasma edge → imaginary refractive index → total reflection.
+          Above Ep the metal becomes UV-transparent; damping γ broadens the step.
+          Cu additionally has an interband Gaussian (d-band → Fermi) that steals blue/green light, producing its reddish hue.
+          <br><br>
+          <strong>NaCl:</strong> Lorentz phonon oscillator gives a sharp ε₂ peak near ωTO ≈ 0.02 eV.
+          In the Reststrahlen band (ωTO < E < ωLO) ε₁ < 0 → high reflectivity and strong lattice absorption.
+          This is the IR thermal-radiation behaviour of ionic crystals.
+          <br><br>
+          <strong>Semiconductors:</strong> Below Eg the material is transparent; above Eg interband excitations create strong absorption.
         </div>
-        <div>
-          <div class="challenge-panel" style="margin-bottom:1rem;">
-            <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙</span><span class="challenge-title">Controls</span></div>
-            <div class="control-row"><span class="control-label">Plasma ωp</span><span class="control-value" id="val-wp">2.0</span><span class="unit-tag">eV</span></div>
-            <input type="range" id="slider-wp" min="0.5" max="5" value="2.0" step="0.1">
-            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Damping γ</span><span class="control-value" id="val-gamma">0.1</span><span class="unit-tag">eV</span></div>
-            <input type="range" id="slider-gamma" min="0.01" max="0.5" value="0.1" step="0.01">
-            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Refractive index n</span><span class="control-value" id="val-n-od">3.5</span></div>
-            <input type="range" id="slider-n-od" min="1.0" max="5" value="3.5" step="0.1">
-            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Extinction κ</span><span class="control-value" id="val-kappa-od">0.01</span></div>
-            <input type="range" id="slider-kappa-od" min="0" max="1" value="0.01" step="0.01">
-          </div>
-          <div class="challenge-panel">
-            <div class="challenge-header"><span class="challenge-icon" style="background:rgba(192,132,252,0.1);">📊</span><span class="challenge-title">Live Readout</span></div>
-            <table>
-              <tr><th>Quantity</th><th>Value</th></tr>
-              <tr><td>n</td><td class="highlight-num" id="live-n">3.50</td></tr>
-              <tr><td>κ</td><td class="highlight-pink" id="live-k">0.0100</td></tr>
-            </table>
-          </div>
-        </div>
+      </details>
+    </div>
+
+    <!-- Canvas ray diagram (2D top-down) -->
+    <div style="text-align:center;">
+      <canvas id="spec-canvas" width="720" height="220" style="background:#080815;border-radius:8px;border:1px solid var(--glass-border);display:block;margin:0 auto;"></canvas>
+      <div class="msg" id="spec-scene-hint" style="margin-top:6px;">Incident ray (left) → sample → reflected / transmitted / absorbed (glow)</div>
+    </div>
+
+    <!-- Live readout bar -->
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;">
+      <div style="flex:1 1 140px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
+        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">Reflectivity R</div>
+        <div id="spec-R" style="font-family:var(--font-mono);color:var(--accent-green);font-size:1.05rem;font-weight:700;">—</div>
+      </div>
+      <div style="flex:1 1 140px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
+        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">Transmission T</div>
+        <div id="spec-T" style="font-family:var(--font-mono);color:var(--accent-cyan);font-size:1.05rem;font-weight:700;">—</div>
+      </div>
+      <div style="flex:1 1 140px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
+        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">Absorption A</div>
+        <div id="spec-A" style="font-family:var(--font-mono);color:var(--accent-pink);font-size:1.05rem;font-weight:700;">—</div>
+      </div>
+      <div style="flex:1 1 140px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
+        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">Refractive index n · Extinction κ</div>
+        <div id="spec-nk" style="font-family:var(--font-mono);color:var(--text-bright);font-size:1.05rem;font-weight:700;">—</div>
+      </div>
+      <div style="flex:1 1 140px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
+        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">Real ε₁ · Imag ε₂</div>
+        <div id="spec-eps" style="font-family:var(--font-mono);color:var(--text-bright);font-size:1.05rem;font-weight:700;">—</div>
       </div>
     </div>
-    <div class="insight-card" style="margin-top:1rem;">
-      <div class="insight-title">✨ Why does this matter?</div>
-      <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
-        The optical response of a material is governed by its dielectric function ε(ω) = ε₁ + iε₂. The Drude model captures free-electron response: a plasma frequency ωp marks the boundary between reflecting (ω < ωp) and transmitting (ω > ωp) behavior. The complex refractive index n + iκ encodes phase velocity and absorption.
+
+    <!-- Twin Plotly charts -->
+    <div class="plots" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;">
+      <div id="plot-eps" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;min-height:300px;"></div>
+      <div id="plot-rt" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;min-height:300px;"></div>
+    </div>
+  </section>
+
+  <!-- Phonon Insight Card -->
+  <section class="insights" style="margin-top:1rem;">
+    <div class="insight-card" style="grid-column:1 / -1;">
+      <h4>🔊 Phonon Excitation &amp; Lattice Heating</h4>
+      <p>
+        Every absorbed photon dumps a fraction of its energy into <strong>phonons</strong> (quantized lattice vibrations).
+        The phonon bath temperature rises following the Einstein model: <code>T_lat = 300 K + c·E_phonon</code>.
       </p>
-      <div class="equation-box" style="font-size:0.85rem;">
-        $$\epsilon(\omega) = 1 - \frac{\omega_p^2}{\omega^2 + i\gamma\omega}, \qquad R = \frac{(n-1)^2 + \kappa^2}{(n+1)^2 + \kappa^2}$$
-      </div>
+      <p>
+        As <code>T_lat</code> grows, atoms oscillate with larger amplitude (Debye–Waller factor), and free electrons in metals
+        scatter more strongly off the distorted lattice → <strong>resistivity rises</strong>.
+        Phonons anharmonically decay over ~1 s in this toy model.
+        Repeated high-energy shots heat the lattice; phonon energy dissipates gradually back to 300 K.
+      </p>
     </div>
-  </div>
-  <div class="mode-section" id="section-challenge" style="display:none;">
-    <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span><span class="challenge-title">Challenge 1: Metal or Transparent?</span><span class="challenge-difficulty easy">Easy</span></div>
-      <div class="challenge-desc">Given ω and ωp, predict whether the material is strongly reflective or transmitting.</div>
-      <div class="challenge-reward">🏆 Reward: 50 XP</div>
-      <div class="timer-bar"><div class="timer-fill" id="od-timer" style="width:100%"></div></div>
-      <div id="od-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <div style="display:flex; gap:0.5rem;"><button class="btn" onclick="guessOD('reflective')">Reflective</button><button class="btn" onclick="guessOD('transparent')">Transparent</button></div>
-      <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;"><strong>Score:</strong> <span id="od-score">0</span> · <strong>Combo:</strong> <span id="od-combo">0</span></div>
-      <div class="challenge-feedback" id="od-feedback"></div>
+  </section>
+
+  <!-- Live Readout Table -->
+  <section class="readout-section">
+    <h3>📊 Live Readout</h3>
+    <table class="readout-table">
+      <thead>
+        <tr>
+          <th>Material</th><th>E (eV)</th><th>λ (nm)</th><th>θ₁</th>
+<th>R (%)</th><th>T (%)</th><th>A (%)</th>
+          <th>Refr.index n</th><th>Extinct. κ</th><th>Real ε₁</th><th>Imag ε₂</th>
+          <th>θ₂</th><th>T_lat (K)</th><th>Outcome</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td id="live-material">Cu</td>
+          <td id="live-E">2.00</td>
+          <td id="live-lam">620</td>
+          <td id="live-theta">0°</td>
+          <td id="live-R">—</td>
+          <td id="live-T">—</td>
+          <td id="live-A">—</td>
+          <td id="live-n">—</td>
+          <td id="live-k">—</td>
+          <td id="live-eps1">—</td>
+          <td id="live-eps2">—</td>
+          <td id="live-theta2">—</td>
+          <td id="live-phonon">300</td>
+          <td><span id="live-outcome" class="material-badge reflect">Reflect</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Insight Cards -->
+  <section class="insights">
+    <div class="insight-card">
+      <h4>📐 Physical Motivation — Why does n depend on E?</h4>
+      <p>
+        The dielectric function ε(ω) = ε₁(ω) + iε₂(ω) encodes how the material polarizes under
+        an oscillating electric field. For a free-electron metal:
+      </p>
+      <p style="margin:0.5rem 0;font-family:monospace;font-size:0.95rem;">
+        ε₁(ω) = 1 − ωp² / (ω² + γ²)
+        <br>
+        ε₂(ω) = ωp² γ / (ω (ω² + γ²))
+      </p>
+      <p>
+        The plasma frequency ωp marks the boundary between metallic reflection and UV transparency.
+        Damping γ = ħ/τ (scattering rate) broadens this edge. Real noble metals have low γ and stay
+        brilliantly reflective; Al has higher damping and a softer edge.
+      </p>
+      <p>
+        For semiconductors and insulators, ε₂ ≠ 0 only when photons have enough energy to excite
+        electrons across the bandgap Eg. Below Eg the material is transparent — the foundation of
+        optical fibers and infrared windows.
+      </p>
     </div>
-    <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(74,222,128,0.12);">📐</span><span class="challenge-title">Challenge 2: Brewster Angle Finder</span><span class="challenge-difficulty medium">Medium</span></div>
-      <div class="challenge-desc">Given n, calculate the Brewster angle θB where reflected light is fully polarized.</div>
-      <div class="challenge-reward">🏆 Reward: 75 XP</div>
-      <div id="brew-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <input type="text" id="brew-ans" placeholder="degrees" style="width:120px;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
-      <button class="btn" onclick="checkBrew()" style="margin-left:0.5rem;">Submit</button>
-      <div class="challenge-feedback" id="brew-feedback"></div>
+    <div class="insight-card">
+      <h4>🔗 Kramers–Kronig Causality</h4>
+      <p>
+        Because the response must be causal (effect never precedes cause), ε₁ and ε₂ are
+        Hilbert-transform pairs. The UV absorption peak in ε₂ creates the rise in n(ω) (normal dispersion).
+        Any region of strong absorption must be accompanied by anomalous dispersion nearby.
+      </p>
     </div>
-    <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🌡</span><span class="challenge-title">Challenge 3: Penetration Depth Estimator</span><span class="challenge-difficulty hard">Hard</span></div>
-      <div class="challenge-desc">Estimate the skin depth z = λ/(4πκ) for a given λ and κ.</div>
-      <div class="challenge-reward">🏆 Reward: 100 XP</div>
-      <div id="skin-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <input type="text" id="skin-ans" placeholder="nm" style="width:120px;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
-      <button class="btn" onclick="checkSkin()" style="margin-left:0.5rem;">Submit</button>
-      <div class="challenge-feedback" id="skin-feedback"></div>
+    <div class="insight-card">
+      <h4>🔬 Try This</h4>
+      <ul>
+        <li>Set Al and sweep E from 10 eV to 20 eV — watch the reflected photon fade and the transmitted ray appear above the plasma edge.</li>
+        <li>Set NaCl and drop E below 0.1 eV — the IR phonon peak in ε₂ creates strong absorption bands responsible for thermal radiation behavior.</li>
+        <li>Compare Cu and Ag at 1 eV — both metals reflect, but Cu's interband absorption (d-band → Fermi) steals some red light, giving it a reddish hue.</li>
+      </ul>
     </div>
-  </div>
-  <div class="mode-section" id="section-puzzle" style="display:none;">
-    <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🔧</span><span class="challenge-title">Puzzle 1: Build ε ↔ n Relations</span><span class="challenge-difficulty medium">Medium</span></div>
-      <div class="challenge-desc">Match each expression to the physical quantity it represents.</div>
-      <div class="challenge-reward">🏆 Reward: 60 XP</div>
-      <div id="od-pool" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0.5rem 0;"></div>
-      <div id="od-zones" style="display:flex;gap:0.3rem;flex-wrap:wrap;margin:0.5rem 0;"></div>
-      <button class="btn" onclick="checkODBuilder()">✓ Verify</button>
-      <div class="challenge-feedback" id="od-builder-feedback"></div>
-    </div>
-    <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.12);">📐</span><span class="challenge-title">Puzzle 2: Hagen-Rubens Limit</span><span class="challenge-difficulty medium">Medium</span></div>
-      <div class="challenge-desc">In the Hagen-Rubens limit, R ≈ 1 − A√ω. Predict whether R increases or decreases as conductivity σ rises.</div>
-      <div class="challenge-reward">🏆 Reward: 70 XP</div>
-      <div id="hr-list" style="margin-top:0.5rem;"></div>
-      <button class="btn" onclick="checkHRPuzzle()">✓ Check</button>
-      <div class="challenge-feedback" id="hr-feedback"></div>
-    </div>
-    <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(255,78,205,0.12);">💡</span><span class="challenge-title">Puzzle 3: Total Internal Reflection</span><span class="challenge-difficulty master">Master</span></div>
-      <div class="challenge-desc">Given n₁ and n₂, calculate the critical angle θc for total internal reflection.</div>
-      <div class="challenge-reward">🏆 Reward: 120 XP</div>
-      <div id="tir-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <input type="text" id="tir-ans" placeholder="degrees" style="width:120px;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
-      <button class="btn" onclick="checkTIR()" style="margin-left:0.5rem;">Submit</button>
-      <div class="challenge-feedback" id="tir-feedback"></div>
-    </div>
-  </div>
-  <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; margin-top:2rem;">
-    <div></div>
-    <div>
-      <div class="challenge-panel" style="position:sticky; top:5rem;">
-        <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.08);">🗺</span><span class="challenge-title">Lab Navigator</span></div>
-        <div id="module-nav"></div>
-        <div class="section-divider" style="margin:1rem 0;"></div>
-        <div class="challenge-header"><span class="challenge-icon" style="background:rgba(74,222,128,0.08);">🏆</span><span class="challenge-title">Your Badges</span></div>
-        <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        <div class="section-divider" style="margin:1rem 0;"></div>
-        <div class="scoreboard">
-          <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
+  </section>
+
 </div>
+
+<!-- ═════════════════════ CHALLENGES ═════════════════════ -->
+<div class="mode-section" id="section-challenge" style="display:none;">
+  <section class="challenge-interface">
+    <h3>🎯 Predict the Outcome</h3>
+    <div class="timer-bar"><div class="timer-fill" id="ch-timer"></div></div>
+    <div id="ch-question" class="ch-question"></div>
+    <div id="ch-options" class="ch-options"></div>
+    <div id="ch-feedback" class="feedback"></div>
+    <div id="ch-score" class="ch-score">Score: 0</div>
+  </section>
+</div>
+
+<!-- ═════════════════════ PUZZLE ═════════════════════ -->
+<div class="mode-section" id="section-puzzle" style="display:none;">
+  <section class="puzzle-interface">
+    <h3>🧩 Match Material + Energy to Outcome</h3>
+    <p>For each case below, choose the dominant macroscopic outcome based on the physics you've explored.</p>
+    <div id="puz-list" class="puz-list"></div>
+    <button class="submit-btn" onclick="checkODPuzzle()">Check Answers</button>
+    <div id="puz-feedback" class="feedback"></div>
+  </section>
+</div>
+
+
+</div>
+
+<aside class="game-sidebar">
+  <div class="sidebar-card">
+    <h4>🏆 Badges</h4>
+    <div id="badge-list" class="badge-grid"></div>
+  </div>
+  <div class="sidebar-card">
+    <h4>📈 Scoreboard</h4>
+    <ul class="stats">
+      <li>Challenges: <span id="stat-challenges">0</span></li>
+      <li>Puzzles:    <span id="stat-puzzles">0</span></li>
+      <li>Badges:     <span id="stat-badges">0</span></li>
+      <li>XP:         <span id="stat-xp">0</span></li>
+    </ul>
+  </div>
+  <div class="sidebar-card">
+    <h4>🧭 Lab Navigator</h4>
+    <div id="module-nav"></div>
+  </div>
+</aside>
+
+</div>
+
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
-<script src="od_sim.js?v=1"></script>
-<script src="od_apps.js?v=1"></script>
-<script src="od_apps_games.js?v=1"></script>
+<script src="od_sim.js"></script>
+<script src="od_apps_games.js"></script>
 <script src="../../shared_effects.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  if(typeof initOD==='function') initOD();
+  if(typeof initODGames==='function') initODGames();
+});
+</script>
+
+<script>
+(function(){
+  var d = document.createElement('div');
+  d.id = 'od-diag';
+  d.style.cssText = 'position:fixed;bottom:8px;right:8px;z-index:99999;background:rgba(0,0,0,0.85);color:#4ade80;font-family:monospace;font-size:12px;padding:8px 12px;border-radius:6px;max-width:320px;';
+  var out=[];
+  out.push('OD diag');
+  out.push('Plotly: ' + (typeof Plotly));
+  out.push('THREE:  ' + (typeof THREE));
+  out.push('Macro3D: ' + (document.getElementById('macro-canvas-container')?'ok':'MISS'));
+  out.push('Micro3D:  merged (single-view)');
+  try{
+    odComputeSpectra(); odUpdateLiveReadouts();
+    out.push('Engine: OK');
+  }catch(e){ out.push('Engine ERR: ' + e.message); }
+  try{
+    if(typeof initODMacro3D==='function'){ initODMacro3D(); out.push('Macro3D init: OK'); }
+    else out.push('Macro3D init: MISSING');
+  }catch(e){ out.push('3D ERR: ' + e.message); }
+  d.innerHTML = out.join('<br>');
+  document.body.appendChild(d);
+})();
+</script>
+
 </body>
 </html>

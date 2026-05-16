@@ -6,10 +6,11 @@
 'use strict';
 
 var _dLayout = {
-  paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#e0e0f0', size: 11 },
-  margin: { l: 50, r: 20, t: 40, b: 40 },
-  xaxis: { gridcolor: '#2a2a3a', zerolinecolor: '#3a3a5a' },
-  yaxis: { gridcolor: '#2a2a3a', zerolinecolor: '#3a3a5a' }
+  paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+  font: { family: 'JetBrains Mono, monospace', color: '#b0b0d0', size: 11 },
+  margin: { l: 55, r: 10, t: 30, b: 45 },
+  xaxis: { title: { font: { color: '#a0a0c0' } }, color: '#a0a0c0', gridcolor: '#1a1a28', zerolinecolor: '#3a3a5a' },
+  yaxis: { title: { font: { color: '#a0a0c0' } }, color: '#a0a0c0', gridcolor: '#1a1a28', zerolinecolor: '#3a3a5a' }
 };
 function _ext(base, over) {
   var out = JSON.parse(JSON.stringify(base));
@@ -29,6 +30,84 @@ var __COND = {
 };
 
 function linspace(a, b, n) { var arr = new Array(n); for (var i = 0; i < n; i++) arr[i] = a + i * (b - a) / (n - 1); return arr; }
+
+function plotMeanFreePath() {
+  var T = linspace(10, 500, 100);
+  var l_ph = T.map(function(t) { return 40 * (300 / Math.max(t, 50)); });
+  var l_imp = T.map(function() { return 200; });
+  var l_total = T.map(function(t, i) { return 1 / (1/l_ph[i] + 1/l_imp[i]); });
+  Plotly.react('plot-mfp', [
+    { x: T, y: l_ph, mode: 'lines', name: 'e⁻-phonon', line: { color: '#00f0ff', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.06)' },
+    { x: T, y: l_imp, mode: 'lines', name: 'e⁻-impurity', line: { color: '#ff4ecd', width: 2, dash: 'dash' } },
+    { x: T, y: l_total, mode: 'lines', name: 'Total (Matthiessen)', line: { color: '#ffd740', width: 2.5 } }
+  ], _ext(_dLayout, {
+    title: { text: 'Mean Free Path vs Temperature', font: { size: 13 } },
+    xaxis: { title: 'T (K)' },
+    yaxis: { title: '\u03bb (nm)', zeroline: true, zerolinecolor: '#5a5a80' },
+    legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(10,10,15,0.9)', bordercolor: '#3a3a5a', font: { color: '#d0d0e0' } }
+  }), { responsive: true, displayModeBar: true, scrollZoom: true });
+}
+
+function plotHall() {
+  var B = linspace(-2, 2, 200);
+  var thickness = 100e-9; var I = 1e-3;
+  var n = 1e28; var vh = I / (n * 1.6e-19 * thickness);
+  var VH_n = B.map(function(b) { return vh * b * 1e6; });
+  var VH_p = B.map(function(b) { return -vh * b * 1e6; });
+  Plotly.react('plot-hall', [
+    { x: B, y: VH_n, mode: 'lines', name: 'n-type', line: { color: '#00f0ff', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.06)' },
+    { x: B, y: VH_p, mode: 'lines', name: 'p-type', line: { color: '#ff4ecd', width: 2.5 } }
+  ], _ext(_dLayout, {
+    title: { text: 'Hall Voltage vs B-field', font: { size: 13 } },
+    xaxis: { title: 'B (T)' },
+    yaxis: { title: 'V_H (\u03bcV)', zeroline: true, zerolinecolor: '#5a5a80' },
+    legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(10,10,15,0.9)', bordercolor: '#3a3a5a', font: { color: '#d0d0e0' } }
+  }), { responsive: true, displayModeBar: true, scrollZoom: true });
+}
+
+function plotIoffeRegel() {
+  var T = linspace(10, 500, 100);
+  var kFl = T.map(function(t) {
+    var tau = 50 * 300 / Math.max(t, 10);
+    var vF = Math.sqrt(2 * 7 * 1.6e-19 / 9.109e-31);
+    var lambda = vF * tau * 1e-15 * 1e9;
+    var kF = Math.sqrt(2 * 7) * 1e10;
+    return kF * lambda;
+  });
+  var limit = T.map(function() { return 1; });
+  Plotly.react('plot-ioffe', [
+    { x: T, y: kFl, mode: 'lines', name: 'k_F \u03bb', line: { color: '#ffd740', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(255,215,64,0.06)' },
+    { x: T, y: limit, mode: 'lines', name: 'Ioffe-Regel limit', line: { color: '#ff4ecd', width: 2, dash: 'dash' } }
+  ], _ext(_dLayout, {
+    title: { text: 'Ioffe–Regel Criterion', font: { size: 13 } },
+    xaxis: { title: 'T (K)' },
+    yaxis: { title: 'k_F \u03bb', type: 'log', zeroline: true, zerolinecolor: '#5a5a80' },
+    legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(10,10,15,0.9)', bordercolor: '#3a3a5a', font: { color: '#d0d0e0' } }
+  }), { responsive: true, displayModeBar: true, scrollZoom: true });
+}
+
+function plotWiedemannFranz() {
+  var T = linspace(10, 500, 100);
+  var L = T.map(function(t) {
+    var tau = 50 * 300 / Math.max(t, 50);
+    var vF = Math.sqrt(2 * 7 * 1.6e-19 / 9.109e-31);
+    var lambda = vF * tau * 1e-15;
+    var c_el = 1.6e-19 * Math.PI * Math.PI / 3 * 8.617e-5 * t / 7;
+    var sigma = 1e28 * 1.6e-19 * 1.6e-19 * tau * 1e-15 / 9.109e-31;
+    var kappa = 1/3 * c_el * vF * lambda;
+    return kappa / (sigma * t);
+  });
+  var Sommerfeld = T.map(function() { return 2.44e-8; });
+  Plotly.react('plot-wf', [
+    { x: T, y: L, mode: 'lines', name: 'L = \u03ba/(\u03c3T)', line: { color: '#4ade80', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(74,222,128,0.06)' },
+    { x: T, y: Sommerfeld, mode: 'lines', name: 'Sommerfeld value 2.44e⁻⁸ WΩ/K²', line: { color: '#ffd740', width: 2, dash: 'dash' } }
+  ], _ext(_dLayout, {
+    title: { text: 'Wiedemann–Franz Law: L(T)', font: { size: 13 } },
+    xaxis: { title: 'T (K)' },
+    yaxis: { title: 'L (W\u03a9/K²)', zeroline: true, zerolinecolor: '#5a5a80' },
+    legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(10,10,15,0.9)', bordercolor: '#3a3a5a', font: { color: '#d0d0e0' } }
+  }), { responsive: true, displayModeBar: true, scrollZoom: true });
+}
 
 // ===== PLAYGROUND: Drift animation =====
 function plotDriftAnimation() {
@@ -356,6 +435,10 @@ document.addEventListener('DOMContentLoaded', function() {
         plotDriftAnimation();
         plotResistivityTemp();
         plotIVCurve();
+        plotMeanFreePath();
+        plotHall();
+        plotIoffeRegel();
+        plotWiedemannFranz();
       });
     }
   });
@@ -364,6 +447,10 @@ document.addEventListener('DOMContentLoaded', function() {
     plotDriftAnimation();
     plotResistivityTemp();
     plotIVCurve();
+    plotMeanFreePath();
+    plotHall();
+    plotIoffeRegel();
+    plotWiedemannFranz();
   }
 
   if (typeof setGameMode === 'function') {

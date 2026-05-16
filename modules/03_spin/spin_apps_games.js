@@ -81,6 +81,7 @@ function initChallenge1() {
       '<div style="font-family:var(--mono);font-size:1.1rem;color:var(--accent-cyan);">Target P(↑) = <span id="ch1-target">' + cos2(deg2rad(SpinGame.ch1.targetTheta)/2).toFixed(3) + '</span></div>' +
       '<div class="hud-badge hud-timer">⏱ <span id="ch1-timer">60</span>s</div>' +
     '</div>' +
+    '<div class="timer-bar" style="margin-bottom:0.8rem;"><div class="timer-fill" id="ch1-timer-bar" style="width:100%"></div></div>' +
     '<div style="margin-bottom:0.5rem;">' +
       '<div class="control-row"><span class="control-label">Your θ</span><span class="control-value" id="ch1-val">60°</span></div>' +
       '<input type="range" id="ch1-slider" min="0" max="180" value="60" step="1">' +
@@ -102,10 +103,30 @@ function initChallenge1() {
 }
 
 function ch1Preview(thetaDeg) {
-  var p = cos2(deg2rad(thetaDeg) / 2);
+  var pUp = cos2(deg2rad(thetaDeg) / 2);
+  var pDown = sin2(deg2rad(thetaDeg) / 2);
   var fb = document.getElementById('ch1-feedback');
-  if (fb) fb.innerHTML = '<span style="color:var(--text-muted);">Your P(↑) = ' + p.toFixed(4) + '</span>';
-  fb.style.display = 'block';
+  if (fb) {
+    fb.innerHTML = '<span style="color:var(--text-muted);">Your P(↑) = ' + pUp.toFixed(4) + ' &nbsp;·&nbsp; P(↓) = ' + pDown.toFixed(4) + '</span>';
+    fb.style.display = 'block';
+  }
+  ch1PlotPreview(pUp, pDown);
+}
+
+function ch1PlotPreview(pUp, pDown) {
+  var traces = [
+    { x: ['|↑z⟩', '|↓z⟩'], y: [pUp, pDown], type: 'bar',
+      marker: { color: ['rgba(0,240,255,0.7)', 'rgba(255,78,205,0.7)'] },
+      text: [pUp.toFixed(3), pDown.toFixed(3)], textposition: 'auto', hoverinfo: 'y' }
+  ];
+  Plotly.react('ch1', traces, {
+    margin: { t: 20, r: 10, b: 35, l: 40 },
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+    font: { family: 'JetBrains Mono, monospace', color: '#8080a0', size: 11 },
+    xaxis: { color: '#505070', gridcolor: 'transparent' },
+    yaxis: { title: 'Probability', color: '#505070', gridcolor: '#1a1a28', range: [0, 1.05], tickformat: '.1f' },
+    showlegend: false
+  }, { responsive: true, displayModeBar: false });
 }
 
 function startCh1Timer() {
@@ -113,11 +134,16 @@ function startCh1Timer() {
     SpinGame.ch1.timeLeft--;
     var el = document.getElementById('ch1-timer');
     if (el) el.textContent = SpinGame.ch1.timeLeft;
+    var bar = document.getElementById('ch1-timer-bar');
+    if (bar) bar.style.width = (SpinGame.ch1.timeLeft / 60 * 100) + '%';
+    if (SpinGame.ch1.timeLeft <= 10 && bar) bar.classList.add('urgent');
     if (SpinGame.ch1.timeLeft <= 0) {
       clearInterval(SpinGame.ch1.timer);
       var fb = document.getElementById('ch1-feedback');
-      fb.className = 'challenge-feedback error';
-      fb.innerHTML = '<strong>Time\'s up!</strong> The correct θ was ' + SpinGame.ch1.targetTheta + '°. Try again!';
+      if (fb) {
+        fb.className = 'challenge-feedback error';
+        fb.innerHTML = '<strong>Time\'s up!</strong> The correct θ was ' + SpinGame.ch1.targetTheta + '°. Try again!';
+      }
     }
   }, 1000);
 }
@@ -178,6 +204,7 @@ function initChallenge2() {
     '<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:0.5rem;">' +
       '<div class="hud-badge hud-timer">⏱ <span id="ch2-timer">90</span>s</div>' +
     '</div>' +
+    '<div class="timer-bar" style="margin-bottom:0.8rem;"><div class="timer-fill" id="ch2-timer-bar" style="width:100%"></div></div>' +
     '<div style="margin-bottom:0.5rem;">' +
       '<div class="control-row"><span class="control-label">Microwave f</span><span class="control-value" id="ch2-val">10.00</span><span class="unit-tag">GHz</span></div>' +
       '<input type="range" id="ch2-slider" min="5" max="90" value="10" step="0.1">' +
@@ -232,11 +259,16 @@ function startCh2Timer() {
     SpinGame.ch2.timeLeft--;
     var el = document.getElementById('ch2-timer');
     if (el) el.textContent = SpinGame.ch2.timeLeft;
+    var bar = document.getElementById('ch2-timer-bar');
+    if (bar) bar.style.width = (SpinGame.ch2.timeLeft / 90 * 100) + '%';
+    if (SpinGame.ch2.timeLeft <= 15 && bar) bar.classList.add('urgent');
     if (SpinGame.ch2.timeLeft <= 0) {
       clearInterval(SpinGame.ch2.timer);
       var fb = document.getElementById('ch2-feedback');
-      fb.className = 'challenge-feedback error';
-      fb.innerHTML = '<strong>Time\'s up!</strong> The resonance was at ' + (28.024 * SpinGame.ch2.targetB).toFixed(2) + ' GHz.';
+      if (fb) {
+        fb.className = 'challenge-feedback error';
+        fb.innerHTML = '<strong>Time\'s up!</strong> The resonance was at ' + (28.024 * SpinGame.ch2.targetB).toFixed(2) + ' GHz.';
+      }
     }
   }, 1000);
 }
@@ -322,7 +354,15 @@ function ch3RenderQuestion() {
   if (!q) { ch3Finish(); return; }
 
   var controls = document.getElementById('ch3-controls');
+  var progressPct = ((SpinGame.ch3.qIndex) / CH3_QUESTIONS.length) * 100;
   controls.innerHTML =
+    '<div style="margin-bottom:0.6rem;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;color:var(--text-dim);margin-bottom:0.3rem;">' +
+        '<span>Question ' + (SpinGame.ch3.qIndex + 1) + ' of ' + CH3_QUESTIONS.length + '</span>' +
+        '<span>Score: ' + SpinGame.ch3.score + '</span>' +
+      '</div>' +
+      '<div class="timer-bar" style="height:6px;border-radius:3px;"><div class="timer-fill" style="width:' + progressPct + '%;transition:width 0.3s ease;"></div></div>' +
+    '</div>' +
     '<div style="margin-bottom:0.8rem;font-size:0.95rem;color:var(--text-main);line-height:1.5;">' +
       '<strong>Q' + (SpinGame.ch3.qIndex + 1) + '/3:</strong> ' + q.q +
     '</div>' +
@@ -399,18 +439,18 @@ function initPuzzle1() {
 
   var controls = document.getElementById('pz1-controls');
   controls.innerHTML =
-    '<div id="pz1-chain" style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;font-family:var(--mono);font-size:0.9rem;flex-wrap:wrap;">' +
-      '<span style="background:rgba(0,212,255,0.1);padding:0.3rem 0.6rem;border-radius:6px;border:1px solid rgba(0,212,255,0.3);">|↑z⟩</span>' +
-      '<span style="color:var(--text-dim);">→</span>' +
-      '<span id="pz1-m1" style="padding:0.3rem 0.6rem;border-radius:6px;border:1px dashed var(--border-subtle);">?</span>' +
-      '<span style="color:var(--text-dim);">→</span>' +
-      '<span id="pz1-m2" style="padding:0.3rem 0.6rem;border-radius:6px;border:1px dashed var(--border-subtle);">?</span>' +
-      '<span style="color:var(--text-dim);">→</span>' +
-      '<span id="pz1-m3" style="padding:0.3rem 0.6rem;border-radius:6px;border:1px dashed var(--border-subtle);">?</span>' +
+    '<div id="pz1-chain" style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;font-family:var(--mono);font-size:0.85rem;flex-wrap:wrap;justify-content:center;padding:0.8rem;background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);">' +
+      '<span style="background:rgba(0,212,255,0.1);padding:0.4rem 0.8rem;border-radius:6px;border:1px solid rgba(0,212,255,0.3);color:var(--accent-cyan);">|↑z⟩</span>' +
+      '<span style="color:var(--text-dim);font-size:1.2rem;">➜</span>' +
+      '<span id="pz1-m1" style="padding:0.4rem 0.8rem;border-radius:6px;border:1px dashed var(--border-subtle);color:var(--text-dim);background:var(--bg-elevated);min-width:60px;text-align:center;">Sz ?</span>' +
+      '<span style="color:var(--text-dim);font-size:1.2rem;">➜</span>' +
+      '<span id="pz1-m2" style="padding:0.4rem 0.8rem;border-radius:6px;border:1px dashed var(--border-subtle);color:var(--text-dim);background:var(--bg-elevated);min-width:60px;text-align:center;">Sx ?</span>' +
+      '<span style="color:var(--text-dim);font-size:1.2rem;">➜</span>' +
+      '<span id="pz1-m3" style="padding:0.4rem 0.8rem;border-radius:6px;border:1px dashed var(--border-subtle);color:var(--text-dim);background:var(--bg-elevated);min-width:60px;text-align:center;">Sz ?</span>' +
     '</div>' +
     '<div id="pz1-stage-text" style="margin-bottom:0.8rem;font-size:0.9rem;color:var(--text-muted);">After measuring Sz on |↑z⟩, what is the outcome?</div>' +
     '<div class="btn-group" id="pz1-buttons">' +
-      '<button class="btn" onclick="pz1Step(1)">|↑z⟩ (certain)</button>' +
+      '<button class="btn" onclick="pz1Step(0)">|↑z⟩ (certain)</button>' +
     '</div>';
 
   document.getElementById('pz1-feedback').innerHTML = '<span style="color:var(--text-dim);">Build the chain step by step.</span>';
@@ -445,7 +485,7 @@ function pz1Step(choice) {
   }
 
   // Update chain display
-  var labels = { upz: '|↑z⟩', fifty: '½|+x⟩ ± ½|−x⟩', fifty2: '½|↑z⟩ ± ½|↓z⟩' };
+  var labels = { upz: '|↑z⟩', fifty: '50/50', fifty2: '50/50' };
   var el = document.getElementById('pz1-m' + (SpinGame.pz1.stage + 1));
   if (el) {
     el.textContent = labels[chosen.val] || chosen.label;

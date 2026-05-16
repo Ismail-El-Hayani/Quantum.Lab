@@ -66,6 +66,9 @@
     <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">
       <span class="mode-icon">🔬</span> Playground
     </button>
+    <button class="game-mode-btn" id="mode-wavepacket" onclick="setGameMode('wavepacket')">
+      <span class="mode-icon">🌊</span> Wave Packet
+    </button>
     <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">
       <span class="mode-icon">🎯</span> Challenges
     </button>
@@ -78,7 +81,7 @@
     <div class="playground-area">
       <div class="playground-header">
         <div class="playground-title">🔬 Band Structure Sandbox</div>
-        <div class="playground-level">Control the potential and observe the quantum tunneling leakage and the resulting band structure.</div>
+        <div class="playground-level">Tune the periodic potential V(x) and watch how the allowed electron energies organize into bands and bandgaps. The top-left plot shows one period of the Kronig-Penney square-well potential; the top-right plots the stationary-state wave function for a single barrier (steady-state tunneling); the bottom plot computes the full dispersion relation E(k) by solving the transcendental Kronig-Penney equation across the first Brillouin zone. Adjust V₀ and b/a to see how barrier height and thickness sculpt the band structure — the fundamental model behind every semiconductor device.</div>
       </div>
 
       <div style="display:grid; grid-template-columns: 1fr 320px; gap: 1.5rem;">
@@ -88,8 +91,19 @@
             <div class="plot-container" id="plot-tunneling" style="min-height:240px;"></div>
           </div>
           <div class="plot-container" id="plot-bands" style="min-height:240px; margin-bottom:1rem;"></div>
-          <div style="display:flex; justify-content:center; gap:1rem; margin-top:0.5rem; font-size:0.75rem; color:var(--text-dim);">
-            <span>Left: V(x) Periodic Potential</span><span class="mx-2">|</span><span>Right: Tunneling Leakage (Real-time ψ)</span><span class="mx-2">|</span><span>Bottom: E(k) Dispersion</span>
+
+          <!-- Playground Plot Legend -->
+          <div class="challenge-panel" style="margin-top:0.5rem; padding:0.6rem 1rem;">
+            <div style="display:flex; justify-content:center; gap:1.5rem; flex-wrap:wrap; font-size:0.78rem; color:var(--text-dim);">
+              <span><span style="display:inline-block; width:12px; height:3px; background:#a78bfa; vertical-align:middle; margin-right:4px;"></span><b>V(x)</b> Periodic potential</span>
+              <span><span style="display:inline-block; width:12px; height:3px; background:#f472b6; vertical-align:middle; margin-right:4px;"></span><b>|ψ|²</b> Probability density</span>
+              <span><span style="display:inline-block; width:12px; height:3px; background:#00f0ff; vertical-align:middle; margin-right:4px;"></span><b>VB</b> Valence Band</span>
+              <span><span style="display:inline-block; width:12px; height:3px; background:#c084fc; vertical-align:middle; margin-right:4px;"></span><b>CB</b> Conduction Band</span>
+              <span><span style="display:inline-block; width:12px; height:3px; background:#fbbf24; vertical-align:middle; margin-right:4px;"></span><b>Bandgap</b> Forbidden energy</span>
+            </div>
+            <p style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:0.4rem; margin-bottom:0;">
+              <b>Top-left:</b> Single-period potential | <b>Top-right:</b> Tunneling through one barrier | <b>Bottom:</b> Full E(k) bands across the Brillouin zone
+            </p>
           </div>
         </div>
 
@@ -106,7 +120,7 @@
                 <span class="control-value" id="val-v0">5.0</span>
               </div>
               <input type="range" id="slider-v0" min="0.5" max="50" value="5" step="0.5">
-              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Higher V₀ → larger bandgaps, narrower bands.</p>
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">The potential energy inside each barrier. Higher V₀ deepens the wells and increases the energy cost for an electron to tunnel between neighboring cells. This widens the bandgaps and narrows the allowed bands, pushing the system toward discrete atomic levels.</p>
             </div>
 
             <div style="margin-bottom:1rem;">
@@ -115,7 +129,7 @@
                 <span class="control-value" id="val-e">2.0</span>
               </div>
               <input type="range" id="slider-e" min="0.1" max="60" value="2.0" step="0.1">
-              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Tunneling "leakage" occurs when E < V₀ but the barrier is thin.</p>
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Energy of the electron probing the single barrier (top-right plot). When E < V₀, the wave function decays exponentially inside the barrier — the tunneling "leakage" amplitude. Higher E increases transmission.</p>
             </div>
 
             <div style="margin-bottom:1rem;">
@@ -124,7 +138,7 @@
                 <span class="control-value" id="val-b">0.20</span>
               </div>
               <input type="range" id="slider-b" min="0.05" max="0.40" value="0.20" step="0.01">
-              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Wider barriers increase confinement (less leak).</p>
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Fraction of the lattice period occupied by the barrier. Larger b/a means thicker barriers → stronger confinement, narrower bands, and larger bandgaps. At b/a → 0 the bands become nearly free-electron-like; at b/a → 1 the system approaches isolated atoms with discrete levels.</p>
             </div>
 
             <div style="margin-bottom:1rem;">
@@ -133,12 +147,16 @@
                 <span class="control-value" id="val-a">1.0</span>
               </div>
               <input type="range" id="slider-a" min="0.5" max="3.0" value="1.0" step="0.1">
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Period of the repeating potential. Larger a lowers the Brillouin-zone boundary (π/a) and squeezes the E(k) plot horizontally. The ratio b/a matters more than a alone for the band structure shape.</p>
             </div>
 
-            <div class="btn-group">
+            <div class="btn-group" style="margin-bottom:0.3rem;">
               <button class="btn active" id="btn-reduced" onclick="setScheme('reduced')">Reduced zone</button>
               <button class="btn" id="btn-extended" onclick="setScheme('extended')">Extended zone</button>
             </div>
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">
+              <b>Reduced zone:</b> All bands folded into the first Brillouin zone [−π/a, +π/a]. Easier to see gaps. <b>Extended zone:</b> Bands drawn in their "natural" k regions, showing the free-electron parabola interrupted by Bragg reflections at zone boundaries.
+            </p>
           </div>
 
           <div class="challenge-panel">
@@ -148,27 +166,204 @@
             </div>
             <table style="width:100%">
               <tr style="text-align:left"><th style="font-weight:normal; color:var(--text-dim)">Quantity</th><th style="text-align:right; font-weight:normal; color:var(--text-dim)">Value</th></tr>
-              <tr style="border-bottom:1px solid var(--glass-border)"><td style="padding:0.4rem 0">First gap ΔE₁</td><td class="highlight-num" id="live-gap1" style="text-align:right">—</td></tr>
-              <tr style="border-bottom:1px solid var(--glass-border)"><td style="padding:0.4rem 0">Second gap ΔE₂</td><td class="highlight-num" id="live-gap2" style="text-align:right">—</td></tr>
-              <tr style="border-bottom:1px solid var(--glass-border)"><td style="padding:0.4rem 0">Band width 1st</td><td class="highlight-num" id="live-width1" style="text-align:right">—</td></tr>
-              <tr style="border-bottom:1px solid var(--glass-border)"><td style="padding:0.4rem 0">Band width 2nd</td><td class="highlight-num" id="live-width2" style="text-align:right">—</td></tr>
-              <tr style="border-bottom:1px solid var(--glass-border)"><td style="padding:0.4rem 0">m* (bottom)</td><td class="highlight-num" id="live-mass1" style="text-align:right">—</td></tr>
-              <tr style="border-bottom:1px solid var(--glass-border)"><td style="padding:0.4rem 0">m* (top)</td><td class="highlight-num" id="live-mass2" style="text-align:right">—</td></tr>
+              <tr style="border-bottom:1px solid var(--glass-border)"><td style="padding:0.4rem 0">VB–CB gap ΔE₁</td><td class="highlight-num" id="live-gap1" style="text-align:right">—</td></tr>
+              <tr style="border-bottom:1px solid var(--glass-border)"><td style="padding:0.4rem 0">CB–Band 3 gap ΔE₂</td><td class="highlight-num" id="live-gap2" style="text-align:right">—</td></tr>
+              <tr style="border-bottom:1px solid var(--glass-border)"><td style="padding:0.4rem 0">Valence Band width</td><td class="highlight-num" id="live-width1" style="text-align:right">—</td></tr>
+              <tr style="border-bottom:1px solid var(--glass-border)"><td style="padding:0.4rem 0">Conduction Band width</td><td class="highlight-num" id="live-width2" style="text-align:right">—</td></tr>
+              <tr style="border-bottom:1px solid var(--glass-border)"><td style="padding:0.4rem 0">m* (VB bottom)</td><td class="highlight-num" id="live-mass1" style="text-align:right">—</td></tr>
+              <tr style="border-bottom:1px solid var(--glass-border)"><td style="padding:0.4rem 0">m* (CB bottom)</td><td class="highlight-num" id="live-mass2" style="text-align:right">—</td></tr>
             </table>
+            <p style="font-size:0.75rem; color:var(--text-dim); margin-top:0.6rem;">
+              <b>ΔE:</b> Energy gap between bands — electrons cannot occupy these energies. <b>Band width:</b> Range of allowed E within a band. <b>m*:</b> Effective mass at the band edge; m* &ll; m₀ means electrons travel almost freely (wide band); m* &gg; m₀ means they are heavy and localized (narrow band).
+            </p>
           </div>
         </div>
       </div>
     </div>
 
     <div class="insight-card" style="margin-top:1rem;">
-      <div class="insight-title">✨ Physics Insight: Tunneling vs. Bands</div>
+      <div class="insight-title">✨ Physics Insight: From Single Barrier to Bloch Bands</div>
       <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
-        The <strong style="color:var(--accent-cyan)">Tunneling Simulation</strong> shows a single electron encountering a barrier. When $E < V_0$, the wave function decays exponentially inside the barrier, but if the barrier is thin (small $b/a$), a non-zero amplitude "leaks" through.
-        The <strong style="color:var(--accent-purple)">Band Structure</strong> is the global result of this leakage across a periodic lattice. High tunneling (thin barriers) leads to wide energy bands; low tunneling (thick barriers) leads to narrow bands that mimic discrete atomic levels.
+        The <strong style="color:var(--accent-cyan)">Tunneling Simulation</strong> (top-right) shows a single electron encountering one barrier. When <span style="color:var(--accent-cyan)">E < V₀</span>, the wave function decays exponentially inside the barrier; if the barrier is thin (small <i>b/a</i>), a non-zero amplitude "leaks" through to the far side. This is <b>quantum mechanical tunneling</b> — classically impossible, yet measurable in every semiconductor device.<br><br>
+        The <strong style="color:var(--accent-purple)">Band Structure</strong> (bottom plot) is the <b>global consequence</b> of this leakage repeated across a periodic lattice. High tunneling (thin barriers, low V₀) makes the atomic orbitals overlap strongly → <b>broad energy bands</b>. Low tunneling (thick barriers, high V₀) isolates the atoms → <b>narrow bands</b> that behave like discrete atomic levels. The gaps between bands are <b>forbidden energies</b> where no traveling wave can exist in the crystal.<br><br>
+        <span style="color:var(--text-dim)"><b>Key controls:</b> Drag <i>V₀</i> to open/close gaps. Drag <i>b/a</i> to change barrier thickness. Toggle Reduced vs Extended zone to see how the same bands fold/unfold across the Brillouin zone.</span>
       </p>
       <div class="equation-box" style="font-size:0.85rem;">
-        $$\text{Transmission Probability } T \approx e^{-2\kappa w} \text{ where } \kappa = \sqrt{\frac{2m(V_0-E)}{\hbar^2}}$$
-      </div >
+        $$\text{Transmission } T \approx e^{-2\kappa w} \quad \text{with} \quad \kappa = \sqrt{\frac{2m(V_0-E)}{\hbar^2}} \qquad \text{(WKB approximation)}$$
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== WAVE PACKET SCATTERING MODE ===== -->
+  <div class="mode-section" id="section-wavepacket" style="display:none;">
+    <div class="playground-area">
+        <div class="playground-header">
+          <div class="playground-title">🌊 Wave-Packet Scattering</div>
+          <div class="playground-level">A localized Gaussian wave packet hits a single barrier in real time. Watch it split into reflected and transmitted components, observe interference fringes from the superposition, and measure the "forbidden" tunneling probability inside the barrier. The method is the Strang split-operator FFT (exact kinetic step via Fourier space, exact potential half-step), with absorbing boundary conditions to suppress wraparound artifacts.</div>
+        </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 320px; gap: 1.5rem;">
+        <div>
+          <div style="width:100%; background:var(--bg-elevated); border-radius:var(--radius-sm); border:1px solid var(--glass-border); overflow:hidden;">
+            <canvas id="wp-canvas" style="display:block; width:100%; image-rendering:pixelated;"></canvas>
+          </div>
+          <div style="display:flex; justify-content:center; gap:2rem; margin-top:0.4rem; font-size:0.75rem; color:var(--text-dim);">
+            <span><span style="color:var(--accent-pink)">⬤</span> |<span style="color:var(--text-main)">ψ|<sup>2</sup></span> probability</span>
+            <span><span style="color:#5555ff">━</span> Re(<span style="color:#ff3333">+</span>/<span style="color:#3333ff">−</span>)</span>
+            <span>⏱ t = <span id="wp-time">0.00</span></span>
+          </div>
+
+          <!-- Wave-Packet Legend / Description -->
+          <div class="challenge-panel" style="margin-top:0.6rem; padding:0.7rem 1rem;">
+            <div style="display:flex; justify-content:center; gap:1.5rem; flex-wrap:wrap; font-size:0.78rem; color:var(--text-dim);">
+              <span><span style="display:inline-block; width:14px; height:4px; background:#c084fc; vertical-align:middle; margin-right:4px;"></span><b>V(x)</b> Barrier potential</span>
+              <span><span style="display:inline-block; width:14px; height:4px; background:#d946ef; vertical-align:middle; margin-right:4px;"></span><b>|ψ|²</b> Probability density</span>
+              <span><span style="display:inline-block; width:14px; height:4px; background:#5555ff; vertical-align:middle; margin-right:4px;"></span>→<span style="display:inline-block; width:14px; height:4px; background:#ff3333; vertical-align:middle; margin-right:4px;"></span><b>Re(ψ)</b> Phase (blue −, red +)</span>
+              <span><span style="display:inline-block; width:14px; height:4px; background:#fbbf24; opacity:0.5; vertical-align:middle; margin-right:4px;"></span><b>Forbidden</b> E < V₀ region</span>
+            </div>
+            <p style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:0.4rem; margin-bottom:0;">
+              The canvas shows a <b>Gaussian wave packet</b> evolving under the time-dependent Schrödinger equation (split-operator FFT, N = 1024). Use the <i>Barrier count</i> slider to switch between a single barrier and a <b>periodic array</b> of up to 7 identical barriers. The packet splits into reflected and transmitted parts — observe how multiple barriers create resonant transmission peaks (Fabry-Pérot) and standing waves inside the wells.
+            </p>
+          </div>
+
+          <div style="display:flex; justify-content:center; gap:0.8rem; margin-top:0.6rem;">
+            <button class="btn" id="wp-btn-play">▶ Evolve</button>
+            <button class="btn" id="wp-btn-pause">⏸ Pause</button>
+            <button class="btn" id="wp-btn-reset">↺ Reset</button>
+          </div>
+
+          <div class="insight-card" style="margin-top:1rem;">
+            <div class="insight-title">✨ Key Observations</div>
+            <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.7;">
+              <b class="text-cyan">Reflection & Interference:</b> When the packet reaches the barrier, a portion bounces back. This reflected wave superposes with the still-arriving incident wave, producing <b>standing interference fringes</b> on the left (blue-red oscillations). The fringe spacing is λ/2, directly revealing the packet's de Broglie wavelength. <span style="color:var(--text-dim)">Notice how the fringes grow sharper as the packet width σ increases (narrower momentum spread).</span><br><br>
+
+              <b class="text-purple">Transmission:</b> Part of the packet carries past the barrier. If <span style="color:var(--accent-cyan)">E > V₀</span>, transmission is classical — the wave simply climbs over. If <span style="color:var(--accent-cyan)">E < V₀</span> but the barrier is thin, transmission is purely <b>quantum tunneling</b>. The transmitted packet appears delayed and broadened because high-momentum components tunnel more easily than low-momentum ones — this is <b>filtering in k-space</b>.<br><br>
+
+              <b class="text-yellow">Forbidden Leakage:</b> When <span style="color:var(--accent-yellow)">E < V₀</span>, the barrier region is shaded pale yellow. Classically, no particle can exist here. Yet <b>|ψ|² > 0</b> inside — the tunneling amplitude. The probability readout <i>P(barrier)</i> quantifies this "forbidden" population. In a periodic lattice, this same leakage, repeated cell after cell, is what <b>creates energy bands and bandgaps</b>.<br><br>
+
+              <span style="color:var(--text-dim)"><b>Experiment:</b> Try the <i>Semicircle</i> barrier for smooth, physical scattering. Compare with <i>Square</i> — you'll see extra ripples from the discontinuity. Switch to <i>Gaussian</i> for the smoothest, most realistic barrier shape. Then vary <i>k₀</i>: low energy (<i>E &ll; V₀</i>) gives nearly total reflection with tiny tunneling; high energy (<i>E &gg; V₀</i>) gives almost free passage.<br><br>
+              <b>Multiple barriers:</b> Increase <i>Barrier count</i> to 3+ and watch the packet rattle between barriers like a photon in a Fabry-Pérot cavity. At certain spacings (when cavity width ≈ integer × λ/2) you'll see dramatically enhanced transmission — a precursor to the formation of <b>Bloch bands</b> in a periodic lattice. Reduce <i>Barrier spacing</i> until barriers overlap — the system approaches the single-barrier Kronig-Penney limit.</span>
+            </p>
+            <div class="equation-box" style="font-size:0.8rem;">
+              $$
+              i\hbar\,\partial_t\psi = \Bigl[-\frac{\hbar^2}{2m}\frac{\partial^2}{\partial x^2} + V(x)\Bigr]\psi
+              \qquad\text{with}\qquad
+              \psi(x,0)=\Bigl(\frac{1}{2\pi\sigma^2}\Bigr)^{\!1/4}\exp\!\Bigl[-\frac{(x-x_0)^2}{4\sigma^2}+ik_0x\Bigr]
+              $$
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="challenge-panel" style="margin-bottom:1rem;">
+            <div class="challenge-header">
+              <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">⚙</span>
+              <span class="challenge-title">Packet Controls</span>
+            </div>
+
+            <div style="margin-bottom:1rem;">
+              <div class="control-row">
+                <span class="control-label">Barrier height V₀</span>
+                <span class="control-value" id="wp-val-v0">5.00</span>
+              </div>
+              <input type="range" id="wp-slider-v0" min="0.5" max="15" value="5" step="0.5">
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Energy where classical block starts.</p>
+            </div>
+
+            <div style="margin-bottom:1rem;">
+              <div class="control-row">
+                <span class="control-label">Barrier width</span>
+                <span class="control-value" id="wp-val-width">2.00</span>
+              </div>
+              <input type="range" id="wp-slider-width" min="0.5" max="6" value="2" step="0.1">
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Wider barriers suppress tunneling exponentially. For E < V₀, the decay length is <i>1/κ = ℏ/√(2m(V₀−E))</i>.</p>
+            </div>
+
+            <div style="margin-bottom:1rem;">
+              <div class="control-row">
+                <span class="control-label">Barrier count</span>
+                <span class="control-value" id="wp-val-count">1</span>
+              </div>
+              <input type="range" id="wp-slider-count" min="1" max="7" value="1" step="1">
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Number of identical barriers arranged symmetrically around x = 0. At 2+ barriers you can observe <b>multiple reflections</b> and Fabry-Pérot-like resonant transmission when the packet wavelength matches the cavity spacing.</p>
+            </div>
+
+            <div style="margin-bottom:1rem;">
+              <div class="control-row">
+                <span class="control-label">Barrier spacing</span>
+                <span class="control-value" id="wp-val-spacing">4.00</span>
+              </div>
+              <input type="range" id="wp-slider-spacing" min="2.0" max="10" value="4" step="0.2">
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Center-to-center distance between barriers. Small spacing makes barriers overlap into a single wide barrier; large spacing creates isolated resonant cavities. For a periodic array (equal spacing), this is the <b>lattice constant</b> — the origin of Bloch bands.</p>
+            </div>
+
+            <div style="margin-bottom:1rem;">
+              <div class="control-row">
+                <span class="control-label">Initial momentum k₀</span>
+                <span class="control-value" id="wp-val-k0">3.00</span>
+              </div>
+              <input type="range" id="wp-slider-k0" min="0.5" max="8" value="3" step="0.1">
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Packet energy E = k₀²/2 = <span id="wp-energy">4.50</span></p>
+            </div>
+
+            <div style="margin-bottom:1rem;">
+              <div class="control-row">
+                <span class="control-label">Packet width σ</span>
+                <span class="control-value" id="wp-val-sigma">1.20</span>
+              </div>
+              <input type="range" id="wp-slider-sigma" min="0.4" max="3.0" value="1.2" step="0.1">
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Spatial spread of the Gaussian.</p>
+            </div>
+
+            <div style="margin-bottom:1rem;">
+              <div class="control-row">
+                <span class="control-label">Time step dt</span>
+                <span class="control-value" id="wp-val-dt">0.0010</span>
+              </div>
+              <input type="range" id="wp-slider-dt" min="0.0002" max="0.005" value="0.001" step="0.0001" style="width:100%">
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Smaller = slower, but numerically more stable.</p>
+            </div>
+
+            <div class="btn-group" style="margin-bottom:0.3rem;">
+              <button class="btn active wp-shape-btn" data-shape="semicircle">Semicircle</button>
+              <button class="btn wp-shape-btn" data-shape="square">Square</button>
+              <button class="btn wp-shape-btn" data-shape="gaussian">Gaussian</button>
+            </div>
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">
+              <b>Semicircle:</b> Smooth, physical barrier (no sharp edges → no artificial high-k scattering). <b>Square:</b> Sharp discontinuities produce extra Fourier components and unphysical ripples. <b>Gaussian:</b> The most realistic smoothly varying potential.
+            </p>
+          </div>
+
+          <div class="challenge-panel">
+            <div class="challenge-header">
+              <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">📊</span>
+              <span class="challenge-title">Probability Readout</span>
+            </div>
+            <table style="width:100%; font-size:0.9rem;">
+              <tr style="text-align:left">
+                <th style="font-weight:normal; color:var(--text-dim)">Region</th>
+                <th style="text-align:right; font-weight:normal; color:var(--text-dim)">P(<code>∫|ψ|² dx</code>)</th>
+              </tr>
+              <tr style="border-bottom:1px solid var(--glass-border)">
+                <td style="padding:0.5rem 0">🟦 Left (x < −w/2)</td>
+                <td class="highlight-num" id="wp-p-left" style="text-align:right">—</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--glass-border)">
+                <td style="padding:0.5rem 0">🟨 Barrier (<span style="color:var(--accent-yellow)">forbidden</span>)</td>
+                <td class="highlight-num" id="wp-p-mid" style="text-align:right">—</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--glass-border)">
+                <td style="padding:0.5rem 0">🟩 Right (x > +w/2)</td>
+                <td class="highlight-num" id="wp-p-right" style="text-align:right">—</td>
+              </tr>
+            </table>
+            <p style="font-size:0.75rem; color:var(--text-dim); margin-top:0.6rem;">
+              Normalize to ~1.0.
+              <span style="color:var(--accent-yellow)">P(barrier) > 0</span> when E < V₀ is tunneling evidence.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -450,8 +645,20 @@
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
-<script src="kp_sim.js?v=2"></script>
-<script src="kp_apps_games.js?v=1"></script>
+<script src="kp_sim.js?v=4"></script>
+<script src="kp_wavepacket_embed.js?v=1"></script>
+<script src="kp_wavepacket.js?v=2"></script>
+<script src="kp_apps_games.js?v=2"></script>
 <script src="../../shared_effects.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    if (typeof initKP === 'function') initKP();
+    if (typeof initWavePacket === 'function') initWavePacket();
+  }, 60);
+});
+</script>
+
 </body>
 </html>

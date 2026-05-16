@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Junctions & Devices Lab — Physics Playground</title>
+<title>Junctions &amp; Devices Lab — Physics Playground</title>
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <link rel="stylesheet" href="../../shared_styles.css">
@@ -22,60 +22,118 @@
   .device-card:hover { border-color:var(--accent-cyan); }
   .device-card.selected { border-color:var(--accent-cyan); background:rgba(0,240,255,0.06); }
   .iv-preview { width:100%; height:120px; background:var(--bg-panel); border-radius:6px; margin-top:0.5rem; }
+  .canvas-junction { width:100%; height:320px; background:rgba(10,10,18,0.6); border-radius:8px; border:1px solid var(--glass-border); }
+  .device-tab { display:inline-block; padding:0.5rem 1rem; border-radius:var(--radius-sm); border:1px solid var(--glass-border); background:var(--bg-elevated); color:var(--text-dim); font-size:0.85rem; cursor:pointer; margin-right:0.4rem; transition:all 0.2s; }
+  .device-tab:hover { border-color:var(--accent-cyan); color:var(--text-main); }
+  .device-tab.active { border-color:var(--accent-cyan); background:rgba(0,240,255,0.08); color:var(--accent-cyan); font-weight:600; }
 </style>
 </head>
 <body>
 <div class="orb orb-cyan"></div><div class="orb orb-purple"></div><div class="orb orb-pink"></div>
 <nav class="game-nav">
-  <div class="nav-brand"><a href="../../index.html" style="text-decoration:none;color:inherit;"><span class="nav-logo">⚛</span> Physics Playground</a></div>
+  <div class="nav-brand"><a href="../../index.html" style="text-decoration:none;color:inherit;"><span class="nav-logo">&#9883;</span> Physics Playground</a></div>
   <div class="nav-stats">
-    <div class="stat-badge"><span class="stat-icon">🔌</span><span class="stat-value">Junctions</span></div>
-    <div class="stat-badge"><span class="stat-icon">⭐</span><span class="stat-value" id="nav-xp">0 XP</span></div>
+    <div class="stat-badge"><span class="stat-icon">&#128268;</span><span class="stat-value">Junctions</span></div>
+    <div class="stat-badge"><span class="stat-icon">&#11088;</span><span class="stat-value" id="nav-xp">0 XP</span></div>
   </div>
 </nav>
 <div class="game-hero" style="padding-bottom:0;">
-  <div class="level-badge">Module 11 · Level <span id="current-level">1</span> · Barrier Engineer</div>
-  <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-purple),var(--accent-cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Junctions & Devices</span></h1>
+  <div class="level-badge">Module 11 &middot; Level <span id="current-level">1</span> &middot; Barrier Engineer</div>
+  <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-purple),var(--accent-cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Junctions &amp; Devices</span></h1>
   <p class="hero-desc">Engineer p-n junctions, master diode rectification, and unlock solar-cell efficiency by controlling doping, depletion, and built-in potential.</p>
 </div>
 <div class="game-container">
   <div class="game-mode-bar">
-    <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
-    <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">🎯 Challenges</button>
-    <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">🧩 Puzzles</button>
+    <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">&#128300; Playground</button>
+    <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">&#127919; Challenges</button>
+    <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">&#129513; Puzzles</button>
   </div>
 
   <!-- PLAYGROUND -->
   <div class="mode-section" id="section-play">
     <div class="playground-area">
       <div class="playground-header">
-        <div class="playground-title">🔬 p-n Junction & Diode I-V Lab</div>
-        <div class="playground-level">Adjust doping, temperature, and bias. Explore rectification, depletion, and solar-cell behaviour.</div>
+        <div class="playground-title">&#128300; Device Physics Lab</div>
+        <div class="playground-level">Select a device, adjust doping and bias in real time, and watch electrons, holes, and band barriers respond.</div>
       </div>
-      <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem;">
+
+      <!-- Device tabs -->
+      <div style="margin-bottom:0.8rem;">
+        <span class="device-tab active" id="tab-pn" onclick="setJDDevice('pn')">p-n Diode</span>
+        <span class="device-tab" id="tab-zener" onclick="setJDDevice('zener')">Zener Diode</span>
+        <span class="device-tab" id="tab-tunnel" onclick="setJDDevice('tunnel')">Tunnel Diode</span>
+        <span class="device-tab" id="tab-nmos" onclick="setJDDevice('nmos')">n-MOSFET</span>
+        <span class="device-tab" id="tab-pmos" onclick="setJDDevice('pmos')">p-MOSFET</span>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 340px; gap:1.5rem;">
+        <!-- left column -->
         <div>
-          <div class="plot-container" id="plot-band-junction" style="min-height:300px;"></div>
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
-            <strong>What it shows:</strong> Energy-band bending across the p-n interface and how the built-in barrier reacts to applied bias.<br>
-            <strong>Why it matters:</strong> The barrier height controls carrier injection — lower it slightly and current explodes exponentially.
+          <!-- 2D Canvas visualisation -->
+          <div><canvas id="canvas-junction" class="canvas-junction"></canvas></div>
+          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:0.3rem;margin-bottom:1rem;line-height:1.6;">
+            <strong>What it shows:</strong> Live 2D view of the device cross-section with conduction/valence bands, depletion region, electrons (cyan) and holes (magenta). Arrows show conventional current direction. Band bending responds instantly to bias.<br>
+            <strong>Why it matters:</strong> You can literally see the barrier shrink under forward bias, tunnel electrons appear in breakdown, and the inversion channel form in a MOSFET.
           </div>
-          <div class="plot-container" id="plot-diode-iv" style="min-height:260px; margin-top:1.5rem;"></div>
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
-            <strong>What it shows:</strong> The rectifier I-V curve — exponential forward conduction versus flat reverse blocking.<br>
-            <strong>Why it matters:</strong> This asymmetry is the physical basis of all switching, power conversion, and signal clipping in electronics.
+
+          <!-- Plotly I-V panels (device-specific, only one visible) -->
+          <div id="panel-pn">
+            <div class="plot-container" id="plot-diode-iv" style="min-height:260px; margin-top:1rem;"></div>
+            <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
+              <strong>What it shows:</strong> The rectifier I-V curve -- exponential forward conduction versus flat reverse blocking.<br>
+              <strong>Why it matters:</strong> This asymmetry is the physical basis of all switching, power conversion, and signal clipping in electronics.
+            </div>
+            <div class="plot-container" id="plot-depletion" style="min-height:220px;"></div>
+            <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
+              <strong>What it shows:</strong> Energy band bending across the p-n interface and depletion width under bias.<br>
+              <strong>Why it matters:</strong> Depletion width governs junction capacitance and breakdown voltage -- critical for RF and power devices.
+            </div>
           </div>
-          <div class="plot-container" id="plot-depletion" style="min-height:220px; margin-top:1.5rem;"></div>
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
-            <strong>What it shows:</strong> How the depletion region widens under reverse bias and narrows under forward bias.<br>
-            <strong>Why it matters:</strong> Depletion width governs junction capacitance and breakdown voltage — critical for RF and power devices.
+          <div id="panel-zener" style="display:none;">
+            <div class="plot-container" id="plot-zener-iv" style="min-height:260px; margin-top:1rem;"></div>
+            <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
+              <strong>What it shows:</strong> Zener I-V with sharp breakdown knee. Heavy doping creates a narrow depletion region, enabling band-to-band tunneling at low reverse voltages.<br>
+              <strong>Why it matters:</strong> Zener diodes give precise voltage references and over-voltage protection in circuits.
+            </div>
+            <div class="plot-container" id="plot-depletion-zener" style="min-height:220px;"></div>
+          </div>
+          <div id="panel-tunnel" style="display:none;">
+            <div class="plot-container" id="plot-tunnel-iv" style="min-height:260px; margin-top:1rem;"></div>
+            <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
+              <strong>What it shows:</strong> Esaki tunnel-diode I-V with peak, valley, and negative differential resistance (NDR) region.<br>
+              <strong>Why it matters:</strong> NDR enables ultra-fast switching, microwave oscillators, and low-noise amplifiers.
+            </div>
+            <div class="plot-container" id="plot-depletion-tunnel" style="min-height:220px;"></div>
+          </div>
+          <div id="panel-nmos" style="display:none;">
+            <div class="plot-container" id="plot-mos-iv" style="min-height:260px; margin-top:1rem;"></div>
+            <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
+              <strong>What it shows:</strong> n-MOSFET drain I-V families (triode/saturation) for different gate overdrive voltages.<br>
+              <strong>Why it matters:</strong> MOS transistors are the building blocks of CMOS logic and modern memory. This curve determines switching speed and power dissipation.
+            </div>
+            <div class="plot-container" id="plot-transfer-nmos" style="min-height:220px;"></div>
+            <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
+              <strong>What it shows:</strong> Transfer characteristic (Ids vs Vgs) revealing threshold voltage Vth and subthreshold swing.<br>
+              <strong>Why it matters:</strong> Vth sets the logic level; a steep subthreshold slope gives low standby power.
+            </div>
+          </div>
+          <div id="panel-pmos" style="display:none;">
+            <div class="plot-container" id="plot-mos-iv-pmos" style="min-height:260px; margin-top:1rem;"></div>
+            <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
+              <strong>What it shows:</strong> p-MOSFET drain I-V families. Holes flow from source to drain when gate is pulled negative below Vth.<br>
+              <strong>Why it matters:</strong> p-MOS and n-MOS in CMOS pairs eliminate static power draw -- the secret behind billion-transistor chips.
+            </div>
+            <div class="plot-container" id="plot-transfer-pmos" style="min-height:220px;"></div>
           </div>
         </div>
+
+        <!-- right column: controls -->
         <div>
           <div class="challenge-panel" style="margin-bottom:1rem;">
-            <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙</span><span class="challenge-title">Controls</span></div>
-            <div class="control-row"><span class="control-label">Acceptor Na</span><span class="control-value" id="val-Na">1.0e16</span><span class="unit-tag">cm⁻³</span></div>
+            <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.1);">&#9881;</span><span class="challenge-title">Controls</span></div>
+            <div class="control-row"><span class="control-label">Acceptor Na</span><span class="control-value" id="val-Na">1.0e16</span><span class="unit-tag">cm-3</span></div>
             <input type="range" id="slider-Na" min="14" max="19" value="16" step="0.5">
-            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Donor Nd</span><span class="control-value" id="val-Nd">1.0e16</span><span class="unit-tag">cm⁻³</span></div>
+            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Donor Nd</span><span class="control-value" id="val-Nd">1.0e16</span><span class="unit-tag">cm-3</span></div>
             <input type="range" id="slider-Nd" min="14" max="19" value="16" step="0.5">
             <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Temperature T</span><span class="control-value" id="val-T-jd">300</span><span class="unit-tag">K</span></div>
             <input type="range" id="slider-T-jd" min="200" max="500" value="300" step="10">
@@ -83,15 +141,18 @@
             <input type="range" id="slider-Vbias" min="-1.0" max="0.8" value="0.0" step="0.05">
             <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Photocurrent Iph</span><span class="control-value" id="val-Isc">0.0</span><span class="unit-tag">A</span></div>
             <input type="range" id="slider-Isc" min="0" max="1e-6" value="0" step="1e-8">
+            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Gate Vg</span><span class="control-value" id="val-Vgate">0.0</span><span class="unit-tag">V</span></div>
+            <input type="range" id="slider-Vgate" min="-1.5" max="1.5" value="0.0" step="0.05">
           </div>
           <div class="challenge-panel">
-            <div class="challenge-header"><span class="challenge-icon" style="background:rgba(192,132,252,0.1);">📊</span><span class="challenge-title">Live Readout</span></div>
+            <div class="challenge-header"><span class="challenge-icon" style="background:rgba(192,132,252,0.1);">&#128202;</span><span class="challenge-title">Live Readout</span></div>
             <table>
               <tr><th>Quantity</th><th>Value</th></tr>
-              <tr><td>V_bi</td><td class="highlight-num" id="live-Vbi">—</td></tr>
-              <tr><td>Depletion W</td><td class="highlight-num" id="live-W">—</td></tr>
-              <tr><td>x_n / x_p</td><td class="highlight-num" id="live-xnxp">—</td></tr>
-              <tr><td>I at bias</td><td class="highlight-pink" id="live-Ibias">—</td></tr>
+              <tr><td>Device</td><td class="highlight-num" id="live-device">PN</td></tr>
+              <tr><td>V_bi</td><td class="highlight-num" id="live-Vbi">-</td></tr>
+              <tr><td>Depletion W</td><td class="highlight-num" id="live-W">-</td></tr>
+              <tr><td>x_n / x_p</td><td class="highlight-num" id="live-xnxp">-</td></tr>
+              <tr><td>I at bias</td><td class="highlight-pink" id="live-Ibias">-</td></tr>
               <tr><td>Voc (solar)</td><td class="highlight-num" id="live-Voc">0 V</td></tr>
             </table>
           </div>
@@ -99,13 +160,14 @@
       </div>
     </div>
     <div class="insight-card" style="margin-top:1rem;">
-      <div class="insight-title">✨ Why does this matter?</div>
+      <div class="insight-title">&#10024; Why does this matter?</div>
       <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
         A p-n junction creates a built-in potential barrier from the diffusion of holes and electrons. Forward bias lowers the barrier, allowing exponential current flow. Reverse bias widens the depletion region, blocking current. Add photocurrent and the same device becomes a solar cell: absorbed photons generate electron-hole pairs that are swept across the junction by the built-in field.
+        Zener diodes exploit heavy doping to make the depletion so thin that electrons tunnel quantum-mechanically through the barrier at precise reverse voltages, giving stable voltage references. MOSFETs replace the junction with a gate-controlled inversion channel, making the ideal switch for digital logic.
       </p>
       <div class="equation-box" style="font-size:0.85rem;">
-        $$V_{bi}=\frac{k_BT}{e}\ln\left(\frac{N_a N_d}{n_i^2}\right)\qquad W=\sqrt{\frac{2\varepsilon_s}{e}\left(\frac{1}{N_a}+\frac{1}{N_d}\right)(V_{bi}-V)}$$
-        $$I = I_0\left(e^{eV/nk_BT}-1\right)-I_{ph}\qquad\text{(solar cell)}$$
+        $$V_{bi}=\frac{k_B T}{e}\ln\left(\frac{N_a N_d}{n_i^2}\right)\qquad W=\sqrt{\frac{2\varepsilon_s}{e}\left(\frac{1}{N_a}+\frac{1}{N_d}\right)(V_{bi}-V)}$$
+        $$I = I_0\left(e^{eV/nk_B T}-1\right)-I_{ph}\qquad\text{(solar cell)}$$
       </div>
     </div>
   </div>
@@ -113,37 +175,37 @@
   <!-- CHALLENGES -->
   <div class="mode-section" id="section-challenge" style="display:none;">
     <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span><span class="challenge-title">Challenge 1: Diode Direction</span><span class="challenge-difficulty easy">Easy</span></div>
+      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.12);">&#127918;</span><span class="challenge-title">Challenge 1: Diode Direction</span><span class="challenge-difficulty easy">Easy</span></div>
       <div class="challenge-desc">Given a circuit description, predict whether the diode is in forward or reverse bias and whether it conducts.</div>
-      <div class="challenge-reward">🏆 Reward: 50 XP · Combo bonus: +5 XP per streak</div>
+      <div class="challenge-reward">&#127942; Reward: 50 XP &middot; Combo bonus: +5 XP per streak</div>
       <div class="timer-bar"><div class="timer-fill" id="jd-timer" style="width:100%"></div></div>
       <div id="jd-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
       <div style="display:flex; gap:0.5rem;">
         <button class="btn" onclick="guessJD(true)">Forward / Conducting</button>
         <button class="btn" onclick="guessJD(false)">Reverse / Blocking</button>
       </div>
-      <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;"><strong>Score:</strong> <span id="jd-score">0</span> · <strong>Combo:</strong> <span id="jd-combo">0</span></div>
+      <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;"><strong>Score:</strong> <span id="jd-score">0</span> &middot; <strong>Combo:</strong> <span id="jd-combo">0</span></div>
       <div class="challenge-feedback" id="jd-feedback"></div>
     </div>
 
     <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(74,222,128,0.12);">📐</span><span class="challenge-title">Challenge 2: Built-in Voltage Calculator</span><span class="challenge-difficulty medium">Medium</span></div>
+      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(74,222,128,0.12);">&#128208;</span><span class="challenge-title">Challenge 2: Built-in Voltage Calculator</span><span class="challenge-difficulty medium">Medium</span></div>
       <div class="challenge-desc">Use the built-in potential equation with the given doping and temperature. Beat the clock!</div>
-      <div class="challenge-reward">🏆 Reward: 75 XP</div>
+      <div class="challenge-reward">&#127942; Reward: 75 XP</div>
       <div class="timer-bar"><div class="timer-fill" id="jd-calc-timer" style="width:100%"></div></div>
       <div id="jd-calc-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
       <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
         <input type="text" id="jd-calc-ans" placeholder="V_bi in V" style="width:160px;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
         <button class="btn" onclick="checkJDCalc()">Submit</button>
-        <button class="btn btn-secondary" onclick="showJDHint()" style="font-size:0.8rem;">💡 Hint (−5 XP)</button>
+        <button class="btn btn-secondary" onclick="showJDHint()" style="font-size:0.8rem;">&#128161; Hint (-5 XP)</button>
       </div>
       <div class="challenge-feedback" id="jd-calc-feedback"></div>
     </div>
 
     <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🌡</span><span class="challenge-title">Challenge 3: Solar Spectrum Matcher</span><span class="challenge-difficulty hard">Hard</span></div>
+      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(255,78,205,0.12);">&#127777;</span><span class="challenge-title">Challenge 3: Solar Spectrum Matcher</span><span class="challenge-difficulty hard">Hard</span></div>
       <div class="challenge-desc">Match the optimal semiconductor band gap to the solar spectrum for maximum power conversion efficiency.</div>
-      <div class="challenge-reward">🏆 Reward: 100 XP</div>
+      <div class="challenge-reward">&#127942; Reward: 100 XP</div>
       <div id="solar-match-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
       <div id="solar-match-options" style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1rem;"></div>
       <div class="challenge-feedback" id="solar-match-feedback"></div>
@@ -153,43 +215,43 @@
   <!-- PUZZLES -->
   <div class="mode-section" id="section-puzzle" style="display:none;">
     <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🔧</span><span class="challenge-title">Puzzle 1: Depletion Width Builder</span><span class="challenge-difficulty medium">Medium</span></div>
+      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(192,132,252,0.12);">&#128295;</span><span class="challenge-title">Puzzle 1: Depletion Width Builder</span><span class="challenge-difficulty medium">Medium</span></div>
       <div class="challenge-desc">Drop the terms into the correct positions to assemble the depletion width formula.</div>
-      <div class="challenge-reward">🏆 Reward: 120 XP</div>
+      <div class="challenge-reward">&#127942; Reward: 120 XP</div>
       <div style="font-size:0.9rem;color:var(--text-muted);margin:0.5rem 0;">Build: W = <span id="w-formula-target" style="font-family:var(--font-mono);color:var(--accent-cyan);">...</span></div>
       <div id="jd-pool" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0.5rem 0;"></div>
       <div id="jd-zones" style="display:flex;gap:0.3rem;flex-wrap:wrap;margin:0.5rem 0;align-items:center;"></div>
-      <button class="btn" onclick="checkJDBuilder()">✓ Verify</button>
-      <button class="btn btn-secondary" onclick="initJDBuilder()" style="margin-left:0.5rem;">↻ Reset</button>
+      <button class="btn" onclick="checkJDBuilder()">&#10003; Verify</button>
+      <button class="btn btn-secondary" onclick="initJDBuilder()" style="margin-left:0.5rem;">&#8634; Reset</button>
       <div class="challenge-feedback" id="jd-builder-feedback"></div>
     </div>
 
     <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.12);">📐</span><span class="challenge-title">Puzzle 2: Band Bending Assembly</span><span class="challenge-difficulty medium">Medium</span></div>
+      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.12);">&#128208;</span><span class="challenge-title">Puzzle 2: Band Bending Assembly</span><span class="challenge-difficulty medium">Medium</span></div>
       <div class="challenge-desc">Drag the energy-band labels to build the correct equilibrium, forward-bias, and reverse-bias diagrams.</div>
-      <div class="challenge-reward">🏆 Reward: 120 XP</div>
+      <div class="challenge-reward">&#127942; Reward: 120 XP</div>
       <div id="band-assembly-container" style="margin-top:0.5rem;">
         <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem;">Drag each label into the diagram row that matches the bias condition.</div>
         <div id="band-label-pool" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0.5rem 0;"></div>
         <div id="band-rows"></div>
       </div>
-      <button class="btn" onclick="checkBandAssembly()">✓ Check Assembly</button>
-      <button class="btn btn-secondary" onclick="initBandAssembly()" style="margin-left:0.5rem;">↻ Reset</button>
+      <button class="btn" onclick="checkBandAssembly()">&#10003; Check Assembly</button>
+      <button class="btn btn-secondary" onclick="initBandAssembly()" style="margin-left:0.5rem;">&#8634; Reset</button>
       <div class="challenge-feedback" id="band-assembly-feedback"></div>
     </div>
 
     <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(255,78,205,0.12);">💡</span><span class="challenge-title">Puzzle 3: Device Detective</span><span class="challenge-difficulty master">Master</span></div>
+      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(255,78,205,0.12);">&#128161;</span><span class="challenge-title">Puzzle 3: Device Detective</span><span class="challenge-difficulty master">Master</span></div>
       <div class="challenge-desc">Match each device description to its I-V characteristic curve.</div>
-      <div class="challenge-reward">🏆 Reward: 120 XP</div>
+      <div class="challenge-reward">&#127942; Reward: 120 XP</div>
       <div id="device-detective-container" style="margin-top:0.5rem;">
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
           <div id="device-descriptions"></div>
           <div id="device-curves"></div>
         </div>
       </div>
-      <button class="btn" onclick="checkDeviceDetective()" style="margin-top:1rem;">✓ Check Matches</button>
-      <button class="btn btn-secondary" onclick="initDeviceDetective()" style="margin-left:0.5rem;">↻ Reset</button>
+      <button class="btn" onclick="checkDeviceDetective()" style="margin-top:1rem;">&#10003; Check Matches</button>
+      <button class="btn btn-secondary" onclick="initDeviceDetective()" style="margin-left:0.5rem;">&#8634; Reset</button>
       <div class="challenge-feedback" id="device-detective-feedback"></div>
     </div>
   </div>
@@ -198,10 +260,10 @@
     <div></div>
     <div>
       <div class="challenge-panel" style="position:sticky; top:5rem;">
-        <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.08);">🗺</span><span class="challenge-title">Lab Navigator</span></div>
+        <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.08);">&#128506;</span><span class="challenge-title">Lab Navigator</span></div>
         <div id="module-nav"></div>
         <div class="section-divider" style="margin:1rem 0;"></div>
-        <div class="challenge-header"><span class="challenge-icon" style="background:rgba(74,222,128,0.08);">🏆</span><span class="challenge-title">Your Badges</span></div>
+        <div class="challenge-header"><span class="challenge-icon" style="background:rgba(74,222,128,0.08);">&#127942;</span><span class="challenge-title">Your Badges</span></div>
         <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
         <div class="section-divider" style="margin:1rem 0;"></div>
         <div class="scoreboard">
@@ -217,9 +279,9 @@
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
-<script src="jd_sim.js?v=2"></script>
-<script src="jd_apps.js?v=1"></script>
-<script src="jd_apps_games.js?v=2"></script>
+<script src="jd_sim.js?v=4"></script>
+<script src="jd_apps.js?v=2"></script>
+<script src="jd_apps_games.js?v=3"></script>
 <script src="../../shared_effects.js"></script>
 </body>
 </html>

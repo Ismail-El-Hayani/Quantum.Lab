@@ -41,13 +41,17 @@ function psi_n_time(n, xArr, t) {
   const E = energy_n(n);
   const cosEt = Math.cos(E * t);
   const sinEt = Math.sin(E * t);
-  const re = new Float64Array(xArr.length);
-  const im = new Float64Array(xArr.length);
-  for (let i = 0; i < xArr.length; i++) {
-    re[i] = psi[i] * cosEt;
-    im[i] = -psi[i] * sinEt;
+  const N = xArr.length;
+  const re = new Float64Array(N);
+  const im = new Float64Array(N);
+  const prob = new Float64Array(N);
+  for (let i = 0; i < N; i++) {
+    const p = psi[i];
+    re[i] = p * cosEt;
+    im[i] = -p * sinEt;
+    prob[i] = p * p;
   }
-  return { re: re, im: im, prob: psi };
+  return { re: re, im: im, prob: prob };
 }
 
 function psi_superposition(n, m, cn, cm, xArr, t) {
@@ -94,6 +98,10 @@ function coherentState(alpha_re, alpha_im, xArr, t) {
 function _plot(id, traces, lay, cfg) {
   var el = document.getElementById(id);
   if (!el) return;
+  if (typeof Plotly === 'undefined') {
+    console.error('[QHO] Plotly not available — cannot render plot #' + id);
+    return;
+  }
   Plotly.react(id, traces, lay, cfg || {responsive: true, displayModeBar: false});
 }
 
@@ -225,7 +233,7 @@ function updateWigner() {
     for (let i = 0; i < xG.length; i++) {
       W[i] = new Float64Array(pG.length);
       for (let j = 0; j < pG.length; j++) {
-        W[i][j] = (1 / Math.PI) * Math.exp(-(xG[i] - x0)**2 - (pG[j] - p0)**2);
+        W[i][j] = (1 / Math.PI) * Math.exp(-Math.pow(xG[i] - x0, 2) - Math.pow(pG[j] - p0, 2));
       }
     }
   } else {
@@ -283,72 +291,167 @@ function assocLaguerre(n, k, x) {
   return L1;
 }
 
-// ── HYDROGEN ATOM LOGIC ──────────────────────────────────────
-function l_m_phi(l, m, theta, phi) {
-    // Rough approximation for orbital shapes (S, P, D)
-    if (l === 0) return 1.0;
-    if (l === 1) {
-        if (m === 0) return Math.cos(theta);
-        if (m === 1) return Math.sin(theta) * Math.cos(phi);
-        if (m === -1) return Math.sin(theta) * Math.sin(phi);
-    }
-    if (l === 2) {
-        if (m === 0) return 3 * Math.pow(Math.cos(theta), 2) - 1;
-        if (m === 1) return Math.sin(theta) * Math.cos(theta);
-        if (m === -1) return Math.sin(theta) * Math.cos(theta);
-        if (m === 2) return Math.pow(Math.sin(theta), 2) * Math.cos(2 * phi);
-        if (m === -2) return Math.pow(Math.sin(theta), 2) * Math.sin(2 * phi);
-    }
-    return Math.cos(theta); 
+/** ── EXACT HYDROGEN ATOM PHYSICS ───────────────────────────
+ *  Radial: R_nl(r) = N · ρ^l · e^{-ρ/2} · L_{n-l-1}^{2l+1}(ρ),   ρ = 2r/n
+ *  Angular: Real spherical harmonics Y_lm(θ,φ)
+ *  Density: |ψ_nlm(r,θ,φ)|² = |R_nl(r)|² · Y_lm(θ,φ)²
+ */
+
+/* Real spherical-harmonic squared Y_lm²(θ,φ) for density plots */
+function Y2_lm(l, m, theta, phi) {
+  const c = Math.cos(theta), s = Math.sin(theta);
+  // l = 0, s
+  if (l === 0) return 1 / (4 * Math.PI);
+
+  // l = 1, p
+  if (l === 1) {
+    if (m === 0) return (3 / (4 * Math.PI)) * c * c;                 // pz
+    if (Math.abs(m) === 1) return (3 / (8 * Math.PI)) * s * s;        // px, py  (m=±1 real combo)
+  }
+
+  // l = 2, d
+  if (l === 2) {
+    if (m === 0) return (5 / (16 * Math.PI)) * Math.pow(3 * c * c - 1, 2);                    // dz²
+    if (Math.abs(m) === 1) return (15 / (8 * Math.PI)) * s * s * c * c;                       // dxz, dyz
+    if (Math.abs(m) === 2) return (15 / (32 * Math.PI)) * Math.pow(s, 4);                       // dx²-y², dxy  (average over φ)
+  }
+
+  // l = 3, f (fallback approximation)
+  if (l === 3) return (7 / (16 * Math.PI)) * Math.pow(5 * c * c * c - 3 * c, 2);
+
+  return 1 / (4 * Math.PI);
 }
 
+/* Exact hydrogen radial wavefunction R_nl(r) in atomic units (a₀=1) */
+function R_nl_exact(n, l, r) {
+  if (r < 1e-6) return l === 0 ? 2 * Math.pow(1 / n, 1.5) : 0;
+  const rho = 2 * r / n;
+  const norm = Math.sqrt(
+    Math.pow(2 / n, 3) * factorial(n - l - 1) / (2 * n * factorial(n + l))
+  );
+  const lag = assocLaguerre(n - l - 1, 2 * l + 1, rho);
+  return norm * Math.pow(rho, l) * Math.exp(-rho / 2) * lag;
+}
+
+/* Orbital label: 1s, 2p, 3d, etc. */
+function orbitalLabel(l) {
+  return ['s', 'p', 'd', 'f', 'g', 'h'][l] || '?';
+}
+
+/* Energy in eV: E_n = -13.6057 / n² */
+function energy_Hydrogen_eV(n) {
+  return -13.6057 / (n * n);
+}
+
+/* Number of radial nodes = n - l - 1, angular nodes = l, total = n - 1 */
+function countNodes(n, l) {
+  return { radial: n - l - 1, angular: l, total: n - 1 };
+}
+
+/* ── 3D ORBITAL DENSITY PLOT ───────────────────────────────── */
 function updateAtomPlot() {
-    const n = parseInt(document.getElementById('val-atom-n').textContent) || 1;
-    const l = parseInt(document.getElementById('val-atom-l').textContent) || 0;
-    const m = parseInt(document.getElementById('val-atom-m').textContent) || 0;
-    
-    const step = 1.0;
-    const limit = 15;
-    const x = [], y = [], z = [], val = [];
-    
-    for(let i = -limit; i <= limit; i += step) {
-        for(let j = -limit; j <= limit; j += step) {
-            for(let k = -limit; k <= limit; k += step) {
-                const r = Math.sqrt(i*i + j*j + k*k);
-                if (r < 0.1) continue;
-                const theta = Math.acos(k / r);
-                const phi = Math.atan2(j, i);
-                
-                // Density approx: R(r)^2 * Y(theta, phi)^2
-                const radial = Math.exp(-r / n) * Math.pow(r, l);
-                const angular = l_m_phi(l, m, theta, phi);
-                const density = Math.pow(radial * angular, 2);
-                
-                if (density > 0.001) {
-                    x.push(i); y.push(j); z.push(k); val.push(density);
-                }
-            }
+  const n = parseInt(document.getElementById('val-atom-n').textContent) || 1;
+  const l = parseInt(document.getElementById('val-atom-l').textContent) || 0;
+  const m = parseInt(document.getElementById('val-atom-m').textContent) || 0;
+
+  // Adaptive sampling: higher n needs larger grid, smaller step for smoothness
+  const gridMax = Math.max(12, 5 * n);
+  const step = l >= 3 ? 0.6 : 0.8;
+
+  const x = [], y = [], z = [], val = [];
+
+  for (let i = -gridMax; i <= gridMax; i += step) {
+    for (let j = -gridMax; j <= gridMax; j += step) {
+      for (let k = -gridMax; k <= gridMax; k += step) {
+        const r = Math.sqrt(i * i + j * j + k * k);
+        if (r < 0.01) continue;
+        const theta = Math.acos(Math.max(-1, Math.min(1, k / r)));
+        const phi = Math.atan2(j, i);
+
+        const R = R_nl_exact(n, l, r);
+        const Y2 = Y2_lm(l, m, theta, phi);
+        const density = R * R * Y2;
+
+        if (density > 0.0005) {
+          x.push(i); y.push(j); z.push(k); val.push(density);
         }
+      }
     }
-    
-    _plot('plot-atom-3d', [{
-        type: 'isosurface',
-        x: x, y: y, z: z, value: val,
-        isomin: 0.01, isomax: Math.max(...val) * 0.5 || 0.1,
-        opacity: 0.4,
-        colorscale: 'Viridis',
-        caps: { x: {show: false}, y: {show: false}, z: {show: false} }
-    }], {
-        title: { text: `Hydrogen Orbital |n=${n}, l=${l}, m=${m}⟩`, font: { color: '#e0e0f0' } },
-        scene: {
-            xaxis: { gridcolor: '#2a2a3a', zerolinecolor: '#3a3a55' },
-            yaxis: { gridcolor: '#2a2a3a', zerolinecolor: '#3a3a55' },
-            zaxis: { gridcolor: '#2a2a3a', zerolinecolor: '#3a3a55' },
-            paper_bgcolor: 'rgba(0,0,0,0)', bgcolor: 'rgba(0,0,0,0)'
-        },
-        margin: { l: 0, r: 0, b: 0, t: 40 },
-        font: { color: '#e0e0f0' }
-    });
+  }
+
+  // Auto iso-threshold: pick a fraction of max to get clean surfaces
+  const maxVal = Math.max(...val, 1e-6);
+  const isoVal = maxVal * 0.15;
+
+  _plot('plot-atom-3d', [{
+    type: 'isosurface',
+    x: x, y: y, z: z, value: val,
+    isomin: isoVal, isomax: maxVal,
+    surface: { count: 1, fill: 0.9, pattern: 'odd' },
+    opacity: 0.25,
+    colorscale: 'Viridis',
+    caps: { x: { show: false }, y: { show: false }, z: { show: false } },
+    showscale: false
+  }], {
+    title: {
+      text: `Hydrogen |${n}${orbitalLabel(l)}, m=${m}⟩    E_n = ${energy_Hydrogen_eV(n).toFixed(3)} eV`,
+      font: { size: 13, color: '#e0e0f0' }
+    },
+    scene: {
+      xaxis: { title: 'x (a₀)', gridcolor: '#2a2a3a', zerolinecolor: '#3a3a55', showbackground: false },
+      yaxis: { title: 'y (a₀)', gridcolor: '#2a2a3a', zerolinecolor: '#3a3a55', showbackground: false },
+      zaxis: { title: 'z (a₀)', gridcolor: '#2a2a3a', zerolinecolor: '#3a3a55', showbackground: false },
+      camera: { eye: { x: 1.4, y: 1.4, z: 1.2 } },
+      aspectmode: 'cube'
+    },
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    font: { color: '#e0e0f0', family: 'JetBrains Mono, monospace' },
+    margin: { l: 0, r: 0, b: 0, t: 50 }
+  });
+
+  // ── Update legend panel ──
+  updateAtomLegend(n, l, m);
+}
+
+/* ── LEGEND: orbital name, energy, nodes, state info ─────────── */
+function updateAtomLegend(n, l, m) {
+  const nodes = countNodes(n, l);
+  const label = orbitalLabel(l);
+  const E = energy_Hydrogen_eV(n);
+  const mSign = m > 0 ? '+' : '';
+
+  const legendHTML = `
+    <div class="atom-legend-card">
+      <div class="atom-legend-row">
+        <span class="atom-legend-label">State</span>
+        <span class="atom-legend-value">|${n}${label}, m=${mSign}${m}⟩</span>
+      </div>
+      <div class="atom-legend-row">
+        <span class="atom-legend-label">Energy</span>
+        <span class="atom-legend-value">${E.toFixed(3)} eV</span>
+      </div>
+      <div class="atom-legend-row">
+        <span class="atom-legend-label">Radial nodes</span>
+        <span class="atom-legend-value">${nodes.radial}</span>
+      </div>
+      <div class="atom-legend-row">
+        <span class="atom-legend-label">Angular nodes</span>
+        <span class="atom-legend-value">${nodes.angular}</span>
+      </div>
+      <div class="atom-legend-row">
+        <span class="atom-legend-label">Total nodes</span>
+        <span class="atom-legend-value">${nodes.total}</span>
+      </div>
+      <div class="atom-legend-row">
+        <span class="atom-legend-label">Degeneracy</span>
+        <span class="atom-legend-value">n² = ${n * n}</span>
+      </div>
+    </div>
+  `;
+
+  const legendEl = document.getElementById('atom-legend');
+  if (legendEl) legendEl.innerHTML = legendHTML;
 }
 
 function validateAtomQuantumNumbers() {
@@ -384,6 +487,9 @@ function setSystem(sys) {
     document.getElementById('plot-classical').style.display = (sys === 'qho') ? 'block' : 'none';
     document.getElementById('plot-energy').style.display = (sys === 'qho') ? 'block' : 'none';
     document.getElementById('plot-atom-3d').style.display = (sys === 'atom') ? 'block' : 'none';
+
+    const legendEl = document.getElementById('atom-legend');
+    if (legendEl) legendEl.style.display = (sys === 'atom') ? 'block' : 'none';
     
     if (sys === 'atom') updateAtomPlot();
     else updateWavePlot();

@@ -31,18 +31,18 @@ function plotDOSPlayground(dim) {
 }
 
 function plotDopingEffect(n) {
-  var E = linspace(-0.5, 2, 100);
-  var EF = 0.5 + 0.1 * Math.log10(n / 1e22);
-  var dos3D = E.map(function(e) { return Math.sqrt(Math.max(e, 0.01)); });
+  var E = linspace(0, 2, 100);
+  var dos3D = E.map(function(e) { return Math.sqrt(e); });
+  var EF = 0.026 * Math.log(n / 1e22);
   var fd = E.map(function(e) { return 1 / (1 + Math.exp((e - EF) / 0.026)); });
   var occ = E.map(function(e, i) { return dos3D[i] * fd[i]; });
 
   Plotly.react('plot-doping', [
     { x: E, y: dos3D, mode: 'lines', name: 'DOS D(E)', line: { color: '#00f0ff', width: 2 } },
     { x: E, y: occ, mode: 'lines', name: 'Occupied states', line: { color: '#ff4ecd', width: 2 }, fill: 'tozeroy', fillcolor: 'rgba(255,64,129,0.08)' },
-    { x: [EF, EF], y: [0, Math.max.apply(null, dos3D)], mode: 'lines', line: { color: '#facc15', width: 2, dash: 'dot' }, name: 'E_F = ' + EF.toFixed(2) + ' eV' }
+    { x: [EF, EF], y: [0, Math.max.apply(null, dos3D)], mode: 'lines', line: { color: '#facc15', width: 2, dash: 'dot' }, name: 'E_F = ' + EF.toFixed(3) + ' eV' }
   ], _ext(_dLayout, {
-    title: { text: 'Doping: n = ' + n.toExponential(1) + ' m⁻³ · E_F = ' + EF.toFixed(2) + ' eV', font: { size: 13 } },
+    title: { text: 'Doping: n = ' + n.toExponential(1) + ' m⁻³ · E_F = ' + EF.toFixed(3) + ' eV', font: { size: 13 } },
     xaxis: { title: 'E (eV)' }, yaxis: { title: 'D(E) × f(E)' }
   }), { responsive: true, displayModeBar: false });
 }
@@ -109,20 +109,45 @@ function checkEffectiveMass() {
   var fb = document.getElementById('effmass-feedback');
   // Tie to the state.t from eb_sim.js
   var t_val = (window.state && window.state.t) ? window.state.t : 1.0;
-  // E(k) ≈ ε + t*k² for small k, where k is in units of π/a. To get physical m*:
-  // E(k) = (ħ²π² / (2m*a²)) k², with ħ²/(2m_e*a²) = 0.00301 eV for a=0.5nm.
-  // Comparing to E(k)=t*k² gives t = ħ²π²/(2m*a²) → m*/m_e = ħ²π²/(2t*a²) ≈ 0.152/t.
-  var correctM = 0.152 / t_val; 
-  if (Math.abs(guess - correctM) < 0.15) {
+  // E(k) ≈ ε + 2t·cos(ka). Near k=0: E ≈ ε + 2t - t(ka)².
+  // Curvature |d²E/dk²| = 2ta². Comparing to E = ℏ²k²/(2m*):
+  // m* = ℏ²/(2ta²). For a = 0.5 nm → ℏ²/(2m_e a²) ≈ 1.52 eV.
+  // Therefore m*/m_e = 1.52 / t (numerically for a = 0.5 nm).
+  var correctM = 1.52 / t_val;
+  if (Math.abs(guess - correctM) < 0.2) {
     fb.className = 'challenge-feedback success'; fb.style.display = 'block';
-    fb.innerHTML = '✓ Correct! m* ≈ ℏ²/(2ta²). Higher t = narrower band = lighter mass. GaAs: m* = 0.067 mₑ.';
+    fb.innerHTML = '✓ Correct! m* = ℏ²/(2ta²) ≈ 1.52/t (for a=0.5 nm). Higher t = narrower band = lighter mass. GaAs effective mass ≈ 0.067 mₑ comes from a very different band curvature in real semiconductors.';
     __GameState.addXP(75, 'Effective mass from curvature!');
     __GameState.unlock({ id: 'dos_explorer', title: 'DOS Explorer', desc: 'Calculated effective mass from band curvature', icon: '📐', xp: 25 });
     particleBurst(window.innerWidth / 2, 350, '#c084fc');
   } else {
     fb.className = 'challenge-feedback error'; fb.style.display = 'block';
-    fb.textContent = '✗ Too far. Expanding E(k) near k=0 gives m* ≈ ℏ²/(2ta²). Check the hopping parameter t in the playground!';
+    fb.textContent = '✗ Too far. Expand E(k) ≈ ε + 2t - t(ka)² near k=0, then compare to ℏ²k²/(2m*). Use t from the playground!';
   }
+}
+
+function plotEffectiveMass() {
+  var t_val = (window.state && window.state.t) ? window.state.t : 1.0;
+  var eps = (window.state && window.state.eps) ? window.state.eps : 0.0;
+  var ka = [];
+  var E_tb = [];
+  var E_para = [];
+  for (var i = 0; i <= 100; i++) {
+    var k = (i / 100) * 0.5; // ka from 0 to 0.5
+    ka.push(k);
+    E_tb.push(eps + 2 * t_val * Math.cos(k));
+    E_para.push(eps + 2 * t_val - t_val * k * k);
+  }
+  var correctM = 1.52 / t_val;
+  document.getElementById('effmass-t').textContent = t_val.toFixed(2);
+  Plotly.react('plot-effmass', [
+    { x: ka, y: E_tb, mode: 'lines', name: 'TB: ε + 2t cos(ka)', line: { color: '#00f0ff', width: 2.5 } },
+    { x: ka, y: E_para, mode: 'lines', name: 'Parabolic fit: ε + 2t - t(ka)²', line: { color: '#ff4ecd', width: 2, dash: 'dot' } }
+  ], _ext(_dLayout, {
+    title: { text: 'Band curvature (t=' + t_val.toFixed(2) + ' eV) · m* ≈ ' + correctM.toFixed(2) + ' mₑ', font: { size: 13 } },
+    xaxis: { title: 'ka (dimensionless)' }, yaxis: { title: 'E (eV)' },
+    legend: { x: 0.65, y: 0.95, bgcolor: 'rgba(10,10,15,0.8)', bordercolor: '#2a2a3a', borderwidth: 1 }
+  }), { responsive: true, displayModeBar: false });
 }
 
 var bandgapMaterials = [
@@ -159,7 +184,7 @@ function guessBandgapCat(cat) {
 
 function checkDopingSlider() {
   var targetType = document.getElementById('doping-target-type').textContent;
-  var n = parseFloat(document.getElementById('slider-doping').value);
+  var n = Math.pow(10, parseFloat(document.getElementById('slider-doping').value));
   var fb = document.getElementById('doping-feedback');
   var isNtype = n > 1e21;
   var isPtype = n < 1e19;
@@ -283,8 +308,15 @@ function checkDiracPuzzle() {
 document.addEventListener('DOMContentLoaded', function() {
   var dSlider = document.getElementById('slider-doping');
   if (dSlider) {
+    // Initialize plot with default value
+    var defaultExp = parseFloat(dSlider.value);
+    var defaultN = Math.pow(10, defaultExp);
+    document.getElementById('val-doping').textContent = defaultN.toExponential(1);
+    plotDopingEffect(defaultN);
+
     dSlider.addEventListener('input', function(e) {
-      var n = parseFloat(e.target.value);
+      var exp = parseFloat(e.target.value);
+      var n = Math.pow(10, exp);
       document.getElementById('val-doping').textContent = n.toExponential(1);
       plotDopingEffect(n);
     });
@@ -294,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var orig = setGameMode;
     setGameMode = function(mode) {
       orig(mode);
-      if (mode === 'challenge') { startFermiHunter(); startBandgapDetective(); }
+      if (mode === 'challenge') { startFermiHunter(); startBandgapDetective(); plotEffectiveMass(); }
       if (mode === 'puzzle') { initIntegralPuzzle(); initDiracPuzzle();
         var t = Math.random() > 0.5 ? 'n-type' : 'p-type';
         var el = document.getElementById('doping-target-type');
