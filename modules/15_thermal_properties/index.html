@@ -57,6 +57,15 @@
             </div>
             <canvas id="tp-lattice" style="display:block;width:100%;height:280px;background:var(--bg-elevated);"></canvas>
             <div id="tp-lattice-tooltip" style="position:absolute;padding:4px 8px;background:rgba(10,10,18,0.9);border:1px solid var(--border-subtle);border-radius:6px;font-size:0.78rem;color:var(--text-main);pointer-events:none;opacity:0;transition:opacity 0.15s;z-index:10;"></div>
+            <div style="padding:0.5rem 1rem;display:flex;gap:1.2rem;flex-wrap:wrap;font-size:0.75rem;color:var(--text-muted);border-top:1px solid var(--border-subtle);background:rgba(0,0,0,0.15);">
+              <span><code style="color:#00f0ff;">●</code> Atom</span>
+              <span><code style="color:#ff3c3c;">●</code> Hot &gt; &theta;D</span>
+              <span><code style="color:#2850d4;">●</code> Cold &lt; &theta;D/4</span>
+              <span><code style="color:#7878a0;">―</code> Bond (spring)</span>
+              <span><code style="color:#ffd54f;">○</code> Phonon wave</span>
+              <span><code style="color:#ff7840;">↑</code> Heat cursor</span>
+              <span><code style="color:#78c8ff;">↓</code> Cool cursor</span>
+            </div>
           </div>
           <div class="plot-container" id="plot-cv" style="min-height:280px;"></div>
           <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
