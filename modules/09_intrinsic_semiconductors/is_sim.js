@@ -588,9 +588,6 @@ function disposeIS3D() {
 }
 
 /* ============ PLOTTING ============ */
-function _plotIS(id, traces, lay, cfg) {
-  if (document.getElementById(id)) Plotly.react(id, traces, lay, cfg);
-}
 
 var IS_PLOT_CFG = { responsive: true, displayModeBar: false };
 
@@ -629,7 +626,7 @@ function plotCarrierDensity() {
     effectiveDensity(m.Nv300, isState.T)
   );
 
-  _plotIS('plot-carrier-density', [
+  _plot('plot-carrier-density', [
     { x: T, y: n, mode: 'lines', name: 'n(T)', line: { color: '#00f0ff', width: 2 } },
     { x: T, y: p, mode: 'lines', name: 'p(T)', line: { color: '#ff4ecd', width: 2 } },
     { x: [isState.T, isState.T], y: [1e5, 1e20], mode: 'lines',
@@ -656,7 +653,7 @@ function plotConductivity() {
     sig.push(conductivity(doped.n, doped.p, mu_e, mu_h));
   }
 
-  _plotIS('plot-conductivity', [
+  _plot('plot-conductivity', [
     { x: T, y: sig, mode: 'lines', name: 'σ(T)',
       line: { color: '#00f0ff', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.08)' }
   ], isLayout('Conductivity vs Temperature', 'T (K)', 'σ (S/cm)', {
@@ -671,7 +668,7 @@ function plotBandgapVsT() {
     T.push(t);
     Eg.push(bandgapVarshini(mat, t));
   }
-  _plotIS('plot-bandgap', [
+  _plot('plot-bandgap', [
     { x: T, y: Eg, mode: 'lines', name: 'Eg(T)',
       line: { color: '#ffd740', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(255,215,64,0.08)' }
   ], isLayout('Bandgap vs Temperature (Varshni)', 'T (K)', 'Eg (eV)'), IS_PLOT_CFG);

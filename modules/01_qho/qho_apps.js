@@ -7,22 +7,6 @@
 'use strict';
 
 // ============ HELPERS ============
-function _plotApp(id, traces, layout, cfg) {
-  var el = document.getElementById(id);
-  if (!el) return;
-  if (typeof Plotly === 'undefined') {
-    console.error('[QHO Apps] Plotly not available — cannot render plot #' + id);
-    return;
-  }
-  Plotly.react(id, traces, layout, cfg || {responsive: true, displayModeBar: false});
-}
-
-function linspace(a, b, n) {
-  var arr = new Array(n);
-  for (let i = 0; i < n; i++) arr[i] = a + i * (b - a) / (n - 1);
-  return arr;
-}
-
 // ============ APP 1: IR SPECTRUM (already in main engine, enhanced) ============
 function plotIRApp(xe) {
   var nu = [];

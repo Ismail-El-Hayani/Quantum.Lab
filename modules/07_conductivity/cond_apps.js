@@ -5,13 +5,7 @@
 
 'use strict';
 
-function _plotApp(id, traces, layout, cfg) {
-  var el = document.getElementById(id);
-  if (!el) return;
-  Plotly.react(id, traces, layout, cfg || {responsive: true, displayModeBar: false});
-}
-
-function linspace(a, b, n) { var arr = new Array(n); for (let i = 0; i < n; i++) arr[i] = a + i * (b - a) / (n - 1); return arr; }
+function plotWiedemannFranz() {
 
 // ============ APP 1: I-V CURVES (Ohmic vs Non-Ohmic) ============
 function plotIVCurve(T_K) {

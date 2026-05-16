@@ -114,10 +114,6 @@ function computeDOS(dim, N) {
 }
 
 /* ====== helpers ====== */
-function _plot(id, traces, lay, cfg) {
-  if (document.getElementById(id)) Plotly.react(id, traces, lay, cfg);
-}
-
 const PLOT_CFG = { responsive: true, displayModeBar: true, scrollZoom: true };
 
 function layout(title, xtitle, ytitle, extra) {

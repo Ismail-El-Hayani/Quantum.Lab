@@ -95,16 +95,6 @@ function coherentState(alpha_re, alpha_im, xArr, t) {
   return { re: re, im: im, prob: prob, x0: x0, p0: p0 };
 }
 
-function _plot(id, traces, lay, cfg) {
-  var el = document.getElementById(id);
-  if (!el) return;
-  if (typeof Plotly === 'undefined') {
-    console.error('[QHO] Plotly not available — cannot render plot #' + id);
-    return;
-  }
-  Plotly.react(id, traces, lay, cfg || {responsive: true, displayModeBar: false});
-}
-
 // ── STATE ───────────────────────────────────────────────────
 var state = {
   system: 'qho',               // 'qho' | 'atom'

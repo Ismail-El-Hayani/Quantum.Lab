@@ -57,10 +57,6 @@ function blochGrueneisen(T, thetaD) {
   return 1.6 * x;
 }
 
-function _plot(id, traces, lay, cfg) {
-  if (document.getElementById(id)) Plotly.react(id, traces, lay, cfg);
-}
-
 const PLOT_CFG = { responsive: true, displayModeBar: false };
 
 function layout(title, xtitle, ytitle, extra) {

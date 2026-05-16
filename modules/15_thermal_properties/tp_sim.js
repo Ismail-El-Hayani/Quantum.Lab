@@ -9,9 +9,6 @@ var kB_J = 1.381e-23;
 var R_gas = 8.314;
 var h = 6.626e-34;
 
-function _plotTP(id, traces, lay, cfg) {
-  if (document.getElementById(id)) Plotly.react(id, traces, lay, cfg);
-}
 
 function tpLayout(title, xtitle, ytitle, extra) {
   return Object.assign({
@@ -70,7 +67,7 @@ function plotCv() {
     cvElectronic.push(tpState.type === 'metal' ? electronicCv(t, tpState.gammaEl) : 0);
     cvDulong.push(3 * R_gas);
   }
-  _plotTP('plot-cv', [
+  _plot('plot-cv', [
     { x: T, y: cvTotal, mode: 'lines', name: 'Cv total', line: { color: '#00f0ff', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.06)' },
     { x: T, y: cvLattice, mode: 'lines', name: 'Lattice (Debye)', line: { color: '#ff4ecd', width: 2 } },
     { x: T, y: cvElectronic, mode: 'lines', name: 'Electronic (γT)', line: { color: '#ffd54f', width: 2 } },
@@ -92,7 +89,7 @@ function plotThermalConductivity() {
     var sigma = (tpState.type === 'metal') ? 1e7 : 0;
     kappaEl.push(tpState.type === 'metal' ? 2.44e-8 * sigma * t : 0);
   }
-  _plotTP('plot-kappa', [
+  _plot('plot-kappa', [
     { x: T, y: kappaPh, mode: 'lines', name: 'κphonon', line: { color: '#00f0ff', width: 2 }, fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.04)' },
     { x: T, y: kappaEl, mode: 'lines', name: 'κelectron (WF)', line: { color: '#ffd54f', width: 2 } }
   ], tpLayout(null, 'Temperature (K)', 'κ (W/m·K)'), PLOT_CFG);

@@ -29,8 +29,7 @@ var __COND = {
   superState: {}
 };
 
-function linspace(a, b, n) { var arr = new Array(n); for (var i = 0; i < n; i++) arr[i] = a + i * (b - a) / (n - 1); return arr; }
-
+// ===== PLAYGROUND: I-V & Hall Effect =====
 function plotMeanFreePath() {
   var T = linspace(10, 500, 100);
   var l_ph = T.map(function(t) { return 40 * (300 / Math.max(t, 50)); });

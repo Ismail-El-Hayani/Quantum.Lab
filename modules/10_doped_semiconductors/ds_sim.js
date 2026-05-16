@@ -66,9 +66,6 @@ function conductivity(T, n, p, mat) {
 }
 
 /* ---- Plotting helpers ---- */
-function _plotDS(id, traces, lay, cfg) {
-  if (document.getElementById(id)) Plotly.react(id, traces, lay, cfg);
-}
 const PLOT_CFG = { responsive: true, displayModeBar: false };
 function dsLayout(title, xtitle, ytitle, extra) {
   const base = {
@@ -104,7 +101,7 @@ function plotFermiShift() {
     Ec.push(mat.Eg);
     Ev.push(0);
   }
-  _plotDS('plot-fermi-shift', [
+  _plot('plot-fermi-shift', [
     { x: T, y: Ec, mode: 'lines', name: 'Ec', line: { color: '#ff4ecd', width: 2, dash: 'dash' } },
     { x: T, y: Ev, mode: 'lines', name: 'Ev', line: { color: '#4ade80', width: 2, dash: 'dash' } },
     { x: T, y: Ef, mode: 'lines', name: 'EF (doped)', line: { color: '#00f0ff', width: 2.5 }, fill: 'tonexty', fillcolor: 'rgba(0,240,255,0.06)' },
@@ -122,7 +119,7 @@ function plotCarrierTemp() {
     p.push(c.p);
     ni_arr.push(c.ni);
   }
-  _plotDS('plot-carrier-temp', [
+  _plot('plot-carrier-temp', [
     { x: T, y: n, mode: 'lines', name: 'n (electrons)', line: { color: '#00f0ff', width: 2 } },
     { x: T, y: p, mode: 'lines', name: 'p (holes)', line: { color: '#ff4ecd', width: 2 } },
     { x: T, y: ni_arr, mode: 'lines', name: 'ni', line: { color: '#ffd54f', width: 1.5, dash: 'dot' } }
@@ -137,7 +134,7 @@ function plotConductivityDoped() {
     var c = solveCarriers(t, dsState.Nd, dsState.Na, mat);
     sigma.push(conductivity(t, c.n, c.p, mat));
   }
-  _plotDS('plot-conductivity-doped', [
+  _plot('plot-conductivity-doped', [
     { x: T, y: sigma, mode: 'lines', name: '\u03c3(T)', line: { color: '#00f0ff', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.06)' }
   ], dsLayout(null, 'Temperature (K)', 'Conductivity (S/cm)'), PLOT_CFG);
 }

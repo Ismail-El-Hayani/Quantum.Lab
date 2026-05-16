@@ -4,9 +4,6 @@
  * temperature-dependent M-T curve, material presets with Tc.
  */
 'use strict';
-function _plotMAG(id, traces, lay, cfg) {
-  if (document.getElementById(id)) Plotly.react(id, traces, lay, cfg);
-}
 const PLOT_CFG = { responsive: true, displayModeBar: false };
 function magLayout(title, xtitle, ytitle, extra) {
   const base = {
@@ -59,7 +56,7 @@ function plotSusceptibility() {
     chiCW.push(cw);
     chiDia.push(-0.001);
   }
-  _plotMAG('plot-susceptibility', [
+  _plot('plot-susceptibility', [
     { x: T, y: chiC, mode: 'lines', name: 'χ = C/T (Curie)', line: { color: '#00f0ff', width: 2 } },
     { x: T, y: chiCW, mode: 'lines', name: 'χ = C/(T-θ) (Weiss)', line: { color: '#ff4ecd', width: 2 } },
     { x: T, y: chiDia, mode: 'lines', name: 'Diamagnetism', line: { color: '#ffd54f', width: 1.5, dash: 'dot' } },
@@ -75,7 +72,7 @@ function plotMagnetizationCurve() {
     T.push(t);
     M.push(magnetization(t, magState.Tc, magState.Ms));
   }
-  _plotMAG('plot-M-T', [
+  _plot('plot-M-T', [
     { x: T, y: M, mode: 'lines', name: 'M(T)', line: { color: '#00f0ff', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.06)' },
     { x: [magState.Tc, magState.Tc], y: [0, magState.Ms], mode: 'lines', line: { color: '#facc15', width: 1.5, dash: 'dash' }, showlegend: false, hoverinfo: 'skip' }
   ], magLayout(null, 'Temperature (K)', 'M / M_s', {
@@ -99,7 +96,7 @@ function plotHysteresis() {
     else if (h < -Hc_eff) M.push(-Ms * Math.tanh((h + Hc_eff) / -0.01));
     else M.push(Ms * (h / Math.max(Hc_eff, 1e-6)));
   }
-  _plotMAG('plot-hysteresis', [
+  _plot('plot-hysteresis', [
     { x: H, y: M, mode: 'lines', name: 'M(H)', line: { color: '#4ade80', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(74,222,128,0.06)' }
   ], magLayout(null, 'H (arb.)', 'M (arb.)', {
     annotations: [

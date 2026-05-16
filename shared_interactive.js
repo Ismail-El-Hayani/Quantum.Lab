@@ -282,3 +282,18 @@ var LevelProgression = {
   advance: function(module) { this.levels[module] = (this.levels[module] || 1) + 1; },
   reset: function(module) { this.levels[module] = 1; }
 };
+
+// ===== SHARED MATH UTILITIES =====
+function linspace(a, b, n) {
+  var arr = new Array(n);
+  for (var i = 0; i < n; i++) arr[i] = a + i * (b - a) / (n - 1);
+  return arr;
+}
+
+// ===== PLOTLY HELPER =====
+function _plot(id, traces, lay, cfg) {
+  var el = document.getElementById(id);
+  if (!el || typeof Plotly === 'undefined') return;
+  Plotly.react(id, traces, lay, cfg || {responsive: true, displayModeBar: false});
+}
+var _plotApp = _plot;

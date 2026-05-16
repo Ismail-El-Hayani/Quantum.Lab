@@ -8,12 +8,6 @@
 /* ---------- Shortcuts ---------- */
 var H = window.HydrogenLab;
 
-function _plotApp(id, traces, layout, cfg) {
-  var el = document.getElementById(id);
-  if (!el || typeof Plotly === 'undefined') return;
-  Plotly.react(id, traces, layout, cfg || { responsive: true, displayModeBar: false });
-}
-
 function _ext(base, over) {
   var out = JSON.parse(JSON.stringify(base));
   for (var k in over) {
@@ -45,12 +39,6 @@ var __H = {
   orbitalState: {},
   hundState: {}
 };
-
-function linspace(a, b, n) {
-  var arr = new Array(n);
-  for (var i = 0; i < n; i++) arr[i] = a + i * (b - a) / (n - 1);
-  return arr;
-}
 
 /* ---------- Playground Plots ---------- */
 function plotHydrogen(n, l) {

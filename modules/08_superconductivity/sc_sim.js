@@ -53,9 +53,6 @@ function susceptibility(T, Tc, H) {
   return 0;
 }
 
-function _plotSC(id, traces, lay, cfg) {
-  if (document.getElementById(id)) Plotly.react(id, traces, lay, cfg);
-}
 
 const PLOT_CFG = { responsive: true, displayModeBar: false };
 
@@ -85,7 +82,7 @@ function plotGapVsTemp() {
     gap.push(r * gap0);
   }
 
-  _plotSC('plot-gap-temp', [
+  _plot('plot-gap-temp', [
     { x: T, y: gap, mode: 'lines', name: 'Δ(T)',
       line: { color: '#00f0ff', width: 2.5 },
       fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.08)'
@@ -123,7 +120,7 @@ function plotMagnetization() {
     }
   }
 
-  _plotSC('plot-magnetization', [
+  _plot('plot-magnetization', [
     { x: T, y: M, mode: 'lines', name: 'χ = M/H',
       line: { color: '#00f0ff', width: 2.5 },
       fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.08)'
@@ -155,7 +152,7 @@ function plotPenetration() {
     }
   }
 
-  _plotSC('plot-penetration', [
+  _plot('plot-penetration', [
     { x: x, y: B, mode: 'lines', name: 'B(x)/B₀',
       line: { color: '#00f0ff', width: 2.5 },
       fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.08)'

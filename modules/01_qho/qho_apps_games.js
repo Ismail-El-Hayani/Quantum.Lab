@@ -39,12 +39,6 @@ function qhoPsi(n, x) {
 
 function qhoProb(n, x) { return qhoPsi(n, x) * qhoPsi(n, x); }
 
-function linspace(a, b, n) {
-  var arr = new Array(n);
-  for (var i = 0; i < n; i++) arr[i] = a + i * (b - a) / (n - 1);
-  return arr;
-}
-
 // ===== PLOTLY SHORTCUT (dark theme) =====
 var _darkLayout = {
   paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#e0e0f0', size: 11 },

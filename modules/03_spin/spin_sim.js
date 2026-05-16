@@ -139,10 +139,6 @@ function layout(title, xtitle, ytitle, extra) {
   return Object.assign(base, extra || {});
 }
 
-function _plot(id, traces, lay, cfg) {
-  if (document.getElementById(id)) Plotly.react(id, traces, lay, cfg);
-}
-
 // ===== A. PLAYGROUND =====
 function plotBlochSphere() {
   const a = getAmplitudes(state.theta, state.phi);

@@ -24,8 +24,6 @@ var __EB = {
   challenge: { active: false, score: 0, combo: 0, timeLeft: 60, streak: 0, timer: null },
 };
 
-function linspace(a, b, n) { var arr = new Array(n); for (var i = 0; i < n; i++) arr[i] = a + i * (b - a) / (n - 1); return arr; }
-
 function plotDOSPlayground(dim) {
   if (window.setEBDim) window.setEBDim(dim);
 }

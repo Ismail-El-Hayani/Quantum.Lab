@@ -42,7 +42,6 @@ function chemicalPotential(EF, T) {
   var r = kB_eV * T / EF;
   return EF * (1 - (Math.PI * Math.PI / 12) * r * r);
 }
-function linspace(a, b, n) { var arr = new Array(n); for (var i = 0; i < n; i++) arr[i] = a + i * (b - a) / (n - 1); return arr; }
 function deBroglie(T) {
   var m = 9.109e-31, kB = 1.381e-23, h = 6.626e-34;
   return (h / Math.sqrt(2 * Math.PI * m * kB * T)) * 1e9;

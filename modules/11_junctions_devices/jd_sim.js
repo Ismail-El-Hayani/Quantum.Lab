@@ -46,10 +46,6 @@ function Wdep(Na,Nd,VbiV,Vbias,T){
 function idealDiodeI(V,T,I0,n){ return I0*(Math.exp(V/(n*kB_eV*T))-1); }
 
 /* safe Plotly */
-function _plotJD(id,traces,lay,cfg){
-  var el=document.getElementById(id); if(!el || typeof Plotly==='undefined') return;
-  Plotly.react(id,traces,lay,cfg||{responsive:true,displayModeBar:false});
-}
 function jdLayout(title,xt,yt,extra){
   var base={margin:{t:25,r:10,b:45,l:55},paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',
     font:{family:'JetBrains Mono, monospace',color:'#8080a0',size:11},
@@ -577,7 +573,7 @@ function plotDiodeIV(){
   for(var v=0;v<=Vmax;v+=0.01){Vf.push(v);If.push(idealDiodeI(v,T,I0,1.0));}
   for(var v2=0;v2>=Vmin;v2-=0.01){Vr.push(v2);Ir.push(idealDiodeI(v2,T,I0,1.0));}
   var Vsc=Vf.slice(); var Isc=Vsc.map(function(v){return idealDiodeI(v,T,I0,1.0)-JD.photons;});
-  _plotJD('plot-diode-iv',[
+  _plot('plot-diode-iv',[
     {x:Vf,y:If,mode:'lines',name:'Dark I(V)',line:{color:'#00f0ff',width:2}},
     {x:Vr,y:Ir,mode:'lines',name:'Reverse I(V)',line:{color:'#ff4ecd',width:2}},
     {x:Vsc,y:Isc,mode:'lines',name:'Irradiated I(V)',line:{color:'#ffd54f',width:2,dash:'dash'}}
@@ -595,7 +591,7 @@ function plotZenerIV(){
     if(v<breakdown){ var tun=0.05*Math.exp(3*(breakdown-v)); base-=tun; }
     I.push(base);
   }
-  _plotJD('plot-zener-iv',[
+  _plot('plot-zener-iv',[
     {x:V,y:I,mode:'lines',name:'Zener I(V)',line:{color:'#ff4ecd',width:2.5},fill:'tozeroy',fillcolor:'rgba(255,78,205,0.06)'}
   ],jdLayout(null,'Voltage V (V)','Current I (A)',{
     shapes:[{type:'line',x0:0,x1:0,y0:-1,y1:1,line:{color:'#8080a0',width:1,dash:'dot'}}],
@@ -612,7 +608,7 @@ function plotTunnelIV(){
     else if(v<Vv) I.push( Iv + (Ip-Iv)*Math.exp(-(v-Vp)/0.08) );
     else I.push( I0*(Math.exp(v/(kB_eV*T))-1) + Iv*Math.exp(-(v-Vv)/0.15) );
   }
-  _plotJD('plot-tunnel-iv',[
+  _plot('plot-tunnel-iv',[
     {x:V,y:I,mode:'lines',name:'Tunnel I(V)',line:{color:'#00f0ff',width:2.5},fill:'tozeroy',fillcolor:'rgba(0,240,255,0.06)'}
   ],jdLayout(null,'Voltage V (V)','Current I (A)',{
     shapes:[{type:'line',x0:0,x1:0,y0:-1e-5,y1:5e-5,line:{color:'#8080a0',width:1,dash:'dot'}}],
@@ -649,7 +645,7 @@ function plotMOSFETIV(){
     return {x:Vd,y:Id,mode:'lines',name:'Vg='+Vg.toFixed(2)+'V',line:{color:colors[col],width:2}};
   });
   var yt=(JD.device==='pmos')?'Ids (p-MOS)':'Ids (n-MOS)';
-  _plotJD(cid,traces,jdLayout(null,'Vds (V)',yt+' (mA)',{
+  _plot(cid,traces,jdLayout(null,'Vds (V)',yt+' (mA)',{
     shapes:[{type:'line',x0:0,x1:0,y0:-1,y1:5,line:{color:'#8080a0',width:1,dash:'dot'}}]
   }),{responsive:true,displayModeBar:false});
 }
@@ -669,7 +665,7 @@ function plotTransfer(){
       else Id.push(mu*Cox*(Wch/Lch)*Math.pow(vg-Vth,2)/2*1e-6);
     }
   }
-  _plotJD(cid,[
+  _plot(cid,[
     {x:Vg,y:Id,mode:'lines',name:'Transfer',line:{color:'#ffd54f',width:2.5},fill:'tozeroy',fillcolor:'rgba(255,213,79,0.06)'}
   ],jdLayout(null,'Vgs (V)','Ids (mA)',{shapes:[{type:'line',x0:Vth,x1:Vth,y0:0,y1:Math.max.apply(null,Id),line:{color:'#ff4ecd',width:1,dash:'dot'}}]}),{responsive:true,displayModeBar:false});
 }
@@ -695,7 +691,7 @@ function plotDepletion(){
     Ev.push(Ec[Ec.length-1]-1.12);
     Wn.push(inN?w*1e-7:0); Wp.push(inP?w*1e-7:0);// placeholder for region fill
   }
-  _plotJD(cid,[
+  _plot(cid,[
     {x:x,y:Ec,mode:'lines',name:'Ec',line:{color:'#ff4ecd',width:2}},
     {x:x,y:Ev,mode:'lines',name:'Ev',line:{color:'#4ade80',width:2}}
   ],jdLayout(null,'Position x (nm)','Energy (eV)'),{responsive:true,displayModeBar:false});

@@ -133,10 +133,6 @@ function solveTunneling(E, V0, w, x_range) {
 }
 
 // ============ PLOTTING ============
-function _plot(id, traces, lay, cfg) {
-  if (document.getElementById(id)) Plotly.react(id, traces, lay, cfg);
-}
-
 function plotPotential(){
   let x=[], V=[];
   const a=state.a, b=state.b, V0=state.V0;

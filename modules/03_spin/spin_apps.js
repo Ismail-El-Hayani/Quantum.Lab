@@ -5,14 +5,6 @@
 
 'use strict';
 
-function _plotApp(id, traces, layout, cfg) {
-  var el = document.getElementById(id);
-  if (!el) return;
-  Plotly.react(id, traces, layout, cfg || {responsive: true, displayModeBar: false});
-}
-
-function linspace(a, b, n) { var arr = new Array(n); for (let i = 0; i < n; i++) arr[i] = a + i * (b - a) / (n - 1); return arr; }
-
 // ============ APP 1: STERN-GERLACH MEASUREMENT PROBABILITY ============
 function plotSG(theta_deg) {
   var theta = theta_deg * Math.PI / 180;
