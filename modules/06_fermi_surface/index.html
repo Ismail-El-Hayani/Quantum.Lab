@@ -84,6 +84,18 @@
         </div>
       </div>
 
+      <div class="challenge-panel" style="margin:1rem 0;">
+        <div style="font-size:0.8rem;color:var(--text-dim);line-height:1.6;"
+        >
+          <strong style="color:var(--text-main);">Canvas &middot; k-space occupation snapshot.</strong>
+          Each dot is a momentum state (kx, ky). Its colour encodes Fermi-Dirac occupation f(E).
+          At <em>T = 0</em>, the circle is razor-sharp: every state inside k<sub>F</sub> is filled, every state outside is empty.
+          At finite <em>T</em>, only electrons within ~k<sub>B</sub>T of the Fermi surface can be thermally excited
+          into empty states, so the edge blurs into a pink thermal shell. The Brillouin-zone boundary (dashed square)
+          shows the crystal limit where free-electron sphere might distort.
+        </div>
+      </div>
+
       <div style="display:grid; grid-template-columns: 1fr 320px; gap: 1.5rem;">
         <div>
           <div class="plot-container" id="plot-fd" style="min-height:380px;"></div>
@@ -164,6 +176,26 @@
               <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">📊</span>
               <span class="challenge-title">Live Readout</span>
             </div>
+
+            <!-- Canvas legend mirror in control panel -->
+            <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:0.6rem;">
+              <div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;">
+                <span style="width:8px;height:8px;border-radius:50%;background:rgba(0,240,255,0.9);display:inline-block;"></span> Occupied state (f ≈ 1)
+              </div>
+              <div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;">
+                <span style="width:8px;height:8px;border-radius:50%;background:rgba(255,78,205,0.7);display:inline-block;"></span> Thermal shell (0.15 < f < 0.85)
+              </div>
+              <div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;">
+                <span style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.12);display:inline-block;"></span> Empty state (f ≈ 0)
+              </div>
+              <div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;">
+                <span style="width:10px;height:1.5px;border-bottom:1.5px dashed rgba(0,240,255,0.4);display:inline-block;"></span> k<sub>F</sub> (Fermi wavevector)
+              </div>
+              <div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;">
+                <span style="width:10px;height:3px;background:rgba(255,255,255,0.15);display:inline-block;"></span> Brillouin-zone boundary
+              </div>
+            </div>
+
             <table>
               <tr><th>Quantity</th><th>Value</th></tr>
               <tr><td>Temperature</td><td class="highlight-num" id="live-T">300 K</td></tr>

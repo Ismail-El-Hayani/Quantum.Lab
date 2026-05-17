@@ -395,7 +395,42 @@
       <div class="plot-container" id="plot-laser-levels" style="height:200px;margin-top:1rem;"></div>
     </div>
 
-    <!-- CHALLENGE 3: Removed -->
+    <!-- CHALLENGE 3: Zero-Point Race -->
+    <div class="challenge-panel">
+      <div class="challenge-header">
+        <span class="challenge-icon" style="background:rgba(74,222,128,0.12);">🏎</span>
+        <span class="challenge-title">Challenge 3: Zero-Point Race</span>
+        <span class="challenge-difficulty hard">Hard</span>
+      </div>
+      <div class="challenge-desc">
+        The particle must never stop (zero-point energy). Freeze it at absolute zero — but you can't! 
+        Answer: the minimum uncertainty Δx·Δp = ℏ/2 <em>prevents</em> the particle from sitting still.
+        Can you beat the uncertainty principle?
+      </div>
+      <div class="challenge-reward">🏆 Reward: 100 XP + "Uncertainty Crusher" badge</div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
+        <div>
+          <p style="font-size:0.9rem;color:var(--text-main);margin-bottom:1rem;">
+            <strong>Question:</strong> If we measure the position of a ground-state QHO particle to be exactly at x = 0, what happens to its momentum uncertainty?
+          </p>
+          <div class="btn-group" style="flex-direction:column;gap:0.5rem;">
+            <button class="btn" onclick="checkZeroPointAnswer('infinite')">Δp → ∞ (momentum is completely uncertain)</button>
+            <button class="btn" onclick="checkZeroPointAnswer('zero')">Δp → 0 (momentum is known perfectly)</button>
+            <button class="btn" onclick="checkZeroPointAnswer('same')">Δp stays the same</button>
+            <button class="btn" onclick="checkZeroPointAnswer('violated')">The uncertainty principle is violated</button>
+          </div>        
+        </div>
+        <div id="zero-point-anim" style="background:var(--bg-elevated);border-radius:var(--radius-sm);min-height:200px;display:flex;align-items:center;justify-content:center;">
+          <div style="text-align:center;color:var(--text-dim);font-size:0.9rem;">
+            <div style="font-size:3rem;margin-bottom:0.5rem;">❄</div>
+            Particle at T = 0 K
+            <br/><span style="font-size:0.75rem;">Still vibrating!</span>
+          </div>
+        </div>
+      </div>
+      <div id="zero-point-feedback" class="challenge-feedback"></div>
+    </div>
 
   </div>
 
@@ -597,31 +632,4 @@
 <script src="../../shared_effects.js"></script>
 <script src="qho_apps_games.js"></script>
 </body>
-<script>
-(function(){
-  var log = [];
-  function out(msg){ log.push(msg); }
-  
-  out('Plotly exists: ' + (typeof Plotly !== 'undefined'));
-  out('Plotly.react exists: ' + (typeof Plotly !== 'undefined' && typeof Plotly.react === 'function'));
-  
-  var el = document.getElementById('plot-psi');
-  out('plot-psi found: ' + !!el);
-  if (el) {
-    out('plot-psi w=' + el.offsetWidth + ' h=' + el.offsetHeight);
-  }
-  
-  try {
-    updateWavePlot();
-    out('updateWavePlot() OK');
-  } catch(e) {
-    out('updateWavePlot() ERROR: ' + e.message);
-  }
-  
-  var panel = document.createElement('div');
-  panel.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#111;color:#0f0;padding:12px;font-family:monospace;font-size:13px;border-top:2px solid #0f0;max-height:200px;overflow:auto;';
-  panel.innerHTML = '<strong>DIAGNOSTICS (refresh to update):</strong><br>' + log.join('<br>');
-  document.body.appendChild(panel);
-})();
-</script>
 </html>
