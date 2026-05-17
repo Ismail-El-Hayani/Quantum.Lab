@@ -212,8 +212,10 @@ function plotTargetWave(n) {
   if (_qhoPlotCheck()) Plotly.react('challenge-target-plot', [
     { x: x, y: target, mode: 'lines', line: { color: '#8080a0', width: 2, dash: 'dash' } }
   ], _extend(_darkLayout, {
+    title: { text: 'Target Wavefunction — guess n!', font: { size: 12, color: '#e0e0f0' } },
     xaxis: { showticklabels: false }, yaxis: { showticklabels: false, range: [-0.8, 0.8] },
-    margin: { l: 20, r: 20, t: 10, b: 10 }, showlegend: false
+    margin: { l: 20, r: 20, t: 30, b: 10 }, showlegend: false,
+    annotations: [{ x: 0.5, y: 0.95, xref: 'paper', yref: 'paper', text: 'Dashed = hidden state', font: { size: 9, color: '#8080a0' }, showarrow: false }]
   }), { responsive: true, displayModeBar: false });
 }
 
@@ -223,8 +225,10 @@ function plotUserWave(n) {
   if (_qhoPlotCheck()) Plotly.react('challenge-user-plot', [
     { x: x, y: user, mode: 'lines', line: { color: '#00f0ff', width: 2 } }
   ], _extend(_darkLayout, {
+    title: { text: 'Your Wavefunction n=' + n, font: { size: 12, color: '#e0e0f0' } },
     xaxis: { showticklabels: false }, yaxis: { showticklabels: false, range: [-0.8, 0.8] },
-    margin: { l: 20, r: 20, t: 10, b: 10 }, showlegend: false
+    margin: { l: 20, r: 20, t: 30, b: 10 }, showlegend: false,
+    annotations: [{ x: 0.5, y: 0.95, xref: 'paper', yref: 'paper', text: 'Solid = your guess', font: { size: 9, color: '#e0e0f0' }, showarrow: false }]
   }), { responsive: true, displayModeBar: false });
 }
 
@@ -317,10 +321,11 @@ function plotLaserLevels() {
     });
   }
   if (_qhoPlotCheck()) Plotly.react('plot-laser-levels', levels, _extend(_darkLayout, {
-    title: { text: 'Energy Levels', font: { size: 12 } },
+    title: { text: 'Laser coupling — energy levels Eₙ = ℏω(n + ½)', font: { size: 12, color: '#e0e0f0' } },
     xaxis: { range: [0, 1], showticklabels: false },
     yaxis: { title: 'E / ℏω', gridcolor: '#2a2a3a' },
-    margin: { l: 40, r: 10, t: 30, b: 20 }, showlegend: false
+    margin: { l: 50, r: 10, t: 40, b: 20 }, showlegend: false,
+    annotations: [{ x: 0.5, y: 0.01, xref: 'paper', yref: 'paper', text: 'Photon absorption: n → n+1 at ΔE = ℏω', font: { size: 9, color: '#8080a0' }, showarrow: false }]
   }), { responsive: true, displayModeBar: false });
 }
 
@@ -585,10 +590,14 @@ function initSelectionRules() {
   });
 
   if (_qhoPlotCheck()) Plotly.react('plot-selection', traces, _extend(_darkLayout, {
-    title: { text: 'QHO Energy Levels', font: { size: 12 } },
+    title: { text: 'QHO Selection Rules — Δn = ±1 (dipole operator x)', font: { size: 12, color: '#e0e0f0' } },
     xaxis: { range: [0, 1], showticklabels: false },
     yaxis: { title: 'E / ℏω', range: [0, 6], gridcolor: '#2a2a3a' },
-    margin: { l: 40, r: 40, t: 30, b: 20 }, showlegend: false
+    margin: { l: 40, r: 40, t: 40, b: 20 }, showlegend: false,
+    annotations: [
+      { x: 0.02, y: 0.95, xref: 'paper', yref: 'paper', text: 'Allowed transitions require parity change', font: { size: 9, color: '#8080a0' }, showarrow: false },
+      { x: 0.5, y: 0.02, xref: 'paper', yref: 'paper', text: 'Click buttons below to toggle Allowed / Forbidden', font: { size: 9, color: '#00f0ff' }, showarrow: false }
+    ]
   }), { responsive: true, displayModeBar: false });
 
   // Buttons

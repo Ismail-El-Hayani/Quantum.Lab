@@ -141,17 +141,19 @@ function updateWavePlot() {
             state.mode === 'superposition' ? (state.cn*state.cn*energy_n(state.n) + state.cm*state.cm*energy_n(state.m)) :
             (state.alpha_re*state.alpha_re + state.alpha_im*state.alpha_im + 0.5);
   const xTP = Math.sqrt(2 * E);
-  traces.push({ x: [xTP, xTP], y: [-2, 2], mode: 'lines', line: { color: '#4ade80', width: 1.5, dash: 'dot' }, showlegend: false });
-  traces.push({ x: [-xTP, -xTP], y: [-2, 2], mode: 'lines', line: { color: '#4ade80', width: 1.5, dash: 'dot' }, showlegend: false });
+  traces.push({ x: [xTP, xTP], y: [-2, 2], mode: 'lines', name: 'Turning point +√(2E)', line: { color: '#4ade80', width: 1.5, dash: 'dot' }, showlegend: true });
+  traces.push({ x: [-xTP, -xTP], y: [-2, 2], mode: 'lines', name: 'Turning point −√(2E)', line: { color: '#4ade80', width: 1.5, dash: 'dot' }, showlegend: true });
   if (state.mode === 'coherent') {
     traces.push({ x: [x0], y: [0], mode: 'markers', marker: { size: 16, color: '#ffd54f', symbol: 'diamond', line: { color: '#fff', width: 1 } }, name: '⟨x⟩', showlegend: true });
   }
   const layout = {
-    title: { text: state.mode === 'eigenstate' ? 'Eigenstate |' + state.n + '⟩' : state.mode === 'superposition' ? 'Superposition' : 'Coherent State', font: { size: 13, color: '#e0e0f0' } },
-    xaxis: { title: 'x', gridcolor: '#2a2a3a', zerolinecolor: '#3a3a55', range: [-state.xRange, state.xRange] },
+    title: { text: state.mode === 'eigenstate' ? 'Eigenstate |' + state.n + '⟩ — Re ψ, Im ψ, |ψ|²' : state.mode === 'superposition' ? 'Superposition |Ψ⟩ = c₀|n⟩ + c₁|m⟩' : 'Coherent State |α⟩ — displaced Gaussian packet', font: { size: 13, color: '#e0e0f0' } },
+    xaxis: { title: 'x (in units of √(ℏ/mω) )', gridcolor: '#2a2a3a', zerolinecolor: '#3a3a55', range: [-state.xRange, state.xRange] },
     yaxis: { title: 'Amplitude', gridcolor: '#2a2a3a', range: [-1.2, 1.4] },
     paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#e0e0f0', family: 'JetBrains Mono, monospace' },
-    margin: { l: 50, r: 20, t: 50, b: 40 }
+    margin: { l: 50, r: 20, t: 50, b: 40 },
+    showlegend: true,
+    legend: { x: 1.02, y: 1, bgcolor: 'rgba(10,10,15,0.85)', font: { color: '#e0e0e0' }, bordercolor: '#2a2a3a', borderwidth: 1 }
   };
   _plot('plot-psi', traces, layout);
   updateWigner();
@@ -170,11 +172,13 @@ function updateEnergyPlot() {
     levels.push({ x: [0, 1], y: [k + 0.5, k + 0.5], mode: 'lines', line: { color: active ? '#00f0ff' : '#2a2a3a', width: active ? 3 : 1 }, showlegend: false });
   }
   _plot('plot-energy', levels, {
-    title: { text: 'Energy eigenvalues Eₙ', font: { size: 13, color: '#e0e0f0' } },
+    title: { text: 'Energy eigenvalues Eₙ = ℏω(n + ½) — golden spacing', font: { size: 13, color: '#e0e0f0' } },
     xaxis: { visible: false, range: [0, 1] },
     yaxis: { title: 'E / ħω', gridcolor: '#2a2a3a', dtick: 1, range: [-0.2, maxN + 1] },
     paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#e0e0f0', family: 'JetBrains Mono, monospace' },
-    margin: { l: 50, r: 20, t: 40, b: 20 }
+    margin: { l: 50, r: 20, t: 50, b: 20 },
+    showlegend: true,
+    legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(10,10,15,0.85)', font: { color: '#e0e0e0' }, bordercolor: '#2a2a3a', borderwidth: 1 }
   });
 }
 
@@ -192,17 +196,18 @@ function updateClassicalPlot(E) {
     return psi * psi;
   });
   _plot('plot-classical', [
-    { x: xArr, y: xQuantum, mode: 'lines', name: '|ψ|² (quantum)', line: { color: '#ffd54f', width: 2 }, fill: 'tozeroy', fillcolor: 'rgba(255,213,79,0.1)' },
+    { x: xArr, y: xQuantum, mode: 'lines', name: '|ψₙ|² (quantum)', line: { color: '#ffd54f', width: 2 }, fill: 'tozeroy', fillcolor: 'rgba(255,213,79,0.1)' },
     { x: [xCl, xCl], y: [-0.5, 1.5], mode: 'lines', name: 'Classical x(t)', line: { color: '#4ade80', width: 2, dash: 'dot' } },
-    { x: [A, A], y: [-0.5, 1.5], mode: 'lines', line: { color: '#8080a0', width: 1 }, showlegend: false },
-    { x: [-A, -A], y: [-0.5, 1.5], mode: 'lines', line: { color: '#8080a0', width: 1 }, showlegend: false }
+    { x: [A, A], y: [-0.5, 1.5], mode: 'lines', name: 'Turning point +A', line: { color: '#8080a0', width: 1 }, showlegend: true },
+    { x: [-A, -A], y: [-0.5, 1.5], mode: 'lines', name: 'Turning point −A', line: { color: '#8080a0', width: 1 }, showlegend: true }
   ], {
-    title: { text: 'Quantum vs Classical turning points', font: { size: 13, color: '#e0e0f0' } },
-    xaxis: { title: 'x', gridcolor: '#2a2a3a', range: [-state.xRange, state.xRange] },
+    title: { text: 'Quantum probability vs Classical trajectory', font: { size: 13, color: '#e0e0f0' } },
+    xaxis: { title: 'x (in units of √(ℏ/mω) )', gridcolor: '#2a2a3a', range: [-state.xRange, state.xRange] },
     yaxis: { title: 'Probability / Position', gridcolor: '#2a2a3a', range: [-0.5, 1.5] },
     paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#e0e0f0', family: 'JetBrains Mono, monospace' },
     margin: { l: 50, r: 20, t: 50, b: 40 },
-    legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(10,10,15,0.8)' }
+    showlegend: true,
+    legend: { x: 1.02, y: 1, bgcolor: 'rgba(10,10,15,0.85)', font: { color: '#e0e0e0' }, bordercolor: '#2a2a3a', borderwidth: 1 }
   });
 }
 
@@ -235,10 +240,15 @@ function updateWigner() {
     traces.push({ x: state.trajectory.map(p => p.x), y: state.trajectory.map(p => p.p), mode: 'lines', line: { color: '#ffd54f', width: 2 }, showlegend: false });
   }
   _plot('plot-wigner', traces, {
-    title: { text: 'Wigner Phase Space', font: { size: 13, color: '#e0e0f0' } },
-    xaxis: { title: 'x', gridcolor: '#2a2a3a' }, yaxis: { title: 'p', gridcolor: '#2a2a3a' },
+    title: { text: 'Wigner Phase Space — quasi-probability W(x,p)', font: { size: 13, color: '#e0e0f0' } },
+    xaxis: { title: 'x (in units of √(ℏ/mω) )', gridcolor: '#2a2a3a' }, yaxis: { title: 'p (in units of √(mωℏ) )', gridcolor: '#2a2a3a' },
     paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#e0e0f0', family: 'JetBrains Mono, monospace' },
-    margin: { l: 50, r: 80, t: 40, b: 40 }
+    margin: { l: 50, r: 80, t: 50, b: 40 },
+    showlegend: true,
+    legend: { x: 1.02, y: 1, bgcolor: 'rgba(10,10,15,0.85)', font: { color: '#e0e0e0' }, bordercolor: '#2a2a3a', borderwidth: 1 },
+    annotations: [
+      { x: 0.01, y: 0.01, xref: 'paper', yref: 'paper', text: '<b>Negative regions</b> = quantum interference', font: { size: 9, color: '#8080a0' }, showarrow: false, align: 'left' }
+    ]
   });
 }
 
@@ -282,11 +292,32 @@ function assocLaguerre(n, k, x) {
 }
 
 /** ── EXACT HYDROGEN ATOM PHYSICS ───────────────────────────
- *  Radial: R_nl(r) = N · ρ^l · e^{-ρ/2} · L_{n-l-1}^{2l+1}(ρ),   ρ = 2r/n
- *  Angular: Real spherical harmonics Y_lm(θ,φ)
- *  Density: |ψ_nlm(r,θ,φ)|² = |R_nl(r)|² · Y_lm(θ,φ)²
+ *
+ *  The hydrogen atom is solved by separating Schrödinger equation in
+ *  spherical coordinates:
+ *
+ *    H ψ = E ψ,   H = −ℏ²/2mₑ∇² − e²/(4πε₀r)
+ *
+ *  Separation ansatz: ψ(r,θ,φ) = R(r)·Y(θ,φ) gives
+ *
+ *    Radial:   [−ℏ²/2mₑ d²/dr² + ℏ²ℓ(ℓ+1)/2mₑr² − e²/(4πε₀r)] R = E R
+ *    Angular:  L²Y = ℏ²ℓ(ℓ+1)Y,    LzY = ℏmY
+ *
+ *  Radial solution (a₀ = 4πε₀ℏ²/mₑe² = Bohr radius):
+ *    R_{nℓ}(r) = N_{nℓ} · ρ^ℓ · e^{-ρ/2} · L_{n−ℓ−1}^{2ℓ+1}(ρ)
+ *    where ρ = 2r/(na₀),   N = √[(2/na₀)³ · (n−ℓ−1)! / 2n · (n+ℓ)!]
+ *
+ *  Angular: real spherical harmonics Y_{ℓm}(θ,φ) (tesseral) are linear
+ *  combinations of Y_{ℓ}^{m} and Y_{ℓ}^{−m} to produce real-valued
+ *  orbitals (s, p_x, p_y, p_z, d_xy, d_xz, d_yz, d_z², d_{x²−y²}, …)
+ *
+ *  Probability density displayed: |ψ|² = |R_{nℓ}(r)|² · Y_{ℓm}²(θ,φ)
+ *    — the isosurface |ψ|² = 0.12·max traces a constant-probability
+ *    surface. The scatter3d cloud behind it helps visualize where the
+ *    electron is most likely to be found.
+ *
+ *  Real spherical-harmonic squared Y_lm²(θ,φ) for density plots:
  */
-
 /* Real spherical-harmonic squared Y_lm²(θ,φ) for density plots */
 function Y2_lm(l, m, theta, phi) {
   const c = Math.cos(theta), s = Math.sin(theta);
@@ -433,7 +464,8 @@ function updateAtomPlot() {
     colorscale: 'Viridis',
     caps: { x: { show: false }, y: { show: false }, z: { show: false } },
     showscale: false,
-    hoverinfo: 'skip'
+    hoverinfo: 'skip',
+    name: 'Iso-surface (12% of peak)'
   };
 
   const traceCloud = {
@@ -445,14 +477,16 @@ function updateAtomPlot() {
       color: sc,
       colorscale: 'Viridis',
       opacity: 0.45,
-      line: { width: 0 }
+      line: { width: 0 },
+      colorbar: { title: { text: '|ψ|² / max', font: { size: 10, color: '#e0e0f0' } }, thickness: 15 }
     },
-    hoverinfo: 'skip'
+    hoverinfo: 'skip',
+    name: 'Probability cloud'
   };
 
   _plot('plot-atom-3d', [traceCloud, traceIso], {
     title: {
-      text: `Hydrogen |${n}${orbitalLabel(l)}, m=${m}⟩    E_n = ${energy_Hydrogen_eV(n).toFixed(3)} eV`,
+      text: `Hydrogen Atom 3D — |${n}${orbitalLabel(l)}, m=${m}⟩<br><sub>Eₙ = ${energy_Hydrogen_eV(n).toFixed(3)} eV | radial nodes: ${countNodes(n,l).radial} | angular nodes: ${countNodes(n,l).angular}</sub>`,
       font: { size: 13, color: '#e0e0f0' }
     },
     scene: {
@@ -466,7 +500,8 @@ function updateAtomPlot() {
     plot_bgcolor: 'rgba(0,0,0,0)',
     font: { color: '#e0e0f0', family: 'JetBrains Mono, monospace' },
     margin: { l: 0, r: 0, b: 0, t: 50 },
-    showlegend: false
+    showlegend: true,
+    legend: { x: 0.01, y: 0.99, bgcolor: 'rgba(10,10,15,0.85)', font: { color: '#e0e0e0' }, bordercolor: '#2a2a3a', borderwidth: 1 }
   });
 
   // ── Update legend panel ──
@@ -549,6 +584,9 @@ function setSystem(sys) {
 
     const legendEl = document.getElementById('atom-legend');
     if (legendEl) legendEl.style.display = (sys === 'atom') ? 'block' : 'none';
+
+    const legend3d = document.getElementById('atom-3d-legend');
+    if (legend3d) legend3d.style.display = (sys === 'atom') ? 'block' : 'none';
     
     if (sys === 'atom') {
         // Defer to allow browser reflow — WebGL isosurface needs real dimensions

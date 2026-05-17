@@ -110,7 +110,18 @@
           
           <!-- ATOMIC 3D Plot (Revealed when Atom mode active) -->
           <div class="plot-container" id="plot-atom-3d" style="min-height:500px; display:none;"></div>
-          
+          <!-- Atom 3D color scale legend -->
+          <div id="atom-3d-legend" class="atom-legend-card" style="display:none;">
+            <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.75rem; color:var(--text-dim); font-family:var(--font-mono);">
+              <span>Low |ψ|²</span>
+              <div style="flex:1; height:8px; background:linear-gradient(90deg, #440154, #31688e, #35b779, #fde725); border-radius:4px;"></div>
+              <span>High |ψ|²</span>
+            </div>
+            <div style="margin-top:0.4rem; font-size:0.72rem; color:var(--text-muted); line-height:1.4;">
+              Iso-surface = 12% of peak density. Scatter cloud shows &gt;3.5% of peak. Colors follow the Viridis scale.
+            </div>
+          </div>
+
           <!-- PHASE SPACE: WIGNER PLOT (New Integration) -->
           <div class="plot-container" id="plot-wigner" style="min-height:300px;"></div>
 
