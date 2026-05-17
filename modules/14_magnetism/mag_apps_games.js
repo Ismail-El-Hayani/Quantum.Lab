@@ -34,8 +34,8 @@ var MAG_BADGES = [
   { id: 'hyst-architect', name: 'Hyst Architect', desc: 'Hysteresis puzzle done', icon: '🏗' }
 ];
 function renderBadgesMAG() {
-  var el = document.getElementById('badge-list'); if (!el || !window._GameState) return;
-  var s = _GameState.earnedBadges;
+  var el = document.getElementById('badge-list'); if (!el || !window.__GameState) return;
+  var s = __GameState.earnedBadges;
   var earned = MAG_BADGES.filter(function(b){ return s.has(b.id); });
   var pending = MAG_BADGES.filter(function(b){ return !s.has(b.id); });
   var html = '';
@@ -44,13 +44,13 @@ function renderBadgesMAG() {
   el.innerHTML = html || 'Complete challenges to earn badges!';
 }
 function updateScoreboardMAG() {
-  if (!window._GameState) return;
+  if (!window.__GameState) return;
   var elCh = document.getElementById('stat-challenges'), elPuz = document.getElementById('stat-puzzles'), elXP = document.getElementById('stat-xp'), elBad = document.getElementById('stat-badges');
-  if (elCh) elCh.textContent = _GameState.moduleScores['mag_challenges'] || 0;
-  if (elPuz) elPuz.textContent = _GameState.moduleScores['mag_puzzles'] || 0;
-  if (elXP) elXP.textContent = _GameState.xp;
-  if (elBad) elBad.textContent = _GameState.earnedBadges.size;
-  var elNav = document.getElementById('nav-xp'); if (elNav) elNav.textContent = _GameState.xp + ' XP';
+  if (elCh) elCh.textContent = __GameState.moduleScores['mag_challenges'] || 0;
+  if (elPuz) elPuz.textContent = __GameState.moduleScores['mag_puzzles'] || 0;
+  if (elXP) elXP.textContent = __GameState.xp;
+  if (elBad) elBad.textContent = __GameState.earnedBadges.size;
+  var elNav = document.getElementById('nav-xp'); if (elNav) elNav.textContent = __GameState.xp + ' XP';
   renderBadgesMAG();
 }
 
@@ -78,8 +78,8 @@ function guessMag(g) {
   else { magCh.combo = 0; showMagFB(false, 'Incorrect.'); }
   document.getElementById('mag-score').textContent = magCh.score;
   document.getElementById('mag-combo').textContent = magCh.combo;
-  if (magCh.score >= 150 && window._GameState) _GameState.earnedBadges.add('classifier');
-  if (window._GameState) { _GameState.addXP(ok ? 50 : 10, 'mag_challenges'); _GameState.moduleScores['mag_challenges'] = magCh.score; _GameState.save(); }
+  if (magCh.score >= 150 && window.__GameState) __GameState.earnedBadges.add('classifier');
+  if (window.__GameState) { __GameState.addXP(ok ? 50 : 10, 'mag_challenges'); __GameState.moduleScores['mag_challenges'] = magCh.score; __GameState.save(); }
   updateScoreboardMAG(); setTimeout(nextMag, 1200);
 }
 function showMagFB(ok, msg) { var el = document.getElementById('mag-feedback'); if (!el) return; el.textContent = msg; el.className = 'challenge-feedback ' + (ok ? 'success' : 'error'); }
@@ -100,7 +100,7 @@ function checkTcMag() {
   var ok = Math.abs(guess - tcMagCh.theta) < 15;
   fb.textContent = ok ? 'Correct! Tc ≈ ' + tcMagCh.theta + ' K' : 'Hint: Tc ≈ θ in the Curie-Weiss model.';
   fb.className = 'challenge-feedback ' + (ok ? 'success' : 'hint');
-  if (ok && window._GameState) { _GameState.addXP(75, 'mag_challenges'); _GameState.earnedBadges.add('curie-hunter'); _GameState.save(); updateScoreboardMAG(); }
+  if (ok && window.__GameState) { __GameState.addXP(75, 'mag_challenges'); __GameState.earnedBadges.add('curie-hunter'); __GameState.save(); updateScoreboardMAG(); }
 }
 
 /* ---- Challenge 3: GMR sign ---- */
@@ -115,7 +115,7 @@ function guessGMR(g) {
   var ok = g === gmrCh.current.answer;
   fb.textContent = ok ? 'Correct! Aligned layers reduce spin-dependent scattering, lowering R.' : 'Incorrect. The resistance decreases.';
   fb.className = 'challenge-feedback ' + (ok ? 'success' : 'error');
-  if (ok && window._GameState) { _GameState.addXP(100, 'mag_challenges'); _GameState.earnedBadges.add('gmr-sage'); _GameState.save(); updateScoreboardMAG(); }
+  if (ok && window.__GameState) { __GameState.addXP(100, 'mag_challenges'); __GameState.earnedBadges.add('gmr-sage'); __GameState.save(); updateScoreboardMAG(); }
 }
 
 /* ---- Puzzle 1: ordering match ---- */
@@ -141,7 +141,7 @@ function checkOrderPuzzle() {
   var list = document.getElementById('order-list'); var items = JSON.parse(list.dataset.items || '[]'); var ok = true;
   items.forEach(function(it, i) { var sel = document.getElementById('order-sel-' + i); if (!sel || sel.value !== it.answer) ok = false; });
   var fb = document.getElementById('order-feedback'); fb.textContent = ok ? 'All correct!' : 'Review the magnetic classes.'; fb.className = 'challenge-feedback ' + (ok ? 'success' : 'error');
-  if (ok && window._GameState) { _GameState.addXP(60, 'mag_puzzles'); _GameState.earnedBadges.add('order-master'); _GameState.save(); updateScoreboardMAG(); }
+  if (ok && window.__GameState) { __GameState.addXP(60, 'mag_puzzles'); __GameState.earnedBadges.add('order-master'); __GameState.save(); updateScoreboardMAG(); }
 }
 
 /* ---- Puzzle 2: hysteresis parameters ---- */
@@ -166,7 +166,7 @@ function checkHystPuzzle() {
   var list = document.getElementById('hyst-list'); var items = JSON.parse(list.dataset.items || '[]'); var ok = true;
   items.forEach(function(it, i) { var sel = document.getElementById('hyst-sel-' + i); if (!sel || sel.value !== it.answer) ok = false; });
   var fb = document.getElementById('hyst-feedback'); fb.textContent = ok ? 'All correct!' : 'Some definitions are wrong.'; fb.className = 'challenge-feedback ' + (ok ? 'success' : 'error');
-  if (ok && window._GameState) { _GameState.addXP(70, 'mag_puzzles'); _GameState.earnedBadges.add('hyst-architect'); _GameState.save(); updateScoreboardMAG(); }
+  if (ok && window.__GameState) { __GameState.addXP(70, 'mag_puzzles'); __GameState.earnedBadges.add('hyst-architect'); __GameState.save(); updateScoreboardMAG(); }
 }
 
 /* ---- Puzzle 3: neutron diffraction ---- */
@@ -191,7 +191,7 @@ function checkNeutronPuzzle() {
   var list = document.getElementById('neutron-list'); var items = JSON.parse(list.dataset.items || '[]'); var ok = true;
   items.forEach(function(it, i) { var sel = document.getElementById('neutron-sel-' + i); if (!sel || sel.value !== it.answer) ok = false; });
   var fb = document.getElementById('neutron-feedback'); fb.textContent = ok ? 'All correct! Neutrons reveal magnetic order.' : 'Review why neutron diffraction is special.'; fb.className = 'challenge-feedback ' + (ok ? 'success' : 'error');
-  if (ok && window._GameState) { _GameState.addXP(120, 'mag_puzzles'); _GameState.save(); updateScoreboardMAG(); }
+  if (ok && window.__GameState) { __GameState.addXP(120, 'mag_puzzles'); __GameState.save(); updateScoreboardMAG(); }
 }
 
 function initMAGGames() {
