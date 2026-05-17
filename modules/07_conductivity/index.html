@@ -161,6 +161,7 @@
               <button class="toggle-btn on" id="btn-phonons" onclick="condTogglePhonons();this.classList.toggle('on');">Phonons</button>
               <button class="toggle-btn on" id="btn-impurities" onclick="condToggleImpurities();this.classList.toggle('on');">Impurities</button>
               <button class="toggle-btn" id="btn-mfp" onclick="condToggleMFP();this.classList.toggle('on');">MFP trails</button>
+              <button class="toggle-btn" id="btn-drift" onclick="condToggleDriftOnly();this.classList.toggle('on');">Drift only</button>
             </div>
           </div>
 
@@ -169,14 +170,15 @@
               <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">🔘</span>
               <span class="challenge-title">Material Preset</span>
             </div>
-            <button class="material-btn active" id="mat-Cu" onclick="condSetMaterial('Cu');condHighlightMat(this);">Copper — τ=30 fs, n=10²⁸ m⁻³</button>
-            <button class="material-btn" id="mat-Al" onclick="condSetMaterial('Al');condHighlightMat(this);">Aluminum — τ=25 fs, n=1.8×10²⁸</button>
-            <button class="material-btn" id="mat-Ag" onclick="condSetMaterial('Ag');condHighlightMat(this);">Silver — τ=40 fs, n=7.4×10²⁸</button>
-            <button class="material-btn" id="mat-Si_n" onclick="condSetMaterial('Si_n');condHighlightMat(this);">n-type Si — τ=100 fs, n=10²¹</button>
-            <button class="material-btn" id="mat-GaAs" onclick="condSetMaterial('GaAs');condHighlightMat(this);">GaAs — τ=80 fs, n=5×10²³</button>
+            <button class="material-btn active" id="mat-Cu" onclick="condSetMaterial('Cu');condHighlightMat(this);">Pure Cu — τ=30 fs, substitutional</button>
+            <button class="material-btn" id="mat-CuZn" onclick="condSetMaterial('CuZn');condHighlightMat(this);">Brass CuZn — τ=15 fs, alloy</button>
+            <button class="material-btn" id="mat-Al_poly" onclick="condSetMaterial('Al_poly');condHighlightMat(this);">Polycrystal Al — τ=20 fs, grain boundaries</button>
+            <button class="material-btn" id="mat-Cu_film" onclick="condSetMaterial('Cu_film');condHighlightMat(this);">Thin-film Cu — τ=10 fs, surface rough</button>
+            <button class="material-btn" id="mat-Si_n" onclick="condSetMaterial('Si_n');condHighlightMat(this);">n-type Si — τ=100 fs, ionized dopants</button>
+            <button class="material-btn" id="mat-GaAs" onclick="condSetMaterial('GaAs');condHighlightMat(this);">GaAs — τ=60 fs, dislocation</button>
           </div>
 
-          <div class="challenge-panel" style="margin-bottom:1rem;">
+            <div class="challenge-panel" style="margin-bottom:1rem;">
             <div class="challenge-header">
               <span class="challenge-icon" style="background:rgba(255,215,64,0.1);">📖</span>
               <span class="challenge-title">Canvas Legend</span>
@@ -184,9 +186,14 @@
             <div style="font-family:var(--font-mono);font-size:0.78rem;color:var(--text-main);">
               <div class="legend-row"><span class="legend-dot" style="background:#00f0ff;"></span> Electron</div>
               <div class="legend-row"><span class="legend-dot" style="background:rgba(255,255,255,0.5);"></span> Lattice ion</div>
-              <div class="legend-row"><span class="legend-dot" style="background:rgba(255,68,68,0.7);"></span> Impurity</div>
+              <div class="legend-row"><span class="legend-dot" style="background:rgba(255,68,68,0.6);"></span> Substitutional impurity</div>
+              <div class="legend-row"><span class="legend-dot" style="background:rgba(251,146,60,0.7);"></span> Alloy atom</div>
+              <div class="legend-row"><span class="legend-dot" style="background:rgba(150,150,150,0.6);"></span> Grain boundary</div>
+              <div class="legend-row"><span class="legend-dot" style="background:rgba(59,130,246,0.6);"></span> Rough surface</div>
+              <div class="legend-row"><span class="legend-dot" style="background:rgba(239,68,68,0.7);"></span> Ionized dopant +</div>
+              <div class="legend-row"><span class="legend-dot" style="background:rgba(192,132,252,0.6);"></span> Dislocation <span style="font-family:monospace">⊥</span></div>
               <div class="legend-row"><span class="legend-dot" style="background:#ffd740;"></span> Scattering flash</div>
-              <div class="legend-row"><span class="legend-dot" style="background:#c084fc;"></span> E-field arrow</div>
+              <div class="legend-row"><span class="legend-dot" style="background:#c084fc;"></span> E-field</div>
               <div class="legend-row"><span class="legend-dot" style="background:#ffd740;border:1px solid #ffd740;"></span> Drift velocity v_d</div>
               <div class="legend-row"><span class="legend-dot" style="background:rgba(74,222,128,0.5);"></span> MFP trail (if on)</div>
             </div>

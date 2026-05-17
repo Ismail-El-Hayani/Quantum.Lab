@@ -1,6 +1,7 @@
 /**
- * Electrical Conductivity — Physics Engine (v4 Canvas)
- * Canvas: px-based visual simulation (tuned for visibility)
+ * Electrical Conductivity — Physics Engine (v5 Canvas)
+ * Color-coded impurities + exaggerated drift visibility + drift-only mode
+ * Canvas: px-based visual (tuned for pedagogy)
  * Plots: real physics formulas
  */
 
@@ -20,7 +21,8 @@ var COND_STATE = {
   paused: false,
   showPhonons: true,
   showImpurities: true,
-  showMFP: false
+  showMFP: false,
+  driftOnly: false
 };
 
 /* ===== Canvas Engine ===== */
@@ -33,6 +35,9 @@ var COND_CANVAS = {
   ions: [],
   impurities: [],
   phonons: [],
+  grainBoundaries: [],
+  dislocation: null,
+  surfaceRough: false,
   mfpTracks: [],
   collisionCount: 0
 };
@@ -58,18 +63,67 @@ function condInitLattice() {
     }
   }
 
+  /* Impurities by material type */
   geo.impurities = [];
-  var impCount = Math.max(3, Math.floor(28 - COND_STATE.tau / 4));
-  for (var i = 0; i < impCount; i++) {
-    geo.impurities.push({
-      x: 30 + Math.random() * (w - 60),
-      y: 40 + Math.random() * (h - 80)
-    });
+  geo.grainBoundaries = [];
+  geo.dislocation = null;
+  geo.surfaceRough = false;
+
+  var mat = COND_MATERIALS[COND_STATE.material] || COND_MATERIALS['Cu'];
+  var impType = mat.impType || 'substitutional';
+
+  if (impType === 'substitutional' || impType === 'alloy' || impType === 'ionized' || impType === 'dislocation') {
+    var impCount = (impType === 'alloy') ? 22 : Math.max(3, Math.floor(28 - COND_STATE.tau / 4));
+    for (var i = 0; i < impCount; i++) {
+      geo.impurities.push({
+        x: 30 + Math.random() * (w - 60),
+        y: 40 + Math.random() * (h - 80)
+      });
+    }
   }
 
+  if (impType === 'grain_boundary') {
+    /* Few substitutional + grain boundaries */
+    for (var i = 0; i < 4; i++) {
+      geo.impurities.push({
+        x: 30 + Math.random() * (w - 60),
+        y: 40 + Math.random() * (h - 80)
+      });
+    }
+    var gbCount = 3 + Math.floor(Math.random() * 3);
+    for (var i = 0; i < gbCount; i++) {
+      var gx = 60 + Math.random() * (w - 120);
+      geo.grainBoundaries.push({
+        x: gx,
+        top: 25 + Math.random() * 20,
+        bottom: h - 25 - Math.random() * 20,
+        wobble: Math.random() * 10
+      });
+    }
+  }
+
+  if (impType === 'thin_film') {
+    for (var i = 0; i < 3; i++) {
+      geo.impurities.push({
+        x: 30 + Math.random() * (w - 60),
+        y: 40 + Math.random() * (h - 80)
+      });
+    }
+    geo.surfaceRough = true;
+  }
+
+  if (impType === 'dislocation') {
+    geo.dislocation = {
+      x: w / 2 + (Math.random() - 0.5) * w * 0.3,
+      y: h / 2 + (Math.random() - 0.5) * h * 0.3,
+      angle: Math.random() * 3.14,
+      length: 120 + Math.random() * 80
+    };
+  }
+
+  /* Phonon bonds */
   geo.phonons = [];
   for (var i = 0; i < geo.ions.length; i++) {
-    var ion = geo.ions[i];
     var c = i % cols, r = Math.floor(i / cols);
     if (c < cols - 1) {
       geo.phonons.push({ aIdx: i, bIdx: i + 1, phase: Math.random() * 6.283, type: 'horiz' });
@@ -88,7 +142,6 @@ function condInitElectrons() {
   geo.electrons = [];
   geo.mfpTracks = [];
   for (var i = 0; i < count; i++) {
-    var angle = Math.random() * 6.283;
     geo.electrons.push({
       x: 20 + Math.random() * (w - 40),
       y: 30 + Math.random() * (h - 60),
@@ -108,9 +161,7 @@ function condInitCanvas() {
   COND_CANVAS.c = c;
   COND_CANVAS.ctx = c.getContext('2d');
   condResizeCanvas();
-  window.addEventListener('resize', function() {
-    condResizeCanvas();
-  });
+  window.addEventListener('resize', function() { condResizeCanvas(); });
   return true;
 }
 
@@ -127,16 +178,16 @@ function condResizeCanvas() {
   condInitElectrons();
 }
 
-/* === Physics step (px-based, tuned for visibility) === */
+/* === Physics step === */
 function condPhysicsStep() {
   var geo = COND_CANVAS;
   var st = COND_STATE;
   var w = geo.width, h = geo.height;
 
-  /* Visual parameters tuned for visibility on 800x420 canvas */
-  var vThermal = 3.0 + (st.T / 300) * 2.5;  // px/frame thermal speed
-  var tauFrames = Math.max(8, Math.round(st.tau / 2.5));  // frames between scatters
-  var aE = st.Efield * 0.4;  // px/frame^2 — tuned so drift is visible
+  var vThermal = 3.0 + (st.T / 300) * 2.5;
+  var tauFrames = Math.max(8, Math.round(st.tau / 2.5));
+  /* aE exaggerated for visibility: real drift is tiny vs thermal */
+  var aE = st.Efield * 2.5;
 
   var sumVx = 0;
   var activeMFP = 0, mfpCount = 0;
@@ -151,7 +202,7 @@ function condPhysicsStep() {
     e.x += e.vx;
     e.y += e.vy;
 
-    /* Periodic boundaries */
+    /* Boundaries */
     if (e.x < 0) e.x += w;
     if (e.x > w) e.x -= w;
     if (e.y < 0) e.y += h;
@@ -159,10 +210,46 @@ function condPhysicsStep() {
 
     /* Scattering */
     e.framesSinceScatter++;
+    var scattered = false;
+
+    /* Phonon/impurity scattering (tau) */
     if (e.framesSinceScatter >= tauFrames) {
+      scattered = true;
+    }
+
+    /* Grain boundary scattering */
+    for (var gb = 0; gb < geo.grainBoundaries.length && !scattered; gb++) {
+      var b = geo.grainBoundaries[gb];
+      if (Math.abs(e.x - b.x) < 4 && e.y > b.top && e.y < b.bottom) {
+        if (Math.random() < 0.3) scattered = true;
+      }
+    }
+
+    /* Surface roughness scattering */
+    if (geo.surfaceRough && !scattered) {
+      if (e.y < 15 || e.y > h - 15) {
+        if (Math.random() < 0.15) scattered = true;
+      }
+    }
+
+    /* Dislocation scattering */
+    if (geo.dislocation && !scattered) {
+      var dl = geo.dislocation;
+      var dx = e.x - dl.x;
+      var dy = e.y - dl.y;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 25 && Math.random() < 0.4) scattered = true;
+    }
+
+    if (scattered) {
       var ang = Math.random() * 6.283;
-      e.vx = vThermal * Math.cos(ang);
-      e.vy = vThermal * Math.sin(ang);
+      if (st.driftOnly) {
+        e.vx = aE * tauFrames * 0.5;
+        e.vy = 0;
+      } else {
+        e.vx = vThermal * Math.cos(ang);
+        e.vy = vThermal * Math.sin(ang);
+      }
       e.flash = 6;
 
       if (geo.mfpTracks[i] > 2) {
@@ -192,6 +279,8 @@ function condDrawFrame() {
   var w = geo.width, h = geo.height;
   var st = COND_STATE;
   var t = geo.frame * 0.03;
+  var mat = COND_MATERIALS[st.material] || COND_MATERIALS['Cu'];
+  var impType = mat.impType || 'substitutional';
 
   /* Background */
   ctx.fillStyle = '#0a0a0f';
@@ -200,11 +289,25 @@ function condDrawFrame() {
   /* Subtle grid */
   ctx.strokeStyle = 'rgba(255,255,255,0.03)';
   ctx.lineWidth = 1;
-  for (var gx = 0; gx < w; gx += 40) {
-    ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke();
-  }
-  for (var gy = 0; gy < h; gy += 40) {
-    ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke();
+  for (var gx = 0; gx < w; gx += 40) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke(); }
+  for (var gy = 0; gy < h; gy += 40) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke(); }
+
+  /* Surface roughness walls */
+  if (geo.surfaceRough) {
+    ctx.strokeStyle = 'rgba(59,130,246,0.4)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (var px = 0; px < w; px += 8) {
+      var rough = 4 + Math.sin(px * 0.15 + t) * 3;
+      ctx.lineTo(px, rough);
+    }
+    ctx.stroke();
+    ctx.beginPath();
+    for (var px = 0; px < w; px += 8) {
+      var rough = h - 4 - Math.sin(px * 0.12 + t * 0.7) * 3;
+      ctx.lineTo(px, rough);
+    }
+    ctx.stroke();
   }
 
   /* Phonon bonds */
@@ -245,19 +348,66 @@ function condDrawFrame() {
     ctx.fill();
   }
 
-  /* Impurities */
+  /* Grain boundaries */
+  for (var i = 0; i < geo.grainBoundaries.length; i++) {
+    var gb = geo.grainBoundaries[i];
+    ctx.strokeStyle = 'rgba(150,150,150,0.5)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(gb.x + Math.sin(t) * gb.wobble, gb.top);
+    ctx.lineTo(gb.x + Math.sin(t * 1.3) * gb.wobble, gb.bottom);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  /* Dislocation */
+  if (geo.dislocation) {
+    var dl = geo.dislocation;
+    ctx.strokeStyle = 'rgba(192,132,252,0.6)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    var dx1 = dl.x - Math.cos(dl.angle) * dl.length * 0.5;
+    var dy1 = dl.y - Math.sin(dl.angle) * dl.length * 0.5;
+    var dx2 = dl.x + Math.cos(dl.angle) * dl.length * 0.5;
+    var dy2 = dl.y + Math.sin(dl.angle) * dl.length * 0.5;
+    ctx.moveTo(dx1, dy1);
+    ctx.lineTo(dx2, dy2);
+    ctx.stroke();
+    /* Burger's vector symbol */
+    ctx.fillStyle = 'rgba(192,132,252,0.8)';
+    ctx.font = '14px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('\u22a5', dl.x + 12, dl.y - 8);
+  }
+
+  /* Impurities (color-coded) */
   if (st.showImpurities) {
+    var impColor, impGlow, impLabel;
+    switch (impType) {
+      case 'alloy': impColor = 'rgba(251,146,60,0.65)'; impGlow = 'rgba(251,146,60,0.3)'; break;
+      case 'ionized': impColor = 'rgba(239,68,68,0.7)'; impGlow = 'rgba(239,68,68,0.35)'; break;
+      default: impColor = 'rgba(255,68,68,0.6)'; impGlow = 'rgba(255,68,68,0.3)'; break;
+    }
+
     for (var i = 0; i < geo.impurities.length; i++) {
       var imp = geo.impurities[i];
-      ctx.fillStyle = 'rgba(255,68,68,0.6)';
+      ctx.fillStyle = impColor;
       ctx.beginPath();
       ctx.arc(imp.x, imp.y, 4.5, 0, 6.283);
       ctx.fill();
-      ctx.strokeStyle = 'rgba(255,68,68,0.3)';
+      ctx.strokeStyle = impGlow;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.arc(imp.x, imp.y, 8, 0, 6.283);
       ctx.stroke();
+
+      if (impType === 'ionized') {
+        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        ctx.font = 'bold 10px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('+', imp.x, imp.y + 3);
+      }
     }
   }
 
@@ -282,7 +432,7 @@ function condDrawFrame() {
     ctx.fill();
   }
 
-  /* E-field arrow (top-right) */
+  /* E-field arrow */
   if (st.Efield > 0.001) {
     var arrowLen = 30 + st.Efield * 150;
     var ax = w - 50, ay = 28;
@@ -304,7 +454,7 @@ function condDrawFrame() {
     ctx.fillText('E = ' + st.Efield.toFixed(3) + ' V/nm', ax, ay - 10);
   }
 
-  /* Drift velocity arrow (bottom center) */
+  /* Drift velocity arrow */
   var avgVx = geo.avgVx || 0;
   var driftPx = avgVx * 2;
   if (Math.abs(driftPx) > 1) {
@@ -327,7 +477,7 @@ function condDrawFrame() {
     ctx.fillText('v_d', dx + driftPx * 1.5, dy - 8);
   }
 
-  /* MFP trails for subset */
+  /* MFP trails */
   if (st.showMFP) {
     ctx.strokeStyle = 'rgba(74,222,128,0.45)';
     ctx.lineWidth = 1.5;
@@ -349,17 +499,21 @@ function condDrawFrame() {
     }
   }
 
-  /* Legend (top-left) */
+  /* Canvas legend (top-left) */
   var lx = 12, ly = 12, lh = 18;
   ctx.font = '11px JetBrains Mono, monospace';
   ctx.textAlign = 'left';
   var items = [
     { c: '#00f0ff', t: 'Electron' },
     { c: 'rgba(255,255,255,0.5)', t: 'Lattice ion' },
-    { c: 'rgba(255,68,68,0.7)', t: 'Impurity' },
+    { c: impType === 'alloy' ? 'rgba(251,146,60,0.7)' : 'rgba(255,68,68,0.6)', t: impType === 'ionized' ? 'Ionized dopant +' : (impType === 'alloy' ? 'Alloy atom' : 'Impurity') },
     { c: '#ffd740', t: 'Scatter flash' },
     { c: '#c084fc', t: 'E-field' }
   ];
+  if (impType === 'grain_boundary') items.splice(2, 0, { c: 'rgba(150,150,150,0.6)', t: 'Grain boundary' });
+  if (impType === 'thin_film') items.splice(2, 0, { c: 'rgba(59,130,246,0.6)', t: 'Rough surface' });
+  if (impType === 'dislocation') items.splice(2, 0, { c: 'rgba(192,132,252,0.6)', t: 'Dislocation \u22a5' });
+
   for (var i = 0; i < items.length; i++) {
     ctx.fillStyle = items[i].c;
     ctx.fillRect(lx, ly + i * lh, 10, 10);
@@ -367,12 +521,12 @@ function condDrawFrame() {
     ctx.fillText(items[i].t, lx + 16, ly + i * lh + 9);
   }
 
-  /* Live readout bar (bottom-right) */
+  /* Live readout bar */
   var sigma = st.n * e_charge * e_charge * (st.tau * 1e-15) / m_e_kg;
   var vF = Math.sqrt(2 * 7.0 * e_charge / m_e_kg);
   var mfp = vF * st.tau * 1e-15 * 1e9;
   var mu = e_charge * (st.tau * 1e-15) / m_e_kg;
-  var vd_real = (e_charge * st.Efield * 1e9 * st.tau * 1e-15 / m_e_kg) * 1e-3;  // mm/s
+  var vd_real = (e_charge * st.Efield * 1e9 * st.tau * 1e-15 / m_e_kg) * 1e-3;
 
   ctx.fillStyle = 'rgba(10,10,20,0.85)';
   ctx.fillRect(w - 240, h - 68, 230, 62);
@@ -412,11 +566,48 @@ function condPauseAnimation() {
 
 function condResumeAnimation() {
   COND_STATE.paused = false;
-  if (!COND_CANVAS.running) { COND_CANVAS.running = true; }
+  if (!COND_CANVAS.running) COND_CANVAS.running = true;
   condAnimate();
 }
 
-/* ===== Plotly Supporting Readouts ===== */
+/* ===== Material Presets (with impurity types) ===== */
+var COND_MATERIALS = {
+  'Cu':       { tau: 30, n: 1e28, label: 'Copper', impType: 'substitutional' },
+  'CuZn':     { tau: 15, n: 1e28, label: 'Brass (CuZn)', impType: 'alloy' },
+  'Al_poly':  { tau: 20, n: 1.8e28, label: 'Polycrystal Al', impType: 'grain_boundary' },
+  'Cu_film':  { tau: 10, n: 1e28, label: 'Thin-film Cu', impType: 'thin_film' },
+  'Si_n':     { tau: 100, n: 1e21, label: 'n-type Si', impType: 'ionized' },
+  'GaAs':     { tau: 60, n: 5e23, label: 'GaAs', impType: 'dislocation' }
+};
+
+function condSetMaterial(name) {
+  var mat = COND_MATERIALS[name];
+  if (!mat) return;
+  COND_STATE.material = name;
+  COND_STATE.tau = mat.tau;
+  COND_STATE.n = mat.n;
+
+  var sTau = document.getElementById('slider-tau');
+  if (sTau) { sTau.value = mat.tau; document.getElementById('val-tau').textContent = mat.tau; }
+  var sN = document.getElementById('slider-n-cond');
+  if (sN) { sN.value = mat.n; document.getElementById('val-n-cond').textContent = mat.n.toExponential(1); }
+
+  condInitLattice();
+  condInitElectrons();
+  condUpdatePlots();
+  condUpdateReadout();
+}
+
+/* ===== Toggles ===== */
+function condTogglePhonons() { COND_STATE.showPhonons = !COND_STATE.showPhonons; }
+function condToggleImpurities() { COND_STATE.showImpurities = !COND_STATE.showImpurities; }
+function condToggleMFP() { COND_STATE.showMFP = !COND_STATE.showMFP; }
+function condToggleDriftOnly() {
+  COND_STATE.driftOnly = !COND_STATE.driftOnly;
+  condInitElectrons();
+}
+
+/* ===== Plotly ===== */
 var PLOT_CFG = { responsive: true, displayModeBar: false };
 
 function _condLayout(title, xtitle, ytitle, extra) {
@@ -455,8 +646,7 @@ function condPlotDrift() {
   });
   Plotly.react('plot-drift', [
     { x: Ef, y: vDrift, mode: 'lines', name: 'v_d = eE' + '\u03c4' + '/m*',
-      line: { color: '#00f0ff', width: 2.5 },
-      fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.06)' },
+      line: { color: '#00f0ff', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.06)' },
     { x: [COND_STATE.Efield, COND_STATE.Efield], y: [0, Math.max.apply(null, vDrift)],
       mode: 'lines', line: { color: '#facc15', width: 2, dash: 'dot' },
       name: 'E = ' + COND_STATE.Efield.toFixed(3) }
@@ -626,38 +816,6 @@ function condWireSliders() {
   }
 }
 
-/* ===== Material presets ===== */
-var COND_MATERIALS = {
-  'Cu': { tau: 30, n: 1e28, label: 'Copper' },
-  'Al': { tau: 25, n: 1.8e28, label: 'Aluminum' },
-  'Ag': { tau: 40, n: 7.4e28, label: 'Silver' },
-  'Si_n': { tau: 100, n: 1e21, label: 'n-type Si' },
-  'GaAs': { tau: 80, n: 5e23, label: 'GaAs' }
-};
-
-function condSetMaterial(name) {
-  var mat = COND_MATERIALS[name];
-  if (!mat) return;
-  COND_STATE.material = name;
-  COND_STATE.tau = mat.tau;
-  COND_STATE.n = mat.n;
-
-  var sTau = document.getElementById('slider-tau');
-  if (sTau) { sTau.value = mat.tau; document.getElementById('val-tau').textContent = mat.tau; }
-  var sN = document.getElementById('slider-n-cond');
-  if (sN) { sN.value = mat.n; document.getElementById('val-n-cond').textContent = mat.n.toExponential(1); }
-
-  condInitLattice();
-  condInitElectrons();
-  condUpdatePlots();
-  condUpdateReadout();
-}
-
-/* ===== Toggles ===== */
-function condTogglePhonons() { COND_STATE.showPhonons = !COND_STATE.showPhonons; }
-function condToggleImpurities() { COND_STATE.showImpurities = !COND_STATE.showImpurities; }
-function condToggleMFP() { COND_STATE.showMFP = !COND_STATE.showMFP; }
-
 /* ===== INIT ===== */
 function initConductivity() {
   if (!condInitCanvas()) return;
@@ -665,7 +823,6 @@ function initConductivity() {
   condInitElectrons();
   condStartAnimation();
   condWireSliders();
-
   setTimeout(function() {
     condUpdatePlots();
     condUpdateReadout();
@@ -677,5 +834,6 @@ window.condSetMaterial = condSetMaterial;
 window.condTogglePhonons = condTogglePhonons;
 window.condToggleImpurities = condToggleImpurities;
 window.condToggleMFP = condToggleMFP;
+window.condToggleDriftOnly = condToggleDriftOnly;
 window.condPauseAnimation = condPauseAnimation;
 window.condResumeAnimation = condResumeAnimation;
