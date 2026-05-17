@@ -9,7 +9,7 @@ function _plotMAG(id, traces, lay, cfg) {
   var el = document.getElementById(id);
   if (el && typeof Plotly !== 'undefined') Plotly.react(id, traces, lay, cfg);
 }
-const PLOT_CFG = { responsive: true, displayModeBar: false };
+var PLOT_CFG = { responsive: true, displayModeBar: false };
 function magLayout(title, xtitle, ytitle, extra) {
   var base = {
     margin: { t: 25, r: 10, b: 45, l: 55 },
@@ -23,7 +23,7 @@ function magLayout(title, xtitle, ytitle, extra) {
   return Object.assign(base, extra || {});
 }
 
-let magState = {
+var magState = {
   T: 300,
   C: 1.0,
   theta: 0,
@@ -146,7 +146,7 @@ function plotHysteresis() {
 }
 
 /* ---- Ising lattice ---- */
-const ISING_SIZE = 50;
+var ISING_SIZE = 50;
 var isingSpins = [];
 var isingCanvas = null, isingCtx = null;
 var isingCell = 6; // pixels per spin
@@ -155,7 +155,8 @@ function initIsing() {
   isingCanvas = document.getElementById('ising-canvas');
   if (!isingCanvas) return;
   var wrapper = document.getElementById('ising-wrapper');
-  if (wrapper) { isingCanvas.width = wrapper.clientWidth; isingCanvas.height = wrapper.clientHeight; }
+  if (wrapper) { isingCanvas.width = wrapper.clientWidth || wrapper.offsetWidth || 800; isingCanvas.height = wrapper.clientHeight || wrapper.offsetHeight || 320; }
+  else { isingCanvas.width = 800; isingCanvas.height = 320; }
   isingCtx = isingCanvas.getContext('2d');
   // random init
   isingSpins = [];
@@ -166,6 +167,7 @@ function initIsing() {
   }
   isingCanvas.addEventListener('click', onIsingClick);
   if (!isingInterval) isingInterval = setInterval(stepIsing, 80);
+  drawIsing();
 }
 function onIsingClick(e) {
   if (!isingCanvas) return;

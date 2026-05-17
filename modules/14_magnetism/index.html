@@ -4,10 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Magnetism Lab — Physics Playground</title>
-<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script src="../../modules/01_qho/plotly-2.27.0.min.js"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <link rel="stylesheet" href="../../shared_styles.css">
 <style>
+  #mag-diag { position:fixed; bottom:0; left:0; right:0; z-index:9999; background:#1a0a0a; color:#ff6b6b; font-family:monospace; font-size:12px; padding:8px 12px; border-top:2px solid #ff4444; max-height:120px; overflow:auto; display:none; }
+  #mag-diag.show { display:block; }
   .timer-bar { height:4px;background:var(--bg-elevated);border-radius:2px;overflow:hidden;margin-bottom:1rem; }
   .timer-fill { height:100%;background:var(--accent-cyan);transition:width 1s linear; }
   .draggable-target { cursor:grab; border:2px dashed var(--glass-border); border-radius:var(--radius-sm); padding:0.5rem 0.8rem; background:var(--bg-elevated); display:inline-block; }
@@ -26,6 +28,15 @@
 </style>
 </head>
 <body>
+<div id="mag-diag"></div>
+<script>
+  window.__magErrors = [];
+  window.onerror = function(msg, url, line, col, err) {
+    window.__magErrors.push(msg + ' @ ' + (url||'').split('/').pop() + ':' + line);
+    var d = document.getElementById('mag-diag');
+    if (d) { d.className = 'show'; d.innerHTML = window.__magErrors.join('\u003cbr\u003e'); }
+  };
+</script>
 <div class="orb orb-cyan"></div><div class="orb orb-purple"></div><div class="orb orb-pink"></div>
 <nav class="game-nav">
   <div class="nav-brand"><a href="../../index.html" style="text-decoration:none;color:inherit;"><span class="nav-logo">⚛</span> Physics Playground</a></div>
