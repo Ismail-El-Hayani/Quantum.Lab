@@ -338,7 +338,12 @@ function Y2_lm(l, m, theta, phi) {
   }
 
   // l = 3, f
-  if (l === 3) return (7 / (16 * Math.PI)) * Math.pow(5 * c * c * c - 3 * c, 2);
+  if (l === 3) {
+    if (m === 0)       return (7 / (16 * Math.PI)) * Math.pow(5 * c * c * c - 3 * c, 2);                          // f_z³
+    if (Math.abs(m) === 1) return (21 / (64 * Math.PI)) * s * s * Math.pow(5 * c * c - 1, 2) * ((m > 0) ? Math.pow(Math.cos(phi), 2) : Math.pow(Math.sin(phi), 2)); // f_xz², f_yz²
+    if (Math.abs(m) === 2) return (105 / (32 * Math.PI)) * Math.pow(s, 4) * c * c * ((m > 0) ? Math.pow(Math.cos(2 * phi), 2) : Math.pow(Math.sin(2 * phi), 2)); // f_z(x²−y²), f_xyz
+    if (Math.abs(m) === 3) return (35 / (64 * Math.PI)) * Math.pow(s, 6) * ((m > 0) ? Math.pow(Math.cos(3 * phi), 2) : Math.pow(Math.sin(3 * phi), 2)); // f_x³, f_y³
+  }
 
   // l = 4, g  (approximate real-spherical-harmonic squared, averaged over φ)
   if (l === 4) {
