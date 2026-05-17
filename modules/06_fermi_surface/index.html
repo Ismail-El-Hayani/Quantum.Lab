@@ -1,16 +1,23 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fermi Lab — Physics Playground</title>
-<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"
-        integrity="sha384-Hl48Kq2HifOWdXEjMsKo6qxqvRLTYqIGbvlENBmkHAxZKIGCXv43H6W1jA671RzC"
-        crossorigin="anonymous"></script>
+<title>Fermi Surface & Statistics — Module 06</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <link rel="stylesheet" href="../../shared_styles.css">
 <style>
+  .fs-canvas-wrap { width:100%; min-height:420px; background:var(--bg-deep); border-radius:12px; border:1px solid var(--glass-border); position:relative; overflow:hidden; margin-bottom:1.5rem; }
+  #fs-canvas { display:block; width:100%; height:420px; }
+  .fs-overlay { position:absolute; top:8px; left:12px; font-size:0.75rem; color:var(--text-dim); pointer-events:none; }
+  .fs-legend-bar { position:absolute; bottom:8px; left:12px; display:flex; gap:0.8rem; pointer-events:none; }
+  .fs-legend-item { display:flex; align-items:center; gap:0.3rem; font-size:0.7rem; color:var(--text-dim); }
+  .fs-legend-dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .preset-grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0.4rem; margin-bottom:0.8rem; }
+  .preset-btn { padding:0.3rem 0.5rem; font-size:0.75rem; }
+  .preset-btn.active { border-color:var(--accent-cyan); color:var(--accent-cyan); background:rgba(0,240,255,0.08); }
+  .app-plot { min-height:260px; margin-top:1.5rem; }
   .challenge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   .draggable-target { cursor: grab; border: 2px dashed var(--glass-border); border-radius: var(--radius-sm); padding: 0.8rem; transition: all 0.2s; text-align: center; background: var(--bg-elevated); }
   .draggable-target:hover { border-color: var(--accent-cyan); background: rgba(0,240,255,0.04); }
@@ -25,7 +32,6 @@
 </head>
 <body>
 
-<!-- AMBIENT ORBS -->
 <div class="orb orb-cyan"></div>
 <div class="orb orb-purple"></div>
 <div class="orb orb-pink"></div>
@@ -41,7 +47,7 @@
 <div class="game-hero" style="padding-bottom:0;">
   <div class="level-badge">Module 06 · Level <span id="current-level">1</span> · Fermi Hunter</div>
   <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Fermi Surface & Statistics</span></h1>
-  <p class="hero-desc">Electrons near the Fermi surface carry all the heat and current. Master their distribution.</p>
+  <p class="hero-desc">Electrons near the Fermi surface carry all the heat and current. Explore thermal smearing, k-space occupation, and material-dependent Fermi surfaces.</p>
 </div>
 
 <div class="game-container">
@@ -56,27 +62,101 @@
   <div class="mode-section" id="section-play">
     <div class="playground-area">
       <div class="playground-header">
-        <div class="playground-title">🔬 Fermi-Dirac Smearing</div>
-        <div class="playground-level">Slide temperature to see electrons smear across the Fermi level. Watch classical vs quantum.</div>
+        <div class="playground-title">🔬 k-Space Occupation & Fermi Surface</div>
+        <div class="playground-level">The Canvas shows a 2D slice of k-space. Each dot is a momentum state, colored by Fermi-Dirac occupation. Below: the f(E) curve, density of thermally active states, and material applications.</div>
+      </div>
+
+      <!-- CANVAS PRIMARY VISUAL -->
+      <div class="fs-canvas-wrap">
+        <canvas id="fs-canvas"></canvas>
+        <div class="fs-overlay">
+          <span id="fs-overlay-mat" style="color:var(--text-main);">Free electron</span>
+          · <span id="fs-overlay-struct" style="color:var(--text-dim);">Free-electron</span>
+          · k<sub>F</sub> = <span id="fs-overlay-kf" style="color:var(--accent-cyan);">3.16</span> nm<sup>-1</sup>
+          · T/T<sub>F</sub> = <span id="fs-overlay-deg" style="color:var(--accent-pink);">0.005</span>
+        </div>
+        <div class="fs-legend-bar">
+          <span class="fs-legend-item"><span class="fs-legend-dot" style="background:rgba(0,240,255,0.9);"></span> Occupied</span>
+          <span class="fs-legend-item"><span class="fs-legend-dot" style="background:rgba(255,78,205,0.7);"></span> Thermal shell</span>
+          <span class="fs-legend-item"><span class="fs-legend-dot" style="background:rgba(255,255,255,0.12);"></span> Empty</span>
+          <span class="fs-legend-item"><span class="fs-legend-dot" style="background:rgba(0,240,255,0.25);border:1px solid rgba(0,240,255,0.5);"></span> k<sub>F</sub> circle</span>
+          <span class="fs-legend-item"><span style="display:inline-block;width:10px;height:3px;background:rgba(255,255,255,0.15);"></span> BZ boundary</span>
+        </div>
       </div>
 
       <div style="display:grid; grid-template-columns: 1fr 320px; gap: 1.5rem;">
         <div>
           <div class="plot-container" id="plot-fd" style="min-height:380px;"></div>
-          <div class="plot-container" id="plot-fermi-3d" style="min-height:280px; margin-top:1.5rem;"></div>
+          <div id="plot-desc-fd" style="font-size:0.78rem;color:var(--text-dim);margin-top:0.4rem;">
+            Fermi-Dirac distribution f(E) = [exp((E−μ)/k<sub>B</sub>T)+1]<sup>−1</sup>. Yellow dashed = T=0 step. Dotted magenta = Maxwell-Boltzmann (classical limit at high T).
+          </div>
+
+          <div class="plot-container" id="plot-dfdE" style="min-height:260px;margin-top:1.5rem;"></div>
+          <div id="plot-desc-dfdE" style="font-size:0.78rem;color:var(--text-dim);margin-top:0.4rem;">
+            −∂f/∂E is a thermal-broadened delta function centred on μ. Its width ~k<sub>B</sub>T. Only electrons within this window respond to external perturbations — the ``thermometer'' of the Fermi sea.
+          </div>
+
+          <div class="plot-container" id="plot-occ" style="min-height:320px;margin-top:1.5rem;"></div>
+          <div id="plot-desc-occ" style="font-size:0.78rem;color:var(--text-dim);margin-top:0.4rem;">
+            2D k-space occupation map. Colour = f(E). At T=0: sharp disk. At finite T: fuzzy edge because states just above k<sub>F</sub> become partially occupied.
+          </div>
+
+          <!-- Applications section -->
+          <div style="margin-top:2rem;">
+            <div class="playground-header">
+              <div class="playground-title">⚙ Applications & Extensions</div>
+              <div class="playground-level">Real consequences of Fermi-Dirac statistics in materials.</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+              <div>
+                <div class="plot-container app-plot" id="plot-pauli"></div>
+                <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Pauli paramagnetic susceptibility χ<sub>P</sub>(T) ~ μ(E<sub>F</sub>) in a Fermi liquid. Constant at low T; drops when k<sub>B</sub>T ~ E<sub>F</sub>.</div>
+              </div>
+              <div>
+                <div class="plot-container app-plot" id="plot-thermionic"></div>
+                <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Thermionic emission current J = AT<sup>2</sup>exp(−φ/k<sub>B</sub>T). Only electrons in the high-energy tail escape the work-function barrier φ.</div>
+              </div>
+            </div>
+            <div class="plot-container app-plot" id="plot-wd"></div>
+            <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">White-dwarf degeneracy pressure P ∝ n<sup>5/3</sup>: the same Pauli pressure that keeps the star from collapsing is what prevents metals from collapsing under their own electronic charge.</div>
+          </div>
         </div>
+
         <div>
           <div class="challenge-panel" style="margin-bottom:1rem;">
             <div class="challenge-header">
               <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙</span>
               <span class="challenge-title">Controls</span>
             </div>
+            <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.4rem;">Material preset</div>
+            <div class="preset-grid">
+              <button class="btn preset-btn" id="preset-Free" onclick="setFSMaterial('Free')">Free e⁻</button>
+              <button class="btn preset-btn" id="preset-Na" onclick="setFSMaterial('Na')">Na</button>
+              <button class="btn preset-btn" id="preset-Cu" onclick="setFSMaterial('Cu')">Cu</button>
+              <button class="btn preset-btn" id="preset-Ag" onclick="setFSMaterial('Ag')">Ag</button>
+              <button class="btn preset-btn" id="preset-Al" onclick="setFSMaterial('Al')">Al</button>
+              <button class="btn preset-btn" id="preset-Nb" onclick="setFSMaterial('Nb')">Nb</button>
+            </div>
+
+            <div class="control-row">
+              <span class="control-label">Fermi energy E<sub>F</sub></span>
+              <span class="control-value" id="val-EF">5.0</span><span class="unit-tag">eV</span>
+            </div>
+            <input type="range" id="slider-EF" min="1" max="15" value="5.0" step="0.1">
+
             <div class="control-row">
               <span class="control-label">Temperature T</span>
               <span class="control-value" id="val-T">300</span><span class="unit-tag">K</span>
             </div>
             <input type="range" id="slider-T" min="1" max="5000" value="300" step="10">
-            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">At T=0, f(E) is a step. At T≫0, it smears over ~k_BT.</p>
+
+            <button class="btn" id="btn-classical" onclick="toggleClassical()" style="margin-top:0.6rem;width:100%;font-size:0.82rem;">
+              Show Maxwell-Boltzmann
+            </button>
+
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.6rem;line-height:1.5;">
+              At T=0, f(E) is a sharp step at E<sub>F</sub>. Only states below E<sub>F</sub> are occupied. As T rises, electrons within ~k<sub>B</sub>T of E<sub>F</sub> are thermally excited into empty states above. The Canvas visualises this directly: cyan dots = occupied, pink glow = thermal shell, white dashed = k<sub>F</sub> circle.
+            </p>
           </div>
 
           <div class="challenge-panel">
@@ -86,10 +166,14 @@
             </div>
             <table>
               <tr><th>Quantity</th><th>Value</th></tr>
+              <tr><td>Temperature</td><td class="highlight-num" id="live-T">300 K</td></tr>
+              <tr><td>Fermi energy E<sub>F</sub></td><td class="highlight-num" id="live-EF">5.00 eV</td></tr>
               <tr><td>Chemical potential μ</td><td class="highlight-num" id="live-mu">4.95 eV</td></tr>
-              <tr><td>Thermal smearing</td><td class="highlight-pink" id="live-smear">25.9 meV</td></tr>
+              <tr><td>k<sub>F</sub></td><td class="highlight-num" id="live-kF">3.16 nm⁻¹</td></tr>
+              <tr><td>Fermi temp T<sub>F</sub></td><td class="highlight-num" id="live-TF">5.8×10⁴ K</td></tr>
               <tr><td>de Broglie λ</td><td class="highlight-num" id="live-debroglie">6.2 nm</td></tr>
-              <tr><td>Fermi wavelength</td><td>0.5 nm</td></tr>
+              <tr><td>Thermal smearing k<sub>B</sub>T</td><td class="highlight-pink" id="live-smear">25.9 meV</td></tr>
+              <tr><td>Degeneracy T/T<sub>F</sub></td><td class="highlight-num" id="live-degen">0.005</td></tr>
             </table>
           </div>
         </div>
@@ -99,7 +183,6 @@
 
   <!-- CHALLENGES -->
   <div class="mode-section" id="section-challenge" style="display:none;">
-
     <div class="challenge-panel">
       <div class="challenge-header">
         <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🌡</span>
@@ -110,14 +193,12 @@
       <div class="challenge-reward">🏆 Reward: 50 XP · Combo bonus: +5 XP per streak</div>
       <div class="timer-bar"><div class="timer-fill" id="temp-race-timer" style="width:100%"></div></div>
       <div id="temp-race-target" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-
       <div class="control-row">
         <span class="control-label">T (guess)</span>
         <span class="control-value" id="val-temp-race">300</span><span class="unit-tag">K</span>
       </div>
       <input type="range" id="slider-temp-race" min="10" max="5000" value="300" step="10" style="width:100%;">
       <button class="btn" onclick="guessTempRace()" style="margin-top:1rem;">✓ Match μ</button>
-
       <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;"><strong>Score:</strong> <span id="temp-race-score">0</span> · <strong>Combo:</strong> <span id="temp-race-combo">0</span></div>
       <div class="challenge-feedback" id="temp-race-feedback"></div>
     </div>
@@ -128,9 +209,8 @@
         <span class="challenge-title">Challenge 2: Debye Theta Detector</span>
         <span class="challenge-difficulty medium">Medium</span>
       </div>
-      <div class="challenge-desc">The Debye temperature θ_D sets where phonon heat capacity transitions from T³ to T. Guess θ_D for copper.</div>
+      <div class="challenge-desc">The Debye temperature θ_D sets where phonon heat capacity transitions from T³ to constant. Guess θ_D for copper.</div>
       <div class="challenge-reward">🏆 Reward: 75 XP · "Fermi Hunter" badge</div>
-
       <div style="display:flex; gap:1rem; align-items:center; margin-top:1rem;">
         <input type="number" id="debye-guess" placeholder="θ_D (K)" style="background:var(--bg-elevated);border:1px solid var(--glass-border);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);width:120px;">
         <button class="btn" onclick="checkDebyeGuess()">✓ Submit</button>
@@ -147,9 +227,9 @@
       <div class="challenge-desc">Heavy fermion materials have enormous effective mass m*. How does their heat capacity behave at low T?</div>
       <div class="challenge-reward">🏆 Reward: 100 XP + "Heavy Fermion" badge</div>
       <div class="btn-group" style="margin-top:1rem;">
-        <button class="btn" onclick="checkHeavyFermion()">σ ∝ T with large coefficient</button>
-        <button class="btn" onclick="var fb=document.getElementById('heavy-feedback');fb.className='challenge-feedback error';fb.style.display='block';fb.textContent='✗ Not exponential. Heavy fermions are Fermi liquids with m* ≫ m_e.';">σ ∝ e^(-Δ/kT)</button>
-        <button class="btn" onclick="var fb=document.getElementById('heavy-feedback');fb.className='challenge-feedback error';fb.style.display='block';fb.textContent='✗ Not constant. The large γ comes from the huge effective mass.';">σ = constant</button>
+        <button class="btn" onclick="checkHeavyFermion('linear')">C ∝ T with large coefficient</button>
+        <button class="btn" onclick="checkHeavyFermion('exp')">C ∝ e^(-Δ/kT)</button>
+        <button class="btn" onclick="checkHeavyFermion('const')">C = constant</button>
       </div>
       <div class="challenge-feedback" id="heavy-feedback"></div>
     </div>
@@ -157,7 +237,6 @@
 
   <!-- PUZZLES -->
   <div class="mode-section" id="section-puzzle" style="display:none;">
-
     <div class="challenge-panel">
       <div class="challenge-header">
         <span class="challenge-icon" style="background:rgba(192,132,252,0.12);">⚙</span>
@@ -204,16 +283,30 @@
       <div class="challenge-desc">Does the Wiedemann-Franz law κ/(σT) = L hold for all materials? Select the correct answer.</div>
       <div class="challenge-reward">🏆 Reward: 100 XP · "W-F Guardian" badge</div>
       <div class="btn-group" style="margin-top:1rem;">
-        <button class="btn" onclick="document.getElementById('wf-guess').value='yes';checkWiedemannFranz()">Yes, universally for all materials</button>
-        <button class="btn" onclick="document.getElementById('wf-guess').value='yes';checkWiedemannFranz()">Yes, for metals only (Fermi liquids)</button>
-        <button class="btn" onclick="var fb=document.getElementById('wf-feedback');fb.className='challenge-feedback error';fb.style.display='block';fb.textContent='✗ Not always wrong! It holds for Fermi liquid metals.';">No, never true</button>
+        <button class="btn" onclick="document.getElementById('wf-guess').value='all';checkWiedemannFranz()">Yes, universally for all materials</button>
+        <button class="btn" onclick="document.getElementById('wf-guess').value='metals';checkWiedemannFranz()">Yes, for metals only (Fermi liquids)</button>
+        <button class="btn" onclick="document.getElementById('wf-guess').value='no';checkWiedemannFranz()">No, never true</button>
       </div>
       <input type="hidden" id="wf-guess">
       <div class="challenge-feedback" id="wf-feedback"></div>
     </div>
   </div>
 
-  <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; margin-top:2rem;">
+  <!-- INSIGHTS -->
+  <div style="margin-top:2rem;background:var(--bg-deep);border:1px solid var(--glass-border);border-radius:12px;padding:1.5rem;">
+    <h3 style="font-size:1.1rem;color:var(--text-main);margin-bottom:0.8rem;">💡 Physical Insights</h3>
+    <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-bottom:0.8rem;">
+      The Fermi-Dirac distribution <strong>f(E) = [exp((E−μ)/k<sub>B</sub>T) + 1]<sup>−1</sup></strong> is the cornerstone of electron behaviour in solids. At absolute zero it is a perfect step function: all states below E<sub>F</sub> are filled, all above are empty. This Pauli blocking is why metals have Pauli paramagnetism, a specific heat proportional to T, and thermal conductivities carried almost entirely by electrons.
+    </p>
+    <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-bottom:0.8rem;">
+      The finite-temperature correction to the chemical potential in 3D is <strong>μ(T) ≈ E<sub>F</sub> [1 − (π<sup>2</sup>/12)(k<sub>B</sub>T/E<sub>F</sub>)<sup>2</sup>]</strong>, valid when T ≪ T<sub>F</sub> = E<sub>F</sub>/k<sub>B</sub>. Even at room temperature, typical metals have T/T<sub>F</sub> ~ 10<sup>−2</sup>, so only a tiny fraction of electrons within k<sub>B</sub>T of E<sub>F</sub> can participate in transport or thermal excitation. This explains why the electronic specific heat C<sub>v</sub> = γT is so small compared with the classical value 3Nk<sub>B</sub>.
+    </p>
+    <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+      The Wiedemann-Franz law <strong>κ/(σT) = L = (π<sup>2</sup>/3)(k<sub>B</sub>/e)<sup>2</sup></strong> = 2.44×10<sup>−8</sup> WΩ/K<sup>2</sup> holds because both charge and heat are carried by the same quasiparticles near E<sub>F</sub>. A Lorenz number close to this universal value is a fingerprint of Fermi-liquid behaviour. In semiconductors phonons carry heat while electrons carry charge, so L is violated.
+    </p>
+  </div>
+
+  <div style="display:grid; grid-template-columns: 1fr 320px; gap: 1.5rem; margin-top:2rem;">
     <div></div>
     <div>
       <div class="challenge-panel" style="position:sticky; top:5rem;">
@@ -244,9 +337,8 @@
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
-<script src="fs_sim.js?v=1"></script>
-<script src="fs_apps_games.js?v=1"></script>
-
+<script src="fs_sim.js?v=2"></script>
+<script src="fs_apps_games.js?v=2"></script>
 <script src="../../shared_effects.js"></script>
 </body>
 </html>

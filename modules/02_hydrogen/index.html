@@ -84,6 +84,29 @@
     height: 300px; 
     width: 100%; 
   }
+  .viz-meta { padding: 0.55rem 0.9rem; border-top: 1px solid var(--glass-border); background: rgba(0,0,0,0.15); }
+  .viz-meta h4 { margin: 0 0 0.25rem; font-size: 0.82rem; color: var(--text-main); }
+  .viz-meta p { margin: 0 0 0.4rem; font-size: 0.71rem; color: var(--text-dim); line-height: 1.45; }
+  .viz-legend { display: flex; flex-wrap: wrap; gap: 0.4rem 0.85rem; font-size: 0.66rem; color: var(--text-muted); }
+  .viz-legend span { display: inline-flex; align-items: center; gap: 0.3rem; }
+  .viz-legend .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .dot-cyan   { background: #00f0ff; box-shadow: 0 0 4px #00f0ff; }
+  .dot-purple { background: #c084fc; box-shadow: 0 0 4px #c084fc; }
+  .dot-pink   { background: #ff4ecd; box-shadow: 0 0 4px #ff4ecd; }
+  .dot-yellow { background: #facc15; box-shadow: 0 0 4px #facc15; }
+  .dot-green  { background: #4ade80; box-shadow: 0 0 4px #4ade80; }
+  .dot-cyan2  { background: #00f0ff; }
+  .dot-red    { background: #ff4ecd; }
+  .plot-desc {
+    margin: 0.6rem 0 1.2rem;
+    padding: 0.8rem 1rem;
+    background: rgba(0,0,0,0.2);
+    border-left: 3px solid var(--accent-cyan);
+    border-radius: 0 8px 8px 0;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
 </style>
 </head>
 <body>
@@ -137,21 +160,73 @@
             <div class="sim-card">
               <div class="sim-card-label">Radial Wavefunction</div>
               <div class="sim-content" id="plot-orbitals"></div>
+              <div class="viz-meta">
+                <h4>Radial Wavefunction R<sub>nl</sub>(r) and Probability Density</h4>
+                <p>The solid cyan trace shows the radial part of the hydrogen wavefunction <em>R<sub>nl</sub>(r)</em>, while the dashed purple fill shows <em>r²|R|<sup>2</sup></em> — the probability of finding the electron between <em>r</em> and <em>r + dr</em>. The yellow dotted line marks ⟨<em>r</em>⟩, the expectation radius of the chosen orbital.</p>
+                <div class="viz-legend">
+                  <span><span class="dot dot-cyan"></span> R<sub>nl</sub>(r)</span>
+                  <span><span class="dot dot-purple"></span> r²|R|<sup>2</sup></span>
+                  <span><span class="dot dot-yellow"></span> ⟨r⟩ expectation</span>
+                </div>
+              </div>
             </div>
             <div class="sim-card">
               <div class="sim-card-label">3D Orbital state</div>
               <div class="sim-content" id="canvas-3d" style="cursor:move;"></div>
+              <div class="viz-meta">
+                <h4>3D Atomic Visualisation</h4>
+                <p>Left: Bohr-model electron on a circular orbit (classical analogy). Right: quantum probability cloud <em>|ψ|²</em> built from the same quantum numbers — no definite trajectory, only an amplitude.</p>
+                <div class="viz-legend">
+                  <span><span class="dot dot-pink"></span> Proton nucleus</span>
+                  <span><span class="dot dot-cyan"></span> Electron / cloud</span>
+                  <span><span class="dot dot-yellow"></span> Bohr orbit ring</span>
+                </div>
+              </div>
             </div>
           </div>
           
           <div class="sim-card">
             <div class="sim-card-label">Emission Spectrum</div>
             <div class="sim-content full-width-sim" id="plot-spectrum"></div>
+            <div class="viz-meta">
+              <h4>Emission Spectrum and Series Identification</h4>
+              <p>Each coloured dot is a possible hydrogen transition. The dashed vertical line marks the photon energy for the currently selected <em>n<sub>i</sub> → n<sub>f</sub></em> transition. Match colour to spectral series: pink Lyman (UV), yellow Balmer (visible), green Paschen (IR), cyan Brackett (far-IR).</p>
+                <div class="viz-legend">
+                  <span><span class="dot dot-pink"></span> Lyman series (UV)</span>
+                  <span><span class="dot dot-yellow"></span> Balmer series (Vis)</span>
+                  <span><span class="dot dot-green"></span> Paschen series (IR)</span>
+                  <span><span class="dot dot-cyan"></span> Brackett series (IR)</span>
+                  <span><span class="dot dot-purple"></span> Your transition (dashed)</span>
+                </div>
+                <div style="display:flex;gap:1.2rem;margin-top:0.5rem;align-items:center;flex-wrap:wrap;">
+                  <div style="display:flex;align-items:center;gap:0.3rem;font-size:0.75rem;color:var(--text-muted);">
+                    <span>n<sub>i</sub>:</span>
+                    <span id="val-ni-meta" style="font-family:var(--font-mono);color:var(--accent-cyan);min-width:16px;">3</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:0.3rem;font-size:0.75rem;color:var(--text-muted);">
+                    <span>n<sub>f</sub>:</span>
+                    <button class="btn" style="padding:1px 6px;font-size:0.6rem;" onclick="setNf(__H.nf-1)">-</button>
+                    <span id="val-nf-meta" style="font-family:var(--font-mono);color:var(--accent-cyan);min-width:16px;">2</span>
+                    <button class="btn" style="padding:1px 6px;font-size:0.6rem;" onclick="setNf(__H.nf+1)">+</button>
+                  </div>
+                  <button class="btn" style="padding:2px 10px;font-size:0.65rem;" onclick="plotSpectrum(__H.n, __H.nf)">📡 Plot Spectrum</button>
+                </div>
+            </div>
           </div>
 
           <div class="sim-card">
             <div class="sim-card-label">Zeeman Splitting</div>
             <div class="sim-content full-width-sim" id="plot-zeeman"></div>
+            <div class="viz-meta">
+              <h4>Zeeman Energy Splitting in a Magnetic Field</h4>
+              <p>In an external magnetic field <em>B</em>, each orbital level <em>l</em> splits into <em>2l + 1</em> sub-levels labelled by magnetic quantum number <em>m</em>. The spacing <em>ΔE = μ<sub>B</sub>B</em> is the same for every adjacent pair — the normal Zeeman effect. This is the origin of the anomalous Zeeman effect when spin is included.</p>
+              <div class="viz-legend">
+                <span><span class="dot dot-pink"></span> m = +l</span>
+                <span><span class="dot dot-purple"></span> m intermediate</span>
+                <span><span class="dot dot-cyan"></span> m = −l</span>
+                <span><span class="dot dot-yellow"></span> μ<sub>B</sub>B splitting</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -188,7 +263,6 @@
             </div>
 
             <div class="btn-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:0.7rem;">
-              <button class="btn" style="width:100%;" onclick="plotSpectrum(__H.ni, __H.nf)">📡 Spectrum</button>
               <button class="btn" id="btn-reveal-wf" style="width:100%; background:var(--accent-purple); cursor:pointer;" onclick="toggleWavefunctionView()">🌌 Orbit Cloud</button>
             </div>
           </div>
@@ -248,6 +322,9 @@
         🔎 <strong>Target photon:</strong> <span id="spec-energy">?</span> eV · Which transition?
       </div>
       <div class="spectrum-strip" id="spectrum-strip"></div>
+      <div class="plot-desc" style="margin-top:0.6rem;">
+        <strong>What it shows:</strong> A spectral line is the emission signature of a single electron transition between bound hydrogen states. The photon energy is fixed by <em>E = 13.6(1/n<sub>f</sub>² − 1/n<sub>i</sub>²)</em> eV, so each unique pair (<em>n<sub>i</sub>, n<sub>f</sub></em>) emits at one precise wavelength. The line colour maps to the series: Lyman (UV, magenta), Balmer (visible, yellow), Paschen (IR, green) and Brackett (far-IR, cyan).
+      </div>
       <div style="display:flex; align-items:center; gap:1.5rem; margin-top:1rem;">
         <div style="font-size:0.85rem;color:var(--text-muted);">
           <strong>Score:</strong> <span id="spec-score">0</span> · 
@@ -269,6 +346,9 @@
       </div>
       <div class="challenge-reward">🏆 Reward: 75 XP · "Fine Structure Analyst" badge</div>
       <div class="plot-container" id="plot-fine-structure" style="height:260px;"></div>
+      <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
+        <strong>What it shows:</strong> Spin-orbit coupling splits the n=2, l=1 level into j = l ± ½. The j = 1/2 state (lower) and j = 3/2 state (upper) are separated by a fine-structure energy ΔE𝞫 ≈ (Zα)⁴ 13.6 eV / n³. This splitting is the origin of the sodium doublet and the tiny energy differences in precise atomic clocks.
+      </div>
       <div style="display:flex; gap:1rem; margin-top:1rem;">
         <button class="btn" onclick="checkFineStructure('1/2')">j = 1/2 is lower</button>
         <button class="btn" onclick="checkFineStructure('3/2')">j = 3/2 is lower</button>
@@ -298,6 +378,9 @@
         </div>
         <div id="bohr-anim" style="background:var(--bg-elevated);border-radius:var(--radius-sm);min-height:200px;display:flex;align-items:center;justify-content:center;"></div>
       </div>
+      <div class="plot-desc" style="margin-top:0.6rem;">
+        <strong>What it shows:</strong> The Bohr radius scales as ⟨<em>r</em>⟩ = <em>a</em>₀ <em>n</em>² [1 + ½(1 − <em>l</em>(<em>l</em>+1)/<em>n</em>²)], so for any fixed <em>l</em> the dominant dependence is <em>n</em>². The n=3 state is therefore 9× larger than n=1 in spatial extent — a direct consequence of the Coulomb potential's 1/<em>r</em> form and the virial theorem. This scaling controls how tightly bound an electron is and therefore how strongly it interacts with external fields.
+      </div>
       <div id="bohr-feedback" class="challenge-feedback"></div>
     </div>
   </div>
@@ -324,6 +407,9 @@
       </div>
       <div id="aufbau-feedback" class="challenge-feedback"></div>
       <button class="btn" onclick="checkAufbau()">✓ Check Configuration</button>
+      <div class="plot-desc" style="margin-top:0.6rem;">
+        <strong>What it shows:</strong> The Aufbau principle states that electrons fill orbitals in order of increasing (<em>n + l</em>). Where (<em>n + l</em>) ties, the smaller <em>n</em> wins — this explains why 4s fills before 3d, and why transition metals appear where they do in the periodic table.
+      </div>
     </div>
 
     <div class="challenge-panel">
@@ -339,6 +425,9 @@
       <div id="orbital-matches" style="margin-top:0.5rem;"></div>
       <div id="orbital-feedback" class="challenge-feedback"></div>
       <button class="btn" onclick="checkOrbitalPuzzle()">✓ Check Matches</button>
+      <div class="plot-desc" style="margin-top:0.6rem;">
+        <strong>What it shows:</strong> Spherical harmonics <em>Y<sub>lm</sub>(θ,φ)</em> encode the angular shape of orbitals. <em>l</em> = 0 is isotropic (s), <em>l</em> = 1 has three <em>m</em> projections (p<sub>x</sub>, p<sub>y</sub>, p<sub>z</sub>), and <em>l</em> = 2 has five d-orbitals. The squared modulus |<em>Y<sub>lm</sub></em>|² is what the 3D cloud plot above displays — the probability of finding the electron at a given polar angle.
+      </div>
     </div>
 
     <div class="challenge-panel">
@@ -356,6 +445,9 @@
       <div id="hund-feedback" class="challenge-feedback"></div>
       <button class="btn" onclick="checkHundPuzzle()">✓ Verify Order</button>
       <button class="btn" onclick="initHundPuzzle()">↺ Shuffle</button>
+      <div class="plot-desc" style="margin-top:0.6rem;">
+        <strong>What it shows:</strong> Hund's rules maximise total spin <em>S</em> (parallel spins first), then maximise orbital angular momentum <em>L</em>, and finally obey spin-orbit coupling <em>J</em> = |<em>L</em> − <em>S</em>| for less-than-half-filled shells. This ordering minimises Coulomb repulsion by keeping electrons spatially separated and explains the magnetic moments of the first-transition-series atoms.
+      </div>
     </div>
   </div>
 
@@ -409,8 +501,7 @@
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
-<script src="hydrogen_sim.js?v=1"></script>
-<script src="hydrogen_apps_games.js?v=1"></script>
-<script src="../../shared_effects.js"></script>
+<script src="hydrogen_sim.js?v=2"></script>
+<script src="hydrogen_apps_games.js?v=2"></script><script src="../../shared_effects.js"></script>
 </body>
 </html>

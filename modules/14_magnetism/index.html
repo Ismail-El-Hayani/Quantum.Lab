@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Magnetism Lab — Physics Playground</title>
-<script src="../../modules/01_qho/plotly-2.27.0.min.js"></script>
+<script src="../../modules/01_qho/plotly-2.27.0.min.js"
+        integrity="sha384-Hl48Kq2HifOWdXEjMsKo6qxqvRLTYqIGbvlENBmkHAxZKIGCXv43H6W1jA671RzC"
+        crossorigin="anonymous"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <link rel="stylesheet" href="../../shared_styles.css">
 <style>
-  #mag-diag { position:fixed; bottom:0; left:0; right:0; z-index:9999; background:#1a0a0a; color:#ff6b6b; font-family:monospace; font-size:12px; padding:8px 12px; border-top:2px solid #ff4444; max-height:120px; overflow:auto; display:none; }
-  #mag-diag.show { display:block; }
   .timer-bar { height:4px;background:var(--bg-elevated);border-radius:2px;overflow:hidden;margin-bottom:1rem; }
   .timer-fill { height:100%;background:var(--accent-cyan);transition:width 1s linear; }
   .draggable-target { cursor:grab; border:2px dashed var(--glass-border); border-radius:var(--radius-sm); padding:0.5rem 0.8rem; background:var(--bg-elevated); display:inline-block; }
@@ -25,18 +25,18 @@
   .spin-up::before { background: #00f0ff; }
   .spin-down::before { background: #ff4ecd; }
   .spin-domain::before { background: #facc15; }
+  .spin-bond-strong::before { background: #00f0ff; opacity:0.5; }
+  .spin-bond-weak::before { background: #ff4ecd; opacity:0.3; }
+  .bar-magnet-label::before { background:linear-gradient(to right,#00f0ff 50%,#ff4ecd 50%); border-radius:2px; width:14px; height:6px; }
+  .field-arrow::before { content:'→'; background:none; color:#00f0ff; font-size:0.9rem; width:auto; height:auto; display:inline; }
+  .uniform-h-arrow::before { content:'→'; background:none; color:#a0b8ff; font-size:0.85rem; width:auto; height:auto; display:inline; }
+  /* magnet toggle switch */
+  .mag-switch .mag-slider::before { position:absolute; content:''; height:14px; width:14px; left:3px; bottom:3px; background:var(--text-muted); border-radius:50%; transition:.3s; }
+  #magnet-toggle-check:checked + .mag-slider { background:rgba(0,240,255,0.25); }
+  #magnet-toggle-check:checked + .mag-slider::before { transform:translateX(16px); background:#00f0ff; }
 </style>
 </head>
 <body>
-<div id="mag-diag"></div>
-<script>
-  window.__magErrors = [];
-  window.onerror = function(msg, url, line, col, err) {
-    window.__magErrors.push(msg + ' @ ' + (url||'').split('/').pop() + ':' + line);
-    var d = document.getElementById('mag-diag');
-    if (d) { d.className = 'show'; d.innerHTML = window.__magErrors.join('\u003cbr\u003e'); }
-  };
-</script>
 <div class="orb orb-cyan"></div><div class="orb orb-purple"></div><div class="orb orb-pink"></div>
 <nav class="game-nav">
   <div class="nav-brand"><a href="../../index.html" style="text-decoration:none;color:inherit;"><span class="nav-logo">⚛</span> Physics Playground</a></div>
@@ -64,32 +64,39 @@
       </div>
       <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem;">
         <div>
-          <div class="plot-container" id="plot-susceptibility" style="min-height:280px;"></div>
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
-            <strong>What it shows:</strong> Magnetic susceptibility versus temperature, distinguishing paramagnetic Curie-law decay from ferromagnetic divergence near Tc and the antiferromagnetic peak at T<sub>N</sub>.<br>
-            <strong>Why it matters:</strong> The χ(T) fingerprint tells you the dominant interaction — weak independent moments versus strong exchange coupling — and predicts phase transitions.
-          </div>
-          <div class="plot-container" id="plot-M-T" style="min-height:220px; margin-top:1.5rem;"></div>
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
-            <strong>What it shows:</strong> Normalized magnetization M(T)/M<sub>s</sub> versus temperature. Below Tc, exchange interactions win over thermal disorder and spontaneous order appears.<br>
-            <strong>Why it matters:</strong> The M(T) knee is the smoking gun for a ferromagnetic transition and lets you read Tc off a magnetization experiment directly.
-          </div>
-          <div class="plot-container" id="plot-hysteresis" style="min-height:260px; margin-top:1.5rem;"></div>
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
-            <strong>What it shows:</strong> The classic M-H hysteresis loop capturing remanence, coercivity, and saturation.<br>
-            <strong>Why it matters:</strong> The loop area and coercivity decide whether a material is a soft transformer core or a hard permanent magnet / data-storage medium.
-          </div>
+          <!-- Ising Canvas FIRST (primary visual) -->
           <div id="ising-wrapper">
             <canvas id="ising-canvas"></canvas>
           </div>
           <div class="ising-legend">
-            <span class="spin-up">Spin up</span>
-            <span class="spin-down">Spin down</span>
+            <span class="spin-up">Spin up (↑)</span>
+            <span class="spin-down">Spin down (↓)</span>
             <span class="spin-domain">Domain wall</span>
+            <span class="spin-bond-strong">Strong coupling</span>
+            <span class="spin-bond-weak">Weak coupling</span>
+            <span class="bar-magnet-label">Bar magnet (N-S)</span>
+            <span class="field-arrow">Local field arrow</span>
+            <span class="uniform-h-arrow">Uniform H field</span>
           </div>
           <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.6;">
-            <strong>What it shows:</strong> A 2D Ising lattice where each arrow is a spin. At low T, exchange coupling locks neighbours into domains. At T > Tc, thermal noise randomizes the lattice. Click to flip a spin; watch domains grow or shrink.<br>
-            <strong>Why it matters:</strong> Domains are why a ferromagnet can have zero net M even when cold — the spins are locally ordered but globally cancelling. The lattice is the microscopic origin of the macroscopic curves above.
+            <strong>What it shows:</strong> A 2D Ising lattice (20×20) where each arrow is a spin-½ moment. At low T, exchange J locks neighbours into domains (thick cyan bonds). At T > Tc, thermal noise randomizes the lattice (thin pink bonds). The uniform background arrows show the global external field H direction. Drag the bar magnet (blue=North, red=South) across the crystal and toggle its power — the local dipole arrows show how its reorients nearby spins.<br>
+            <strong>Why it matters:</strong> Domains are why a ferromagnet can have zero net M even when cold — spins are locally ordered but globally cancelling. The lattice is the microscopic origin of the macroscopic curves below.
+          </div>
+
+          <div class="plot-container" id="plot-susceptibility" style="min-height:280px;margin-top:1.5rem;"></div>
+          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
+            <strong>What it shows:</strong> Magnetic susceptibility versus temperature, distinguishing paramagnetic Curie-law decay (χ = C/T), ferromagnetic Curie–Weiss divergence near Tc (χ = C/(T−θ)), and the antiferromagnetic peak at T<sub>N</sub>.<br>
+            <strong>Why it matters:</strong> The χ(T) fingerprint tells you the dominant interaction — weak independent moments versus strong exchange coupling — and predicts phase transitions.
+          </div>
+          <div class="plot-container" id="plot-M-T" style="min-height:220px; margin-top:1.5rem;"></div>
+          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
+            <strong>What it shows:</strong> Normalized magnetization M(T)/M<sub>s</sub> versus temperature. Below Tc, exchange interactions win over thermal disorder and spontaneous order appears (Brillouin-like tanh law).<br>
+            <strong>Why it matters:</strong> The M(T) knee is the smoking gun for a ferromagnetic transition and lets you read Tc off a magnetization experiment directly.
+          </div>
+          <div class="plot-container" id="plot-hysteresis" style="min-height:260px; margin-top:1.5rem;"></div>
+          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
+            <strong>What it shows:</strong> The classic M–H hysteresis loop: sweep external field H up (green) and down (magenta). Captures remanence M<sub>r</sub>, coercivity H<sub>c</sub>, and saturation M<sub>s</sub>. At T → Tc the loop collapses because thermal energy destroys domains.<br>
+            <strong>Why it matters:</strong> The loop area and coercivity decide whether a material is a soft transformer core (low Hc) or a hard permanent magnet / storage medium (high Hc, high Mr).
           </div>
         </div>
         <div>
@@ -97,15 +104,7 @@
             <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙</span><span class="challenge-title">Controls</span></div>
             <div class="control-row"><span class="control-label">Temperature T</span><span class="control-value" id="val-T-mag">300</span><span class="unit-tag">K</span></div>
             <input type="range" id="slider-T-mag" min="10" max="1400" value="300" step="5">
-            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Curie constant C</span><span class="control-value" id="val-C">1.0</span></div>
-            <input type="range" id="slider-C" min="0.1" max="5" value="1.0" step="0.1">
-            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Weiss θ</span><span class="control-value" id="val-theta">0</span><span class="unit-tag">K</span></div>
-            <input type="range" id="slider-theta" min="0" max="300" value="0" step="5">
-            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Saturation M<sub>s</sub></span><span class="control-value" id="val-Ms">1.0</span></div>
-            <input type="range" id="slider-Ms" min="0.1" max="2.5" value="1.0" step="0.1">
-            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Curie temp T<sub>c</sub></span><span class="control-value" id="val-Tc">1043</span><span class="unit-tag">K</span></div>
-            <input type="range" id="slider-Tc" min="0" max="1400" value="1043" step="5">
-            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Ext. field H</span><span class="control-value" id="val-H">0.0</span></div>
+            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">External field H</span><span class="control-value" id="val-H">0.0</span></div>
             <input type="range" id="slider-H" min="-0.3" max="0.3" value="0" step="0.005">
             <div style="margin-top:0.8rem;font-size:0.78rem;color:var(--text-muted);">Material:</div>
             <div style="display:flex; gap:0.35rem; flex-wrap:wrap; margin-top:0.3rem;">
@@ -114,6 +113,28 @@
               <button class="mat-btn" id="btn-Co" onclick="setMagMaterial('Co')">Co</button>
               <button class="mat-btn" id="btn-Gd" onclick="setMagMaterial('Gd')">Gd</button>
               <button class="mat-btn" id="btn-Cu" onclick="setMagMaterial('Cu')">Cu</button>
+              <button class="mat-btn" id="btn-Cr" onclick="setMagMaterial('Cr')">Cr</button>
+              <button class="mat-btn" id="btn-MnO" onclick="setMagMaterial('MnO')">MnO</button>
+            </div>
+            <div style="margin-top:1rem;font-size:0.78rem;color:var(--text-muted);border-top:1px solid var(--border-subtle);padding-top:0.6rem;">Properties:</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);line-height:1.8;">
+              T<sub>c</sub>: <span id="val-Tc">1043</span> K · T<sub>N</sub>: <span id="val-TN">0</span> K<br>
+              M<sub>s</sub>: <span id="val-Ms">1.70</span> · H<sub>c</sub>: <span id="val-Hc">0.05</span> · M<sub>r</sub>: <span id="val-Mr">0.65</span><br>
+              θ: <span id="val-theta">1043</span> K · C: <span id="val-C">1.0</span> · J: <span id="val-J">1.0</span>
+            </div>
+            <div style="margin-top:1rem;font-size:0.78rem;color:var(--text-muted);border-top:1px solid var(--border-subtle);padding-top:0.6rem;">Applied Field:</div>
+            <div style="display:flex;align-items:center;gap:0.6rem;margin-top:0.4rem;">
+              <div style="font-size:0.72rem;color:var(--text-muted);">OFF</div>
+              <label class="mag-switch" style="position:relative;display:inline-block;width:36px;height:20px;cursor:pointer;">
+                <input type="checkbox" id="magnet-toggle-check" style="opacity:0;width:0;height:0;">
+                <span class="mag-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#2a2a3a;border-radius:10px;transition:.3s;"></span>
+              </label>
+              <div style="font-size:0.72rem;color:var(--text-muted);">ON</div>
+            </div>
+            <div class="control-row" style="margin-top:0.6rem;"><span class="control-label">Magnet Strength</span><span class="control-value" id="val-magnet-strength">0.15</span></div>
+            <input type="range" id="slider-magnet-strength" min="0.05" max="0.50" value="0.15" step="0.01">
+            <div style="margin-top:0.4rem;font-size:0.72rem;color:var(--text-muted);line-height:1.5;">
+              Drag the bar magnet on the lattice. N pole (blue) repels ↑; S pole (red) attracts ↑. Arrows show local field direction. Higher strength = stronger domain reorientation.
             </div>
           </div>
           <div class="challenge-panel">
@@ -121,8 +142,11 @@
             <table>
               <tr><th>Quantity</th><th>Value</th></tr>
               <tr><td>χ (paramag)</td><td class="highlight-num" id="live-chi">—</td></tr>
-              <tr><td>Hc</td><td class="highlight-pink" id="live-Hc">—</td></tr>
+              <tr><td>H<sub>eff</sub> (coercivity)</td><td class="highlight-pink" id="live-Hc">—</td></tr>
+              <tr><td>M<sub>r</sub> (remanence)</td><td class="highlight-num" id="live-Mr">—</td></tr>
               <tr><td>M(T)</td><td class="highlight-num" id="live-M">—</td></tr>
+              <tr><td>H (field)</td><td class="highlight-num" id="live-Hf">—</td></tr>
+              <tr><td>T<sub>N</sub> / T<sub>c</sub></td><td class="highlight-num" id="live-TN">—</td></tr>
               <tr><td>State</td><td id="live-mag-state">—</td></tr>
               <tr><td>Lattice M</td><td class="highlight-num" id="live-lattice-M">—</td></tr>
             </table>
@@ -225,9 +249,9 @@
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
-<script src="mag_sim.js?v=3"></script>
+<script src="mag_sim.js?v=4"></script>
 <script src="mag_apps.js?v=3"></script>
-<script src="mag_apps_games.js?v=3"></script>
+<script src="mag_apps_games.js?v=4"></script>
 <script src="../../shared_effects.js"></script>
 </body>
 </html>

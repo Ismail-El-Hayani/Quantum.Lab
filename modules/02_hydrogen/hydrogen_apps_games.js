@@ -287,15 +287,15 @@ function plotFineStructure() {
   _plotApp('plot-fine-structure', [
     { x: [0, 1], y: [H.energy_eV(n), H.energy_eV(n)], mode: 'lines',
       line: { color: '#8080a0', width: 3 }, name: 'n=2, unperturbed' },
-    { x: [1.2, 2.2], y: [H.energy_eV(n) + deltaE / 2, H.energy_eV(n) + deltaE / 2], mode: 'lines',
-      line: { color: '#00f0ff', width: 3 }, name: 'j=1/2 (spin ∥)' },
-    { x: [2.4, 3.4], y: [H.energy_eV(n) - deltaE / 2, H.energy_eV(n) - deltaE / 2], mode: 'lines',
-      line: { color: '#ff4ecd', width: 3 }, name: 'j=3/2 (spin anti)' }
+    { x: [1.2, 2.2], y: [H.energy_eV(n) - deltaE / 2, H.energy_eV(n) - deltaE / 2], mode: 'lines',
+      line: { color: '#00f0ff', width: 3 }, name: 'j=1/2 (lower, L·S anti)' },
+    { x: [2.4, 3.4], y: [H.energy_eV(n) + deltaE / 2, H.energy_eV(n) + deltaE / 2], mode: 'lines',
+      line: { color: '#ff4ecd', width: 3 }, name: 'j=3/2 (higher, L·S ∥)' }
   ], _ext(_dLayout, {
-    title: { text: 'Fine Structure: n=2 splits into j=1/2 and j=3/2', font: { size: 13 } },
+    title: { text: 'Fine Structure: n=2 splits into j=1/2 (lower) and j=3/2 (higher)', font: { size: 13 } },
     xaxis: { showticklabels: false, range: [-0.5, 4] },
     yaxis: { title: 'Energy (eV)' },
-    legend: { x: 0.5, y: 0.98, bgcolor: 'rgba(10,10,15,0.8)' }
+    legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(10,10,15,0.8)' }
   }), { responsive: true, displayModeBar: false });
 }
 
@@ -536,6 +536,19 @@ function checkHundPuzzle() {
 }
 
 /* ---------- Sliders & Boot ---------- */
+function setNf(v) {
+  v = parseInt(v);
+  if (v < 1) v = 1;
+  if (v >= __H.n) {
+    v = __H.n - 1;
+    if (v < 1) v = 1;
+  }
+  __H.nf = v;
+  var el = document.getElementById('val-nf-meta');
+  if (el) el.textContent = __H.nf;
+  plotSpectrum(__H.n, __H.nf);
+}
+
 function attachSliders() {
   var nSlider = document.getElementById('slider-h2-n');
   var lSlider = document.getElementById('slider-h2-l');
@@ -545,7 +558,16 @@ function attachSliders() {
   if (nSlider) {
     nSlider.addEventListener('input', function(e) {
       __H.n = parseInt(e.target.value);
+      __H.ni = __H.n;
       if (valN) valN.textContent = __H.n;
+      var niMeta = document.getElementById('val-ni-meta');
+      if (niMeta) niMeta.textContent = __H.ni;
+      if (__H.nf >= __H.n) {
+        __H.nf = __H.n - 1;
+        if (__H.nf < 1) __H.nf = 1;
+      }
+      var nfMeta = document.getElementById('val-nf-meta');
+      if (nfMeta) nfMeta.textContent = __H.nf;
       if (lSlider) {
         lSlider.max = String(__H.n - 1);
         if (__H.l >= __H.n) {
@@ -555,7 +577,6 @@ function attachSliders() {
         }
       }
       plotHydrogen(__H.n, __H.l);
-      plotSpectrum(__H.n, __H.nf);
       updateLiveTable();
       sync3D();
     });
@@ -573,6 +594,12 @@ function attachSliders() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+  __H.ni = __H.n;
+  var niMeta = document.getElementById('val-ni-meta');
+  var nfMeta = document.getElementById('val-nf-meta');
+  if (niMeta) niMeta.textContent = __H.ni;
+  if (nfMeta) nfMeta.textContent = __H.nf;
+
   attachSliders();
 
   if (H.Hydrogen3D.init('canvas-3d')) {

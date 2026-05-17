@@ -14,10 +14,16 @@ var __GameState = (function() {
     localStorage.setItem(key, JSON.stringify(data));
   }
 
+  var msTarget = data.moduleScores || {};
+  var earnedSet = new Set(data.earnedBadges || []);
+  var xpFunc = function() { return data.xp || 0; };
+  xpFunc.valueOf = function() { return data.xp || 0; };
+  xpFunc.toString = function() { return String(data.xp || 0); };
+
   return {
     get: function(k) { return data[k]; },
     set: function(k, v) { data[k] = v; save(); },
-    xp: function() { return data.xp || 0; },
+    xp: xpFunc,
     addXP: function(n, reason) {
       data.xp = (data.xp || 0) + n;
       if (reason) showXPFloat(n, reason);
@@ -41,7 +47,34 @@ var __GameState = (function() {
       data['progress_' + module] = Math.max(data['progress_' + module] || 0, pct);
       save();
     },
-    level: function() { return data.level || 1; }
+    level: function() { return data.level || 1; },
+    moduleScores: new Proxy(msTarget, {
+      set: function(target, prop, value) {
+        target[prop] = value;
+        data.moduleScores = target;
+        save();
+        return true;
+      }
+    }),
+    earnedBadges: {
+      add: function(id) {
+        earnedSet.add(id);
+        data.earnedBadges = Array.from(earnedSet);
+        save();
+        return this;
+      },
+      has: function(id) { return earnedSet.has(id); },
+      delete: function(id) {
+        var result = earnedSet.delete(id);
+        data.earnedBadges = Array.from(earnedSet);
+        save();
+        return result;
+      },
+      get size() { return earnedSet.size; },
+      forEach: function(cb) { earnedSet.forEach(cb); },
+      values: function() { return earnedSet.values(); }
+    },
+    save: save
   };
 })();
 

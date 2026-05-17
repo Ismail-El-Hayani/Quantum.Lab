@@ -1,30 +1,19 @@
 /**
  * Magnetism — Apps wiring (mag_apps.js)
- * Playground wiring: susceptibility, Curie-Weiss, hysteresis overlays.
+ * XP logging + playground setup only. All plotting lives in mag_sim.js.
  */
 'use strict';
 
-function magExtraPlot(id, traces, layout, cfg) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  Plotly.react(id, traces, layout, cfg || { responsive: true, displayModeBar: false });
-}
-
-function animateMAGPlots() {
-  var ids = ['plot-susceptibility','plot-hysteresis'];
-  ids.forEach(function(id) {
-    var el = document.getElementById(id); if (!el) return;
-    Plotly.animate(id, null, { transition: { duration: 300, easing: 'cubic-in-out' }, frame: { duration: 300 } }).catch(function(){});
-  });
-}
-
 function setupMAGPlayground() {
-  var sliders = ['slider-T-mag','slider-C','slider-theta','slider-Ms'];
-  sliders.forEach(function(k) {
+  // Prevent duplicate listeners - this module's sliders are already wired in mag_sim.js
+  // Just attach XP logging as a pass-through.
+  var sliders = ['slider-T-mag','slider-C','slider-theta','slider-Ms','slider-Tc','slider-H','slider-TN','slider-Mr'];
+  sliders.forEach(function(k){
     var el = document.getElementById(k); if (!el) return;
-    el.addEventListener('input', function() {
-      try { animateMAGPlots(); } catch(e){}
-      if (window.__GameState) __GameState.addXP(1, 'mag_playground');
+    // one-time XP bump on first interaction
+    el.addEventListener('input', function once() {
+      if (window._GameState) _GameState.addXP(1, 'mag_playground');
+      el.removeEventListener('input', once);
     });
   });
 
