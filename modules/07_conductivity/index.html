@@ -10,6 +10,16 @@
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <link rel="stylesheet" href="../../shared_styles.css">
 <style>
+  .cond-canvas-wrap { width: 100%; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--glass-border); background: var(--bg-panel); }
+  .cond-layout { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; }
+  .cond-plot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .material-btn { display: block; width: 100%; padding: 0.5rem 0.7rem; margin-bottom: 0.4rem; border: 1px solid var(--glass-border); border-radius: var(--radius-sm); background: var(--bg-elevated); color: var(--text-main); font-family: var(--font-mono); font-size: 0.8rem; cursor: pointer; transition: all 0.15s; text-align: left; }
+  .material-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+  .material-btn.active { border-color: var(--accent-cyan); background: rgba(0,240,255,0.08); color: var(--accent-cyan); }
+  .toggle-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.8rem; }
+  .toggle-btn { padding: 0.3rem 0.6rem; border: 1px solid var(--glass-border); border-radius: var(--radius-sm); background: var(--bg-elevated); color: var(--text-muted); font-family: var(--font-mono); font-size: 0.75rem; cursor: pointer; transition: all 0.15s; }
+  .toggle-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+  .toggle-btn.on { border-color: var(--accent-cyan); background: rgba(0,240,255,0.06); color: var(--accent-cyan); }
   .challenge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   .draggable-target { cursor: grab; border: 2px dashed var(--glass-border); border-radius: var(--radius-sm); padding: 0.8rem; transition: all 0.2s; text-align: center; background: var(--bg-elevated); }
   .draggable-target:hover { border-color: var(--accent-cyan); background: rgba(0,240,255,0.04); }
@@ -18,6 +28,10 @@
   .drop-zone.wrong { border-color: var(--accent-red); background: rgba(255,68,68,0.08); }
   .timer-bar { height: 4px; background: var(--bg-elevated); border-radius: 2px; overflow: hidden; margin-bottom: 1rem; }
   .timer-fill { height: 100%; background: var(--accent-cyan); transition: width 1s linear; }
+  @media (max-width: 900px) {
+    .cond-layout { grid-template-columns: 1fr; }
+    .cond-plot-grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
@@ -36,9 +50,9 @@
 </nav>
 
 <div class="game-hero" style="padding-bottom:0;">
-  <div class="level-badge">Module 07 · Level <span id="current-level">1</span> · Circuit Builder</div>
+  <div class="level-badge">Module 07 · Level <span id="current-level">1</span> · Drude Engine</div>
   <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Electrical Conductivity</span></h1>
-  <p class="hero-desc">Drift, scatter, superconduct. Build circuits and trace I-V curves.</p>
+  <p class="hero-desc">Drift, scatter, conduct. Watch electrons move through a crystal lattice under electric field.</p>
 </div>
 
 <div class="game-container">
@@ -53,64 +67,75 @@
   <div class="mode-section" id="section-play">
     <div class="playground-area">
       <div class="playground-header">
-        <div class="playground-title">🔬 Drift & Resistivity</div>
-        <div class="playground-level">Tune field, scattering time, and temperature. Watch electrons drift.</div>
+        <div class="playground-title">🔬 Drude Electron Drift</div>
+        <div class="playground-level">Electrons drift through a crystal lattice. Yellow flash = scattering event. Purple arrow = E-field. Cyan vector = average drift velocity.</div>
       </div>
 
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+      <div class="cond-layout">
+        <!-- LEFT: Canvas + Plots -->
         <div>
-          <div class="plot-container" id="plot-drift" style="min-height:300px;"></div>
-          <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
-            ⚡ <b>Drift Velocity</b> — v_d = eEτ/m*. Linear with field; saturation at high E.
+          <!-- CANVAS (top) -->
+          <div class="cond-canvas-wrap">
+            <canvas id="cond-canvas"></canvas>
           </div>
-        </div>
-        <div>
-          <div class="plot-container" id="plot-rho-T" style="min-height:300px;"></div>
-          <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
-            📈 <b>Resistivity vs T</b> — Bloch-Grüneisen: ρ ∝ T⁵ (low T) → ρ ∝ T (high T).
-          </div>
-        </div>
-        <div>
-          <div class="plot-container" id="plot-iv" style="min-height:300px;"></div>
-          <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
-            🔌 <b>I-V Curves</b> — Ohmic (linear) vs Diode (exponential). Log scale highlights turn-on.
-          </div>
-        </div>
-        <div>
-          <div class="plot-container" id="plot-mfp" style="min-height:300px;"></div>
-          <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
-            🎯 <b>Mean Free Path</b> — Matthiessen's rule: 1/λ_total = 1/λ_ph + 1/λ_imp.
-          </div>
-        </div>
-        <div>
-          <div class="plot-container" id="plot-hall" style="min-height:300px;"></div>
-          <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
-            🧲 <b>Hall Effect</b> — Sign of V_H distinguishes n-type (negative) vs p-type (positive).
-          </div>
-        </div>
-        <div>
-          <div class="plot-container" id="plot-ioffe" style="min-height:300px;"></div>
-          <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
-            🧊 <b>Ioffe–Regel Criterion</b> — k_F λ > 1 marks the metallic limit. Below → localization.
-          </div>
-        </div>
-        <div>
-          <div class="plot-container" id="plot-wf" style="min-height:300px;"></div>
-          <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
-            🔥 <b>Wiedemann–Franz Law</b> — L = κ/(σT). Approaches 2.44×10⁻⁸ WΩ/K² for Fermi liquids.
-          </div>
-        </div>
-      </div>
 
-      <div style="max-width: 320px; margin: 1.5rem auto 0;">
-        <div class="challenge-panel" style="margin-bottom:1rem;">
+          <!-- PLOTS (below canvas) -->
+          <div class="cond-plot-grid" style="margin-top:1.5rem;">
+            <div>
+              <div class="plot-container" id="plot-drift" style="min-height:280px;"></div>
+              <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
+                ⚡ <b>Drift Velocity</b> — v_d = eEτ/m*. Linear with field; saturation at high E.
+              </div>
+            </div>
+            <div>
+              <div class="plot-container" id="plot-rho-T" style="min-height:280px;"></div>
+              <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
+                📈 <b>Resistivity vs T</b> — Bloch-Grüneisen: ρ ∝ T⁵ (low T) → ρ ∝ T (high T).
+              </div>
+            </div>
+            <div>
+              <div class="plot-container" id="plot-iv" style="min-height:280px;"></div>
+              <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
+                🔌 <b>I-V Curves</b> — Ohmic (linear) vs Diode (exponential). Log scale highlights turn-on.
+              </div>
+            </div>
+            <div>
+              <div class="plot-container" id="plot-mfp" style="min-height:280px;"></div>
+              <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
+                🎯 <b>Mean Free Path</b> — Matthiessen's rule: 1/λ_total = 1/λ_ph + 1/λ_imp.
+              </div>
+            </div>
+            <div>
+              <div class="plot-container" id="plot-hall" style="min-height:280px;"></div>
+              <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
+                🧲 <b>Hall Effect</b> — Sign of V_H distinguishes n-type (negative) vs p-type (positive).
+              </div>
+            </div>
+            <div>
+              <div class="plot-container" id="plot-ioffe" style="min-height:280px;"></div>
+              <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
+                🧊 <b>Ioffe–Regel Criterion</b> — k_F λ > 1 marks the metallic limit. Below → localization.
+              </div>
+            </div>
+            <div>
+              <div class="plot-container" id="plot-wf" style="min-height:280px;"></div>
+              <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
+                🔥 <b>Wiedemann–Franz Law</b> — L = κ/(σT). Approaches 2.44×10⁻⁸ WΩ/K² for Fermi liquids.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Controls -->
+        <div>
+          <div class="challenge-panel" style="margin-bottom:1rem;">
             <div class="challenge-header">
               <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙</span>
               <span class="challenge-title">Controls</span>
             </div>
             <div class="control-row">
               <span class="control-label">E-field</span>
-              <span class="control-value" id="val-Efield">0.01</span><span class="unit-tag">V/m</span>
+              <span class="control-value" id="val-Efield">0.01</span><span class="unit-tag">V/nm</span>
             </div>
             <input type="range" id="slider-Efield" min="0.001" max="0.5" value="0.01" step="0.001">
             <div class="control-row" style="margin-top:0.8rem;">
@@ -128,18 +153,41 @@
               <span class="control-value" id="val-n-cond">1.0e28</span><span class="unit-tag">m⁻³</span>
             </div>
             <input type="range" id="slider-n-cond" min="1e20" max="1e30" value="1e28" step="1e20">
+
+            <div class="toggle-row">
+              <button class="toggle-btn on" id="btn-phonons" onclick="condTogglePhonons();this.classList.toggle('on');">Phonons</button>
+              <button class="toggle-btn on" id="btn-impurities" onclick="condToggleImpurities();this.classList.toggle('on');">Impurities</button>
+              <button class="toggle-btn" id="btn-mfp" onclick="condToggleMFP();this.classList.toggle('on');">MFP trails</button>
+            </div>
           </div>
+
+          <div class="challenge-panel" style="margin-bottom:1rem;">
+            <div class="challenge-header">
+              <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">🔘</span>
+              <span class="challenge-title">Material Preset</span>
+            </div>
+            <button class="material-btn active" id="mat-Cu" onclick="condSetMaterial('Cu');condHighlightMat(this);">Copper — τ=30 fs, n=10²⁸ m⁻³</button>
+            <button class="material-btn" id="mat-Al" onclick="condSetMaterial('Al');condHighlightMat(this);">Aluminum — τ=25 fs, n=1.8×10²⁸</button>
+            <button class="material-btn" id="mat-Ag" onclick="condSetMaterial('Ag');condHighlightMat(this);">Silver — τ=40 fs, n=7.4×10²⁸</button>
+            <button class="material-btn" id="mat-Si_n" onclick="condSetMaterial('Si_n');condHighlightMat(this);">n-type Si — τ=100 fs, n=10²¹</button>
+            <button class="material-btn" id="mat-GaAs" onclick="condSetMaterial('GaAs');condHighlightMat(this);">GaAs — τ=80 fs, n=5×10²³</button>
+          </div>
+
           <div class="challenge-panel">
             <div class="challenge-header">
-              <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">📊</span>
+              <span class="challenge-icon" style="background:rgba(74,222,128,0.1);">📊</span>
               <span class="challenge-title">Live Readout</span>
             </div>
             <table>
               <tr><th>Quantity</th><th>Value</th></tr>
               <tr><td>Drift velocity v_d</td><td class="highlight-num" id="live-vd">0.01 mm/s</td></tr>
-              <tr><td>Conductivity σ</td><td class="highlight-pink" id="live-sigma">5.9×10⁷ (Ω·m)⁻¹</td></tr>
-              <tr><td>Mean free path</td><td class="highlight-num" id="live-mfp">40 nm</td></tr>
-              <tr><td>Mobility μ</td><td>~40 cm²/V·s</td></tr>
+              <tr><td>Conductivity σ</td><td class="highlight-pink" id="live-sigma">5.9×10⁷ S/m</td></tr>
+              <tr><td>Mean free path λ</td><td class="highlight-num" id="live-mfp">40 nm</td></tr>
+              <tr><td>Mobility μ</td><td class="highlight-num" id="live-mu">~40 cm²/Vs</td></tr>
+              <tr><td>Scattering time τ</td><td class="highlight-num" id="live-tau">30 fs</td></tr>
+              <tr><td>E-field</td><td class="highlight-num" id="live-E">0.01 V/nm</td></tr>
+              <tr><td>Temperature</td><td class="highlight-num" id="live-T">300 K</td></tr>
+              <tr><td>Carrier density n</td><td class="highlight-num" id="live-n">1.0×10²⁸ m⁻³</td></tr>
             </table>
           </div>
         </div>
@@ -288,7 +336,19 @@
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
-<script src="cond_apps_games.js?v=2"></script>
+<script src="cond_apps_games.js?v=3"></script>
+<script src="cond_sim.js?v=3"></script>
 <script src="../../shared_effects.js"></script>
+<script>
+function condHighlightMat(btn) {
+  document.querySelectorAll('.material-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    if (typeof initConductivity === 'function') initConductivity();
+  }, 200);
+});
+</script>
 </body>
 </html>
