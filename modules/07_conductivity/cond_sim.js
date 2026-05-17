@@ -329,18 +329,22 @@ function condDrawFrame() {
 
   /* MFP trails for subset */
   if (st.showMFP) {
-    ctx.strokeStyle = 'rgba(74,222,128,0.3)';
-    ctx.lineWidth = 1;
-    for (var i = 0; i < Math.min(geo.electrons.length, 12); i++) {
+    ctx.strokeStyle = 'rgba(74,222,128,0.45)';
+    ctx.lineWidth = 1.5;
+    for (var i = 0; i < Math.min(geo.electrons.length, 20); i++) {
       var e = geo.electrons[i];
       var mfp = geo.mfpTracks[i];
-      if (mfp > 3) {
-        var nx = e.vx / (Math.abs(e.vx) + 0.01);
-        var ny = e.vy / (Math.abs(e.vy) + 0.01);
-        ctx.beginPath();
-        ctx.moveTo(e.x, e.y);
-        ctx.lineTo(e.x - nx * Math.min(mfp, 40), e.y - ny * Math.min(mfp, 40));
-        ctx.stroke();
+      if (mfp > 5) {
+        var speed = Math.sqrt(e.vx * e.vx + e.vy * e.vy);
+        if (speed > 0.1) {
+          var nx = e.vx / speed;
+          var ny = e.vy / speed;
+          var trailLen = Math.min(mfp, 50);
+          ctx.beginPath();
+          ctx.moveTo(e.x, e.y);
+          ctx.lineTo(e.x - nx * trailLen, e.y - ny * trailLen);
+          ctx.stroke();
+        }
       }
     }
   }
