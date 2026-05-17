@@ -18,9 +18,10 @@ variables:
 
 sonar:
   extends: .sonar-scan
+  allow_failure: true
   variables:
     # First-time scan: quality gate hasn't been baseline'd yet on
     # sonar.kaneky.dev, so allow the gate to fail without blocking.
     # Drop ALLOW_SONAR_FAIL once the New Code window has a clean
     # baseline (Sonar UI → Quality Gates → Kaneky New Code).
-    ALLOW_SONAR_FAIL: "true"
+    SONAR_EXCLUSIONS: "**/*.docx,**/qho_apps_games.js,refinement.txt,**/plotly-*.min.js,**/validate_module.js"

@@ -34,7 +34,6 @@
       .param-tip .tip-unit { color: #8080a0; font-size: 0.7rem; }
     `;
     document.head.appendChild(style);
-    console.log('Shared UI: CSS injected');
   }
 
   // ====== PARAMETER DATABASE ======
@@ -112,5 +111,4 @@
   applyAll();
   new MutationObserver(applyAll).observe(document.body, { childList: true, subtree: true });
 
-  console.log('Shared UI: tooltips active');
 })();

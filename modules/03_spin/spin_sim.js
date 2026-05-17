@@ -82,13 +82,13 @@ function measureProbZ(a) {
 
 function measureProbX(a) {
   // Project onto |+x⟩ = (|↑⟩ + |↓⟩)/√2
-  const pPlus = 0.5 * ((a.up_re + a.down_re)**2 + (a.up_im + a.down_im)**2);
+  const pPlus = 0.5 * (Math.pow(a.up_re + a.down_re, 2) + Math.pow(a.up_im + a.down_im, 2));
   return { plus: pPlus, minus: 1 - pPlus };
 }
 
 function measureProbY(a) {
   // Project onto |+y⟩ = (|↑⟩ + i|↓⟩)/√2
-  const pPlus = 0.5 * ((a.up_re - a.down_im)**2 + (a.up_im + a.down_re)**2);
+  const pPlus = 0.5 * (Math.pow(a.up_re - a.down_im, 2) + Math.pow(a.up_im + a.down_re, 2));
   return { plus: pPlus, minus: 1 - pPlus };
 }
 

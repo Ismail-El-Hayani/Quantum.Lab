@@ -44,9 +44,8 @@ function plotPhonon() {
 
   // Monatomic chain: ω = 2√(K/M) |sin(ka/2)|
   var omega_mono = kArr.map(k => 2 * Math.abs(Math.sin(k / 2)));
-  // Diatomic chain (optical + acoustic branches)
-  var omega_ac = kArr.map(k => Math.sqrt((1 + M_ratio) - Math.sqrt((1 + M_ratio)**2 - 4 * M_ratio * Math.sin(k/2)**2)));
-  var omega_op = kArr.map(k => Math.sqrt((1 + M_ratio) + Math.sqrt((1 + M_ratio)**2 - 4 * M_ratio * Math.sin(k/2)**2)));
+  var omega_ac = kArr.map(k => Math.sqrt((1 + M_ratio) - Math.sqrt(Math.pow(1 + M_ratio, 2) - 4 * M_ratio * Math.pow(Math.sin(k/2), 2))));
+  var omega_op = kArr.map(k => Math.sqrt((1 + M_ratio) + Math.sqrt(Math.pow(1 + M_ratio, 2) - 4 * M_ratio * Math.pow(Math.sin(k/2), 2))));
 
   _plotApp('app-phonon', [
     { x: kArr.map(k => k / Math.PI), y: omega_mono, mode: 'lines', name: 'Monatomic (acoustic only)',
@@ -230,7 +229,6 @@ function plotSpecificHeat() {
 
 // ============ MASTER INIT ============
 function initQHOApps() {
-  console.log('QHO Apps: initializing...');
 
   // IR spectrum (already wired to anharmonicity slider in main engine)
   // Just ensure the div exists; plotIRApp is called from main engine
@@ -277,7 +275,6 @@ function initQHOApps() {
   // Specific heat
   plotSpecificHeat();
 
-  console.log('QHO Apps: all initialized');
 }
 
 // Auto-init if called after DOM ready

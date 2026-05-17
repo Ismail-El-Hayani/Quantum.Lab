@@ -6,6 +6,8 @@
 'use strict';
 
 function plotWiedemannFranz() {
+  // stub: actual implementation lives in cond_apps_games.js
+}
 
 // ============ APP 1: I-V CURVES (Ohmic vs Non-Ohmic) ============
 function plotIVCurve(T_K) {
@@ -234,7 +236,6 @@ function plotSkinEffect(f_MHz) {
 
 // ============ MASTER INIT ============
 function initCondApps() {
-  console.log('Cond Apps: initializing...');
   plotIVCurve(300);
   plotHallEffect(1);
   plotSeebeck(400);
@@ -254,8 +255,6 @@ function initCondApps() {
   var fSlider = document.getElementById('slider-freq');
   if (fSlider) fSlider.addEventListener('input', function(){ var f=parseFloat(this.value); document.getElementById('val-freq').textContent=f.toFixed(0); plotSkinEffect(f); });
 
-  console.log('Cond Apps: done');
+  if (document.readyState !== 'loading') setTimeout(initCondApps, 800);
+  else document.addEventListener('DOMContentLoaded', function(){ setTimeout(initCondApps, 800); });
 }
-
-if (document.readyState !== 'loading') setTimeout(initCondApps, 800);
-else document.addEventListener('DOMContentLoaded', function(){ setTimeout(initCondApps, 800); });
