@@ -126,7 +126,7 @@
   /* ─── 7. NUMBER COUNT-UP ANIMATION ─── */
   window.animateCount = function(element, target, duration = 1200) {
     const start = performance.now();
-    const from = parseInt(element.textContent) || 0;
+    const from = Number.parseInt(element.textContent) || 0;
     function tick(now) {
       const p = Math.min((now - start) / duration, 1);
       const ease = 1 - Math.pow(1 - p, 3);

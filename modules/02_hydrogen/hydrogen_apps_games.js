@@ -470,7 +470,7 @@ function initOrbitalPuzzle() {
 function checkOrbitalPuzzle() {
   var correct = 0;
   orbitalPuzzles.forEach(function(p, i) {
-    var gl = parseInt(document.getElementById('orb-l-' + i).value);
+    var gl = Number.parseInt(document.getElementById('orb-l-' + i).value);
     var gm = document.getElementById('orb-m-' + i).value;
     if (gl === p.l && gm === ('' + p.m)) correct++;
   });
@@ -515,7 +515,7 @@ function initHundPuzzle() {
 function checkHundPuzzle() {
   var selected = document.querySelectorAll('#hund-list .draggable-target');
   if (!selected.length) return;
-  var ordered = Array.from(selected).sort(function(a, b) { return parseInt(a.dataset.order) - parseInt(b.dataset.order); });
+  var ordered = Array.from(selected).sort(function(a, b) { return Number.parseInt(a.dataset.order) - Number.parseInt(b.dataset.order); });
   var correct = true;
   selected.forEach(function(el, i) { if (el.dataset.order != ordered[i].dataset.order) correct = false; });
 
@@ -537,7 +537,7 @@ function checkHundPuzzle() {
 
 /* ---------- Sliders & Boot ---------- */
 function setNf(v) {
-  v = parseInt(v);
+  v = Number.parseInt(v);
   if (v < 1) v = 1;
   if (v >= __H.n) {
     v = __H.n - 1;
@@ -557,7 +557,7 @@ function attachSliders() {
 
   if (nSlider) {
     nSlider.addEventListener('input', function(e) {
-      __H.n = parseInt(e.target.value);
+      __H.n = Number.parseInt(e.target.value);
       __H.ni = __H.n;
       if (valN) valN.textContent = __H.n;
       var niMeta = document.getElementById('val-ni-meta');
@@ -584,7 +584,7 @@ function attachSliders() {
 
   if (lSlider) {
     lSlider.addEventListener('input', function(e) {
-      __H.l = parseInt(e.target.value);
+      __H.l = Number.parseInt(e.target.value);
       if (valL) valL.textContent = __H.l;
       plotHydrogen(__H.n, __H.l);
       updateLiveTable();

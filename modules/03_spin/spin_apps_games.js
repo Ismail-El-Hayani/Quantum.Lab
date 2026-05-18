@@ -149,7 +149,7 @@ function startCh1Timer() {
 }
 
 function ch1Check() {
-  var thetaDeg = parseInt(document.getElementById('ch1-slider').value);
+  var thetaDeg = Number.parseInt(document.getElementById('ch1-slider').value);
   var targetP = cos2(deg2rad(SpinGame.ch1.targetTheta) / 2);
   var userP = cos2(deg2rad(thetaDeg) / 2);
   var diff = Math.abs(userP - targetP);

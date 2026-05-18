@@ -402,9 +402,9 @@ function updateAtomPlot() {
   }
   __atomPlotRenderScheduled = false;
 
-  const n = parseInt(document.getElementById('val-atom-n').textContent) || 1;
-  const l = parseInt(document.getElementById('val-atom-l').textContent) || 0;
-  const m = parseInt(document.getElementById('val-atom-m').textContent) || 0;
+  const n = Number.parseInt(document.getElementById('val-atom-n').textContent) || 1;
+  const l = Number.parseInt(document.getElementById('val-atom-l').textContent) || 0;
+  const m = Number.parseInt(document.getElementById('val-atom-m').textContent) || 0;
 
   // Grid: explicit integer resolution × range, derive step precisely
   const res = l >= 3 ? 36 : 32;          // number of steps along each axis
@@ -558,9 +558,9 @@ function validateAtomQuantumNumbers() {
     const lEl = document.getElementById('val-atom-l');
     const mEl = document.getElementById('val-atom-m');
     if (!nEl || !lEl || !mEl) return;
-    let n = parseInt(nEl.textContent) || 1;
-    let l = parseInt(lEl.textContent) || 0;
-    let m = parseInt(mEl.textContent) || 0;
+    let n = Number.parseInt(nEl.textContent) || 1;
+    let l = Number.parseInt(lEl.textContent) || 0;
+    let m = Number.parseInt(mEl.textContent) || 0;
     // Clamp l to [0, n-1]
     if (l >= n) {
         l = n - 1;
@@ -664,7 +664,7 @@ function initQHO() {
     });
   }
   sliderN.addEventListener('input', function() {
-    state.n = parseInt(this.value);
+    state.n = Number.parseInt(this.value);
     document.getElementById('val-n').textContent = state.n;
     if (!state.animating) updateWavePlot();
   });
@@ -672,7 +672,7 @@ function initQHO() {
   const sliderM = document.getElementById('slider-m');
   if (sliderM) {
     sliderM.addEventListener('input', function() {
-      state.m = parseInt(this.value);
+      state.m = Number.parseInt(this.value);
       document.getElementById('val-m').textContent = state.m;
       if (!state.animating) updateWavePlot();
     });

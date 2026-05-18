@@ -227,7 +227,7 @@ function checkLandauPuzzle() {
   var correct = 0;
   for (var i = 0; i < landauLevels.length; i++) {
     var n = landauLevels[i];
-    var v = parseInt(document.getElementById('landau-' + n).value);
+    var v = Number.parseInt(document.getElementById('landau-' + n).value);
     if (n === 0) { if (v === 1) correct++; } else { if (v === 2) correct++; }
   }
   var fb = document.getElementById('landau-feedback');

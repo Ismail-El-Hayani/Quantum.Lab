@@ -503,7 +503,7 @@ function initBraggPuzzle() {
     btn.textContent = 'n = ' + n;
     btn.dataset.n = n;
     btn.onclick = function() {
-      b.selected_n = parseInt(this.dataset.n);
+      b.selected_n = Number.parseInt(this.dataset.n);
       opts.querySelectorAll('button').forEach(function(b) { b.classList.remove('active'); });
       this.classList.add('active');
     };

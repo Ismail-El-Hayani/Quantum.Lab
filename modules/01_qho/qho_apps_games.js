@@ -235,7 +235,7 @@ function checkWaveMatch() {
   var c = __QHO.challenge;
   if (!c.active) return;
 
-  var guess = parseInt(document.getElementById('slider-challenge-n').value);
+  var guess = Number.parseInt(document.getElementById('slider-challenge-n').value);
   var feedback = document.getElementById('challenge-1-feedback');
   var wrap = document.getElementById('challenge-user-plot-wrap');
 
@@ -330,7 +330,7 @@ function plotLaserLevels() {
 
 function fireLaser() {
   var freq = parseFloat(document.getElementById('slider-laser-freq').value);
-  var target = parseInt(document.getElementById('laser-to').textContent) - parseInt(document.getElementById('laser-from').textContent);
+  var target = Number.parseInt(document.getElementById('laser-to').textContent) - Number.parseInt(document.getElementById('laser-from').textContent);
   var atom = document.getElementById('atom-target');
   var fb = document.getElementById('laser-feedback');
 
@@ -363,8 +363,8 @@ function fireLaser() {
 }
 
 function showLaserHint() {
-  var from = parseInt(document.getElementById('laser-from').textContent);
-  var to = parseInt(document.getElementById('laser-to').textContent);
+  var from = Number.parseInt(document.getElementById('laser-from').textContent);
+  var to = Number.parseInt(document.getElementById('laser-to').textContent);
   var delta = to - from;
   var fb = document.getElementById('laser-feedback');
   fb.className = 'challenge-feedback hint';
@@ -455,8 +455,8 @@ function checkLadder() {
   var slots = document.querySelectorAll('.energy-slot');
   var correct = 0;
   slots.forEach(function(s) {
-    var slotN = parseInt(s.dataset.level);
-    var placedN = parseInt(s.dataset.placed);
+    var slotN = Number.parseInt(s.dataset.level);
+    var placedN = Number.parseInt(s.dataset.placed);
     if (slotN === placedN) {
       s.style.borderColor = 'var(--accent-green)';
       s.style.background = 'rgba(105,240,174,0.12)';
@@ -682,7 +682,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (nSlider) {
       nSlider.addEventListener('input', function(e) {
-        __QHO.n = parseInt(e.target.value);
+        __QHO.n = Number.parseInt(e.target.value);
         document.getElementById('val-n').textContent = __QHO.n;
         updateLiveReadout(__QHO.n, __QHO.alpha);
         plotPlayground(__QHO.n, __QHO.alpha, __QHO.showClassical);

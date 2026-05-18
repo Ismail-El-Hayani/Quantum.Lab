@@ -705,7 +705,7 @@
   // ── Preview on hover ──
   document.querySelectorAll('.lab-card').forEach(function(card) {
     card.addEventListener('mouseenter', function() {
-      var mod = parseInt(card.dataset.module) || 1;
+      var mod = Number.parseInt(card.dataset.module) || 1;
       var waveData = [];
       for (var i = 0; i < 200; i++) {
         var ti = i / 30, baseFreq = 0.5 + mod * 0.3;
