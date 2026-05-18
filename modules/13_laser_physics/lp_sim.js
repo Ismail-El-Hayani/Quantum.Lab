@@ -41,7 +41,7 @@ var LP_CANVAS = {
 
 function lpInitCanvas() {
   var c = document.getElementById('laser-canvas');
-  if (!c) { console.warn('[LP] canvas not found'); return false; }
+  if (!c) { return false; }
   LP_CANVAS.c = c;
   LP_CANVAS.ctx = c.getContext('2d');
   lpResizeCanvas();

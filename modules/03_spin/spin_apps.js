@@ -157,7 +157,6 @@ function plot21cm() {
 
 // ============ MASTER INIT ============
 function initSpinApps() {
-  console.log('Spin Apps: initializing...');
   plotSG(60);
   plotESR(1);
   plotNMR(3);
@@ -172,8 +171,6 @@ function initSpinApps() {
 
   var nmrSlider = document.getElementById('slider-nmr-b');
   if (nmrSlider) nmrSlider.addEventListener('input', function(){ var b=parseFloat(this.value); document.getElementById('val-nmr-b').textContent=b.toFixed(1); plotNMR(b); });
-
-  console.log('Spin Apps: done');
 }
 
 if (document.readyState !== 'loading') setTimeout(initSpinApps, 800);

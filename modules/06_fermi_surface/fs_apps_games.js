@@ -48,8 +48,23 @@ function renderFSBadges() {
     for (var i = 0; i < earned.length; i++) { if (earned[i] === b.id) { earnedBadge = true; break; } }
     var div = document.createElement('div');
     div.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.35rem 0;font-size:0.78rem;';
-    if (earnedBadge) { div.innerHTML = b.icon + ' \u003cspan style="color:var(--accent-green);">' + b.name + '\u003c/span>'; }
-    else { div.innerHTML = '\u2B1C \u003cspan style="color:var(--text-dim);">' + b.name + '\u003c/span>'; }
+    if (earnedBadge) {
+      var icon = document.createElement('span');
+      icon.textContent = b.icon + ' ';
+      div.appendChild(icon);
+      var name = document.createElement('span');
+      name.style.color = 'var(--accent-green)';
+      name.textContent = b.name;
+      div.appendChild(name);
+    } else {
+      var icon2 = document.createElement('span');
+      icon2.textContent = '⬜ ';
+      div.appendChild(icon2);
+      var name2 = document.createElement('span');
+      name2.style.color = 'var(--text-dim)';
+      name2.textContent = b.name;
+      div.appendChild(name2);
+    }
     bl.appendChild(div);
   });
 }

@@ -125,15 +125,20 @@ LiveConsole.prototype.log = function(msg, type) {
   this.lines.push({ msg: msg, type: type, time: new Date().toLocaleTimeString() });
   if (this.lines.length > 50) this.lines.shift();
 
-  this.el.innerHTML = this.lines.map(function(l) {
-    return '<div style="font-family:JetBrains Mono,monospace;font-size:12px;margin:2px 0;">' +
-      '<span style="color:var(--text-dim);font-size:10px;">[' + l.time + ']</span> ' +
-      '<span style="color:' + color + '">' + l.msg + '</span></div>';
-  }).join('');
-  this.el.scrollTop = this.el.scrollHeight;
+  this.el.innerHTML = '';
+  var self = this;
+  this.lines.forEach(function(l) {
+    var row = document.createElement('div');
+    var c = (l.type === 'error') ? '#ef4444' : (l.type === 'warn') ? '#f59e0b' : '#4ade80';
+    row.style.cssText = 'font-family:JetBrains Mono,monospace;font-size:12px;margin:2px 0;';
+    row.innerHTML = '<span style="color:var(--text-dim);font-size:10px;">[' + l.time + ']</span> ' +
+      '<span style="color:' + c + '">' + l.msg + '</span>';
+    self.el.appendChild(row);
+  });
+  self.el.scrollTop = self.el.scrollHeight;
 };
 
-// ===== EXPERIMENT RECORDER =====
+/* ── Shared interactivity helpers ── */
 // Record user parameter sets for replay (for "design challenge" mode)
 function ExperimentRecorder() {
   this.steps = [];

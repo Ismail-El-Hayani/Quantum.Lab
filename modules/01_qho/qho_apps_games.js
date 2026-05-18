@@ -7,7 +7,6 @@
 
 function _qhoPlotCheck() {
   if (typeof Plotly === 'undefined') {
-    console.error('[QHO Games] Plotly not available — plot skipped');
     return false;
   }
   return true;

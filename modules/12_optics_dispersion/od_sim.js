@@ -57,7 +57,7 @@ var infoOverlay, beamLegend;
 /* ─── INIT ─── */
 window.initOD = function() {
   container = document.getElementById('macro-canvas-container');
-  if (!container) { console.error('[OD] macro-canvas-container missing'); return; }
+  if (!container) { return; }
 
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x05050a);
@@ -105,13 +105,24 @@ function createOverlays() {
 
   beamLegend = document.createElement('div');
   beamLegend.style.cssText = 'position:absolute;bottom:12px;right:12px;z-index:2;background:rgba(10,12,24,0.72);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:8px 12px;font-size:0.72rem;color:#8899aa;display:flex;flex-direction:column;gap:4px;pointer-events:none;';
-  beamLegend.innerHTML = [
-    '<span style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:#ffdd44;display:inline-block;"></span> Incident</span>',
-    '<span style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:#00f0ff;display:inline-block;"></span> Reflected</span>',
-    '<span style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:#4ade80;display:inline-block;"></span> Refracted</span>',
-    '<span style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:#ff4ecd;display:inline-block;"></span> Absorption glow</span>',
-    '<span style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:#ff6b35;display:inline-block;"></span> Phonon wave</span>'
-  ].join('');
+  [
+    {c:'#ffdd44',l:'Incident'},
+    {c:'#00f0ff',l:'Reflected'},
+    {c:'#4ade80',l:'Refracted'},
+    {c:'#ff4ecd',l:'Absorption glow'},
+    {c:'#ff6b35',l:'Phonon wave'}
+  ].forEach(function(entry) {
+    var r = document.createElement('span');
+    r.style.display = 'flex'; r.style.alignItems = 'center'; r.style.gap = '6px';
+    var d = document.createElement('span');
+    d.style.width = '8px'; d.style.height = '8px'; d.style.borderRadius = '50%';
+    d.style.background = entry.c; d.style.display = 'inline-block';
+    r.appendChild(d);
+    var s = document.createElement('span');
+    s.textContent = ' ' + entry.l;
+    r.appendChild(s);
+    beamLegend.appendChild(r);
+  });
   container.appendChild(beamLegend);
 }
 

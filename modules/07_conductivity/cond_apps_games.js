@@ -296,7 +296,7 @@ function initMFPBuilder() {
   scatterTerms.forEach(function(t) {
     var el = document.createElement('div');
     el.className = 'draggable-target'; el.draggable = true;
-    el.innerHTML = t.label;
+    el.textContent = t.label;
     el.ondragstart = function(e) { e.dataTransfer.setData('text', t.correct); };
     pool.appendChild(el);
   });
@@ -304,11 +304,11 @@ function initMFPBuilder() {
   [{label:'Increases resistance', ans:'tau'},{label:'Decreases with T', ans:'tau-ph'},{label:'Weak at low T', ans:'tau-ee'},{label:'Dominates in thin films', ans:'tau-surf'}].forEach(function(z) {
     var zone = document.createElement('div');
     zone.className = 'drop-zone'; zone.dataset.want = z.ans;
-    zone.innerHTML = z.label;
+    zone.textContent = z.label;
     zone.ondrop = function(e) {
       e.preventDefault(); var got = e.dataTransfer.getData('text');
-      if (got === z.ans) { zone.classList.add('correct'); zone.innerHTML = z.label + ' ✓'; }
-      else zone.classList.add('wrong');
+      if (got === z.ans) { zone.classList.add('correct'); zone.textContent = z.label + ' ✓'; }
+      else { zone.style.borderColor = '#ef4444'; zone.textContent = z.label + ' ✗'; }
     };
     zone.ondragover = function(e) { e.preventDefault(); };
     zones.appendChild(zone);

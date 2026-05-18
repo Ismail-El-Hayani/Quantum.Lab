@@ -44,7 +44,7 @@ function initPlayground() {
 
   // If spin_sim.js initSpin hasn't run yet, trigger it
   if (typeof initSpin === 'function' && document.getElementById('plot-bloch')) {
-    try { initSpin(); } catch(e) { console.log('spin_sim init:', e); }
+    try { initSpin(); } catch(e) {}
   }
 
   // First exploration bonus
@@ -508,14 +508,19 @@ function pz1Step(choice) {
   }
 
   fb.className = 'challenge-feedback success';
-  fb.innerHTML = '<strong>Good!</strong> ' + stage.next[choice].label;
+  fb.textContent = 'Good! ' + stage.next[choice].label;
 
   var nextStage = stages[SpinGame.pz1.stage];
   document.getElementById('pz1-stage-text').textContent = nextStage.text;
   var btns = document.getElementById('pz1-buttons');
-  btns.innerHTML = nextStage.next.map(function(opt, i) {
-    return '<button class="btn" onclick="pz1Step(' + i + ')">' + opt.label + '</button>';
-  }).join('');
+  btns.innerHTML = '';
+  nextStage.next.forEach(function(opt, i) {
+    var b = document.createElement('button');
+    b.className = 'btn';
+    b.textContent = opt.label;
+    b.onclick = function() { pz1Step(i); };
+    btns.appendChild(b);
+  });
 }
 
 // ============ PUZZLE 2: PAULI MATRIX ALGEBRA (Hard, 80XP) ============

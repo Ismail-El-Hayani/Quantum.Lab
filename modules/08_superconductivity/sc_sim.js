@@ -185,8 +185,9 @@ function updateLiveSC() {
 
   const elState = document.getElementById('live-state');
   if (elState) {
-    const isSC = T < Tc && scState.H < Hc;
-    elState.innerHTML = isSC ? '<span class="tc-badge">Superconducting</span>' : '<span class="normal-badge">Normal</span>';
+    var isSC = T < Tc && scState.H < Hc;
+    elState.textContent = isSC ? 'Superconducting' : 'Normal';
+    elState.className = isSC ? 'tc-badge' : 'normal-badge';
   }
 
   const elLambda = document.getElementById('live-lambda');

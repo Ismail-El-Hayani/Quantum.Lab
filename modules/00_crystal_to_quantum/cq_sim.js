@@ -1552,8 +1552,7 @@
       // Photon absorbed → electron excited → re-emits photon after delay
       scene.remove(photon);
       photons.splice(idx, 1);
-      if (msg) msg.innerHTML = scaleLabel() + ': <span style="color:#00f0ff">' +
-        'Absorbed! e⁻ excited → will re-emit ' + E.toFixed(2) + ' eV photon</span>';
+      if (msg) msg.textContent = scaleLabel() + ': Absorbed! e⁻ excited → will re-emit ' + E.toFixed(2) + ' eV photon';
       exciteAndEmit(target, E, color);
       break;
 
@@ -1561,8 +1560,7 @@
       // Photon absorbed → electron ejected (photoelectric / photoionization)
       scene.remove(photon);
       photons.splice(idx, 1);
-      if (msg) msg.innerHTML = scaleLabel() + ': <span style="color:#ff4ecd">' +
-        'Photoionization! e⁻ ejected by ' + E.toFixed(2) + ' eV photon</span>';
+      if (msg) msg.textContent = scaleLabel() + ': Photoionization! e⁻ ejected by ' + E.toFixed(2) + ' eV photon';
       ionizeTarget(target, E);
       break;
     }
@@ -1742,8 +1740,7 @@
       photons.push(newPhoton);
 
       var msg2 = document.getElementById('interaction-msg');
-      if (msg2) msg2.innerHTML = scaleLabel() + ': <span style="color:#4ade80">' +
-        'Re-emitted! ' + (E*0.98).toFixed(2) + ' eV photon (fluorescence)</span>';
+      msg2.textContent = scaleLabel() + ': Re-emitted! ' + (E*0.98).toFixed(2) + ' eV photon (fluorescence)';
     }, delayMs);
   }
 

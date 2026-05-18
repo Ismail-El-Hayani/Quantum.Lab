@@ -157,7 +157,7 @@ function condInitElectrons() {
 
 function condInitCanvas() {
   var c = document.getElementById('cond-canvas');
-  if (!c) { console.warn('[COND] canvas not found'); return false; }
+  if (!c) { return false; }
   COND_CANVAS.c = c;
   COND_CANVAS.ctx = c.getContext('2d');
   condResizeCanvas();

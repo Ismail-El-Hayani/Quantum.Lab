@@ -7,9 +7,9 @@ const rootDir = path.resolve(baseDir, '../..');
 let errors = 0;
 let warnings = 0;
 
-function logError(msg) { console.error('ERROR: ' + msg); errors++; }
-function logWarn(msg) { console.warn('WARN:  ' + msg); warnings++; }
-function logInfo(msg) { console.log('INFO:  ' + msg); }
+function logError(msg) { process.stderr.write('ERROR: ' + msg + '\n'); errors++; }
+function logWarn(msg) { process.stderr.write('WARN:  ' + msg + '\n'); warnings++; }
+function logInfo(msg) { process.stdout.write('INFO:  ' + msg + '\n'); }
 
 // ── 1. Check HTML syntax ──────────────────────────────────────
 const htmlPath = path.join(baseDir, 'index.html');
@@ -112,6 +112,5 @@ slidersInHtml.forEach(id => {
 });
 
 // ── Summary ───────────────────────────────────────────────────
-console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-console.log('Validation complete: ' + errors + ' error(s), ' + warnings + ' warning(s)');
+process.stdout.write('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nValidation complete: ' + errors + ' error(s), ' + warnings + ' warning(s)\n');
 if (errors > 0) process.exit(1);

@@ -163,7 +163,6 @@ var IS3D = {
 function initIS3D() {
   var container = document.getElementById('band-diagram-3d');
   if (!container || typeof THREE === 'undefined') {
-    console.warn('Three.js not available or container missing');
     return false;
   }
   if (IS3D.scene) { return true; }
@@ -841,9 +840,6 @@ function initIntrinsicSemi() {
 
   // Init 3D
   var has3D = initIS3D();
-  if (!has3D) {
-    console.warn('3D renderer initialization failed');
-  }
 
   // Initial plots and state
   setMaterialIS('Si');
