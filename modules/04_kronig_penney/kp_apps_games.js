@@ -299,7 +299,7 @@ function checkBlochOscillation() {
   var guessT = Number.parseFloat(document.getElementById('bo-T').value);
   var fb = document.getElementById('bo-feedback');
 
-  if (!Number.isNaN(guessOmega) && !Number.isNaN(guessT) && Math.abs(guessOmega - omega_THz) < 0.2 * omega_THz && Math.abs(guessT - T_ps) < 0.2 * T_ps) {
+  if (!isNaN(guessOmega) && !isNaN(guessT) && Math.abs(guessOmega - omega_THz) < 0.2 * omega_THz && Math.abs(guessT - T_ps) < 0.2 * T_ps) {
     fb.className = 'challenge-feedback success';
     fb.style.display = 'block';
     fb.textContent = '✓ Correct! ω_B = ' + omega_THz.toFixed(2) + ' THz, T_B = ' + T_ps.toFixed(2) + ' ps. Bloch oscillations are periodic motion of electrons in a lattice under an electric field.';
@@ -360,7 +360,7 @@ function checkBandgapEstimation() {
   var predictedGap = 2 * Math.abs(V_G);
   var guess = Number.parseFloat(document.getElementById('be-gap').value);
   var fb = document.getElementById('be-feedback');
-  if (!Number.isNaN(guess) && Math.abs(guess - predictedGap) < 0.15 * predictedGap + 0.05) {
+  if (!isNaN(guess) && Math.abs(guess - predictedGap) < 0.15 * predictedGap + 0.05) {
     fb.className = 'challenge-feedback success';
     fb.style.display = 'block';
     fb.textContent = '✓ Excellent! Nearly-free gap ≈ 2|V_G| = ' + predictedGap.toFixed(3) + ' ℏ²/ma². The Fourier component V_G = (2V₀/π)sin(πb/a) captures the periodic perturbation strength.';
