@@ -625,7 +625,7 @@ function updateReadouts(E, x0, p0, prob, xArr) {
     const elTurning = document.getElementById('live-turning');
     if (elTurning) {
         const xTP = Math.sqrt(2 * E / state.omega);
-        elTurning.textContent = '±' + (Number.isFinite(xTP) ? xTP.toFixed(3) : '∞');
+        elTurning.textContent = '±' + (isFinite(xTP) ? xTP.toFixed(3) : '∞');
     }
     const elX2 = document.getElementById('live-x2');
     if (elX2) elX2.textContent = x2Expect.toFixed(3);
@@ -658,7 +658,7 @@ function initQHO() {
   if (!sliderN) { setTimeout(initQHO, 100); return; }
   if (sliderOmega) {
     sliderOmega.addEventListener('input', function() {
-      state.omega = Number.parseFloat(this.value);
+      state.omega = parseFloat(this.value);
       document.getElementById('val-omega').textContent = state.omega.toFixed(1);
       if (!state.animating) updateWavePlot();
     });
@@ -682,14 +682,14 @@ function initQHO() {
   const sliderAlphaIm = document.getElementById('slider-alpha-im');
   if (sliderAlphaRe) {
     sliderAlphaRe.addEventListener('input', function() {
-      state.alpha_re = Number.parseFloat(this.value);
+      state.alpha_re = parseFloat(this.value);
       document.getElementById('val-alpha-re').textContent = state.alpha_re.toFixed(1);
       if (!state.animating) updateWavePlot();
     });
   }
   if (sliderAlphaIm) {
     sliderAlphaIm.addEventListener('input', function() {
-      state.alpha_im = Number.parseFloat(this.value);
+      state.alpha_im = parseFloat(this.value);
       document.getElementById('val-alpha-im').textContent = state.alpha_im.toFixed(1);
       if (!state.animating) updateWavePlot();
     });
@@ -698,7 +698,7 @@ function initQHO() {
   const sliderSpeed = document.getElementById('slider-speed');
   if (sliderSpeed) {
     sliderSpeed.addEventListener('input', function() {
-      state.speed = Number.parseFloat(this.value);
+      state.speed = parseFloat(this.value);
       document.getElementById('val-speed').textContent = state.speed.toFixed(1);
     });
   }

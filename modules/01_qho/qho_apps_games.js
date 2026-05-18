@@ -329,7 +329,7 @@ function plotLaserLevels() {
 }
 
 function fireLaser() {
-  var freq = Number.parseFloat(document.getElementById('slider-laser-freq').value);
+  var freq = parseFloat(document.getElementById('slider-laser-freq').value);
   var target = Number.parseInt(document.getElementById('laser-to').textContent) - Number.parseInt(document.getElementById('laser-from').textContent);
   var atom = document.getElementById('atom-target');
   var fb = document.getElementById('laser-feedback');
@@ -691,7 +691,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (aSlider) {
       aSlider.addEventListener('input', function(e) {
-        __QHO.alpha = Number.parseFloat(e.target.value);
+        __QHO.alpha = parseFloat(e.target.value);
         document.getElementById('val-alpha').textContent = __QHO.alpha.toFixed(2);
       });
     }
