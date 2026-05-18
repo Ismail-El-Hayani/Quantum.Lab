@@ -339,15 +339,22 @@ function plotSGHistogram() {
 
 // ===== ANIMATION =====
 let currentAmplitude = null;
+let lastAnimTime = 0;
+
+const LARMOR_ANIM_SCALE = 6.2831853; // rad/s per tesla -\u003e period = 1s at B = 1T
 
 function animateLoop() {
   if (!state.animating) return;
-  state.time += 0.03;
+  const now = performance.now();
+  if (lastAnimTime === 0) lastAnimTime = now;
+  const dt = (now - lastAnimTime) / 1000;  // seconds
+  lastAnimTime = now;
 
-  const omega = state.gFactor * muB_eV * state.B / h;  // rad/s
-  // Simplify: just advance phi
-  state.phi += 0.06;
-  if (state.phi > 2 * Math.PI) state.phi -= 2 * Math.PI;
+  // Larmor precession: angular velocity proportional to B
+  const omegaAnim = LARMOR_ANIM_SCALE * state.B;  // rad/s
+  state.phi += omegaAnim * dt;
+  while (state.phi \u003e= 2 * Math.PI) state.phi -= 2 * Math.PI;
+  while (state.phi \u003c 0) state.phi += 2 * Math.PI;
 
   plotBlochSphere();
   plotSpinComponents();
@@ -478,9 +485,11 @@ function initSpin() {
       state.animating = !state.animating;
       this.classList.toggle('active', state.animating);
       if (state.animating) {
+        lastAnimTime = 0;
         animateLoop();
       } else {
         cancelAnimationFrame(state.animFrame);
+        lastAnimTime = 0;
         plotBlochSphere(); plotSpinComponents(); updateLiveTable();
       }
     });
