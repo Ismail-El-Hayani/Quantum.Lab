@@ -101,10 +101,10 @@
           <span class="challenge-title">Material Presets</span>
         </div>
         <div class="challenge-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));">
-          <div class="material-card" onclick="setEBMaterial('Cu')">Copper (Bulk)</div>
-          <div class="material-card" onclick="setEBMaterial('Si')">Silicon (SC)</div>
-          <div class="material-card" onclick="setEBMaterial('Diamond')">Diamond (Ins)</div>
-          <div class="material-card" onclick="setEBMaterial('Graphene')">Graphene</div>
+          <div class="material-card" role="button" tabindex="0" onclick="setEBMaterial('Cu')" onkeydown="if(event.key==='Enter'||event.key===' ')setEBMaterial('Cu')">Copper (Bulk)</div>
+          <div class="material-card" role="button" tabindex="0" onclick="setEBMaterial('Si')" onkeydown="if(event.key==='Enter'||event.key===' ')setEBMaterial('Si')">Silicon (SC)</div>
+          <div class="material-card" role="button" tabindex="0" onclick="setEBMaterial('Diamond')" onkeydown="if(event.key==='Enter'||event.key===' ')setEBMaterial('Diamond')">Diamond (Ins)</div>
+          <div class="material-card" role="button" tabindex="0" onclick="setEBMaterial('Graphene')" onkeydown="if(event.key==='Enter'||event.key===' ')setEBMaterial('Graphene')">Graphene</div>
         </div>
         <!-- Carbon Allotropes subsection (hidden until Graphene selected) -->
         <div id="carbon-subsection" class="challenge-panel" style="display:none; margin-top:1rem; background:rgba(0,0,0,0.0);">
@@ -113,9 +113,9 @@
             <span class="challenge-title">Carbon Allotropes</span>
           </div>
           <div class="challenge-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));">
-            <div class="material-card" onclick="setEBMaterial('Graphite')">Graphite (2D)</div>
-            <div class="material-card" onclick="setEBMaterial('CNT')">Nanotube (1D)</div>
-            <div class="material-card" onclick="setEBMaterial('Fullerene')">Fullerene (0D)</div>
+            <div class="material-card" role="button" tabindex="0" onclick="setEBMaterial('Graphite')" onkeydown="if(event.key==='Enter'||event.key===' ')setEBMaterial('Graphite')">Graphite (2D)</div>
+            <div class="material-card" role="button" tabindex="0" onclick="setEBMaterial('CNT')" onkeydown="if(event.key==='Enter'||event.key===' ')setEBMaterial('CNT')">Nanotube (1D)</div>
+            <div class="material-card" role="button" tabindex="0" onclick="setEBMaterial('Fullerene')" onkeydown="if(event.key==='Enter'||event.key===' ')setEBMaterial('Fullerene')">Fullerene (0D)</div>
           </div>
         </div>
       </div>
