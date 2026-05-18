@@ -263,33 +263,17 @@ function lpDraw() {
 }
 
 /* Semiconductor / dilute-nitride cavity — diagrammatic cross-section */
-function lpDrawSemiconductorCavity(ctx, cx, cy, cw, ch, isQW) {
-  var geo = LP_CANVAS;
-  var pad = geo.mirrorW;
-  var innerX = cx + pad, innerW = cw - 2 * pad;
-
-  // Divide cavity height into layers (diagrammatic)
-  var substrateH = ch * 0.20;
-  var pTypeH = ch * 0.30;
-  var activeH = isQW ? 8 : ch * 0.08;
-  var nTypeH = ch - substrateH - pTypeH - activeH;
-  var subY = cy + ch - substrateH;
-  var pY = cy + nTypeH + activeH;
-  var actY = cy + nTypeH;
-  var nY = cy;
-
-  // --- Substrate (dark gray base) ---
+function lpDrawCavityLayers(ctx, innerX, innerW, subY, substrateH, pY, pTypeH, actY, activeH, nY, nTypeH, isQW) {
+  // Substrate
   ctx.fillStyle = '#2a2a35';
   ctx.fillRect(innerX, subY, innerW, substrateH);
   ctx.strokeStyle = 'rgba(255,255,255,0.12)';
   ctx.lineWidth = 1;
   ctx.strokeRect(innerX, subY, innerW, substrateH);
   ctx.fillStyle = 'rgba(200,200,210,0.4)';
-  ctx.font = '9px sans-serif';
-  ctx.textAlign = 'center';
+  ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
   ctx.fillText('Substrate', innerX + innerW / 2, subY + substrateH / 2 + 3);
-
-  // --- p-type (blue) ---
+  // p-type
   ctx.fillStyle = 'rgba(59,130,246,0.22)';
   ctx.fillRect(innerX, pY, innerW, pTypeH);
   ctx.strokeStyle = 'rgba(59,130,246,0.35)';
@@ -297,8 +281,7 @@ function lpDrawSemiconductorCavity(ctx, cx, cy, cw, ch, isQW) {
   ctx.fillStyle = 'rgba(200,220,255,0.7)';
   ctx.font = 'bold 10px sans-serif';
   ctx.fillText('p-type', innerX + innerW / 2, pY + pTypeH / 2 + 3);
-
-  // --- Active region / junction (yellow-green thin band) ---
+  // Active region
   ctx.fillStyle = isQW ? 'rgba(250,204,21,0.35)' : 'rgba(74,222,128,0.25)';
   ctx.fillRect(innerX, actY, innerW, activeH);
   ctx.strokeStyle = isQW ? 'rgba(250,204,21,0.5)' : 'rgba(74,222,128,0.4)';
@@ -308,8 +291,7 @@ function lpDrawSemiconductorCavity(ctx, cx, cy, cw, ch, isQW) {
   ctx.font = '9px sans-serif';
   var actLabel = isQW ? 'Quantum well (GaInNAs)' : 'Active region';
   ctx.fillText(actLabel, innerX + innerW / 2, actY + activeH / 2 + 3);
-
-  // --- n-type (red) ---
+  // n-type
   ctx.fillStyle = 'rgba(239,68,68,0.20)';
   ctx.fillRect(innerX, nY, innerW, nTypeH);
   ctx.strokeStyle = 'rgba(239,68,68,0.35)';
@@ -317,8 +299,9 @@ function lpDrawSemiconductorCavity(ctx, cx, cy, cw, ch, isQW) {
   ctx.fillStyle = 'rgba(255,220,220,0.8)';
   ctx.font = 'bold 10px sans-serif';
   ctx.fillText('n-type', innerX + innerW / 2, nY + nTypeH / 2 + 3);
+}
 
-  // --- Zigzag photon path inside cavity (decorative, shows stimulated emission bouncing) ---
+function lpDrawZigzagPath(ctx, innerX, innerW, actY, activeH) {
   ctx.strokeStyle = 'rgba(250,204,21,0.55)';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
@@ -332,28 +315,19 @@ function lpDrawSemiconductorCavity(ctx, cx, cy, cw, ch, isQW) {
     ctx.lineTo(zzX + z * zzStep, zzYmid + (z % 2 === 0 ? zzAmp : -zzAmp));
   }
   ctx.stroke();
-  // Small yellow dots along zigzag
   for (var z2 = 0; z2 <= 8; z2++) {
     var zx = zzX + z2 * zzStep;
     var zy = zzYmid + (z2 % 2 === 0 ? 0 : (z2 % 2 === 1 ? -zzAmp : zzAmp));
     ctx.beginPath(); ctx.arc(zx, zy, 2, 0, Math.PI * 2); ctx.fillStyle = '#facc15'; ctx.fill();
   }
+}
 
-  // --- Junction label ---
-  ctx.fillStyle = 'rgba(255,255,255,0.7)';
-  ctx.font = '9px sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText('Junction', innerX + 4, actY - 3);
-
-  // --- Polished end / output indicator (left side) ---
+function lpDrawMirrorsAndFacet(ctx, cx, cy, cw, ch, pad) {
   ctx.fillStyle = 'rgba(250,204,21,0.15)';
   ctx.fillRect(cx, cy, pad, ch);
   ctx.fillStyle = 'rgba(255,255,200,0.6)';
-  ctx.font = '9px sans-serif';
-  ctx.textAlign = 'center';
+  ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
   ctx.fillText('Polished facet', cx + pad / 2, cy - 8);
-
-  // --- Mirrors (cleaved facets) ---
   ctx.fillStyle = 'rgba(255,78,205,0.45)';
   ctx.fillRect(cx, cy, pad, ch);
   ctx.fillRect(cx + cw - pad, cy, pad, ch);
@@ -361,47 +335,36 @@ function lpDrawSemiconductorCavity(ctx, cx, cy, cw, ch, isQW) {
   ctx.font = '10px JetBrains Mono, monospace';
   ctx.fillText('R≈' + lpState.R.toFixed(2), cx + pad / 2, cy + ch + 14);
   ctx.fillText('Facet', cx + cw - pad / 2, cy + ch + 14);
+}
 
-  // --- Electrical contacts (right side wires) ---
+function lpDrawContacts(ctx, innerX, innerW, nY, nTypeH, subY, substrateH) {
   var contactR = 5;
-  // -ve terminal (top, n-type)
   var negX = innerX + innerW + 12;
   var negY = nY + nTypeH / 2;
-  ctx.strokeStyle = 'rgba(180,180,200,0.5)';
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(180,180,200,0.5)'; ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(innerX + innerW, negY);
-  ctx.lineTo(negX, negY);
-  ctx.lineTo(negX, negY + 30);
-  ctx.stroke();
+  ctx.moveTo(innerX + innerW, negY); ctx.lineTo(negX, negY); ctx.lineTo(negX, negY + 30); ctx.stroke();
   ctx.beginPath(); ctx.arc(innerX + innerW, negY, contactR, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(180,180,200,0.3)'; ctx.fill();
   ctx.strokeStyle = 'rgba(180,180,200,0.5)'; ctx.stroke();
   ctx.fillStyle = 'rgba(200,200,220,0.6)';
-  ctx.font = '9px sans-serif';
-  ctx.textAlign = 'left';
+  ctx.font = '9px sans-serif'; ctx.textAlign = 'left';
   ctx.fillText('−ve', negX + 4, negY + 4);
-
-  // +ve terminal (bottom, substrate/p-type)
   var posX = innerX + innerW + 12;
   var posY = subY + substrateH / 2;
   ctx.beginPath();
-  ctx.moveTo(innerX + innerW, posY);
-  ctx.lineTo(posX, posY);
-  ctx.lineTo(posX, posY - 30);
-  ctx.stroke();
+  ctx.moveTo(innerX + innerW, posY); ctx.lineTo(posX, posY); ctx.lineTo(posX, posY - 30); ctx.stroke();
   ctx.beginPath(); ctx.arc(innerX + innerW, posY, contactR, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(180,180,200,0.3)'; ctx.fill();
   ctx.strokeStyle = 'rgba(180,180,200,0.5)'; ctx.stroke();
   ctx.fillStyle = 'rgba(200,200,220,0.6)';
   ctx.fillText('+ve', posX + 4, posY + 4);
+}
 
-  // --- Collimating lens (left of polished/OC facet) ---
+function lpDrawCollimatingLens(ctx, cx, cy, ch) {
   var lensW = 20, lensH = ch * 0.65;
   var lensX = cx - 38;
   var lensY = cy + (ch - lensH) / 2;
-
-  // Lens glass body (biconvex vertical)
   ctx.fillStyle = 'rgba(80,200,255,0.12)';
   ctx.strokeStyle = 'rgba(100,220,255,0.35)';
   ctx.lineWidth = 1;
@@ -409,53 +372,57 @@ function lpDrawSemiconductorCavity(ctx, cx, cy, cw, ch, isQW) {
   ctx.moveTo(lensX + lensW / 2, lensY);
   ctx.bezierCurveTo(lensX - 3, lensY + lensH * 0.15, lensX - 3, lensY + lensH * 0.85, lensX + lensW / 2, lensY + lensH);
   ctx.bezierCurveTo(lensX + lensW + 3, lensY + lensH * 0.85, lensX + lensW + 3, lensY + lensH * 0.15, lensX + lensW / 2, lensY);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  // Lens highlight
+  ctx.closePath(); ctx.fill(); ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(lensX + 6, lensY + 8);
-  ctx.lineTo(lensX + 14, lensY + lensH - 8);
-  ctx.strokeStyle = 'rgba(180,240,255,0.25)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Lens label
+  ctx.moveTo(lensX + 6, lensY + 8); ctx.lineTo(lensX + 14, lensY + lensH - 8);
+  ctx.strokeStyle = 'rgba(180,240,255,0.25)'; ctx.lineWidth = 2; ctx.stroke();
   ctx.fillStyle = 'rgba(160,220,255,0.6)';
-  ctx.font = '9px sans-serif';
-  ctx.textAlign = 'center';
+  ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
   ctx.fillText('Collimating lens', lensX + lensW / 2, lensY - 6);
+}
 
-  // --- Output beam arrows (left side, emerging from polished end) ---
+function lpDrawOutputBeam(ctx, cx, cy, ch) {
   var beamY = cy + ch / 2;
-  ctx.strokeStyle = '#facc15';
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#facc15'; ctx.lineWidth = 2;
   for (var a = -1; a <= 1; a++) {
     ctx.beginPath();
-    ctx.moveTo(cx - 8, beamY + a * 6);
-    ctx.lineTo(cx - 40, beamY + a * 6);
-    ctx.stroke();
-    // Arrowhead
+    ctx.moveTo(cx - 8, beamY + a * 6); ctx.lineTo(cx - 40, beamY + a * 6); ctx.stroke();
     ctx.beginPath();
     ctx.moveTo(cx - 40, beamY + a * 6);
-    ctx.lineTo(cx - 32, beamY + a * 6 - 3);
-    ctx.lineTo(cx - 32, beamY + a * 6 + 3);
+    ctx.lineTo(cx - 32, beamY + a * 6 - 3); ctx.lineTo(cx - 32, beamY + a * 6 + 3);
     ctx.fillStyle = '#facc15'; ctx.fill();
   }
   ctx.fillStyle = '#facc15';
-  ctx.font = '9px sans-serif';
-  ctx.textAlign = 'right';
+  ctx.font = '9px sans-serif'; ctx.textAlign = 'right';
   ctx.fillText('Coherent light →', cx - 44, beamY + 3);
+}
 
-  // --- Light emerges label ---
+function lpDrawCavityLabels(ctx, cx, cy, ch, actY, activeH, isQW) {
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.font = '9px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('Junction', cx + 4, actY - 3);
   ctx.fillStyle = 'rgba(255,255,200,0.5)';
-  ctx.font = '9px sans-serif';
-  ctx.textAlign = 'left';
   ctx.fillText('Light emerges from polished end', cx + 4, cy + ch + 28);
-
-  // --- DOS inset for quantum wells ---
   if (isQW) lpDrawDOSInset(ctx, LP_CANVAS.width - 140, 12);
+}
+
+function lpDrawSemiconductorCavity(ctx, cx, cy, cw, ch, isQW) {
+  var geo = LP_CANVAS;
+  var pad = geo.mirrorW;
+  var innerX = cx + pad, innerW = cw - 2 * pad;
+  var substrateH = ch * 0.20, pTypeH = ch * 0.30;
+  var activeH = isQW ? 8 : ch * 0.08;
+  var nTypeH = ch - substrateH - pTypeH - activeH;
+  var subY = cy + ch - substrateH, pY = cy + nTypeH + activeH;
+  var actY = cy + nTypeH, nY = cy;
+
+  lpDrawCavityLayers(ctx, innerX, innerW, subY, substrateH, pY, pTypeH, actY, activeH, nY, nTypeH, isQW);
+  lpDrawZigzagPath(ctx, innerX, innerW, actY, activeH);
+  lpDrawMirrorsAndFacet(ctx, cx, cy, cw, ch, pad);
+  lpDrawContacts(ctx, innerX, innerW, nY, nTypeH, subY, substrateH);
+  lpDrawCollimatingLens(ctx, cx, cy, ch);
+  lpDrawOutputBeam(ctx, cx, cy, ch);
+  lpDrawCavityLabels(ctx, cx, cy, ch, actY, activeH, isQW);
 }
 
 /* Gas discharge tube cavity */

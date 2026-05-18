@@ -367,33 +367,20 @@ function stepIsing() {
   updateLatticeM();
 }
 
-function drawIsing() {
-  if (!isingCtx) return;
+function drawIsingClear() {
   var cw = isingCanvas.width, ch = isingCanvas.height;
-
-  // solid dark background so spins pop
   isingCtx.fillStyle = '#0a0a12';
   isingCtx.fillRect(0, 0, cw, ch);
+}
 
-  // center the lattice
+function computeIsingOffset() {
+  var cw = isingCanvas.width, ch = isingCanvas.height;
   var offX = (cw - ISING_SIZE * isingCell) / 2;
   var offY = (ch - ISING_SIZE * isingCell) / 2;
-  if (offX < 0) offX = 0;
-  if (offY < 0) offY = 0;
+  return { x: Math.max(offX, 0), y: Math.max(offY, 0), cw: cw, ch: ch };
+}
 
-  var T = magState.T;
-  var Tc = magState.Tc || 1;
-  var TN = magState.TN || 0;
-  var couplingFactor = Math.max(0.15, 1.0 - Math.min(T / (Tc || TN || 100), 0.90));
-  var sHalf = isingCell / 2;
-  var J = magState.J || 1.0;
-  var isAF = TN > 0 && Tc <= 0;
-  var AFJ = isAF && J < 0;
-
-  /* ---- background uniform H-field arrows ---- */
-  drawUniformField(cw, ch, magState.H);
-
-  /* ---- subtle grid lines ---- */
+function drawIsingGrid(offX, offY) {
   isingCtx.globalAlpha = 0.08;
   isingCtx.strokeStyle = '#303045';
   isingCtx.lineWidth = 1;
@@ -407,26 +394,22 @@ function drawIsing() {
     isingCtx.lineTo(offX + ISING_SIZE * isingCell, offY + i * isingCell);
     isingCtx.stroke();
   }
+}
 
-  /* ---- draw bonds first ---- */
+function drawIsingBonds(offX, offY, couplingFactor) {
+  var sHalf = isingCell / 2;
+  var J = magState.J || 1.0;
+  var isAF = (magState.TN || 0) > 0 && (magState.Tc || 0) <= 0;
+  var AFJ = isAF && J < 0;
   for (var i = 0; i < ISING_SIZE; i++) {
     for (var j = 0; j < ISING_SIZE; j++) {
-      var x = offX + j * isingCell;
-      var y = offY + i * isingCell;
-      var cx = x + sHalf;
-      var cy = y + sHalf;
+      var cx = offX + j * isingCell + sHalf;
+      var cy = offY + i * isingCell + sHalf;
       var s = isingSpins[i][j];
       var ba, bc;
-
-      // right neighbor
       if (j < ISING_SIZE - 1) {
-        if (s === isingSpins[i][j + 1]) {
-          ba = 0.55 * couplingFactor;
-          bc = s === 1 ? '#00f0ff' : '#ff4ecd';
-        } else {
-          ba = 0.22 * couplingFactor;
-          bc = '#facc15';
-        }
+        if (s === isingSpins[i][j + 1]) { ba = 0.55 * couplingFactor; bc = s === 1 ? '#00f0ff' : '#ff4ecd'; }
+        else { ba = 0.22 * couplingFactor; bc = '#facc15'; }
         isingCtx.globalAlpha = ba;
         isingCtx.strokeStyle = bc;
         isingCtx.lineWidth = ba > 0.2 ? 3.5 : 2;
@@ -435,15 +418,9 @@ function drawIsing() {
         isingCtx.lineTo(cx + isingCell, cy);
         isingCtx.stroke();
       }
-      // bottom neighbor
       if (i < ISING_SIZE - 1) {
-        if (s === isingSpins[i + 1][j]) {
-          ba = 0.55 * couplingFactor;
-          bc = s === 1 ? '#00f0ff' : '#ff4ecd';
-        } else {
-          ba = 0.22 * couplingFactor;
-          bc = '#facc15';
-        }
+        if (s === isingSpins[i + 1][j]) { ba = 0.55 * couplingFactor; bc = s === 1 ? '#00f0ff' : '#ff4ecd'; }
+        else { ba = 0.22 * couplingFactor; bc = '#facc15'; }
         isingCtx.globalAlpha = ba;
         isingCtx.strokeStyle = bc;
         isingCtx.lineWidth = ba > 0.2 ? 3.5 : 2;
@@ -454,49 +431,42 @@ function drawIsing() {
       }
     }
   }
+}
 
-  /* ---- draw spins ---- */
-  var spinSize = Math.max(7, isingCell * 0.38);
+function drawIsingSpins(offX, offY, spinSize) {
+  var sHalf = isingCell / 2;
+  var r = spinSize / 2;
+  var ar = r * 0.6;
   for (var i = 0; i < ISING_SIZE; i++) {
     for (var j = 0; j < ISING_SIZE; j++) {
       var x = offX + j * isingCell;
       var y = offY + i * isingCell;
       var s = isingSpins[i][j];
-      var cx2 = x + sHalf;
-      var cy2 = y + sHalf;
-      var r = spinSize / 2;
-
-      // subtle shadow / glow
+      var cx = x + sHalf;
+      var cy = y + sHalf;
+      // glow
       isingCtx.globalAlpha = 0.55;
       isingCtx.fillStyle = s === 1 ? 'rgba(0,240,255,0.12)' : 'rgba(255,78,205,0.12)';
-      isingCtx.beginPath();
-      isingCtx.arc(cx2, cy2, r + 2.5, 0, 2 * Math.PI);
-      isingCtx.fill();
-
-      // filled circle
+      isingCtx.beginPath(); isingCtx.arc(cx, cy, r + 2.5, 0, 2 * Math.PI); isingCtx.fill();
+      // circle
       isingCtx.globalAlpha = 0.95;
       isingCtx.fillStyle = s === 1 ? '#00f0ff' : '#ff4ecd';
-      isingCtx.beginPath();
-      isingCtx.arc(cx2, cy2, r, 0, 2 * Math.PI);
-      isingCtx.fill();
-
-      // larger arrow direction overlay
+      isingCtx.beginPath(); isingCtx.arc(cx, cy, r, 0, 2 * Math.PI); isingCtx.fill();
+      // arrow
       isingCtx.globalAlpha = 0.75;
       isingCtx.fillStyle = '#0a0a12';
       isingCtx.beginPath();
-      var ar = r * 0.6;
       if (s === 1) {
-        isingCtx.moveTo(cx2, cy2 - ar);
-        isingCtx.lineTo(cx2 - ar * 0.65, cy2 + ar * 0.55);
-        isingCtx.lineTo(cx2 + ar * 0.65, cy2 + ar * 0.55);
+        isingCtx.moveTo(cx, cy - ar);
+        isingCtx.lineTo(cx - ar * 0.65, cy + ar * 0.55);
+        isingCtx.lineTo(cx + ar * 0.65, cy + ar * 0.55);
       } else {
-        isingCtx.moveTo(cx2, cy2 + ar);
-        isingCtx.lineTo(cx2 - ar * 0.65, cy2 - ar * 0.55);
-        isingCtx.lineTo(cx2 + ar * 0.65, cy2 - ar * 0.55);
+        isingCtx.moveTo(cx, cy + ar);
+        isingCtx.lineTo(cx - ar * 0.65, cy - ar * 0.55);
+        isingCtx.lineTo(cx + ar * 0.65, cy - ar * 0.55);
       }
       isingCtx.fill();
-
-      // domain wall / AF sublattice tint
+      // domain wall tint
       var neighDiff = 0;
       if (i > 0 && isingSpins[i][j] !== isingSpins[i - 1][j]) neighDiff = 1;
       if (i < ISING_SIZE - 1 && isingSpins[i][j] !== isingSpins[i + 1][j]) neighDiff = 1;
@@ -509,17 +479,18 @@ function drawIsing() {
       }
     }
   }
+}
 
-  /* ---- state label overlay ---- */
+function drawIsingStateLabel(offX, offY) {
   isingCtx.globalAlpha = 0.90;
   isingCtx.fillStyle = '#0a0a12';
   isingCtx.fillRect(offX, offY, ISING_SIZE * isingCell, 22);
   isingCtx.globalAlpha = 1.0;
+  var T = magState.T, Tc = magState.Tc || 1, TN = magState.TN || 0;
   var st = '', stCol = '';
   if (TN > 0 && T < TN) { st = 'Antiferromagnetic'; stCol = '#4ade80'; }
-  else if (AFJ) { st = 'Antiferro — J<0'; stCol = '#4ade80'; }
+  else if ((TN > 0 && Tc <= 0) && (magState.J || 1) < 0) { st = 'Antiferro — J<0'; stCol = '#4ade80'; }
   else if (Tc > 0 && T < Tc) { st = 'Ferromagnetic'; stCol = '#00f0ff'; }
-  else if (Tc <= 0 && TN <= 0) { st = 'Paramagnetic'; stCol = '#8080a0'; }
   else { st = 'Paramagnetic'; stCol = '#8080a0'; }
   isingCtx.font = 'bold 13px JetBrains Mono, monospace';
   isingCtx.fillStyle = stCol;
@@ -528,10 +499,9 @@ function drawIsing() {
   isingCtx.fillStyle = '#505070';
   var info = magState.material + '  |  T=' + T + ' K  |  H=' + magState.H.toFixed(2);
   isingCtx.fillText(info, offX + 120, offY + 16);
+}
 
-  isingCtx.globalAlpha = 1.0;
-
-  /* ---- draw bar magnet (always visible, ghost when OFF) ---- */
+function drawBarMagnet(cw, ch) {
   var mw = Math.min(cw, ch) * 0.18;
   var mh = mw * 0.35;
   var mx = barMagnet.x * cw - mw / 2;
@@ -539,15 +509,11 @@ function drawIsing() {
   var mHalf = mw / 2;
   var magAlpha = barMagnet.active ? 1.0 : 0.35;
   var magSat = barMagnet.active ? 1.0 : 0.35;
-
-  // N pole (left half) — blue
   isingCtx.globalAlpha = magAlpha;
   isingCtx.fillStyle = barMagnet.active ? '#00f0ff' : 'rgba(0,240,255,' + magSat + ')';
   isingCtx.fillRect(mx, my, mHalf, mh);
-  // S pole (right half) — red
   isingCtx.fillStyle = barMagnet.active ? '#ff4ecd' : 'rgba(255,78,205,' + magSat + ')';
   isingCtx.fillRect(mx + mHalf, my, mHalf, mh);
-  // border
   isingCtx.strokeStyle = barMagnet.active ? '#8080a0' : 'rgba(128,128,160,0.4)';
   isingCtx.lineWidth = barMagnet.active ? 1.5 : 1;
   isingCtx.strokeRect(mx, my, mw, mh);
@@ -555,13 +521,10 @@ function drawIsing() {
   isingCtx.moveTo(mx + mHalf, my);
   isingCtx.lineTo(mx + mHalf, my + mh);
   isingCtx.stroke();
-  // labels
   isingCtx.font = 'bold 13px JetBrains Mono, monospace';
   isingCtx.fillStyle = '#0a0a12';
   isingCtx.fillText('N', mx + mHalf * 0.32, my + mh * 0.68);
   isingCtx.fillText('S', mx + mHalf * 1.32, my + mh * 0.68);
-
-  // drag ring
   if (barMagnet.dragging) {
     isingCtx.strokeStyle = 'rgba(0,240,255,0.35)';
     isingCtx.lineWidth = 2;
@@ -569,11 +532,28 @@ function drawIsing() {
     isingCtx.arc(mx + mw / 2, my + mh / 2, mw * 0.6, 0, 2 * Math.PI);
     isingCtx.stroke();
   }
+  return { mx: mx, my: my, mw: mw, mh: mh };
+}
 
-  /* ---- field pattern arrows (only when ON) ---- */
-  if (barMagnet.active) {
-    drawMagnetField(mx, my, mw, mh, true);
-  }
+function drawIsing() {
+  if (!isingCtx) return;
+  var dim = computeIsingOffset();
+  var offX = dim.x, offY = dim.y, cw = dim.cw, ch = dim.ch;
+  var T = magState.T;
+  var Tc = magState.Tc || 1;
+  var TN = magState.TN || 0;
+  var couplingFactor = Math.max(0.15, 1.0 - Math.min(T / (Tc || TN || 100), 0.90));
+  var spinSize = Math.max(7, isingCell * 0.38);
+
+  drawIsingClear();
+  drawUniformField(cw, ch, magState.H);
+  drawIsingGrid(offX, offY);
+  drawIsingBonds(offX, offY, couplingFactor);
+  drawIsingSpins(offX, offY, spinSize);
+  drawIsingStateLabel(offX, offY);
+  isingCtx.globalAlpha = 1.0;
+  var m = drawBarMagnet(cw, ch);
+  if (barMagnet.active) drawMagnetField(m.mx, m.my, m.mw, m.mh, true);
 }
 
 /* ---- draw uniform background H-field arrows ---- */
