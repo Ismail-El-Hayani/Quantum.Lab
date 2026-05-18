@@ -65,7 +65,7 @@ function initChallenge1() {
 
   var container = document.getElementById('challenge-1-container');
   if (!container) return;
-  container.textContent = '';
+  container.innerHTML = '';
 
   var panel = buildChallengePanel({
     id: 'ch1', icon: '🔬', title: 'Stern-Gerlach Predictor',
@@ -76,7 +76,7 @@ function initChallenge1() {
   container.appendChild(panel);
 
   var controls = document.getElementById('ch1-controls');
-  controls.textContent =
+  controls.innerHTML =
     '<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:0.5rem;">' +
       '<div style="font-family:var(--mono);font-size:1.1rem;color:var(--accent-cyan);">Target P(↑) = <span id="ch1-target">' + cos2(deg2rad(SpinGame.ch1.targetTheta)/2).toFixed(3) + '</span></div>' +
       '<div class="hud-badge hud-timer">⏱ <span id="ch1-timer">60</span>s</div>' +
@@ -177,7 +177,7 @@ function ch1Hint() {
   __GameState.addXP(-5, 'Hint used');
   var fb = document.getElementById('ch1-feedback');
   fb.className = 'challenge-feedback hint';
-  fb.textContent = 'Hint: P(↑) = cos²(θ/2). At θ=' + SpinGame.ch1.targetTheta + '°, P(↑) ≈ ' + cos2(deg2rad(SpinGame.ch1.targetTheta)/2).toFixed(3) + '. Try θ around ' + (SpinGame.ch1.targetTheta + (Math.random()<0.5?-5:5)) + '°.';
+  fb.innerHTML = 'Hint: P(↑) = cos²(θ/2). At θ=' + SpinGame.ch1.targetTheta + '°, P(↑) ≈ ' + cos2(deg2rad(SpinGame.ch1.targetTheta)/2).toFixed(3) + '. Try θ around ' + (SpinGame.ch1.targetTheta + (Math.random()<0.5?-5:5)) + '°.';
 }
 
 // ============ CHALLENGE 2: ESR RESONANCE (Medium, 75XP) ============
@@ -189,7 +189,7 @@ function initChallenge2() {
 
   var container = document.getElementById('challenge-2-container');
   if (!container) return;
-  container.textContent = '';
+  container.innerHTML = '';
 
   var panel = buildChallengePanel({
     id: 'ch2', icon: '⚡', title: 'ESR Resonance Sweep',
@@ -200,7 +200,7 @@ function initChallenge2() {
   container.appendChild(panel);
 
   var controls = document.getElementById('ch2-controls');
-  controls.textContent =
+  controls.innerHTML =
     '<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:0.5rem;">' +
       '<div class="hud-badge hud-timer">⏱ <span id="ch2-timer">90</span>s</div>' +
     '</div>' +
@@ -215,7 +215,7 @@ function initChallenge2() {
     '</div>';
 
   document.getElementById('ch2-slider').addEventListener('input', function() {
-    document.getElementById('ch2-val').textContent = Number.parseFloat(this.value).toFixed(2);
+    document.getElementById('ch2-val').textContent = parseFloat(this.value).toFixed(2);
     ch2Plot();
   });
 
@@ -226,7 +226,7 @@ function initChallenge2() {
 function ch2Plot() {
   var B = SpinGame.ch2.targetB;
   var f0 = 28.024 * B;
-  var fUser = Number.parseFloat(document.getElementById('ch2-slider').value);
+  var fUser = parseFloat(document.getElementById('ch2-slider').value);
   var fArr = [], sig = [];
   for (var f = 5; f <= 90; f += 0.5) {
     fArr.push(f);
@@ -274,7 +274,7 @@ function startCh2Timer() {
 }
 
 function ch2Check() {
-  var fUser = Number.parseFloat(document.getElementById('ch2-slider').value);
+  var fUser = parseFloat(document.getElementById('ch2-slider').value);
   var f0 = 28.024 * SpinGame.ch2.targetB;
   var diff = Math.abs(fUser - f0);
   var fb = document.getElementById('ch2-feedback');
@@ -301,7 +301,7 @@ function ch2Hint() {
   var f0 = 28.024 * SpinGame.ch2.targetB;
   var fb = document.getElementById('ch2-feedback');
   fb.className = 'challenge-feedback hint';
-  fb.textContent = 'Hint: f₀ ≈ 28 × B. With B = ' + SpinGame.ch2.targetB.toFixed(2) + ' T, the resonance is near ' + f0.toFixed(1) + ' GHz.';
+  fb.innerHTML = 'Hint: f₀ ≈ 28 × B. With B = ' + SpinGame.ch2.targetB.toFixed(2) + ' T, the resonance is near ' + f0.toFixed(1) + ' GHz.';
 }
 
 // ============ CHALLENGE 3: BELL INEQUALITY Q&A (Hard, 100XP) ============
@@ -336,7 +336,7 @@ function initChallenge3() {
 
   var container = document.getElementById('challenge-3-container');
   if (!container) return;
-  container.textContent = '';
+  container.innerHTML = '';
 
   var panel = buildChallengePanel({
     id: 'ch3', icon: '🔮', title: 'Bell Inequality Paradox',
@@ -355,7 +355,7 @@ function ch3RenderQuestion() {
 
   var controls = document.getElementById('ch3-controls');
   var progressPct = ((SpinGame.ch3.qIndex) / CH3_QUESTIONS.length) * 100;
-  controls.textContent =
+  controls.innerHTML =
     '<div style="margin-bottom:0.6rem;">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;color:var(--text-dim);margin-bottom:0.3rem;">' +
         '<span>Question ' + (SpinGame.ch3.qIndex + 1) + ' of ' + CH3_QUESTIONS.length + '</span>' +
@@ -427,7 +427,7 @@ function initPuzzle1() {
 
   var container = document.getElementById('puzzle-1-container');
   if (!container) return;
-  container.textContent = '';
+  container.innerHTML = '';
 
   var panel = buildChallengePanel({
     id: 'pz1', icon: '🧲', title: 'Measurement Chain',
@@ -438,7 +438,7 @@ function initPuzzle1() {
   container.appendChild(panel);
 
   var controls = document.getElementById('pz1-controls');
-  controls.textContent =
+  controls.innerHTML =
     '<div id="pz1-chain" style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;font-family:var(--mono);font-size:0.85rem;flex-wrap:wrap;justify-content:center;padding:0.8rem;background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);">' +
       '<span style="background:rgba(0,212,255,0.1);padding:0.4rem 0.8rem;border-radius:6px;border:1px solid rgba(0,212,255,0.3);color:var(--accent-cyan);">|↑z⟩</span>' +
       '<span style="color:var(--text-dim);font-size:1.2rem;">➜</span>' +
@@ -513,7 +513,7 @@ function pz1Step(choice) {
   var nextStage = stages[SpinGame.pz1.stage];
   document.getElementById('pz1-stage-text').textContent = nextStage.text;
   var btns = document.getElementById('pz1-buttons');
-  btns.textContent = '';
+  btns.innerHTML = '';
   nextStage.next.forEach(function(opt, i) {
     var b = document.createElement('button');
     b.className = 'btn';
@@ -529,7 +529,7 @@ function initPuzzle2() {
 
   var container = document.getElementById('puzzle-2-container');
   if (!container) return;
-  container.textContent = '';
+  container.innerHTML = '';
 
   var panel = buildChallengePanel({
     id: 'pz2', icon: '📐', title: 'Pauli Matrix Algebra',
@@ -540,7 +540,7 @@ function initPuzzle2() {
   container.appendChild(panel);
 
   var controls = document.getElementById('pz2-controls');
-  controls.textContent =
+  controls.innerHTML =
     '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.8rem;margin-bottom:0.8rem;">' +
       '<div style="background:var(--bg-deep);padding:0.8rem;border-radius:8px;border:1px solid var(--border-subtle);font-family:var(--mono);font-size:0.85rem;">' +
         '<div style="color:var(--accent-cyan);margin-bottom:0.3rem;">σ<sub>x</sub></div>' +
@@ -608,7 +608,7 @@ function initPuzzle3() {
 
   var container = document.getElementById('puzzle-3-container');
   if (!container) return;
-  container.textContent = '';
+  container.innerHTML = '';
 
   var panel = buildChallengePanel({
     id: 'pz3', icon: '💻', title: 'Quantum Gate Puzzle',
@@ -619,7 +619,7 @@ function initPuzzle3() {
   container.appendChild(panel);
 
   var controls = document.getElementById('pz3-controls');
-  controls.textContent =
+  controls.innerHTML =
     '<div style="display:flex;gap:0.5rem;margin-bottom:0.8rem;flex-wrap:wrap;">' +
       '<button class="btn" onclick="pz3AddGate(\'H\')">Add H</button>' +
       '<button class="btn" onclick="pz3AddGate(\'Z\')">Add Z</button>' +
@@ -674,7 +674,7 @@ function pz3UpdateCircuit() {
     }
   });
 
-  el.textContent = html;
+  el.innerHTML = html;
   document.getElementById('pz3-state-display').textContent = 'Current state: ' + state.name;
 }
 
