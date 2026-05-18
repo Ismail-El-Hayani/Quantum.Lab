@@ -177,7 +177,7 @@ function updateCrystalDesignerPlot() {
 function updateCrystalLattice(V0, b_ratio) {
   var container = document.getElementById('crystal-lattice');
   if (!container) return;
-  container.innerHTML = '';
+  container.textContent = '';
   var nUnits = 8;
   for (var i = 0; i < nUnits; i++) {
     var well = document.createElement('div');
@@ -302,7 +302,7 @@ function checkBlochOscillation() {
   if (!isNaN(guessOmega) && !isNaN(guessT) && Math.abs(guessOmega - omega_THz) < 0.2 * omega_THz && Math.abs(guessT - T_ps) < 0.2 * T_ps) {
     fb.className = 'challenge-feedback success';
     fb.style.display = 'block';
-    fb.innerHTML = '✓ Correct! ω_B = ' + omega_THz.toFixed(2) + ' THz, T_B = ' + T_ps.toFixed(2) + ' ps. Bloch oscillations are periodic motion of electrons in a lattice under an electric field.';
+    fb.textContent = '✓ Correct! ω_B = ' + omega_THz.toFixed(2) + ' THz, T_B = ' + T_ps.toFixed(2) + ' ps. Bloch oscillations are periodic motion of electrons in a lattice under an electric field.';
     _GameState.addXP(75, 'Bloch oscillation solved!');
     celebrateCorrect();
     _GameState.unlock({ id: 'bloch_racer', title: 'Bloch Racer', desc: 'Computed Bloch frequency correctly', icon: '〰', xp: 25 });
@@ -363,7 +363,7 @@ function checkBandgapEstimation() {
   if (!isNaN(guess) && Math.abs(guess - predictedGap) < 0.15 * predictedGap + 0.05) {
     fb.className = 'challenge-feedback success';
     fb.style.display = 'block';
-    fb.innerHTML = '✓ Excellent! Nearly-free gap ≈ 2|V_G| = ' + predictedGap.toFixed(3) + ' ℏ²/ma². The Fourier component V_G = (2V₀/π)sin(πb/a) captures the periodic perturbation strength.';
+    fb.textContent = '✓ Excellent! Nearly-free gap ≈ 2|V_G| = ' + predictedGap.toFixed(3) + ' ℏ²/ma². The Fourier component V_G = (2V₀/π)sin(πb/a) captures the periodic perturbation strength.';
     _GameState.addXP(100, 'Bandgap estimated!');
     celebrateCorrect();
     _GameState.unlock({ id: 'bandgap_architect', title: 'Bandgap Architect', desc: 'Mastered nearly-free electron gap estimation', icon: '📐', xp: 30 });
@@ -432,7 +432,7 @@ function checkTightBinding() {
   if (filled[0] === 'E0' && filled[1] === 't' && filled[2] === 'ka') {
     fb.className = 'challenge-feedback success';
     fb.style.display = 'block';
-    fb.innerHTML = '✓ Correct! E(k) = E₀ − 2t cos(ka). In the tight-binding limit, electrons hop between nearest-neighbor atoms with amplitude t. The cosine dispersion arises from translational symmetry.';
+    fb.textContent = '✓ Correct! E(k) = E₀ − 2t cos(ka). In the tight-binding limit, electrons hop between nearest-neighbor atoms with amplitude t. The cosine dispersion arises from translational symmetry.';
     _GameState.addXP(60, 'Tight-binding chain solved!');
     celebrateCorrect();
     document.querySelectorAll('#tb-slot-0, #tb-slot-1, #tb-slot-2').forEach(function(el) { el.classList.add('correct'); });
@@ -467,7 +467,7 @@ function checkKPAssembly() {
   if (ok) {
     fb.className = 'challenge-feedback success';
     fb.style.display = 'block';
-    fb.innerHTML = '✓ Perfect! cos(ka) = cos(αw)cosh(βb) + [(β²−α²)/(2αβ)]sin(αw)sinh(βb). This is the exact transcendental equation for the Kronig-Penney model with E < V₀.';
+    fb.textContent = '✓ Perfect! cos(ka) = cos(αw)cosh(βb) + [(β²−α²)/(2αβ)]sin(αw)sinh(βb). This is the exact transcendental equation for the Kronig-Penney model with E < V₀.';
     _GameState.addXP(80, 'K-P equation assembled!');
     celebrateCorrect();
     _GameState.unlock({ id: 'kp_assembler', title: 'Crystal Engineer', desc: 'Assembled the Kronig-Penney equation', icon: '⚙', xp: 25 });
@@ -496,7 +496,7 @@ function initBraggPuzzle() {
   document.getElementById('bragg-k').textContent = b.k.toFixed(2) + 'π';
 
   var opts = document.getElementById('bragg-options');
-  opts.innerHTML = '';
+  opts.textContent = '';
   for (var n = 1; n <= 4; n++) {
     var btn = document.createElement('button');
     btn.className = 'btn';
@@ -515,7 +515,7 @@ function initBraggPuzzle() {
 function drawBraggCanvas() {
   var canvas = document.getElementById('bragg-canvas');
   if (!canvas) return;
-  canvas.innerHTML = '';
+  canvas.textContent = '';
   var w = canvas.clientWidth;
   var h = canvas.clientHeight;
   // Draw atomic planes
@@ -552,7 +552,7 @@ function checkBragg() {
   if (b.selected_n === b.n_target) {
     fb.className = 'challenge-feedback success';
     fb.style.display = 'block';
-    fb.innerHTML = '✓ Correct! Bragg condition: nλ = 2a. With λ = 2π/k, this gives k = nπ/a. For a = ' + b.a.toFixed(2) + ' nm and k = ' + b.k.toFixed(2) + 'π nm⁻¹, n = ' + b.n_target + '.';
+    fb.textContent = '✓ Correct! Bragg condition: nλ = 2a. With λ = 2π/k, this gives k = nπ/a. For a = ' + b.a.toFixed(2) + ' nm and k = ' + b.k.toFixed(2) + 'π nm⁻¹, n = ' + b.n_target + '.';
     _GameState.addXP(120, 'Bragg reflection mastered!');
     celebrateCorrect();
     _GameState.unlock({ id: 'bragg_master', title: 'Bragg Master', desc: 'Matched all Bragg reflections', icon: '💎', xp: 35 });
@@ -584,14 +584,28 @@ function renderBadgesKP() {
   if (!list) return;
   var earned = _GameState.get('achievements') || [];
   var earnedIds = earned.map(function(a){ return a.id; });
-  list.innerHTML = '';
+  list.textContent = '';
   KP_BADGES.forEach(function(b){
     var isEarned = earnedIds.indexOf(b.id) >= 0;
     var div = document.createElement('div');
     div.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0;border-bottom:1px solid var(--glass-border);';
-    div.innerHTML = '<span style="font-size:1.1rem;">' + (isEarned ? b.icon : '🔒') + '</span>' +
-      '<div style="flex:1;"><div style="font-size:0.8rem;color:' + (isEarned ? 'var(--text-main)' : 'var(--text-dim)') + '">' + b.name + '</div>' +
-      '<div style="font-size:0.7rem;color:var(--text-dim)">' + b.desc + '</div></div>';
+    var iconSpan = document.createElement('span');
+    iconSpan.style.fontSize = '1.1rem';
+    iconSpan.textContent = isEarned ? b.icon : '🔒';
+    div.appendChild(iconSpan);
+    var infoDiv = document.createElement('div');
+    infoDiv.style.flex = '1';
+    var nameDiv = document.createElement('div');
+    nameDiv.style.fontSize = '0.8rem';
+    nameDiv.style.color = isEarned ? 'var(--text-main)' : 'var(--text-dim)';
+    nameDiv.textContent = b.name;
+    infoDiv.appendChild(nameDiv);
+    var descDiv = document.createElement('div');
+    descDiv.style.fontSize = '0.7rem';
+    descDiv.style.color = 'var(--text-dim)';
+    descDiv.textContent = b.desc;
+    infoDiv.appendChild(descDiv);
+    div.appendChild(infoDiv);
     list.appendChild(div);
   });
 }
@@ -613,7 +627,7 @@ function updateScoreboardKP() {
 function buildModuleNav() {
   var nav = document.getElementById('module-nav');
   if (!nav) return;
-  nav.innerHTML = '';
+  nav.textContent = '';
 
   var modules = [
     { num: '00', name: 'Crystal to Quantum', url: '../00_crystal_to_quantum/index.html' },
