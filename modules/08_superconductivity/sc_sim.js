@@ -210,7 +210,7 @@ function initSuperconductivity() {
 
   if (sliderT) {
     sliderT.addEventListener('input', function() {
-      scState.T = parseFloat(this.value);
+      scState.T = Number.parseFloat(this.value);
       var el = document.getElementById('val-T-sc');
       if (el) el.textContent = scState.T.toFixed(1);
       plotGapVsTemp(); plotMagnetization(); plotPenetration(); updateLiveSC();
@@ -219,7 +219,7 @@ function initSuperconductivity() {
 
   if (sliderH) {
     sliderH.addEventListener('input', function() {
-      scState.H = parseFloat(this.value);
+      scState.H = Number.parseFloat(this.value);
       var el = document.getElementById('val-H');
       if (el) el.textContent = scState.H.toFixed(2);
       plotMagnetization(); updateLiveSC();
@@ -228,7 +228,7 @@ function initSuperconductivity() {
 
   if (selectMat) {
     selectMat.addEventListener('change', function() {
-      scState.Tc = parseFloat(this.value);
+      scState.Tc = Number.parseFloat(this.value);
       scState.material = this.options[this.selectedIndex].text.split('—')[0].trim();
       var el = document.getElementById('val-Tc');
       if (el) el.textContent = scState.Tc.toFixed(1);
@@ -623,7 +623,7 @@ function initMeissnerAnimation(canvasId) {
     const badgeText = isSC ? 'Meissner state  —  B = 0 inside' : 'Normal state  —  B penetrates freely';
     niceText(ctx, badgeText, 10, 20, { size: 12, color: badgeColor, bold: true });
 
-    if (isSC && isFinite(lambda)) {
+    if (isSC && Number.isFinite(lambda)) {
       const barX = 10, barY = H - 22;
       ctx.fillStyle = 'rgba(0,240,255,0.15)';
       ctx.fillRect(barX, barY, lambda * 1.5, 4);

@@ -225,8 +225,8 @@ function checkNdAnswerDS() {
   var val = document.getElementById('nd-answer-ds');
   var fb = document.getElementById('nd-feedback-ds');
   if (!val || !fb) return;
-  var guess = parseFloat(val.value);
-  var ok = !isNaN(guess) && Math.abs((guess - ndChallenge.targetN) / ndChallenge.targetN) < 0.5;
+  var guess = Number.parseFloat(val.value);
+  var ok = !Number.isNaN(guess) && Math.abs((guess - ndChallenge.targetN) / ndChallenge.targetN) < 0.5;
   fb.textContent = ok ? 'Correct! n ≈ ' + ndChallenge.targetN.toExponential(2) + ' cm⁻³.' : 'Hint: n ≈ ' + ndChallenge.targetN.toExponential(2) + ' cm⁻³. Check your order of magnitude.';
   fb.className = 'challenge-feedback ' + (ok ? 'success' : 'hint');
   if (ok && window._GameState) {

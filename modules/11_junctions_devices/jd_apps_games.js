@@ -101,7 +101,7 @@ function startJDCalc() {
 function checkJDCalc() {
   var val = document.getElementById('jd-calc-ans'); var fb = document.getElementById('jd-calc-feedback');
   if (!val || !fb) return;
-  var guess = parseFloat(val.value);
+  var guess = Number.parseFloat(val.value);
   var ok = Math.abs(Math.log10(Math.max(guess, 1e-20) / jdCalc.target)) < 0.6;
   fb.textContent = ok ? 'Correct! I ≈ ' + jdCalc.target.toExponential(2) + ' A' : 'Hint: use I = I₀(exp(V/kT)−1).';
   fb.className = 'challenge-feedback ' + (ok ? 'success' : 'hint');
@@ -197,7 +197,7 @@ function startSolarPuzzle() {
 function checkSolarPuzzle() {
   var val = document.getElementById('solar-ans'); var fb = document.getElementById('solar-feedback');
   if (!val || !fb) return;
-  var guess = parseFloat(val.value);
+  var guess = Number.parseFloat(val.value);
   var ok = Math.abs(guess - solarPuzzle.Voc) < 0.15;
   fb.textContent = ok ? 'Correct! Voc ≈ ' + solarPuzzle.Voc.toFixed(3) + ' V' : 'Hint: Voc ≈ (kT/e)·ln(Iph/I₀+1). Try again!';
   fb.className = 'challenge-feedback ' + (ok ? 'success' : 'hint');

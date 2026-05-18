@@ -198,12 +198,12 @@ function checkDopingDetective() {
 
   var regime = document.getElementById('dd-regime').value;
   var concStr = document.getElementById('dd-conc').value;
-  var conc = parseFloat(concStr);
+  var conc = Number.parseFloat(concStr);
 
   var regimeOK = (regime === c.type);
   var concOK = true;
   var targetConc = (c.type === 'n-type') ? c.Nd : (c.type === 'p-type' ? c.Na : 0);
-  if (c.type !== 'intrinsic' && !isNaN(conc)) {
+  if (c.type !== 'intrinsic' && !Number.isNaN(conc)) {
     concOK = Math.abs(Math.log10(conc) - Math.log10(targetConc)) <= 1.5;
   }
 
@@ -413,7 +413,7 @@ function checkOpticalPuzzle() {
   opticalPuzzle.pool.forEach(function(item, i) {
     var inp = document.getElementById('opt-ans-' + i);
     if (!inp) { ok = false; return; }
-    var val = parseFloat(inp.value);
+    var val = Number.parseFloat(inp.value);
     if (Math.abs(val - item.lambda_nm) > 80) ok = false;
   });
   if (ok) {

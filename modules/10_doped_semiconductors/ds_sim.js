@@ -247,7 +247,7 @@ function initDoped() {
   var selMat = document.getElementById('select-material-ds');
   if (sNd) {
     sNd.addEventListener('input', function () {
-      dsState.Nd = Math.pow(10, parseFloat(this.value));
+      dsState.Nd = Math.pow(10, Number.parseFloat(this.value));
       var el = document.getElementById('val-Nd');
       if (el) el.textContent = dsState.Nd.toExponential(1);
       plotFermiShift(); plotCarrierTemp(); plotConductivityDoped(); updateLiveDS();
@@ -255,7 +255,7 @@ function initDoped() {
   }
   if (sNa) {
     sNa.addEventListener('input', function () {
-      dsState.Na = Math.pow(10, parseFloat(this.value));
+      dsState.Na = Math.pow(10, Number.parseFloat(this.value));
       var el = document.getElementById('val-Na');
       if (el) el.textContent = dsState.Na.toExponential(1);
       plotFermiShift(); plotCarrierTemp(); plotConductivityDoped(); updateLiveDS();
@@ -263,7 +263,7 @@ function initDoped() {
   }
   if (sT) {
     sT.addEventListener('input', function () {
-      dsState.T = parseFloat(this.value);
+      dsState.T = Number.parseFloat(this.value);
       var el = document.getElementById('val-T-ds');
       if (el) el.textContent = dsState.T;
       plotFermiShift(); plotCarrierTemp(); plotConductivityDoped(); updateLiveDS();

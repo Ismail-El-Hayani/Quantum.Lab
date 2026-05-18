@@ -765,7 +765,7 @@ function initMagnetism() {
 
   if (elT) {
     elT.addEventListener('input', function() {
-      magState.T = parseFloat(this.value);
+      magState.T = Number.parseFloat(this.value);
       var elVal = document.getElementById('val-T-mag');
       if (elVal) elVal.textContent = magState.T;
       plotSusceptibility(); plotMagnetizationCurve(); plotHysteresis(); updateLiveMAG();
@@ -773,7 +773,7 @@ function initMagnetism() {
   }
   if (elC) {
     elC.addEventListener('input', function() {
-      magState.C = parseFloat(this.value);
+      magState.C = Number.parseFloat(this.value);
       var elVal = document.getElementById('val-C');
       if (elVal) elVal.textContent = magState.C.toFixed(2);
       plotSusceptibility(); updateLiveMAG();
@@ -781,7 +781,7 @@ function initMagnetism() {
   }
   if (elTheta) {
     elTheta.addEventListener('input', function() {
-      magState.theta = parseFloat(this.value);
+      magState.theta = Number.parseFloat(this.value);
       var elVal = document.getElementById('val-theta');
       if (elVal) elVal.textContent = magState.theta.toFixed(1);
       plotSusceptibility(); updateLiveMAG();
@@ -789,7 +789,7 @@ function initMagnetism() {
   }
   if (elMs) {
     elMs.addEventListener('input', function() {
-      magState.Ms = parseFloat(this.value);
+      magState.Ms = Number.parseFloat(this.value);
       var elVal = document.getElementById('val-Ms');
       if (elVal) elVal.textContent = magState.Ms.toFixed(2);
       plotMagnetizationCurve(); plotHysteresis(); updateLiveMAG();
@@ -797,7 +797,7 @@ function initMagnetism() {
   }
   if (elTc) {
     elTc.addEventListener('input', function() {
-      magState.Tc = parseFloat(this.value);
+      magState.Tc = Number.parseFloat(this.value);
       var elVal = document.getElementById('val-Tc');
       if (elVal) elVal.textContent = magState.Tc;
       plotSusceptibility(); plotMagnetizationCurve(); plotHysteresis(); updateLiveMAG();
@@ -805,7 +805,7 @@ function initMagnetism() {
   }
   if (elH) {
     elH.addEventListener('input', function() {
-      magState.H = parseFloat(this.value);
+      magState.H = Number.parseFloat(this.value);
       var elVal = document.getElementById('val-H');
       if (elVal) elVal.textContent = magState.H.toFixed(3);
       updateLiveMAG();
@@ -813,7 +813,7 @@ function initMagnetism() {
   }
   if (elTN) {
     elTN.addEventListener('input', function() {
-      magState.TN = parseFloat(this.value);
+      magState.TN = Number.parseFloat(this.value);
       var elVal = document.getElementById('val-TN');
       if (elVal) elVal.textContent = magState.TN;
       plotSusceptibility(); updateLiveMAG();
@@ -821,7 +821,7 @@ function initMagnetism() {
   }
   if (elMr) {
     elMr.addEventListener('input', function() {
-      magState.Mr = parseFloat(this.value);
+      magState.Mr = Number.parseFloat(this.value);
       var elVal = document.getElementById('val-Mr');
       if (elVal) elVal.textContent = magState.Mr.toFixed(2);
       plotHysteresis(); updateLiveMAG();
@@ -838,7 +838,7 @@ function initMagnetism() {
   var elStr = document.getElementById('slider-magnet-strength');
   if (elStr) {
     elStr.addEventListener('input', function() {
-      barMagnet.strength = parseFloat(this.value);
+      barMagnet.strength = Number.parseFloat(this.value);
       var elVal = document.getElementById('val-magnet-strength');
       if (elVal) elVal.textContent = barMagnet.strength.toFixed(2);
       drawIsing();

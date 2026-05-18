@@ -96,7 +96,7 @@ function startDebyeChallenge() {
 function checkDebye() {
   var val = document.getElementById('debye-ans'); var fb = document.getElementById('debye-feedback');
   if (!val || !fb) return;
-  var guess = parseFloat(val.value);
+  var guess = Number.parseFloat(val.value);
   var ok = Math.abs(guess - debyeCh.theta) < 25;
   fb.textContent = ok ? 'Correct! θD ≈ ' + debyeCh.theta + ' K' : 'Hint: compare your T³ slope to the Debye formula.';
   fb.className = 'challenge-feedback ' + (ok ? 'success' : 'hint');
@@ -114,7 +114,7 @@ function startWFChallenge() {
 function checkWF() {
   var val = document.getElementById('wf-ans'); var fb = document.getElementById('wf-feedback');
   if (!val || !fb) return;
-  var guess = parseFloat(val.value);
+  var guess = Number.parseFloat(val.value);
   var ok = Math.abs(guess - wfCh.kappa) / wfCh.kappa < 0.2;
   fb.textContent = ok ? 'Correct! κ ≈ ' + wfCh.kappa.toFixed(1) + ' W/m·K' : 'Hint: κ = L₀·σ·T with L₀≈2.44×10⁻⁸ W·Ω/K².';
   fb.className = 'challenge-feedback ' + (ok ? 'success' : 'hint');

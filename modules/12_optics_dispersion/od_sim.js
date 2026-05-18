@@ -373,7 +373,7 @@ window.odUpdateLiveReadouts = function() {
 };
 
 window.odChangeSliderAngle = function(v){
-  odState.angle = parseFloat(v);
+  odState.angle = Number.parseFloat(v);
   var el = document.getElementById('val-angle');
   if (el) el.textContent = odState.angle.toFixed(0);
   odComputeSpectra(); odUpdateLiveReadouts();
@@ -735,7 +735,7 @@ window.odSetMaterial = function(name){
 };
 
 window.odChangeSliderE = function(v){
-  odState.E = parseFloat(v);
+  odState.E = Number.parseFloat(v);
   var el = document.getElementById('val-E');
   if (el) el.textContent = odState.E.toFixed(2);
   var lamEl = document.getElementById('val-lam');

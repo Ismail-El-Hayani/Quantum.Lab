@@ -352,7 +352,7 @@ function initFS() {
   if (sliderT) {
     sliderT.value = fsState.T;
     sliderT.addEventListener('input', function() {
-      fsState.T = parseFloat(this.value);
+      fsState.T = Number.parseFloat(this.value);
       var v = document.getElementById('val-T');
       if (v) v.textContent = fsState.T;
       fsUpdateAll();
@@ -363,7 +363,7 @@ function initFS() {
   if (sliderEF) {
     sliderEF.value = fsState.EF;
     sliderEF.addEventListener('input', function() {
-      fsState.EF = parseFloat(this.value);
+      fsState.EF = Number.parseFloat(this.value);
       var v = document.getElementById('val-EF');
       if (v) v.textContent = fsState.EF.toFixed(1);
       fsUpdateAll();

@@ -174,7 +174,7 @@
               </details>
               <div class="plot-container" id="plot-bandgap"></div>
               <div class="overlay-toggle">
-                <div class="toggle-pill" id="mat-overlay-toggle" onclick="toggleMaterialOverlay()"></div>
+                <div class="toggle-pill" role="switch" tabindex="0" id="mat-overlay-toggle" onclick="toggleMaterialOverlay()" onkeydown="if(event.key==='Enter'||event.key===' ')toggleMaterialOverlay()"></div>
                 <span style="font-size:0.75rem;color:var(--text-dim)">Overlay all materials (Si · GaAs · Ge)</span>
               </div>
             </div>
