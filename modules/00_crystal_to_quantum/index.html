@@ -413,7 +413,7 @@
   var lastScale = 'macro';
 
   zoomSlider.addEventListener('input', function(){
-    var v = parseFloat(this.value);
+    var v = Number.parseFloat(this.value);
     var s = getScaleFromSlider(v);
     if (s !== lastScale && typeof setCrystalScale === 'function') {
       setCrystalScale(s);
@@ -498,7 +498,7 @@
     }
 
     // --- Photon arrow: maps photon energy to gap, color changes by outcome ---
-    var photonE = parseFloat(document.getElementById('photon-slider').value) || 1.5;
+    var photonE = Number.parseFloat(document.getElementById('photon-slider').value) || 1.5;
     var arrow   = document.getElementById('photon-arrow');
     var arrowLbl = document.getElementById('photon-arrow-label');
     if (arrow && arrowLbl) {
@@ -535,12 +535,12 @@
   var photonSlider = document.getElementById('photon-slider');
   var photonVal = document.getElementById('photon-val');
   photonSlider.addEventListener('input', function(){
-    var e = parseFloat(this.value);
+    var e = Number.parseFloat(this.value);
     photonVal.textContent = e.toFixed(2) + ' eV';
     var color = e < 0.5 ? '#ff2200' : e < 2.0 ? '#ffaa00' : e < 4.0 ? '#aa00ff' : '#00f0ff';
     photonVal.style.color = color;
     // Update bandgap arrow
-    updateBandgapDiagram(parseFloat(zoomSlider.value) || 0);
+    updateBandgapDiagram(Number.parseFloat(zoomSlider.value) || 0);
   });
 
   // View mode toggle
@@ -562,7 +562,7 @@
 
   // Fire button
   document.getElementById('btn-fire').addEventListener('click', function(){
-    var e = parseFloat(photonSlider.value);
+    var e = Number.parseFloat(photonSlider.value);
     if (typeof firePhoton === 'function') {
       firePhoton(e);
       __GameState.addXP(5, 'Fired photon');
@@ -574,7 +574,7 @@
     var idx = scaleNames.indexOf(mode);
     if (idx < 0) return;
     var target = scaleThresholds[idx] + 0.1;
-    var start = parseFloat(zoomSlider.value) || 0;
+    var start = Number.parseFloat(zoomSlider.value) || 0;
     var dur = 600; // ms
     var t0 = performance.now();
 
