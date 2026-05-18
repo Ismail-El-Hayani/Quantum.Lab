@@ -419,7 +419,7 @@ function checkWFPuzzle() {
 function _condModeHook() {
   if (typeof setGameMode === 'function') {
     var orig = setGameMode;
-    window.setGameMode = function(mode) {
+    setGameMode = function(mode) {
       orig(mode);
       if (mode === 'play') {
         if (typeof condResumeAnimation === 'function') condResumeAnimation();
@@ -439,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var el = document.getElementById(id);
     if (el) {
       el.addEventListener('input', function(e) {
-        var v = Number.parseFloat(e.target.value);
+        var v = parseFloat(e.target.value);
         if (id === 'slider-Efield') __COND.Efield = v;
         if (id === 'slider-tau') __COND.tau = v;
         if (id === 'slider-T-cond') __COND.T = v;

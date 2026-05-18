@@ -752,12 +752,12 @@ function initJunction(){
 
   function _on(){ jdRefreshAll(); }
 
-  if(sNa) sNa.addEventListener('input',function(){ JD.Na=Math.pow(10,Number.parseFloat(this.value)); var el=document.getElementById('val-Na'); if(el) el.textContent=JD.Na.toExponential(1); _on(); });
-  if(sNd) sNd.addEventListener('input',function(){ JD.Nd=Math.pow(10,Number.parseFloat(this.value)); var el=document.getElementById('val-Nd'); if(el) el.textContent=JD.Nd.toExponential(1); _on(); });
-  if(sT)  sT.addEventListener('input',function(){ JD.T=Number.parseFloat(this.value); var el=document.getElementById('val-T-jd'); if(el) el.textContent=JD.T; _on(); });
-  if(sV)  sV.addEventListener('input',function(){ JD.Vbias=Number.parseFloat(this.value); var el=document.getElementById('val-Vbias'); if(el) el.textContent=JD.Vbias.toFixed(2); _on(); });
-  if(sIph) sIph.addEventListener('input',function(){ JD.photons=Number.parseFloat(this.value); var el=document.getElementById('val-Isc'); if(el) el.textContent=JD.photons.toExponential(1); _on(); });
-  if(sVg) sVg.addEventListener('input',function(){ JD.Vgate=Number.parseFloat(this.value); var el=document.getElementById('val-Vgate'); if(el) el.textContent=JD.Vgate.toFixed(2); _on(); });
+  if(sNa) sNa.addEventListener('input',function(){ JD.Na=Math.pow(10,parseFloat(this.value)); var el=document.getElementById('val-Na'); if(el) el.textContent=JD.Na.toExponential(1); _on(); });
+  if(sNd) sNd.addEventListener('input',function(){ JD.Nd=Math.pow(10,parseFloat(this.value)); var el=document.getElementById('val-Nd'); if(el) el.textContent=JD.Nd.toExponential(1); _on(); });
+  if(sT)  sT.addEventListener('input',function(){ JD.T=parseFloat(this.value); var el=document.getElementById('val-T-jd'); if(el) el.textContent=JD.T; _on(); });
+  if(sV)  sV.addEventListener('input',function(){ JD.Vbias=parseFloat(this.value); var el=document.getElementById('val-Vbias'); if(el) el.textContent=JD.Vbias.toFixed(2); _on(); });
+  if(sIph) sIph.addEventListener('input',function(){ JD.photons=parseFloat(this.value); var el=document.getElementById('val-Isc'); if(el) el.textContent=JD.photons.toExponential(1); _on(); });
+  if(sVg) sVg.addEventListener('input',function(){ JD.Vgate=parseFloat(this.value); var el=document.getElementById('val-Vgate'); if(el) el.textContent=JD.Vgate.toFixed(2); _on(); });
 
   // device tab wiring (single-shot; inline onclick already triggers setJDDevice)
   //_refreshDeviceTabs is wired in jd_apps.js; no duplicate listeners needed here

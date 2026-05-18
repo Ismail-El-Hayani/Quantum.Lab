@@ -704,7 +704,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var hasChallenge = !!document.getElementById('challenge-target-plot');
   if (hasChallenge && typeof setGameMode === 'function') {
     var origSetGameMode = setGameMode;
-    window.setGameMode = function(mode) {
+    setGameMode = function(mode) {
       origSetGameMode(mode);
       if (mode === 'challenge') {
         startWaveMatch();

@@ -132,9 +132,9 @@ function initThermal() {
   var sGamma = document.getElementById('slider-gamma');
   var selType = document.getElementById('select-type-tp');
 
-  if (sT) { sT.addEventListener('input', function() { tpState.T = Number.parseFloat(this.value); var el = document.getElementById('val-T-tp'); if (el) el.textContent = tpState.T; plotCv(); plotThermalConductivity(); updateLiveTP(); }); }
-  if (sTheta) { sTheta.addEventListener('input', function() { tpState.thetaD = Number.parseFloat(this.value); var el = document.getElementById('val-thetaD'); if (el) el.textContent = tpState.thetaD; plotCv(); plotThermalConductivity(); updateLiveTP(); }); }
-  if (sGamma) { sGamma.addEventListener('input', function() { tpState.gammaEl = Number.parseFloat(this.value); var el = document.getElementById('val-gamma'); if (el) el.textContent = tpState.gammaEl; plotCv(); plotThermalConductivity(); updateLiveTP(); }); }
+  if (sT) { sT.addEventListener('input', function() { tpState.T = parseFloat(this.value); var el = document.getElementById('val-T-tp'); if (el) el.textContent = tpState.T; plotCv(); plotThermalConductivity(); updateLiveTP(); }); }
+  if (sTheta) { sTheta.addEventListener('input', function() { tpState.thetaD = parseFloat(this.value); var el = document.getElementById('val-thetaD'); if (el) el.textContent = tpState.thetaD; plotCv(); plotThermalConductivity(); updateLiveTP(); }); }
+  if (sGamma) { sGamma.addEventListener('input', function() { tpState.gammaEl = parseFloat(this.value); var el = document.getElementById('val-gamma'); if (el) el.textContent = tpState.gammaEl; plotCv(); plotThermalConductivity(); updateLiveTP(); }); }
   if (selType) { selType.addEventListener('change', function() { 
     tpState.type = this.value; 
     plotCv(); plotThermalConductivity(); updateLiveTP(); 

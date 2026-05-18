@@ -96,7 +96,7 @@ function startTcMagChallenge() {
 function checkTcMag() {
   var val = document.getElementById('tc-mag-ans'); var fb = document.getElementById('tc-mag-feedback');
   if (!val || !fb) return;
-  var guess = Number.parseFloat(val.value);
+  var guess = parseFloat(val.value);
   var ok = Math.abs(guess - tcMagCh.theta) < 15;
   fb.textContent = ok ? 'Correct! Tc ≈ ' + tcMagCh.theta + ' K' : 'Hint: Tc ≈ θ in the Curie-Weiss model.';
   fb.className = 'challenge-feedback ' + (ok ? 'success' : 'hint');

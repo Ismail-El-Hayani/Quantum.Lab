@@ -111,7 +111,7 @@ function startTcMatcher() {
   if (!txt) return;
   tcMatcher.current = tcMatcher.materials[Math.floor(Math.random() * tcMatcher.materials.length)];
   var T = (Math.random() * 100).toFixed(1);
-  tcMatcher.current.givenT = Number.parseFloat(T);
+  tcMatcher.current.givenT = parseFloat(T);
   txt.innerHTML = '<strong>' + tcMatcher.current.name + '</strong> — Tc ≈ ' + tcMatcher.current.Tc + ' K<br><span style="font-size:1.4rem;">Is it superconducting at T = ' + T + ' K?</span>';
   tcMatcher.timeLeft = 15;
   updateTcTimer();
@@ -225,7 +225,7 @@ function startIsoChallenge() {
 }
 
 function checkIsotopeAnswer() {
-  var val = Number.parseFloat(document.getElementById('iso-answer').value);
+  var val = parseFloat(document.getElementById('iso-answer').value);
   var fb = document.getElementById('iso-feedback');
   var ans = isoChallenge.current.answer;
   var correct = Math.abs(val - ans) < 0.02;
@@ -329,15 +329,15 @@ function startHCPuzzle() {
   if (!txt) return;
   var H0 = (Math.random() * 0.4 + 0.05).toFixed(3);
   var Tc = (Math.random() * 20 + 1).toFixed(1);
-  var T = (Math.random() * (Number.parseFloat(Tc) - 0.5) + 0.1).toFixed(1);
-  var ans = Number.parseFloat(H0) * (1 - (Number.parseFloat(T) * Number.parseFloat(T)) / (Number.parseFloat(Tc) * Number.parseFloat(Tc)));
-  hcPuzzle.current = { H0: Number.parseFloat(H0), Tc: Number.parseFloat(Tc), T: Number.parseFloat(T), answer: ans };
+  var T = (Math.random() * (parseFloat(Tc) - 0.5) + 0.1).toFixed(1);
+  var ans = parseFloat(H0) * (1 - (parseFloat(T) * parseFloat(T)) / (parseFloat(Tc) * parseFloat(Tc)));
+  hcPuzzle.current = { H0: parseFloat(H0), Tc: parseFloat(Tc), T: parseFloat(T), answer: ans };
   txt.innerHTML = 'H₀ = ' + H0 + ' T, Tc = ' + Tc + ' K<br>Calculate Hc at T = ' + T + ' K using Hc(T) = H₀[1 - T²/Tc²]';
   document.getElementById('hc-answer').value = '';
 }
 
 function checkHCPuzzle() {
-  var val = Number.parseFloat(document.getElementById('hc-answer').value);
+  var val = parseFloat(document.getElementById('hc-answer').value);
   var fb = document.getElementById('hc-feedback');
   var c = hcPuzzle.current;
   var correct = Math.abs(val - c.answer) < 0.005;

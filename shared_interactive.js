@@ -19,10 +19,10 @@ function SliderGroup(cfg) {
     if (!el) return;
 
     self.sliders[s.key] = el;
-    self.state[s.key] = s.default !== undefined ? s.default : Number.parseFloat(el.value);
+    self.state[s.key] = s.default !== undefined ? s.default : parseFloat(el.value);
 
     el.addEventListener('input', function(e) {
-      var v = Number.parseFloat(e.target.value);
+      var v = parseFloat(e.target.value);
       if (s.step && s.step < 1) v = Math.round(v / s.step) * s.step;
       v = Math.round(v * 1e6) / 1e6;
       self.state[s.key] = v;

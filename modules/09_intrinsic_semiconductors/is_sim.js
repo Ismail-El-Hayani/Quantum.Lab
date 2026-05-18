@@ -727,7 +727,7 @@ function initIntrinsicSemi() {
   var sliderT = document.getElementById('slider-T-is');
   if (sliderT) {
     sliderT.addEventListener('input', function() {
-      isState.T = Number.parseFloat(this.value);
+      isState.T = parseFloat(this.value);
       var el = document.getElementById('val-T-is');
       if (el) el.textContent = isState.T.toFixed(0);
       updateLiveReadouts();
@@ -741,7 +741,7 @@ function initIntrinsicSemi() {
   var sliderNd = document.getElementById('slider-nd');
   if (sliderNd) {
     sliderNd.addEventListener('input', function() {
-      var val = Math.pow(10, Number.parseFloat(this.value));
+      var val = Math.pow(10, parseFloat(this.value));
       isState.Nd = val;
       var el = document.getElementById('val-nd');
       if (el) el.textContent = val.toExponential(1);
@@ -754,7 +754,7 @@ function initIntrinsicSemi() {
   var sliderNa = document.getElementById('slider-na');
   if (sliderNa) {
     sliderNa.addEventListener('input', function() {
-      var val = Math.pow(10, Number.parseFloat(this.value));
+      var val = Math.pow(10, parseFloat(this.value));
       isState.Na = val;
       var el = document.getElementById('val-na');
       if (el) el.textContent = val.toExponential(1);
@@ -768,7 +768,7 @@ function initIntrinsicSemi() {
   var sliderEf = document.getElementById('slider-efield');
   if (sliderEf) {
     sliderEf.addEventListener('input', function() {
-      isState.E_field = Number.parseFloat(this.value);
+      isState.E_field = parseFloat(this.value);
       var el = document.getElementById('val-efield');
       if (el) el.textContent = isState.E_field.toFixed(1);
       updateLiveReadouts();

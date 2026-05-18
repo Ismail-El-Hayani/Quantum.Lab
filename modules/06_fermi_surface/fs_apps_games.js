@@ -142,7 +142,7 @@ function startTempRace() {
 function guessTempRace() {
   var c = __FS.challenge;
   if (!c.active) return;
-  var guessT = Number.parseFloat(document.getElementById('slider-temp-race').value);
+  var guessT = parseFloat(document.getElementById('slider-temp-race').value);
   var mu = fsChemicalPotential(__FS.EF, guessT);
   var targetMu = fsChemicalPotential(__FS.EF, c.raceTarget);
   var err = Math.abs(mu - targetMu);
@@ -167,7 +167,7 @@ function guessTempRace() {
 
 // ===== CHALLENGE 2: DEBYE THETA =====
 function checkDebyeGuess() {
-  var guess = Number.parseFloat(document.getElementById('debye-guess').value);
+  var guess = parseFloat(document.getElementById('debye-guess').value);
   var fb = document.getElementById('debye-feedback');
   if (!fb) return;
   var material = { name: 'Cu', theta: 315 };
@@ -207,7 +207,7 @@ function initLandauPuzzle() {
   var c = document.getElementById('landau-list');
   if (!c) return;
   c.innerHTML = '';
-  var B = Number.parseFloat(document.getElementById('slider-landau-B').value) || 1;
+  var B = parseFloat(document.getElementById('slider-landau-B').value) || 1;
   var vB = document.getElementById('val-landau-B'); if (vB) vB.textContent = B.toFixed(1);
   landauLevels.forEach(function(n) {
     var row = document.createElement('div');
@@ -318,7 +318,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (sLandau) {
     sLandau.addEventListener('input', function() {
       var v = document.getElementById('val-landau-B');
-      if (v) v.textContent = Number.parseFloat(this.value).toFixed(1);
+      if (v) v.textContent = parseFloat(this.value).toFixed(1);
     });
   }
 
@@ -355,7 +355,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // GameState wrapper for mode switching
   if (typeof setGameMode === 'function') {
     var orig = setGameMode;
-    window.setGameMode = function(mode) {
+    setGameMode = function(mode) {
       orig(mode);
       if (mode === 'challenge') { startTempRace(); }
       if (mode === 'puzzle') { initLandauPuzzle(); initFDvsMB(); }

@@ -244,16 +244,16 @@ function initCondApps() {
   plotSkinEffect(1);
 
   var TSlider = document.getElementById('slider-iv-t');
-  if (TSlider) TSlider.addEventListener('input', function(){ var T=Number.parseFloat(this.value); document.getElementById('val-iv-t').textContent=T.toFixed(0); plotIVCurve(T); });
+  if (TSlider) TSlider.addEventListener('input', function(){ var T=parseFloat(this.value); document.getElementById('val-iv-t').textContent=T.toFixed(0); plotIVCurve(T); });
 
   var BSlider = document.getElementById('slider-hall-b');
-  if (BSlider) BSlider.addEventListener('input', function(){ var b=Number.parseFloat(this.value); document.getElementById('val-hall-b').textContent=b.toFixed(1); plotHallEffect(b); });
+  if (BSlider) BSlider.addEventListener('input', function(){ var b=parseFloat(this.value); document.getElementById('val-hall-b').textContent=b.toFixed(1); plotHallEffect(b); });
 
   var thSlider = document.getElementById('slider-thot');
-  if (thSlider) thSlider.addEventListener('input', function(){ var t=Number.parseFloat(this.value); document.getElementById('val-thot').textContent=t.toFixed(0); plotSeebeck(t); });
+  if (thSlider) thSlider.addEventListener('input', function(){ var t=parseFloat(this.value); document.getElementById('val-thot').textContent=t.toFixed(0); plotSeebeck(t); });
 
   var fSlider = document.getElementById('slider-freq');
-  if (fSlider) fSlider.addEventListener('input', function(){ var f=Number.parseFloat(this.value); document.getElementById('val-freq').textContent=f.toFixed(0); plotSkinEffect(f); });
+  if (fSlider) fSlider.addEventListener('input', function(){ var f=parseFloat(this.value); document.getElementById('val-freq').textContent=f.toFixed(0); plotSkinEffect(f); });
 
   if (document.readyState !== 'loading') setTimeout(initCondApps, 800);
   else document.addEventListener('DOMContentLoaded', function(){ setTimeout(initCondApps, 800); });
