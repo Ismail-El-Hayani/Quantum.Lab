@@ -177,13 +177,49 @@
         </div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
           <div>
-            <div class="plot-container" id="plot-dos-playground" style="min-height:350px;"></div>
+            <!-- plot-dos-playground viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Density of States g(E)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Number of electronic states per unit energy interval. Van-Hove singularities at band edges.</p>
+  <!-- plot-dos-playground viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Density of States g(E)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Number of electronic states per unit energy interval. Van-Hove singularities at band edges.</p>
+  <!-- plot-dos-playground viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Density of States g(E)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">States per unit energy. Van-Hove singularities at band edges.</p>
+  <div class="plot-container" id="plot-dos-playground" style="min-height:350px;"></div>
+</div>
+
+</div>
+
+</div>
+
             <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
               🔬 <b>DOS g(E)</b> — number of states per unit energy. Gap size reveals metal vs semiconductor.
             </div>
           </div>
           <div>
-            <div class="plot-container" id="plot-arpes-main" style="min-height:350px;"></div>
+            <!-- plot-arpes-main viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">ARPES Intensity Map</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Angle-resolved photoemission spectral intensity I(E,θ) showing band dispersion and Fermi surface.</p>
+  <!-- plot-arpes-main <!-- plot-arpes-main viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">ARPES Intensity Map</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Photoemission intensity I(E,θ) revealing band dispersion and Fermi surface.</p>
+  viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">ARPES Intensity Map</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Angle-resolved photoemission spectral intensity I(E,θ) showing band dispersion and Fermi surface.</p>
+  <div class="plot-container" id="plot-arpes-main" style="min-height:350px;"></div>
+</div>
+
+</div>
+</div>
+
+
             <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
               🔬 <b>ARPES intensity</b> — photoemission map of occupied states vs momentum.
             </div>
@@ -224,13 +260,31 @@
       </div>
       <div class="challenge-desc">At the bottom of a tight-binding band, m* = ℏ²/(2ta²). Given hopping t = <span id="effmass-t">1.0</span> eV and lattice constant a = 0.5 nm, what is m* (in units of mₑ)?</div>
       <div class="challenge-reward">🏆 Reward: 75 XP · "DOS Explorer" badge</div>
-      <div class="plot-container" id="plot-effmass" style="height:260px;"></div>
+      <!-- plot-effmass<!-- plot-effmass viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Effective Mass m*(k)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">m* = ℏ²/(d²E/dk²). Light near band centre, heavy at edges.</p>
+   viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Effective Mass m* Surface</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">m*(k) = ℏ²/(d²E/dk²) near band extrema. Light near band centre, heavier at the edges.</p>
+  <!-- plot-effmass viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Effective Mass m* Surface</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">m*(k) = ℏ²/(d²E/dk²) near band extrema. Light near band centre, heavier at the edges.</p>
+  <div class="plot-container" id="plot-effmass" style="height:260px;"></div>
+</div>
+
+</div>
+
       <div style="display:flex; gap:1rem; align-items:center; margin-top:1rem;">
         <input type="number" id="effmass-guess" step="0.01" placeholder="m* / mₑ" style="background:var(--bg-elevated);border:1px solid var(--glass-border);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);width:120px;">
         <button class="btn" onclick="checkEffectiveMass()">✓ Submit</button>
       </div>
       <div class="challenge-feedback" id="effmass-feedback"></div>
     </div>
+</div>
+
 
     <div class="challenge-panel">
       <div class="challenge-header">
@@ -261,14 +315,32 @@
       <div class="challenge-reward">🏆 Reward: 60 XP</div>
       <div style="font-size:1rem;margin-bottom:1rem;">Target: <strong id="doping-target-type">n-type</strong></div>
         <div class="control-row">
-          <span class="control-label">Carrier density n</span>
+          <span class="control-label">Carrier density n</span><!-- plot-doping viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Doping Dependence σ(T)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Intrinsic → lightly-doped → degenerate: three conductivity regimes.</p>
+  
           <span class="control-value" id="val-doping">1.0e22</span><span class="unit-tag">m⁻³</span>
         </div>
+</div>
+
         <input type="range" id="slider-doping" min="15" max="29" value="22" step="0.1" style="width:100%;">
         <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted); margin-top:0.2rem;">
           <span>10¹⁵</span><span>10²² (intrinsic)</span><span>10²⁹</span>
         </div>
-      <div class="plot-container" id="plot-doping" style="height:220px; margin-top:1rem;"></div>
+      <!-- plot-doping viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Doping Dependence σ(T)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Conductivity vs temperature for intrinsic → lightly-doped → heavily-doped regimes.</p>
+  <!-- plot-doping viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Doping Dependence σ(T)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Conductivity vs temperature for intrinsic → lightly-doped → heavily-doped regimes.</p>
+  <div class="plot-container" id="plot-doping" style="height:220px; margin-top:1rem;"></div>
+</div>
+
+</div>
+
       <button class="btn" onclick="checkDopingSlider()">✓ Check Doping</button>
       <div class="challenge-feedback" id="doping-feedback"></div>
     </div>

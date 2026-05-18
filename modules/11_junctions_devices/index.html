@@ -80,52 +80,100 @@
 
           <!-- Plotly I-V panels (device-specific, only one visible) -->
           <div id="panel-pn">
-            <div class="plot-container" id="plot-diode-iv" style="min-height:260px; margin-top:1rem;"></div>
-            <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
-              <strong>What it shows:</strong> The rectifier I-V curve -- exponential forward conduction versus flat reverse blocking.<br>
-              <strong>Why it matters:</strong> This asymmetry is the physical basis of all switching, power conversion, and signal clipping in electronics.
+            <div class="viz-card">
+              <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">PN-Junction Diode I-V</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Shockley: I = I_s(e^(qV/nkT)-1). Forward: diffusion. Reverse: saturation.</p>
+  <div class="plot-container" id="plot-diode-iv" style="min-height:260px; margin-top:1rem;"></div>
             </div>
+            <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
+              <strong>What it shows:</strong> The rectifier I-V curve -- exponential forwa<!-- plot-depletion viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Depletion Width W_dep(V)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">W_dep = √[2ε_s(V_bi-V)/(qN_A)]. Governs junction capacitance.</p>
+  rd conduction versus flat reverse blocking.<br>
+              <strong>Why it matters:</strong> This asymmetry is the physical basis of all switching, power conversion, and signal clipping<!-- plot-zener-iv viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Zener Breakdown I-V</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Field ionization at high reverse bias. Tunnel-assisted ~3-6 V.</p>
+   in electronics.
+            </div>
+</div>
+
+</div>
+
+            <div class="viz-card">
             <div class="plot-container" id="plot-depletion" style="min-height:220px;"></div>
+    <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Zener Depletion Region</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Depletion width at breakdown with avalanche multiplication.</p>
+            </div>
             <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
               <strong>What it shows:</strong> Energy band bending across the p-n interface and depletion width under bias.<br>
               <strong>Why it matters:</strong> Depletion width governs junction capacitance and breakdown voltage -- critical for RF and power devices.
             </div>
           </div>
           <div id="panel-zener" style="display:none;">
-            <div class="plot-container" id="plot-zener-iv" style="min-height:260px; margin-top:1rem;"></div>
+            <div class="viz-card">
+     <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Tunnel Diode Depletion</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Ultra-narrow depletion enables resonant tunneling current.</p>
+           <div class="plot-container" id="plot-zener-iv" style="min-height:260px; margin-top:1rem;"></div>
+            </div>
             <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
               <strong>What it shows:</strong> Zener I-V with sharp breakdown knee. Heavy doping creates a narrow depletion region, enabling band-to-band tunneling at low reverse voltages.<br>
               <strong>Why it matters:</strong> Zener diodes give precise voltage references and over-voltage protection in circuits.
-            </div>
+            </div<!-- plot-transfer-nmos viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">nMOS Transfer I_D(V_GS)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Threshold V_th marks inversion-channel onset.</p>
+  >
+            <div class="viz-card">
             <div class="plot-container" id="plot-depletion-zener" style="min-height:220px;"></div>
+            </div>
           </div>
-          <div id="panel-tunnel" style="display:none;">
+</div>
+
+          <d  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">pMOS Output I_D(V_DS)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Complementary to nMOS. Operates with negative V_GS.</p>
+  iv id="panel-tunnel" style="display:none;">
+            <div class="viz-card">
             <div class="plot-container" id="plot-tunnel-iv" style="min-height:260px; margin-top:1rem;"></div>
+            </div>
             <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
-              <strong>What it shows:</strong> Esaki tunnel-diode I-V with peak, valley, and negative differential resistance (NDR) region.<br>
+              <strong>What it sh  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">pMOS Transfer I_D(V_GS)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">I_D rises when V_GS < V_th (negative threshold).</p>
+  ows:</strong> Esaki tunnel-diode I-V with peak, valley, and negative differential resistance (NDR) region.<br>
               <strong>Why it matters:</strong> NDR enables ultra-fast switching, microwave oscillators, and low-noise amplifiers.
             </div>
+            <div class="viz-card">
             <div class="plot-container" id="plot-depletion-tunnel" style="min-height:220px;"></div>
+            </div>
           </div>
           <div id="panel-nmos" style="display:none;">
+            <div class="viz-card">
             <div class="plot-container" id="plot-mos-iv" style="min-height:260px; margin-top:1rem;"></div>
+            </div>
             <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
               <strong>What it shows:</strong> n-MOSFET drain I-V families (triode/saturation) for different gate overdrive voltages.<br>
               <strong>Why it matters:</strong> MOS transistors are the building blocks of CMOS logic and modern memory. This curve determines switching speed and power dissipation.
             </div>
+            <div class="viz-card">
             <div class="plot-container" id="plot-transfer-nmos" style="min-height:220px;"></div>
+            </div>
             <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
               <strong>What it shows:</strong> Transfer characteristic (Ids vs Vgs) revealing threshold voltage Vth and subthreshold swing.<br>
               <strong>Why it matters:</strong> Vth sets the logic level; a steep subthreshold slope gives low standby power.
             </div>
           </div>
           <div id="panel-pmos" style="display:none;">
+            <div class="viz-card">
             <div class="plot-container" id="plot-mos-iv-pmos" style="min-height:260px; margin-top:1rem;"></div>
+            </div>
             <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
               <strong>What it shows:</strong> p-MOSFET drain I-V families. Holes flow from source to drain when gate is pulled negative below Vth.<br>
               <strong>Why it matters:</strong> p-MOS and n-MOS in CMOS pairs eliminate static power draw -- the secret behind billion-transistor chips.
             </div>
+            <div class="viz-card">
             <div class="plot-container" id="plot-transfer-pmos" style="min-height:220px;"></div>
+            </div>
           </div>
         </div>
 
@@ -258,10 +306,10 @@
     </div>
   </div>
 
-  <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; margin-top:2rem;">
-    <div></div>
-    <div>
-      <div class="challenge-panel" style="position:sticky; top:5rem;">
+  <div class="game-layout" style="margin-top:2rem;">
+    <div class="game-main"></div>
+    <aside class="game-sidebar">
+      <div class="challenge-panel">
         <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.08);">&#128506;</span><span class="challenge-title">Lab Navigator</span></div>
         <div id="module-nav"></div>
         <div class="section-divider" style="margin:1rem 0;"></div>
@@ -275,7 +323,7 @@
           <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
         </div>
       </div>
-    </div>
+    </aside>
   </div>
 </div>
 <script src="../../shared_ui.js"></script>
@@ -285,5 +333,12 @@
 <script src="jd_apps.js?v=2"></script>
 <script src="jd_apps_games.js?v=3"></script>
 <script src="../../shared_effects.js"></script>
+
+  <!-- Fallback transfer curve container -->
+  <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;display:none;">
+    <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Transfer Curve</h4>
+    <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">I_D vs V_GS transfer characteristic (fallback container for generic device mode).</p>
+    <div class="plot-container" id="plot-transfer" style="min-height:220px;"></div>
+  </div>
 </body>
 </html>

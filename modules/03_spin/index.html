@@ -216,11 +216,47 @@
         <div class="card-title">🔬 Playground — Build a state on the Bloch sphere</div>
         <div class="sim-grid">
           <div>
-            <div class="plot-container" id="plot-bloch"></div>
+            <!-- plot-bloch viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Bloch Sphere</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Visualization of the |ψ⟩ spin state on the Bloch sphere. Precession around the B-field axis.</p>
+  <!-- plot-bloch viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Bloch Sphere</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Visualization of the |ψ⟩ spin state on the Bloch sphere. Precession around the B-field axis.</p>
+  <!-- plot-bloch viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Bloch Sphere</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Qubit state |ψ⟩ on the Bloch sphere. Precession axis = B-field direction.</p>
+  <div class="plot-container" id="plot-bloch"></div>
+</div>
+
+</div>
+
+</div>
+
             <p style="font-size:0.8rem;color:var(--text-dim);text-align:center;margin-top:0.5rem;">Bloch sphere — |ψ⟩ = cos(θ/2)|↑⟩ + e^{iφ}sin(θ/2)|↓⟩</p>
           </div>
           <div>
-            <div class="plot-container" id="plot-components"></div>
+            <!-- plot-components viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Spin Component Probabilities</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Probability of measuring spin up / down along x, y, and z axes.</p>
+  <!-<!-- plot-components viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Spin Component Probabilities</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">P(spin-up) and P(spin-down) along x, y, and z measurement axes.</p>
+  - plot-components viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Spin Component Probabilities</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Probability of measuring spin up / down along x, y, and z axes.</p>
+  <div class="plot-container" id="plot-components"></div>
+</div>
+
+</div>
+</div>
+
+
             <p style="font-size:0.8rem;color:var(--text-dim);text-align:center;margin-top:0.5rem;">Spin expectation values ⟨Sₓ⟩,⟨Sᵧ⟩,⟨Sᵤ⟩<span class="unit-tag">ℏ/2</span></p>
           </div>
         </div>
@@ -421,5 +457,63 @@
 </script>
 
 <script src="../../shared_effects.js"></script>
+
+  <!-- Missing container auto-added -->
+  <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+    <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Stern-Gerlach Histogram</h4>
+    <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Measurement statistics for repeated Stern-Gerlach projection experiments.</p>
+    <!-- plot-sg-hist viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Stern-Gerlach Histogram</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Measurement statistics for repeated Stern-Gerlach projection experiments.</p>
+  <div class="plot-container" id="plot-sg-hist" style="min-height:280px;"></div>
+</div>
+
+  </div>
+
+  <!-- Missing container auto-added -->
+  <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+    <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Hyperfine Splitting</h4>
+    <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Fermi-contact interaction between electron spin and nuclear spin I.</p>
+    <!-- plot-hyperfine viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Hyperfine Splitting</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Fermi-contact interaction between electron spin and nuclear spin I.</p>
+  <div class="plot-container" id="plot-hyperfine" style="min-height:280px;"></div><!-- plot-larmor viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Larmor Precession</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">ωʟ = γB. Spin precession in a uniform magnetic field.</p>
+  
+</div>
+
+  </div>
+</div>
+
+
+  <!-- Missing container auto-added -->
+  <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+    <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Larmor Precession</h4>
+    <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Spin precession frequency ωʟ = γB in a uniform magnetic field.</p>
+    <!-- plot-larmor viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Larmor Precession</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Spin precession frequency ωʟ = γB in a uniform magnetic field.</p>
+  <div class="plot-container" id="plot-larmor" style="min-height:280px;"></div>
+</div>
+
+  </div>
+
+  <!-- Missing container auto-added -->
+  <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+    <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">NMR Resonance Spectrum</h4>
+    <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Resonant absorption at ω = γB with Lorentzian linewidth γ = 1/T₂.</p>
+    <!-- plot-nmr viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">NMR Resonance Spectrum</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Resonant absorption at ω = γB with Lorentzian linewidth γ = 1/T₂.</p>
+  <div class="plot-container" id="plot-nmr" style="min-height:280px;"></div>
+</div>
+
+  </div>
 </body>
 </html>

@@ -752,3 +752,16 @@ input[type="range"]::-webkit-slider-thumb:hover {
   .timeline { flex-wrap: wrap; gap: var(--space-md); }
   .timeline-line { display: none; }
 }
+
+/* ─── VIZ CARD (plot wrapper) ─── */
+.viz-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+.viz-card > .plot-container {
+  min-height: 260px;
+}

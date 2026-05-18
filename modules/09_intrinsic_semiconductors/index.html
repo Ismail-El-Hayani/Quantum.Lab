@@ -155,7 +155,11 @@
                   At low T, carriers are frozen out — only dopants contribute. At high T, thermal generation dominates and ni² = np. The dashed yellow line marks your current T.
                 </div>
               </details>
-              <div class="plot-container" id="plot-carrier-density"></div>
+              <div class="viz-card">
+                <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Carrier Concentration n_i(T)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Intrinsic: n_i = √(N_c N_v) exp(-E_g/2k_BT).</p>
+  <div class="plot-container" id="plot-carrier-density"></div>
+            </div>
             </div>
 
             <!-- Bandgap Plot -->
@@ -167,10 +171,18 @@
               <details class="physics-note">
                 <summary>Varshni model</summary>
                 <div class="note-body">
-                  Lattice vibrations (phonons) reduce the effective periodic potential, shrinking the bandgap. Different materials have unique α and β coefficients.
+                <!-- plot-bandgap viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Bandgap E_g(T)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Varshni fit: E_g(T) = E_g(0) - αT²/(T+β). Shrinks with phonon population.</p>
+    Lattice vibrations (phonons) reduce the effective periodic potential, shrinking the bandgap. Different materials have unique α and β coefficients.
                 </div>
+</div>
+
               </details>
+              <div class="viz-card">
               <div class="plot-container" id="plot-bandgap"></div>
+            </div>
               <div class="overlay-toggle">
                 <div class="toggle-pill" id="mat-overlay-toggle" onclick="toggleMaterialOverlay()"></div>
                 <span style="font-size:0.75rem;color:var(--text-dim)">Overlay all materials (Si · GaAs · Ge)</span>
@@ -182,8 +194,14 @@
           <div class="viz-panel" style="margin-top:1rem;">
             <div class="viz-header">
               <span class="viz-title" style="color:var(--accent-green)">Conductivity vs Temperature</span>
-              <span class="viz-info" title="σ = e(nμe + pμh). Low T: freeze-out → σ drops. Mid T: doping + phonon scattering → peak then fall. High T: intrinsic dominates but μ degrades as T^-2.3.">ⓘ</span>
+              <span class="viz-info" title="σ = e(nμe + pμh). Low T: fr<!-- plot-conductivity viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Intrinsic Conductivity σ(T)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">σ = q(μ_e n + μ_h p). Thermally activated carriers dominate.</p>
+  eeze-out → σ drops. Mid T: doping + phonon scattering → peak then fall. High T: intrinsic dominates but μ degrades as T^-2.3.">ⓘ</span>
             </div>
+</div>
+
             <details class="physics-note">
               <summary>Three conductivity regimes</summary>
               <div class="note-body">
@@ -192,7 +210,9 @@
                 <strong>Intrinsic:</strong> High T, ni dominates but μ falls via phonon scattering → σ plateaus or drops.
               </div>
             </details>
-            <div class="plot-container" id="plot-conductivity"></div>
+            <div class="viz-card">
+              <div class="plot-container" id="plot-conductivity"></div>
+            </div>
           </div>
         </div>
 
@@ -453,11 +473,10 @@
     </div>
   </div>
 
-  <!-- Sidebar -->
-  <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; margin-top:2rem;">
-    <div></div>
-    <div>
-      <div class="challenge-panel" style="position:sticky; top:5rem;">
+  <div class="game-layout" style="margin-top:2rem;">
+    <div class="game-main"></div>
+    <aside class="game-sidebar">
+      <div class="challenge-panel">
         <div class="challenge-header">
           <span class="challenge-icon" style="background:rgba(0,240,255,0.08);">🗺</span>
           <span class="challenge-title">Lab Navigator</span>
@@ -477,7 +496,7 @@
           <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
         </div>
       </div>
-    </div>
+    </aside>
   </div>
 
 </div>

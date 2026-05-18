@@ -253,8 +253,8 @@
 
     <!-- Twin Plotly charts -->
     <div class="plots" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;">
-      <div id="plot-eps" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;min-height:300px;"></div>
-      <div id="plot-rt" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;min-height:300px;"></div>
+      <div class="viz-card"><div id="plot-eps" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;min-height:300px;"></div></div>
+      <div class="viz-card"><div id="plot-rt" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;min-height:300px;"></div></div>
     </div>
   </section>
 
@@ -414,29 +414,7 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 </script>
 
-<script>
-(function(){
-  var d = document.createElement('div');
-  d.id = 'od-diag';
-  d.style.cssText = 'position:fixed;bottom:8px;right:8px;z-index:99999;background:rgba(0,0,0,0.85);color:#4ade80;font-family:monospace;font-size:12px;padding:8px 12px;border-radius:6px;max-width:320px;';
-  var out=[];
-  out.push('OD diag');
-  out.push('Plotly: ' + (typeof Plotly));
-  out.push('THREE:  ' + (typeof THREE));
-  out.push('Macro3D: ' + (document.getElementById('macro-canvas-container')?'ok':'MISS'));
-  out.push('Micro3D:  merged (single-view)');
-  try{
-    odComputeSpectra(); odUpdateLiveReadouts();
-    out.push('Engine: OK');
-  }catch(e){ out.push('Engine ERR: ' + e.message); }
-  try{
-    if(typeof initODMacro3D==='function'){ initODMacro3D(); out.push('Macro3D init: OK'); }
-    else out.push('Macro3D init: MISSING');
-  }catch(e){ out.push('3D ERR: ' + e.message); }
-  d.innerHTML = out.join('<br>');
-  document.body.appendChild(d);
-})();
-</script>
+
 
 </body>
 </html>

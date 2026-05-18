@@ -83,22 +83,76 @@
             <strong>Why it matters:</strong> Domains are why a ferromagnet can have zero net M even when cold — spins are locally ordered but globally cancelling. The lattice is the microscopic origin of the macroscopic curves below.
           </div>
 
-          <div class="plot-container" id="plot-susceptibility" style="min-height:280px;margin-top:1.5rem;"></div>
+          <!-- plot-susceptibility viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Magnetic Susceptibility χ(T)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">χ = C/(T-θ) for paramagnets. Peaks at Néel temperature for antiferromagnets.</p>
+  <!-- plot-susceptibility viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Magnetic Susceptibility χ(T)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">χ = C/(T-θ) for paramagnets. Peaks at Néel temperature for antiferromagnets.</p>
+  <!-- plot-susceptibility viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Magnetic Susceptibility χ(T)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Curie-Weiss: χ = C/(T-θ). Peaks at Néel T for antiferromagnets.</p>
+  <div class="plot-container" id="plot-susceptibility" style="min-height:280px;margin-top:1.5rem;"></div>
+</div>
+
+</div>
+
+</div>
+
           <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
             <strong>What it shows:</strong> Magnetic susceptibility versus temperature, distinguishing paramagnetic Curie-law decay (χ = C/T), ferromagnetic Curie–Weiss divergence near Tc (χ = C/(T−θ)), and the antiferromagnetic peak at T<sub>N</sub>.<br>
             <strong>Why it matters:</strong> The χ(T) fingerprint tells you the dominant interaction — weak independent moments versus strong exchange coupling — and predicts phase transitions.
           </div>
-          <div class="plot-container" id="plot-M-T" style="min-height:220px; margin-top:1.5rem;"></div>
+          <!-- plot-M-T viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Magnetization vs Temperature</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Spontaneous magnetization M_s(T) following mean-field theory: M ∝ √(T_c - T).</<!-- plot-M-T viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Magnetization vs Temperature</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Spontaneous M_s(T) ∝ √(T_c-T) in mean-field theory.</p>
+  p>
+  <!-- plot-M-T viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Magnetization vs Temperature</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Spontaneous magnetization M_s(T) following mean-field theory: M ∝ √(T_c - T).</p>
+  <div class="plot-container" id="plot-M-T" style="min-height:220px; margin-top:1.5rem;"></div>
+</div>
+
+</div>
+</div>
+
+
           <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
             <strong>What it shows:</strong> Normalized magnetization M(T)/M<sub>s</sub> versus temperature. Below Tc, exchange interactions win over thermal disorder and spontaneous order appears (Brillouin-like tanh law).<br>
             <strong>Why it matters:</strong> The M(T) knee is the smoking gun for a ferromagnetic transition and lets you read Tc off a magnetization experiment directly.
-          </div>
-          <div class="plot-container" id="plot-hysteresis" style="min-height:260px; margin-top:1.5rem;"></div>
+          <!-- plot-hysteresis viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Hysteresis Loop M(H)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Ferromagnetic: coercivity H_c, remanence M_r, saturation M_s.</p>
+  </div>
+          <!-- plot-hysteresis viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Hysteresis Loop M(H)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Ferromagnetic hysteresis with coercivity H_c and remanence M_r.</p>
+  <!-- plot-hysteresis viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Hysteresis Loop M(H)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Ferromagnetic hysteresis with coercivity H_c and remanence M_r.</p>
+  <div class="plot-container" id="plot-hysteresis" style="min-height:260px; margin-top:1.5rem;"></div>
+</div>
+
+</div>
+
           <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
             <strong>What it shows:</strong> The classic M–H hysteresis loop: sweep external field H up (green) and down (magenta). Captures remanence M<sub>r</sub>, coercivity H<sub>c</sub>, and saturation M<sub>s</sub>. At T → Tc the loop collapses because thermal energy destroys domains.<br>
             <strong>Why it matters:</strong> The loop area and coercivity decide whether a material is a soft transformer core (low Hc) or a hard permanent magnet / storage medium (high Hc, high Mr).
           </div>
         </div>
+</div>
+
         <div>
           <div class="challenge-panel" style="margin-bottom:1rem;">
             <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙</span><span class="challenge-title">Controls</span></div>

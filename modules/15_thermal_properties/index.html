@@ -65,12 +65,42 @@
               <span><code style="color:#78c8ff;">↓</code> Cool cursor</span>
             </div>
           </div>
-          <div class="plot-container" id="plot-cv" style="min-height:280px;"></div>
+          <!-- plot-cv viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Heat Capacity Cᵥ(T)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Debye T³ law at low T + linear electronic term γT. Electronic term dominates below ~10 K.</p>
+  <!-- plot-cv viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Heat Capacity Cᵥ(T)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Debye T³ law at low T + linear electronic term γT. Electronic term dominates below ~10 K.</p>
+  <!-- plot-cv viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Heat Capacity Cᵥ(T)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Debye T³ + electronic γT. Electronic γT dominates below ~10 K.</p>
+  <div class="plot-container" id="plot-cv" style="min-height:280px;"></div>
+</div>
+
+</div>
+
+</div>
+
           <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
             <strong>What it shows:</strong> How heat capacity evolves from low-temperature phonon and electron contributions up to the classical Dulong–Petit limit.<br>
             <strong>Why it matters:</strong> The slope and intercept at low T directly reveal the Debye temperature and electronic density of states — key calibration points for every solid-state model.
           </div>
-          <div class="plot-container" id="plot-kappa" style="min-height:260px; margin-top:1.5rem;"></div>
+          <!-- plot-kappa viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Thermal Conductivity κ(T)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">κ = κ_ph + κ_el. Phonon Umklapp peak around ~50 K. Electron contribution ∝ T⁻¹ at low T.</p>
+  <!-- plot-kappa viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Thermal Conductivity κ(T)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">κ = κ_ph + κ_el. Phonon Umklapp peak around ~50 K. Electron contribution ∝ T⁻¹ at low T.</p>
+  <div class="plot-container" id="plot-kappa" style="min-height:260px; margin-top:1.5rem;"></div>
+</div>
+
+</div>
+
           <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
             <strong>What it shows:</strong> Thermal conductivity versus temperature, separating phonon and electron contributions.<br>
             <strong>Why it matters:</strong> The Wiedemann–Franz ratio κ/σT links heat and charge transport — a cornerstone for designing thermoelectrics and heat sinks.
