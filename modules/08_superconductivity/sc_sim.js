@@ -281,29 +281,17 @@ function drawScaleBar(ctx, x, y, pxLen, label, color = 'rgba(200,200,220,0.5)') 
    1. COOPER-PAIR CANVAS  (v4)
    ════════════════════════════════════════════════════════════════════════ */
 let cooperAnimId = null;
-function initCooperAnimation(containerId) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-
-  // Fallback if Three.js not loaded
-  if (typeof THREE === 'undefined') {
-    container.innerHTML = '<div style="padding:20px;color:#888;font-size:12px;text-align:center;">Three.js not loaded</div>';
-    return;
-  }
-
-  // ==== THREE.JS SETUP ====
-  const W = container.clientWidth || 340;
-  const H = container.clientHeight || 180;
-
-  const scene = new THREE.Scene();
+/* ── Cooper-pair scene builders ── */
+function buildCooperScene(container) {
+  var W = container.clientWidth || 340;
+  var H = container.clientHeight || 180;
+  var scene = new THREE.Scene();
   scene.background = new THREE.Color(0x09090f);
   scene.fog = new THREE.Fog(0x09090f, 8, 25);
-
-  const camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 100);
+  var camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 100);
   camera.position.set(0, 4, 12);
   camera.lookAt(0, 0, 0);
-
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+  var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
   renderer.setSize(W, H);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
@@ -311,231 +299,232 @@ function initCooperAnimation(containerId) {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.2;
   container.appendChild(renderer.domElement);
+  return { scene: scene, camera: camera, renderer: renderer, W: W, H: H };
+}
 
-  // ==== LIGHTING ====
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.15);
+function buildCooperLighting(scene) {
+  var ambientLight = new THREE.AmbientLight(0xffffff, 0.15);
   scene.add(ambientLight);
-
-  const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+  var dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
   dirLight.position.set(5, 8, 5);
   dirLight.castShadow = true;
   dirLight.shadow.mapSize.width = 512;
   dirLight.shadow.mapSize.height = 512;
   scene.add(dirLight);
-
-  // Blue rim light from below
-  const rimLight = new THREE.DirectionalLight(0x00aaff, 0.3);
+  var rimLight = new THREE.DirectionalLight(0x00aaff, 0.3);
   rimLight.position.set(-5, -3, -2);
   scene.add(rimLight);
+}
 
-  // ==== LATTICE (IONS) ====
-  const ROWS = 4, COLS = 7, DEPTH = 2;
-  const ions = [];
-  const ionGeom = new THREE.SphereGeometry(0.18, 16, 16);
-  const ionMat = new THREE.MeshPhysicalMaterial({
-    color: 0xb8a090,
-    metalness: 0.7,
-    roughness: 0.35,
-    clearcoat: 0.3,
-    emissive: 0x332211,
-    emissiveIntensity: 0.1
+function buildCooperLattice(scene) {
+  var ROWS = 4, COLS = 7, DEPTH = 2;
+  var ions = [];
+  var ionGeom = new THREE.SphereGeometry(0.18, 16, 16);
+  var ionMat = new THREE.MeshPhysicalMaterial({
+    color: 0xb8a090, metalness: 0.7, roughness: 0.35, clearcoat: 0.3,
+    emissive: 0x332211, emissiveIntensity: 0.1
   });
-
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      for (let d = 0; d < DEPTH; d++) {
-        const mesh = new THREE.Mesh(ionGeom, ionMat.clone());
-        const bx = (c - (COLS - 1) / 2) * 1.4;
-        const by = (r - (ROWS - 1) / 2) * 0.9;
-        const bz = (d - (DEPTH - 1) / 2) * 1.2;
+  for (var r = 0; r < ROWS; r++) {
+    for (var c = 0; c < COLS; c++) {
+      for (var d = 0; d < DEPTH; d++) {
+        var mesh = new THREE.Mesh(ionGeom, ionMat.clone());
+        var bx = (c - (COLS - 1) / 2) * 1.4;
+        var by = (r - (ROWS - 1) / 2) * 0.9;
+        var bz = (d - (DEPTH - 1) / 2) * 1.2;
         mesh.position.set(bx, by, bz);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         scene.add(mesh);
-        ions.push({ mesh, bx, by, bz, dx: 0, dy: 0, dz: 0, vx: 0, vy: 0, vz: 0 });
+        ions.push({ mesh: mesh, bx: bx, by: by, bz: bz, dx: 0, dy: 0, dz: 0, vx: 0, vy: 0, vz: 0 });
       }
     }
   }
-
-  // faint grid helper
-  const gridHelper = new THREE.GridHelper(14, 14, 0x1a1a28, 0x111118);
+  var gridHelper = new THREE.GridHelper(14, 14, 0x1a1a28, 0x111118);
   gridHelper.position.y = -1.8;
   scene.add(gridHelper);
+  return ions;
+}
 
-  // ==== ELECTRONS ====
-  const eGeom = new THREE.SphereGeometry(0.28, 24, 24);
-  const eMat = new THREE.MeshPhysicalMaterial({
-    color: 0x00e5ff,
-    emissive: 0x00a0cc,
-    emissiveIntensity: 0.6,
-    metalness: 0.1,
-    roughness: 0.2,
-    transparent: true,
-    opacity: 0.9
+function buildCooperElectrons(scene) {
+  var eGeom = new THREE.SphereGeometry(0.28, 24, 24);
+  var eMat = new THREE.MeshPhysicalMaterial({
+    color: 0x00e5ff, emissive: 0x00a0cc, emissiveIntensity: 0.6,
+    metalness: 0.1, roughness: 0.2, transparent: true, opacity: 0.9
   });
-
-  const e1Mesh = new THREE.Mesh(eGeom, eMat);
-  const e2Mesh = new THREE.Mesh(eGeom, eMat.clone());
+  var e1Mesh = new THREE.Mesh(eGeom, eMat);
+  var e2Mesh = new THREE.Mesh(eGeom, eMat.clone());
   e1Mesh.castShadow = true; e2Mesh.castShadow = true;
   scene.add(e1Mesh); scene.add(e2Mesh);
-
-  // electron point lights (glow)
-  const e1Light = new THREE.PointLight(0x00f0ff, 1.5, 4);
-  const e2Light = new THREE.PointLight(0x00f0ff, 1.5, 4);
+  var e1Light = new THREE.PointLight(0x00f0ff, 1.5, 4);
+  var e2Light = new THREE.PointLight(0x00f0ff, 1.5, 4);
   e1Mesh.add(e1Light); e2Mesh.add(e2Light);
+  return { e1Mesh: e1Mesh, e2Mesh: e2Mesh };
+}
 
-  // ==== PHONON WAKE (visualized as a warm point light between electrons) ====
-  const wakeLight = new THREE.PointLight(0xffaa44, 0, 6);
+function buildCooperEffects(scene) {
+  var wakeLight = new THREE.PointLight(0xffaa44, 0, 6);
   scene.add(wakeLight);
-
-  // pair glow light
-  const pairLight = new THREE.PointLight(0xc084fc, 0, 5);
+  var pairLight = new THREE.PointLight(0xc084fc, 0, 5);
   scene.add(pairLight);
-
-  // trails as arrays of small spheres that fade
-  const trailPool = [];
-  const trailGeom = new THREE.SphereGeometry(0.06, 8, 8);
-  const trailMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.35 });
-  for (let i = 0; i < 40; i++) {
-    const m = new THREE.Mesh(trailGeom, trailMat.clone());
+  var trailPool = [];
+  var trailGeom = new THREE.SphereGeometry(0.06, 8, 8);
+  var trailMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.35 });
+  for (var i = 0; i < 40; i++) {
+    var m = new THREE.Mesh(trailGeom, trailMat.clone());
     m.visible = false;
     scene.add(m);
     trailPool.push({ mesh: m, life: 0 });
   }
+  return { wakeLight: wakeLight, pairLight: pairLight, trailPool: trailPool };
+}
 
-  // ==== ANIMATION STATE ====
-  let phase = 'approach';
-  let phaseT = 0;
-  let e1 = { x: -9, y: 0, z: 0, vx: 0.06, vy: 0, vz: 0 };
-  let e2 = { x: 9, y: 0, z: 0, vx: -0.06, vy: 0, vz: 0 };
-  let wakeStrength = 0;
-  let pairGlow = 0;
-  let trailIdx = 0;
+function updateCooperIons(ions, e1, e2) {
+  for (var i = 0; i < ions.length; i++) {
+    var ion = ions[i];
+    var d1 = Math.hypot(ion.mesh.position.x - e1.x, ion.mesh.position.y - e1.y, ion.mesh.position.z - e1.z);
+    var d2 = Math.hypot(ion.mesh.position.x - e2.x, ion.mesh.position.y - e2.y, ion.mesh.position.z - e2.z);
+    var fx = 0, fy = 0, fz = 0;
+    if (d1 < 2.5 && e1.vx > 0) {
+      var f = 0.08 * Math.exp(-d1 / 0.8);
+      fx += (e1.x - ion.bx) / (d1 || 1) * f;
+      fy += (e1.y - ion.by) / (d1 || 1) * f;
+      fz += (e1.z - ion.bz) / (d1 || 1) * f;
+    }
+    if (d2 < 2.5 && e2.vx < 0) {
+      var f = 0.08 * Math.exp(-d2 / 0.8);
+      fx += (e2.x - ion.bx) / (d2 || 1) * f;
+      fy += (e2.y - ion.by) / (d2 || 1) * f;
+      fz += (e2.z - ion.bz) / (d2 || 1) * f;
+    }
+    ion.vx += (fx - 0.08 * ion.dx - 0.06 * ion.vx);
+    ion.vy += (fy - 0.08 * ion.dy - 0.06 * ion.vy);
+    ion.vz += (fz - 0.08 * ion.dz - 0.06 * ion.vz);
+    ion.dx += ion.vx; ion.dy += ion.vy; ion.dz += ion.vz;
+    var disp = Math.hypot(ion.dx, ion.dy, ion.dz);
+    ion.mesh.material.emissiveIntensity = 0.1 + Math.min(0.5, disp * 0.4);
+    ion.mesh.material.emissive.setHSL(0.08, 0.8, 0.35 + Math.min(0.3, disp * 0.2));
+    ion.mesh.position.set(ion.bx + ion.dx, ion.by + ion.dy, ion.bz + ion.dz);
+  }
+}
+
+function advanceCooperPhase(phase, phaseT, e1, e2, wakeStrength, pairGlow) {
+  var dist = Math.hypot(e1.x - e2.x, e1.y - e2.y);
+  if (phase === 'approach') {
+    if (dist < 1.8) return { phase: 'wake', phaseT: 0, wakeStrength: wakeStrength, pairGlow: pairGlow };
+  } else if (phase === 'wake') {
+    e1.vx *= 0.97; e2.vx *= 0.97;
+    wakeStrength = Math.min(1, wakeStrength + 0.02);
+    pairGlow = Math.min(1, pairGlow + 0.012);
+    if (phaseT > 55) return { phase: 'pair', phaseT: 0, wakeStrength: 0, pairGlow: pairGlow };
+  } else if (phase === 'pair') {
+    var angle = phaseT * 0.025;
+    e1.vx = Math.cos(angle) * 0.025; e1.vy = Math.sin(angle) * 0.025;
+    e2.vx = -Math.cos(angle) * 0.025; e2.vy = -Math.sin(angle) * 0.025;
+    pairGlow = Math.min(1, pairGlow + 0.006);
+    if (phaseT > 90) return { phase: 'drift', phaseT: 0, wakeStrength: wakeStrength, pairGlow: pairGlow };
+  } else if (phase === 'drift') {
+    var drift = 0.045;
+    e1.vx += (drift - e1.vx) * 0.03; e2.vx += (drift - e2.vx) * 0.03;
+    e1.vy += (0 - e1.vy) * 0.03; e2.vy += (0 - e2.vy) * 0.03;
+    pairGlow = Math.max(0, pairGlow - 0.005);
+    if (e1.x > 9 || e2.x > 9) return { phase: 'reset', phaseT: 0, wakeStrength: wakeStrength, pairGlow: pairGlow };
+  } else if (phase === 'reset') {
+    if (phaseT > 40) {
+      e1.x = -9; e1.y = 0; e1.z = 0; e1.vx = 0.06; e1.vy = 0; e1.vz = 0;
+      e2.x = 9; e2.y = 0; e2.z = 0; e2.vx = -0.06; e2.vy = 0; e2.vz = 0;
+      return { phase: 'approach', phaseT: 0, wakeStrength: 0, pairGlow: 0, resetIons: true };
+    }
+  }
+  return { phase: phase, phaseT: phaseT + 1, wakeStrength: wakeStrength, pairGlow: pairGlow };
+}
+
+function updateCooperTrails(trailPool, e1, e2, trailIdx, phase) {
+  if (phase !== 'reset') {
+    var entities = [e1, e2];
+    for (var i = 0; i < entities.length; i++) {
+      var e = entities[i];
+      var t = trailPool[trailIdx % trailPool.length];
+      t.mesh.position.set(e.x, e.y, e.z);
+      t.mesh.visible = true;
+      t.life = 1.0;
+      trailIdx++;
+    }
+  }
+  for (var j = 0; j < trailPool.length; j++) {
+    var t = trailPool[j];
+    if (t.life > 0) {
+      t.life -= 0.04;
+      t.mesh.material.opacity = t.life * 0.35;
+      t.mesh.scale.setScalar(0.5 + t.life * 0.5);
+      if (t.life <= 0) t.mesh.visible = false;
+    }
+  }
+  return trailIdx;
+}
+
+function initCooperAnimation(containerId) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  if (typeof THREE === 'undefined') {
+    var msg = document.createElement('div');
+    msg.style.cssText = 'padding:20px;color:#888;font-size:12px;text-align:center;';
+    msg.textContent = 'Three.js not loaded';
+    container.appendChild(msg);
+    return;
+  }
+
+  var sc = buildCooperScene(container);
+  buildCooperLighting(sc.scene);
+  var ions = buildCooperLattice(sc.scene);
+  var electrons = buildCooperElectrons(sc.scene);
+  var effects = buildCooperEffects(sc.scene);
+
+  var state = {
+    phase: 'approach', phaseT: 0,
+    e1: { x: -9, y: 0, z: 0, vx: 0.06, vy: 0, vz: 0 },
+    e2: { x: 9, y: 0, z: 0, vx: -0.06, vy: 0, vz: 0 },
+    wakeStrength: 0, pairGlow: 0, trailIdx: 0
+  };
 
   function physicsStep() {
-    // ions attracted by passing electrons
-    for (const ion of ions) {
-      const d1 = Math.hypot(ion.mesh.position.x - e1.x, ion.mesh.position.y - e1.y, ion.mesh.position.z - e1.z);
-      const d2 = Math.hypot(ion.mesh.position.x - e2.x, ion.mesh.position.y - e2.y, ion.mesh.position.z - e2.z);
-      let fx = 0, fy = 0, fz = 0;
-
-      if (d1 < 2.5 && e1.vx > 0) {
-        const f = 0.08 * Math.exp(-d1 / 0.8);
-        fx += (e1.x - ion.bx) / (d1 || 1) * f;
-        fy += (e1.y - ion.by) / (d1 || 1) * f;
-        fz += (e1.z - ion.bz) / (d1 || 1) * f;
-      }
-      if (d2 < 2.5 && e2.vx < 0) {
-        const f = 0.08 * Math.exp(-d2 / 0.8);
-        fx += (e2.x - ion.bx) / (d2 || 1) * f;
-        fy += (e2.y - ion.by) / (d2 || 1) * f;
-        fz += (e2.z - ion.bz) / (d2 || 1) * f;
-      }
-
-      ion.vx += (fx - 0.08 * ion.dx - 0.06 * ion.vx);
-      ion.vy += (fy - 0.08 * ion.dy - 0.06 * ion.vy);
-      ion.vz += (fz - 0.08 * ion.dz - 0.06 * ion.vz);
-      ion.dx += ion.vx; ion.dy += ion.vy; ion.dz += ion.vz;
-
-      // emissive glow when displaced
-      const disp = Math.hypot(ion.dx, ion.dy, ion.dz);
-      ion.mesh.material.emissiveIntensity = 0.1 + Math.min(0.5, disp * 0.4);
-      ion.mesh.material.emissive.setHSL(0.08, 0.8, 0.35 + Math.min(0.3, disp * 0.2));
-      ion.mesh.position.set(ion.bx + ion.dx, ion.by + ion.dy, ion.bz + ion.dz);
-    }
-
-    phaseT++;
-    const dist = Math.hypot(e1.x - e2.x, e1.y - e2.y);
-
-    if (phase === 'approach') {
-      if (dist < 1.8) { phase = 'wake'; phaseT = 0; }
-    } else if (phase === 'wake') {
-      e1.vx *= 0.97; e2.vx *= 0.97;
-      wakeStrength = Math.min(1, wakeStrength + 0.02);
-      pairGlow = Math.min(1, pairGlow + 0.012);
-      if (phaseT > 55) { phase = 'pair'; phaseT = 0; wakeStrength = 0; }
-    } else if (phase === 'pair') {
-      const angle = phaseT * 0.025;
-      e1.vx = Math.cos(angle) * 0.025;
-      e1.vy = Math.sin(angle) * 0.025;
-      e2.vx = -Math.cos(angle) * 0.025;
-      e2.vy = -Math.sin(angle) * 0.025;
-      pairGlow = Math.min(1, pairGlow + 0.006);
-      if (phaseT > 90) { phase = 'drift'; phaseT = 0; }
-    } else if (phase === 'drift') {
-      const drift = 0.045;
-      e1.vx += (drift - e1.vx) * 0.03;
-      e2.vx += (drift - e2.vx) * 0.03;
-      e1.vy += (0 - e1.vy) * 0.03;
-      e2.vy += (0 - e2.vy) * 0.03;
-      pairGlow = Math.max(0, pairGlow - 0.005);
-      if (e1.x > 9 || e2.x > 9) { phase = 'reset'; phaseT = 0; }
-    } else if (phase === 'reset') {
-      if (phaseT > 40) {
-        phase = 'approach'; phaseT = 0;
-        e1 = { x: -9, y: 0, z: 0, vx: 0.06, vy: 0, vz: 0 };
-        e2 = { x: 9, y: 0, z: 0, vx: -0.06, vy: 0, vz: 0 };
-        wakeStrength = 0; pairGlow = 0;
-        for (const ion of ions) { ion.dx = ion.dy = ion.dz = 0; ion.vx = ion.vy = ion.vz = 0; }
+    updateCooperIons(ions, state.e1, state.e2);
+    var res = advanceCooperPhase(state.phase, state.phaseT, state.e1, state.e2, state.wakeStrength, state.pairGlow);
+    state.phase = res.phase; state.phaseT = res.phaseT;
+    state.wakeStrength = res.wakeStrength; state.pairGlow = res.pairGlow;
+    if (res.resetIons) {
+      for (var i = 0; i < ions.length; i++) {
+        var ion = ions[i]; ion.dx = ion.dy = ion.dz = 0; ion.vx = ion.vy = ion.vz = 0;
       }
     }
-
-    e1.x += e1.vx; e1.y += e1.vy; e1.z += e1.vz;
-    e2.x += e2.vx; e2.y += e2.vy; e2.z += e2.vz;
-
-    // spawn trail dots
-    if (phase !== 'reset') {
-      for (const e of [e1, e2]) {
-        const t = trailPool[trailIdx % trailPool.length];
-        t.mesh.position.set(e.x, e.y, e.z);
-        t.mesh.visible = true;
-        t.life = 1.0;
-        trailIdx++;
-      }
-    }
-    for (const t of trailPool) {
-      if (t.life > 0) {
-        t.life -= 0.04;
-        t.mesh.material.opacity = t.life * 0.35;
-        t.mesh.scale.setScalar(0.5 + t.life * 0.5);
-        if (t.life <= 0) t.mesh.visible = false;
-      }
-    }
+    state.e1.x += state.e1.vx; state.e1.y += state.e1.vy; state.e1.z += state.e1.vz;
+    state.e2.x += state.e2.vx; state.e2.y += state.e2.vy; state.e2.z += state.e2.vz;
+    state.trailIdx = updateCooperTrails(effects.trailPool, state.e1, state.e2, state.trailIdx, state.phase);
   }
 
   function animate() {
     physicsStep();
-
-    e1Mesh.position.set(e1.x, e1.y, e1.z);
-    e2Mesh.position.set(e2.x, e2.y, e2.z);
-
-    // wake light between electrons
-    wakeLight.position.set((e1.x + e2.x) / 2, (e1.y + e2.y) / 2, 0);
-    wakeLight.intensity = wakeStrength * 2.0;
-
-    // pair glow
-    pairLight.position.set((e1.x + e2.x) / 2, (e1.y + e2.y) / 2, 0);
-    pairLight.intensity = pairGlow * 1.8;
-    e1Mesh.material.emissiveIntensity = 0.6 + pairGlow * 0.4;
-    e2Mesh.material.emissiveIntensity = 0.6 + pairGlow * 0.4;
-
-    // gentle camera drift
-    camera.position.x = Math.sin(Date.now() * 0.0003) * 1.5;
-    camera.lookAt(0, 0, 0);
-
-    renderer.render(scene, camera);
+    electrons.e1Mesh.position.set(state.e1.x, state.e1.y, state.e1.z);
+    electrons.e2Mesh.position.set(state.e2.x, state.e2.y, state.e2.z);
+    effects.wakeLight.position.set((state.e1.x + state.e2.x) / 2, (state.e1.y + state.e2.y) / 2, 0);
+    effects.wakeLight.intensity = state.wakeStrength * 2.0;
+    effects.pairLight.position.set((state.e1.x + state.e2.x) / 2, (state.e1.y + state.e2.y) / 2, 0);
+    effects.pairLight.intensity = state.pairGlow * 1.8;
+    electrons.e1Mesh.material.emissiveIntensity = 0.6 + state.pairGlow * 0.4;
+    electrons.e2Mesh.material.emissiveIntensity = 0.6 + state.pairGlow * 0.4;
+    sc.camera.position.x = Math.sin(Date.now() * 0.0003) * 1.5;
+    sc.camera.lookAt(0, 0, 0);
+    sc.renderer.render(sc.scene, sc.camera);
     cooperAnimId = requestAnimationFrame(animate);
   }
 
   animate();
 
-  // resize handler
   function onResize() {
-    const w = container.clientWidth || 340;
-    const h = container.clientHeight || 180;
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-    renderer.setSize(w, h);
+    var w = container.clientWidth || 340;
+    var h = container.clientHeight || 180;
+    sc.camera.aspect = w / h;
+    sc.camera.updateProjectionMatrix();
+    sc.renderer.setSize(w, h);
   }
   window.addEventListener('resize', onResize);
 }
