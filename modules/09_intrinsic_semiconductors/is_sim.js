@@ -160,114 +160,94 @@ var IS3D = {
   time: 0
 };
 
-function initIS3D() {
-  var container = document.getElementById('band-diagram-3d');
-  if (!container || typeof THREE === 'undefined') {
-    return false;
-  }
-  if (IS3D.scene) { return true; }
-
+/* ── IS 3D scene builders ── */
+function buildISScene(container) {
   var w = container.clientWidth || 640;
   var h = container.clientHeight || 400;
-
-  // Scene
-  IS3D.scene = new THREE.Scene();
-  IS3D.scene.background = new THREE.Color(0x0a0a10);
-  IS3D.scene.fog = new THREE.FogExp2(0x0a0a10, 0.04);
-
-  // Camera
-  IS3D.camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
-  IS3D.camera.position.set(8, 4, 12);
-
-  // Renderer
-  IS3D.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-  IS3D.renderer.setSize(w, h);
-  IS3D.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  IS3D.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  IS3D.renderer.toneMappingExposure = 1.2;
-  container.appendChild(IS3D.renderer.domElement);
-
-  // ---- OrbitControls ----
+  var scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0a0a10);
+  scene.fog = new THREE.FogExp2(0x0a0a10, 0.04);
+  var camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
+  camera.position.set(8, 4, 12);
+  var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+  renderer.setSize(w, h);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.2;
+  container.appendChild(renderer.domElement);
+  var controls = null;
   if (typeof THREE.OrbitControls !== 'undefined') {
-    IS3D.controls = new THREE.OrbitControls(IS3D.camera, IS3D.renderer.domElement);
-    IS3D.controls.enableDamping = true;
-    IS3D.controls.dampingFactor = 0.08;
-    IS3D.controls.minDistance = 6;
-    IS3D.controls.maxDistance = 30;
-    IS3D.controls.target.set(0, 0, 0);
-    IS3D.controls.addEventListener('start', function() {
-      IS3D.lastInteraction = performance.now();
-    });
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.minDistance = 6;
+    controls.maxDistance = 30;
+    controls.target.set(0, 0, 0);
+    controls.addEventListener('start', function() { IS3D.lastInteraction = performance.now(); });
   } else {
-    IS3D.camera.lookAt(0, 0, 0);
+    camera.lookAt(0, 0, 0);
   }
+  return { scene: scene, camera: camera, renderer: renderer, controls: controls };
+}
 
-  // ---- Lighting ----
+function buildISLighting(scene) {
   var hemi = new THREE.HemisphereLight(0x4433aa, 0x111122, 1.0);
-  IS3D.scene.add(hemi);
+  scene.add(hemi);
   var dir = new THREE.DirectionalLight(0xffffff, 1.5);
   dir.position.set(6, 12, 8);
-  IS3D.scene.add(dir);
+  scene.add(dir);
   var ptCB = new THREE.PointLight(0x00f0ff, 0.8, 15);
   ptCB.position.set(0, 2, 0);
-  IS3D.scene.add(ptCB);
+  scene.add(ptCB);
   var ptVB = new THREE.PointLight(0xff4ecd, 0.6, 15);
   ptVB.position.set(0, -2, 0);
-  IS3D.scene.add(ptVB);
+  scene.add(ptVB);
+}
 
-  // ---- Crystal lattice wireframe grid (back and front faces) ----
+function buildISCrystalGrid(scene) {
   var gridMat = new THREE.LineBasicMaterial({ color: 0x2a2a3a, transparent: true, opacity: 0.35 });
   var gridGroup = new THREE.Group();
   var W = IS3D.W, D = IS3D.D, H = 6;
   for (var i = -W/2; i <= W/2; i += 1.0) {
-    var geo1 = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(i, -H/2, -D/2), new THREE.Vector3(i, H/2, -D/2)
-    ]);
+    var geo1 = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(i, -H/2, -D/2), new THREE.Vector3(i, H/2, -D/2)]);
     gridGroup.add(new THREE.Line(geo1, gridMat));
-    var geo2 = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(i, -H/2, D/2), new THREE.Vector3(i, H/2, D/2)
-    ]);
+    var geo2 = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(i, -H/2, D/2), new THREE.Vector3(i, H/2, D/2)]);
     gridGroup.add(new THREE.Line(geo2, gridMat));
   }
   for (var j = -H/2; j <= H/2; j += 1.0) {
-    var geo3 = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(-W/2, j, -D/2), new THREE.Vector3(W/2, j, -D/2)
-    ]);
+    var geo3 = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-W/2, j, -D/2), new THREE.Vector3(W/2, j, -D/2)]);
     gridGroup.add(new THREE.Line(geo3, gridMat));
-    var geo4 = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(-W/2, j, D/2), new THREE.Vector3(W/2, j, D/2)
-    ]);
+    var geo4 = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-W/2, j, D/2), new THREE.Vector3(W/2, j, D/2)]);
     gridGroup.add(new THREE.Line(geo4, gridMat));
   }
-  IS3D.scene.add(gridGroup);
-  IS3D.crystalGrid = gridGroup;
+  scene.add(gridGroup);
+  return gridGroup;
+}
 
-  // ---- Parabolic band surfaces ----
+function buildISBandSurfaces(scene) {
   var segsX = 40, segsZ = 30;
-  var bandGeo = new THREE.PlaneGeometry(W, D, segsX, segsZ);
+  var bandGeo = new THREE.PlaneGeometry(IS3D.W, IS3D.D, segsX, segsZ);
   var cbMat = new THREE.MeshPhysicalMaterial({
-    color: 0x00f0ff, transparent: true, opacity: 0.22,
-    roughness: 0.2, metalness: 0.3, side: THREE.DoubleSide,
-    emissive: 0x004444, emissiveIntensity: 0.3,
-    clearcoat: 1.0, clearcoatRoughness: 0.1
+    color: 0x00f0ff, transparent: true, opacity: 0.22, roughness: 0.2, metalness: 0.3,
+    side: THREE.DoubleSide, emissive: 0x004444, emissiveIntensity: 0.3, clearcoat: 1.0, clearcoatRoughness: 0.1
   });
-  IS3D.cbSurface = new THREE.Mesh(bandGeo, cbMat);
-  IS3D.cbSurface.rotation.x = -Math.PI / 2;
-  IS3D.scene.add(IS3D.cbSurface);
-
+  var cbSurface = new THREE.Mesh(bandGeo, cbMat);
+  cbSurface.rotation.x = -Math.PI / 2;
+  scene.add(cbSurface);
   var vbMat = new THREE.MeshPhysicalMaterial({
-    color: 0xc084fc, transparent: true, opacity: 0.22,
-    roughness: 0.2, metalness: 0.3, side: THREE.DoubleSide,
-    emissive: 0x220044, emissiveIntensity: 0.3,
-    clearcoat: 1.0, clearcoatRoughness: 0.1
+    color: 0xc084fc, transparent: true, opacity: 0.22, roughness: 0.2, metalness: 0.3,
+    side: THREE.DoubleSide, emissive: 0x220044, emissiveIntensity: 0.3, clearcoat: 1.0, clearcoatRoughness: 0.1
   });
-  IS3D.vbSurface = new THREE.Mesh(bandGeo.clone(), vbMat);
-  IS3D.vbSurface.rotation.x = -Math.PI / 2;
-  IS3D.scene.add(IS3D.vbSurface);
+  var vbSurface = new THREE.Mesh(bandGeo.clone(), vbMat);
+  vbSurface.rotation.x = -Math.PI / 2;
+  scene.add(vbSurface);
+  return { cbSurface: cbSurface, vbSurface: vbSurface };
+}
 
-  // ---- Energy axis ruler ----
+function buildISAxisGroup(scene) {
   var axisGroup = new THREE.Group();
   var axisMat = new THREE.LineBasicMaterial({ color: 0x606080 });
+  var W = IS3D.W;
   var axisLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([
     new THREE.Vector3(-W/2 - 0.5, -3, 0), new THREE.Vector3(-W/2 - 0.5, 3, 0)
   ]), axisMat);
@@ -279,280 +259,237 @@ function initIS3D() {
     ]), axisMat);
     axisGroup.add(tick);
   }
-  IS3D.scene.add(axisGroup);
-  IS3D.axisGroup = axisGroup;
+  scene.add(axisGroup);
+  return axisGroup;
+}
 
-  // ---- Fermi level line (yellow) ----
-  var efGeo = new THREE.BufferGeometry().setFromPoints([
-    new THREE.Vector3(-W/2, 0, 0), new THREE.Vector3(W/2, 0, 0)
-  ]);
+function buildISFermiLines(scene) {
+  var W = IS3D.W;
+  var efGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-W/2, 0, 0), new THREE.Vector3(W/2, 0, 0)]);
   var efMat = new THREE.LineBasicMaterial({ color: 0xfacc15, linewidth: 2 });
-  IS3D.efLine = new THREE.Line(efGeo, efMat);
-  IS3D.scene.add(IS3D.efLine);
+  var efLine = new THREE.Line(efGeo, efMat);
+  scene.add(efLine);
+  var eiGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-W/2, 0, -0.3), new THREE.Vector3(W/2, 0, -0.3)]);
+  var eiMat = new THREE.LineDashedMaterial({ color: 0x4ade80, dashSize: 0.3, gapSize: 0.15, linewidth: 1 });
+  var eiLine = new THREE.Line(eiGeo, eiMat);
+  eiLine.computeLineDistances();
+  scene.add(eiLine);
+  return { efLine: efLine, eiLine: eiLine };
+}
 
-  // ---- Intrinsic Fermi level line (green, dashed) ----
-  var eiGeo = new THREE.BufferGeometry().setFromPoints([
-    new THREE.Vector3(-W/2, 0, -0.3), new THREE.Vector3(W/2, 0, -0.3)
-  ]);
-  var eiMat = new THREE.LineDashedMaterial({
-    color: 0x4ade80, dashSize: 0.3, gapSize: 0.15, linewidth: 1
-  });
-  IS3D.eiLine = new THREE.Line(eiGeo, eiMat);
-  IS3D.eiLine.computeLineDistances();
-  IS3D.scene.add(IS3D.eiLine);
+function buildISLabels(scene) {
+  var ecLabel = makeLabel('Ec (Conduction)', 0x00f0ff);
+  var evLabel = makeLabel('Ev (Valence)', 0xc084fc);
+  var efLabel = makeLabel('EF (Fermi)', 0xfacc15);
+  var eiLabel = makeLabel('Ei (Intrinsic)', 0x4ade80);
+  scene.add(ecLabel); scene.add(evLabel); scene.add(efLabel); scene.add(eiLabel);
+  return { ecLabel: ecLabel, evLabel: evLabel, efLabel: efLabel, eiLabel: eiLabel };
+}
 
-  // ---- Labels ----
-  IS3D.ecLabel = makeLabel('Ec (Conduction)', 0x00f0ff);
-  IS3D.scene.add(IS3D.ecLabel);
-  IS3D.evLabel = makeLabel('Ev (Valence)', 0xc084fc);
-  IS3D.scene.add(IS3D.evLabel);
-  IS3D.efLabel = makeLabel('EF (Fermi)', 0xfacc15);
-  IS3D.scene.add(IS3D.efLabel);
-  IS3D.eiLabel = makeLabel('Ei (Intrinsic)', 0x4ade80);
-  IS3D.scene.add(IS3D.eiLabel);
-
-  // ---- E-field arrows ----
-  IS3D.eFieldArrows = [];
+function buildISFieldArrows(scene) {
+  var arrows = [];
   var arrowMat = new THREE.MeshBasicMaterial({ color: 0xff4444 });
   for (var i = 0; i < 5; i++) {
     var arrowGroup = new THREE.Group();
     var shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.6, 8), arrowMat);
     shaft.rotation.z = -Math.PI / 2;
     var head = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.2, 8), arrowMat);
-    head.rotation.z = -Math.PI / 2;
-    head.position.x = 0.4;
-    arrowGroup.add(shaft);
-    arrowGroup.add(head);
+    head.rotation.z = -Math.PI / 2; head.position.x = 0.4;
+    arrowGroup.add(shaft); arrowGroup.add(head);
     arrowGroup.position.set((i - 2) * 2, 0, 2.5);
     arrowGroup.visible = false;
-    IS3D.scene.add(arrowGroup);
-    IS3D.eFieldArrows.push(arrowGroup);
+    scene.add(arrowGroup);
+    arrows.push(arrowGroup);
   }
+  return arrows;
+}
 
-  // ---- Particle meshes (InstancedMesh for performance) ----
+function buildISParticleMeshes(scene) {
   var sphereGeo = new THREE.SphereGeometry(0.10, 16, 16);
   var eMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
   var hMat = new THREE.MeshBasicMaterial({ color: 0xff4ecd });
-
-  IS3D.electronMesh = new THREE.InstancedMesh(sphereGeo, eMat, 80);
-  IS3D.electronMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-  IS3D.scene.add(IS3D.electronMesh);
-
-  IS3D.holeMesh = new THREE.InstancedMesh(sphereGeo, hMat, 80);
-  IS3D.holeMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-  IS3D.scene.add(IS3D.holeMesh);
-
-  // ---- Glow halos ----
+  var electronMesh = new THREE.InstancedMesh(sphereGeo, eMat, 80);
+  electronMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  scene.add(electronMesh);
+  var holeMesh = new THREE.InstancedMesh(sphereGeo, hMat, 80);
+  holeMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  scene.add(holeMesh);
   var glowGeo = new THREE.SphereGeometry(0.22, 16, 16);
   var glowEMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.12 });
   var glowHMat = new THREE.MeshBasicMaterial({ color: 0xff4ecd, transparent: true, opacity: 0.12 });
+  var glowMeshE = new THREE.InstancedMesh(glowGeo, glowEMat, 80);
+  glowMeshE.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  scene.add(glowMeshE);
+  var glowMeshH = new THREE.InstancedMesh(glowGeo, glowHMat, 80);
+  glowMeshH.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  scene.add(glowMeshH);
+  return {
+    electronMesh: electronMesh, holeMesh: holeMesh,
+    glowMeshE: glowMeshE, glowMeshH: glowMeshH,
+    dummy: new THREE.Object3D()
+  };
+}
 
-  IS3D.glowMeshE = new THREE.InstancedMesh(glowGeo, glowEMat, 80);
-  IS3D.glowMeshE.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-  IS3D.scene.add(IS3D.glowMeshE);
-
-  IS3D.glowMeshH = new THREE.InstancedMesh(glowGeo, glowHMat, 80);
-  IS3D.glowMeshH.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-  IS3D.scene.add(IS3D.glowMeshH);
-
-  // Dummy for matrix updates
-  IS3D.dummy = new THREE.Object3D();
-
-  // Start loop
+function initIS3D() {
+  var container = document.getElementById('band-diagram-3d');
+  if (!container || typeof THREE === 'undefined') return false;
+  if (IS3D.scene) return true;
+  var sc = buildISScene(container);
+  IS3D.scene = sc.scene;
+  IS3D.camera = sc.camera;
+  IS3D.renderer = sc.renderer;
+  IS3D.controls = sc.controls;
+  buildISLighting(IS3D.scene);
+  IS3D.crystalGrid = buildISCrystalGrid(IS3D.scene);
+  var bands = buildISBandSurfaces(IS3D.scene);
+  IS3D.cbSurface = bands.cbSurface;
+  IS3D.vbSurface = bands.vbSurface;
+  IS3D.axisGroup = buildISAxisGroup(IS3D.scene);
+  var fermi = buildISFermiLines(IS3D.scene);
+  IS3D.efLine = fermi.efLine;
+  IS3D.eiLine = fermi.eiLine;
+  var labels = buildISLabels(IS3D.scene);
+  IS3D.ecLabel = labels.ecLabel; IS3D.evLabel = labels.evLabel;
+  IS3D.efLabel = labels.efLabel; IS3D.eiLabel = labels.eiLabel;
+  IS3D.eFieldArrows = buildISFieldArrows(IS3D.scene);
+  var particles = buildISParticleMeshes(IS3D.scene);
+  IS3D.electronMesh = particles.electronMesh; IS3D.holeMesh = particles.holeMesh;
+  IS3D.glowMeshE = particles.glowMeshE; IS3D.glowMeshH = particles.glowMeshH;
+  IS3D.dummy = particles.dummy;
   animateIS3D();
-
-  // Resize handler
   window.addEventListener('resize', onIS3DResize);
   return true;
 }
 
-function makeLabel(text, colorHex) {
-  var canvas = document.createElement('canvas');
-  canvas.width = 320; canvas.height = 80;
-  var ctx = canvas.getContext('2d');
-  ctx.font = 'bold 28px JetBrains Mono, monospace';
-  ctx.fillStyle = '#' + new THREE.Color(colorHex).getHexString();
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(text, 160, 40);
-  var tex = new THREE.CanvasTexture(canvas);
-  tex.minFilter = THREE.LinearFilter;
-  var spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
-  var sprite = new THREE.Sprite(spriteMat);
-  sprite.scale.set(3.5, 0.9, 1);
-  return sprite;
-}
-
-function onIS3DResize() {
-  var container = document.getElementById('band-diagram-3d');
-  if (!container || !IS3D.camera || !IS3D.renderer) return;
-  var w = container.clientWidth;
-  var h = container.clientHeight;
-  IS3D.camera.aspect = w / h;
-  IS3D.camera.updateProjectionMatrix();
-  IS3D.renderer.setSize(w, h);
-}
-
-// Update 3D scene from physics state
-function updateIS3D() {
-  if (!IS3D.scene) return;
-
-  var st = isState;
+/* ── IS 3D update helpers ── */
+function updateISBandGeometry(st) {
   var s = IS3D.scaleY;
   var W = IS3D.W;
-  var D = IS3D.D;
-  var Emax = 2.0; // visual max bandgap at 0K
-
-  // Normalized band positions
+  var Emax = 2.0;
   var ecY = (st.Eg / Emax) * s;
   var evY = -ecY;
-
-  // Field-induced band bending (slope in x direction)
-  var slope = -0.12 * st.E_field; // visual slope, V/cm scaled
-
-  // Curvature strength (k^2 dispersion along z)
-  var curveCB = 0.25; // parabolic curvature for conduction band minimum
-  var curveVB = 0.25; // parabolic curvature for valence band maximum
-
-  // Update CB surface position + parabolic curvature + tilt
+  var slope = -0.12 * st.E_field;
+  var curveCB = 0.25, curveVB = 0.25;
   var cbPos = IS3D.cbSurface.geometry.attributes.position;
   for (var i = 0; i < cbPos.count; i++) {
     var x = cbPos.getX(i);
-    var z = cbPos.getY(i); // in local plane coords before rotation
-    // z maps to world z after rotation
-    var zWorld = z;
-    var parabola = curveCB * zWorld * zWorld;
-    // Plane is rotated -90° around X, so local Z is world Y
+    var z = cbPos.getY(i);
+    var parabola = curveCB * z * z;
     cbPos.setZ(i, ecY + parabola + slope * x);
   }
   cbPos.needsUpdate = true;
   IS3D.cbSurface.geometry.computeVertexNormals();
-
-  // Update VB surface (inverted parabola for maximum)
   var vbPos = IS3D.vbSurface.geometry.attributes.position;
   for (var i = 0; i < vbPos.count; i++) {
     var x = vbPos.getX(i);
     var z = vbPos.getY(i);
-    var zWorld = z;
-    var parabola = -curveVB * zWorld * zWorld;
+    var parabola = -curveVB * z * z;
     vbPos.setZ(i, evY + parabola + slope * x);
   }
   vbPos.needsUpdate = true;
   IS3D.vbSurface.geometry.computeVertexNormals();
+  return { ecY: ecY, evY: evY, slope: slope };
+}
 
-  // EF line position
+function updateISFermiLines(st, geom) {
+  var s = IS3D.scaleY;
+  var W = IS3D.W;
+  var Emax = 2.0;
   var efRel = st.EF - st.Eg / 2;
   var efY = efRel * s * 2 / Emax;
-  var efPoints = [
-    new THREE.Vector3(-W/2, efY + slope * (-W/2), 0),
-    new THREE.Vector3(W/2, efY + slope * (W/2), 0)
-  ];
-  IS3D.efLine.geometry.setFromPoints(efPoints);
-
-  // Ei line position
   var eiRel = st.Ei - st.Eg / 2;
   var eiY = eiRel * s * 2 / Emax;
-  var eiPoints = [
-    new THREE.Vector3(-W/2, eiY + slope * (-W/2), -0.3),
-    new THREE.Vector3(W/2, eiY + slope * (W/2), -0.3)
-  ];
-  IS3D.eiLine.geometry.setFromPoints(eiPoints);
+  IS3D.efLine.geometry.setFromPoints([
+    new THREE.Vector3(-W/2, efY + geom.slope * (-W/2), 0),
+    new THREE.Vector3(W/2, efY + geom.slope * (W/2), 0)
+  ]);
+  IS3D.eiLine.geometry.setFromPoints([
+    new THREE.Vector3(-W/2, eiY + geom.slope * (-W/2), -0.3),
+    new THREE.Vector3(W/2, eiY + geom.slope * (W/2), -0.3)
+  ]);
   IS3D.eiLine.computeLineDistances();
+  IS3D.ecLabel.position.set(-W/2 - 1.8, geom.ecY + geom.slope * (-W/2) + 0.3, 0);
+  IS3D.evLabel.position.set(-W/2 - 1.8, geom.evY + geom.slope * (-W/2) - 0.3, 0);
+  IS3D.efLabel.position.set(W/2 + 1.8, efY + geom.slope * (W/2), 0);
+  IS3D.eiLabel.position.set(W/2 + 1.8, eiY + geom.slope * (W/2), 0.5);
+}
 
-  // Labels
-  IS3D.ecLabel.position.set(-W/2 - 1.8, ecY + slope * (-W/2) + 0.3, 0);
-  IS3D.evLabel.position.set(-W/2 - 1.8, evY + slope * (-W/2) - 0.3, 0);
-  IS3D.efLabel.position.set(W/2 + 1.8, efY + slope * (W/2), 0);
-  IS3D.eiLabel.position.set(W/2 + 1.8, eiY + slope * (W/2), 0.5);
-
-  // ---- E-FIELD ARROWS ----
+function updateISFieldArrows(st) {
   var showArrows = Math.abs(st.E_field) > 1;
   var arrowScale = Math.min(1.5, Math.abs(st.E_field) / 200);
   var arrowDir = st.E_field >= 0 ? 1 : -1;
   for (var a = 0; a < IS3D.eFieldArrows.length; a++) {
     var ag = IS3D.eFieldArrows[a];
     ag.visible = showArrows;
-    if (showArrows) {
-      ag.scale.set(arrowDir * arrowScale, arrowScale, arrowScale);
-    }
+    if (showArrows) ag.scale.set(arrowDir * arrowScale, arrowScale, arrowScale);
   }
+}
 
-  // ---- PARTICLES ----
+function updateISParticles(st, curveCB, curveVB, ecY, evY, slope) {
   var logN = Math.log10(st.n + 1);
   var logP = Math.log10(st.p + 1);
   var eCount = Math.min(80, Math.max(0, Math.round((logN - 6) * 4)));
   var hCount = Math.min(80, Math.max(0, Math.round((logP - 6) * 4)));
-
   var time = IS3D.time;
   var jitter = 0.12;
-  var orbitAmp = 0.25; // orbital motion amplitude along z
-
-  // Update electrons in CB
+  var orbitAmp = 0.25;
+  var W = IS3D.W;
+  var dummy = IS3D.dummy;
   for (var i = 0; i < 80; i++) {
     if (i < eCount) {
       var x = (Math.random() - 0.5) * W;
       var drift = st.vd_e * 0.001;
-      var zBase = (Math.sin(i * 3.7) * D * 0.35);
+      var zBase = Math.sin(i * 3.7) * IS3D.D * 0.35;
       var zOrb = Math.sin(time * 1.2 + i * 1.1) * orbitAmp;
       var z = zBase + zOrb;
-      var parab = curveCB * z * z;
-      var yBase = ecY + parab + slope * x - 0.25;
-      var y = yBase + Math.sin(time * 2 + i) * jitter + (Math.random() - 0.5) * jitter * 0.5;
+      var y = ecY + curveCB * z * z + slope * x - 0.25 + Math.sin(time * 2 + i) * jitter + (Math.random() - 0.5) * jitter * 0.5;
       x = ((x + drift * time) % W + W) % W - W/2;
-
-      IS3D.dummy.position.set(x, y, z);
-      IS3D.dummy.scale.set(1, 1, 1);
-      IS3D.dummy.updateMatrix();
-      IS3D.electronMesh.setMatrixAt(i, IS3D.dummy.matrix);
-      // Glow halo (slightly larger, same position)
-      IS3D.dummy.scale.set(1.1, 1.1, 1.1);
-      IS3D.dummy.updateMatrix();
-      IS3D.glowMeshE.setMatrixAt(i, IS3D.dummy.matrix);
+      dummy.position.set(x, y, z); dummy.scale.set(1, 1, 1); dummy.updateMatrix();
+      IS3D.electronMesh.setMatrixAt(i, dummy.matrix);
+      dummy.scale.set(1.1, 1.1, 1.1); dummy.updateMatrix();
+      IS3D.glowMeshE.setMatrixAt(i, dummy.matrix);
     } else {
-      IS3D.dummy.position.set(0, -100, 0);
-      IS3D.dummy.scale.set(0, 0, 0);
-      IS3D.dummy.updateMatrix();
-      IS3D.electronMesh.setMatrixAt(i, IS3D.dummy.matrix);
-      IS3D.glowMeshE.setMatrixAt(i, IS3D.dummy.matrix);
+      dummy.position.set(0, -100, 0); dummy.scale.set(0, 0, 0); dummy.updateMatrix();
+      IS3D.electronMesh.setMatrixAt(i, dummy.matrix);
+      IS3D.glowMeshE.setMatrixAt(i, dummy.matrix);
     }
   }
   IS3D.electronMesh.instanceMatrix.needsUpdate = true;
   IS3D.electronMesh.count = eCount;
   IS3D.glowMeshE.instanceMatrix.needsUpdate = true;
   IS3D.glowMeshE.count = eCount;
-
-  // Update holes in VB
   for (var i = 0; i < 80; i++) {
     if (i < hCount) {
       var x = (Math.random() - 0.5) * W;
       var drift = -st.vd_h * 0.001;
-      var zBase = (Math.sin(i * 2.3 + 1) * D * 0.35);
+      var zBase = Math.sin(i * 2.3 + 1) * IS3D.D * 0.35;
       var zOrb = Math.sin(time * 0.9 + i * 1.3) * orbitAmp;
       var z = zBase + zOrb;
-      var parab = -curveVB * z * z;
-      var yBase = evY + parab + slope * x + 0.25;
-      var y = yBase + Math.sin(time * 1.5 + i + 10) * jitter + (Math.random() - 0.5) * jitter * 0.5;
+      var y = evY - curveVB * z * z + slope * x + 0.25 + Math.sin(time * 1.5 + i + 10) * jitter + (Math.random() - 0.5) * jitter * 0.5;
       x = ((x + drift * time) % W + W) % W - W/2;
-
-      IS3D.dummy.position.set(x, y, z);
-      IS3D.dummy.scale.set(1, 1, 1);
-      IS3D.dummy.updateMatrix();
-      IS3D.holeMesh.setMatrixAt(i, IS3D.dummy.matrix);
-      IS3D.dummy.scale.set(1.1, 1.1, 1.1);
-      IS3D.dummy.updateMatrix();
-      IS3D.glowMeshH.setMatrixAt(i, IS3D.dummy.matrix);
+      dummy.position.set(x, y, z); dummy.scale.set(1, 1, 1); dummy.updateMatrix();
+      IS3D.holeMesh.setMatrixAt(i, dummy.matrix);
+      dummy.scale.set(1.1, 1.1, 1.1); dummy.updateMatrix();
+      IS3D.glowMeshH.setMatrixAt(i, dummy.matrix);
     } else {
-      IS3D.dummy.position.set(0, -100, 0);
-      IS3D.dummy.scale.set(0, 0, 0);
-      IS3D.dummy.updateMatrix();
-      IS3D.holeMesh.setMatrixAt(i, IS3D.dummy.matrix);
-      IS3D.glowMeshH.setMatrixAt(i, IS3D.dummy.matrix);
+      dummy.position.set(0, -100, 0); dummy.scale.set(0, 0, 0); dummy.updateMatrix();
+      IS3D.holeMesh.setMatrixAt(i, dummy.matrix);
+      IS3D.glowMeshH.setMatrixAt(i, dummy.matrix);
     }
   }
   IS3D.holeMesh.instanceMatrix.needsUpdate = true;
   IS3D.holeMesh.count = hCount;
   IS3D.glowMeshH.instanceMatrix.needsUpdate = true;
   IS3D.glowMeshH.count = hCount;
+}
+
+function updateIS3D() {
+  if (!IS3D.scene) return;
+  var st = isState;
+  var geom = updateISBandGeometry(st);
+  updateISFermiLines(st, geom);
+  updateISFieldArrows(st);
+  updateISParticles(st, 0.25, 0.25, geom.ecY, geom.evY, geom.slope);
 }
 
 function animateIS3D() {
