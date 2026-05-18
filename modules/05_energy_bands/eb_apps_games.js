@@ -103,7 +103,7 @@ function guessFermiType(guess) {
 }
 
 function checkEffectiveMass() {
-  var guess = parseFloat(document.getElementById('effmass-guess').value);
+  var guess = Number.parseFloat(document.getElementById('effmass-guess').value);
   var fb = document.getElementById('effmass-feedback');
   // Tie to the state.t from eb_sim.js
   var t_val = (window.state && window.state.t) ? window.state.t : 1.0;
@@ -182,7 +182,7 @@ function guessBandgapCat(cat) {
 
 function checkDopingSlider() {
   var targetType = document.getElementById('doping-target-type').textContent;
-  var n = Math.pow(10, parseFloat(document.getElementById('slider-doping').value));
+  var n = Math.pow(10, Number.parseFloat(document.getElementById('slider-doping').value));
   var fb = document.getElementById('doping-feedback');
   var isNtype = n > 1e21;
   var isPtype = n < 1e19;
@@ -307,13 +307,13 @@ document.addEventListener('DOMContentLoaded', function() {
   var dSlider = document.getElementById('slider-doping');
   if (dSlider) {
     // Initialize plot with default value
-    var defaultExp = parseFloat(dSlider.value);
+    var defaultExp = Number.parseFloat(dSlider.value);
     var defaultN = Math.pow(10, defaultExp);
     document.getElementById('val-doping').textContent = defaultN.toExponential(1);
     plotDopingEffect(defaultN);
 
     dSlider.addEventListener('input', function(e) {
-      var exp = parseFloat(e.target.value);
+      var exp = Number.parseFloat(e.target.value);
       var n = Math.pow(10, exp);
       document.getElementById('val-doping').textContent = n.toExponential(1);
       plotDopingEffect(n);
