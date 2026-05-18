@@ -369,14 +369,14 @@ function initEB() {
 
   if (sliderT) {
     sliderT.addEventListener('input', function() {
-      state.t = Number.parseFloat(this.value);
+      state.t = parseFloat(this.value);
       document.getElementById('val-t').textContent = state.t.toFixed(1);
       plotBandStructure(); plotDOS(); plotARPES(); updateLiveTable();
     });
   }
   if (sliderGap) {
     sliderGap.addEventListener('input', function() {
-      state.gap = Number.parseFloat(this.value);
+      state.gap = parseFloat(this.value);
       document.getElementById('val-gap').textContent = state.gap.toFixed(2);
       plotBandStructure(); plotDOS(); plotARPES(); updateLiveTable();
     });
