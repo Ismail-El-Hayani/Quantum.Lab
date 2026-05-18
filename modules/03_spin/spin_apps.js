@@ -164,13 +164,13 @@ function initSpinApps() {
   plot21cm();
 
   var sgSlider = document.getElementById('slider-sg-theta');
-  if (sgSlider) sgSlider.addEventListener('input', function(){ var t=parseFloat(this.value); document.getElementById('val-sg-theta').textContent=t.toFixed(0); plotSG(t); });
+  if (sgSlider) sgSlider.addEventListener('input', function(){ var t=Number.parseFloat(this.value); document.getElementById('val-sg-theta').textContent=t.toFixed(0); plotSG(t); });
 
   var esrSlider = document.getElementById('slider-esr-b');
-  if (esrSlider) esrSlider.addEventListener('input', function(){ var b=parseFloat(this.value); document.getElementById('val-esr-b').textContent=b.toFixed(2); plotESR(b); });
+  if (esrSlider) esrSlider.addEventListener('input', function(){ var b=Number.parseFloat(this.value); document.getElementById('val-esr-b').textContent=b.toFixed(2); plotESR(b); });
 
   var nmrSlider = document.getElementById('slider-nmr-b');
-  if (nmrSlider) nmrSlider.addEventListener('input', function(){ var b=parseFloat(this.value); document.getElementById('val-nmr-b').textContent=b.toFixed(1); plotNMR(b); });
+  if (nmrSlider) nmrSlider.addEventListener('input', function(){ var b=Number.parseFloat(this.value); document.getElementById('val-nmr-b').textContent=b.toFixed(1); plotNMR(b); });
 }
 
 if (document.readyState !== 'loading') setTimeout(initSpinApps, 800);
