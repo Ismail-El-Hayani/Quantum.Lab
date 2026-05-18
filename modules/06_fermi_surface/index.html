@@ -100,21 +100,9 @@
         <div>
           <!-- plot-fd viz-card -->
 <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Fermi-Dirac Distribution f(E)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Occupation probability at temperature T: f(E) = [1 + e^((E-E_F)/k_BT)]⁻¹.</p>
-  <!-- plot-fd viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Fermi-Dirac Distribution f(E)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Occupation probability at temperature T: f(E) = [1 + e^((E-E_F)/k_BT)]⁻¹.</p>
-  <!-- plot-fd viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
   <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Fermi-Dirac f(E)</h4>
   <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Occupation probability: f(E) = [1 + e^((E-E_F)/k_BT)]⁻¹.</p>
   <div class="plot-container" id="plot-fd" style="min-height:380px;"></div>
-</div>
-
-</div>
-
 </div>
 
           <div id="plot-desc-fd" style="font-size:0.78rem;color:var(--text-dim);margin-top:0.4rem;">
@@ -124,14 +112,8 @@
           <!-- plot-dfdE viz-card -->
 <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
   <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Derivative ∂f/∂E</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Derivative of f(E) showing thermal broadening width.</p>
-  <!-- plot-dfdE viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Derivative ∂f/∂E</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Derivative of f(E) showing thermal broadening width.</p>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Thermal broadening kernel. Width ≈ 3.5 k_B T around E_F.</p>
   <div class="plot-container" id="plot-dfdE" style="min-height:260px;margin-top:1.5rem;"></div>
-</div>
-
 </div>
 
           <div id="plot-desc-dfdE" style="font-size:0.78rem;color:var(--text-dim);margin-top:0.4rem;">
@@ -141,21 +123,9 @@
           <!-- plot-occ viz-card -->
 <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
   <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Occupation Number n(E)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Electron occupancy near the Fermi surface. Smears around E_F as T rises.</p>
-  <!-- plot-occ v<!-- plot-occ viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Occupation Number n(E)</h4>
   <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Electron occupancy near E_F. Smears out as temperature rises.</p>
-  iz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Occupation Number n(E)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Electron occupancy near the Fermi surface. Smears around E_F as T rises.</p>
   <div class="plot-container" id="plot-occ" style="min-height:320px;margin-top:1.5rem;"></div>
 </div>
-
-</div>
-</div>
-
 
           <div id="plot-desc-occ" style="font-size:0.78rem;color:var(--text-dim);margin-top:0.4rem;">
             2D k-space occupation map. Colour = f(E). At T=0: sharp disk. At finite T: fuzzy edge because states just above k<sub>F</sub> become partially occupied.
@@ -170,40 +140,20 @@
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
               <div>
                 <!-- plot-pauli viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);b  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Pauli Exclusion Principle</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">No two electrons share all four quantum numbers. Drives chemical stability.</p>
-  order:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Pauli Exclusion Principle</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">No two electrons share the same set of quantum numbers. The exclusion drives the stability of matter.</p>
-  <!-- plot-pauli viz-card -->
 <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
   <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Pauli Exclusion Principle</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">No two electrons share the same set of quantum numbers. The exclusion drives the stability of matter.</p>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">No two electrons share all four quantum numbers.</p>
   <div class="plot-container app-plot" id="plot-pauli"></div>
 </div>
 
-</div>
-
-                <div style="fo<!-- plot-thermionic viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Thermionic Emission J(T)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Richardson-Dushman: J = AT² e^(-φ/k_BT).</p>
-  nt-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Pauli paramagnetic susceptibility χ<sub>P</sub>(T) ~ μ(E<sub>F</sub>) in a Fermi liquid. Constant at low T; drops when k<sub>B</sub>T ~ E<sub>F</sub>.</div>
-</div>
-
+                <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Pauli paramagnetic susceptibility χ<sub>P</sub>(T) ~ μ(E<sub>F</sub>) in a Fermi liquid. Constant at low T; drops when k<sub>B</sub>T ~ E<sub>F</sub>.</div>
               </div>
               <div>
                 <!-- plot-thermionic viz-card -->
 <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
   <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Thermionic Emission J(T)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Richardson-Dushman current density: J = AT² e^(-φ/k_BT).</p>
-  <!-- plot-thermionic viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Thermionic Emission J(T)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Richardson-Dushman current density: J = AT² e^(-φ/k_BT).</p>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Richardson-Dushman: J = AT² e^(-φ/k_BT).</p>
   <div class="plot-container app-plot" id="plot-thermionic"></div>
-</div>
-
 </div>
 
                 <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Thermionic emission current J = AT<sup>2</sup>exp(−φ/k<sub>B</sub>T). Only electrons in the high-energy tail escape the work-function barrier φ.</div>
@@ -212,14 +162,8 @@
             <!-- plot-wd viz-card -->
 <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
   <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Work Function Distribution</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Energy required to remove an electron from the Fermi level to vacuum.</p>
-  <!-- plot-wd viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Work Function Distribution</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Energy required to remove an electron from the Fermi level to vacuum.</p>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Energy to lift an electron from E_F to vacuum.</p>
   <div class="plot-container app-plot" id="plot-wd"></div>
-</div>
-
 </div>
 
             <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">White-dwarf degeneracy pressure P ∝ n<sup>5/3</sup>: the same Pauli pressure that keeps the star from collapsing is what prevents metals from collapsing under their own electronic charge.</div>

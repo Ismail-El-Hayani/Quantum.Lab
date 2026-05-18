@@ -70,9 +70,9 @@
           <!-- Animation Canvases -->
           <style>
             .viz-grid { display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:1rem; }
-            .viz-card { background:var(--bg-elevated); border:1px solid var(--glass-border); border-radius:var(--radius-sm); overflow:hidden; }
+            .viz-card { background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); overflow:hidden; }
             .viz-canvas { width:100%; height:180px; display:block; background:var(--bg-elevated); }
-            .viz-meta { padding:0.55rem 0.75rem; border-top:1px solid var(--glass-border); }
+            .viz-meta { padding:0.55rem 0.75rem; border-top:1px solid var(--border-subtle); }
             .viz-meta h4 { margin:0 0 0.25rem; font-size:0.82rem; color:var(--text-main); }
             .viz-meta p { margin:0 0 0.35rem; font-size:0.71rem; color:var(--text-dim); line-height:1.35; }
             .viz-legend { display:flex; flex-wrap:wrap; gap:0.4rem 0.9rem; font-size:0.66rem; color:var(--text-muted); }
@@ -127,17 +127,27 @@
             </div>
           </div>
 
-          <div class="viz-card">
-              <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Superconducting Gap Δ(T)</h4>
+          <!-- plot-gap-temp viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Superconducting Gap Δ(T)</h4>
   <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">BCS: Δ(T) ≈ 1.74Δ(0)√(1-T/T_c). Collapses to zero at T_c.</p>
   <div class="plot-container" id="plot-gap-temp" style="min-height:280px;"></div>
-          </div>
-          <div class="viz-card">
-            <div class="plot-container" id="plot-magnetization" style="min-height:260px; margin-top:1.5rem;"></div>
-          </div>
-          <div class="viz-card">
-            <div class="plot-container" id="plot-penetration" style="min-height:260px; margin-top:1.5rem;"></div>
-          </div>
+</div>
+
+          <!-- plot-magnetization viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Magnetization M(T,H)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Meissner effect: B = 0 inside below T_c. Type-I abrupt vs Type-II gradual.</p>
+  <div class="plot-container" id="plot-magnetization" style="min-height:260px; margin-top:1.5rem;"></div>
+</div>
+
+          <!-- plot-penetration viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">London Penetration Depth λ_L</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">B(x) = B₀ e^(-x/λ_L). λ_L = √(m/(μ₀n_s e²)).</p>
+  <div class="plot-container" id="plot-penetration" style="min-height:260px; margin-top:1.5rem;"></div>
+</div>
+
         </div>
         <div>
           <div class="challenge-panel" style="margin-bottom:1rem;">
@@ -156,7 +166,7 @@
               <span class="control-label">Material Tc</span>
               <span class="control-value" id="val-Tc">9.2</span><span class="unit-tag">K</span>
             </div>
-            <select id="select-material-sc" style="width:100%;background:var(--bg-elevated);border:1px solid var(--glass-border);color:var(--text-main);padding:0.4rem;border-radius:6px;font-family:var(--font-mono);">
+            <select id="select-material-sc" style="width:100%;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.4rem;border-radius:6px;font-family:var(--font-mono);">
               <option value="9.2">Niobium (Nb) — 9.2 K</option>
               <option value="4.2">Mercury (Hg) — 4.2 K</option>
               <option value="1.2">Aluminum (Al) — 1.2 K</option>
@@ -264,7 +274,7 @@
       <div class="challenge-reward">🏆 Reward: 80 XP + "Isotope Hunter" badge</div>
       <div id="iso-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
       <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-        <input type="number" id="iso-answer" placeholder="Tc₁/Tc₂" step="0.01" style="width:120px;background:var(--bg-elevated);border:1px solid var(--glass-border);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
+        <input type="number" id="iso-answer" placeholder="Tc₁/Tc₂" step="0.01" style="width:120px;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
         <button class="btn" onclick="checkIsotopeAnswer()">Submit</button>
       </div>
       <div class="challenge-feedback" id="iso-feedback"></div>
@@ -301,7 +311,7 @@
       <div class="challenge-reward">🏆 Reward: 80 XP</div>
       <div id="hc-puzzle-text" style="font-size:1rem;margin:1rem 0;font-family:var(--font-mono);"></div>
       <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-        <input type="number" id="hc-answer" placeholder="Hc(T) in T" step="0.001" style="width:160px;background:var(--bg-elevated);border:1px solid var(--glass-border);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
+        <input type="number" id="hc-answer" placeholder="Hc(T) in T" step="0.001" style="width:160px;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
         <button class="btn" onclick="checkHCPuzzle()">Submit</button>
       </div>
       <div class="challenge-feedback" id="hc-feedback"></div>
@@ -321,10 +331,10 @@
     </div>
   </div>
 
-  <div class="game-layout" style="margin-top:2rem;">
-    <div class="game-main"></div>
-    <aside class="game-sidebar">
-      <div class="challenge-panel">
+  <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; margin-top:2rem;">
+    <div></div>
+    <div>
+      <div class="challenge-panel" style="position:sticky; top:5rem;">
         <div class="challenge-header">
           <span class="challenge-icon" style="background:rgba(0,240,255,0.08);">🗺</span>
           <span class="challenge-title">Lab Navigator</span>
@@ -344,7 +354,7 @@
           <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
         </div>
       </div>
-    </aside>
+    </div>
   </div>
 
 </div>

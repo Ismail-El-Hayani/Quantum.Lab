@@ -100,14 +100,8 @@
           <!-- plot-psi viz-card -->
 <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
   <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Wavefunction Ψ(x,t)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Real and imaginary parts of Ψ(x) plus |ψ|² probability density. Cyan = Re ψ, pink = Im ψ, gold = |ψ|².</p>
-  <!-- plot-psi viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Wavefunction Ψ(x,t)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Real and imaginary parts of Ψ(x) plus |ψ|² probability density. Cyan = Re ψ, pink = Im ψ, gold = |ψ|².</p>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Real (cyan) and imaginary (pink) parts of Ψ plus |ψ|² probability density (gold).</p>
   <div class="plot-container" id="plot-psi" style="min-height:300px;"></div>
-</div>
-
 </div>
 
           
@@ -115,14 +109,8 @@
           <!-- plot-atom-3d viz-card -->
 <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
   <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">3D Probability Density</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Isosurface of |ψ|² in 3D Cartesian space. Colour follows the Viridis scale from low (purple) to high (yellow).</p>
-  <!-- plot-atom-3d viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">3D Probability Density</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Isosurface of |ψ|² in 3D Cartesian space. Colour follows the Viridis scale from low (purple) to high (yellow).</p>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Isosurface of |ψ|² in 3D Cartesian space. Colour follows the Viridis scale.</p>
   <div class="plot-container" id="plot-atom-3d" style="min-height:500px; display:none;"></div>
-</div>
-
 </div>
 
           <!-- Atom 3D color scale legend -->
@@ -141,14 +129,8 @@
           <!-- plot-wigner viz-card -->
 <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
   <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Wigner Phase-Space Distribution</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Quasi-probability W(x,p) showing quantum coherence. Negative regions are a signature of non-classicality.</p>
-  <!-- plot-wigner viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Wigner Phase-Space Distribution</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Quasi-probability W(x,p) showing quantum coherence. Negative regions are a signature of non-classicality.</p>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Quasi-probability W(x,p). Negative regions = quantum non-classicality.</p>
   <div class="plot-container" id="plot-wigner" style="min-height:300px;"></div>
-</div>
-
 </div>
 
 
@@ -170,28 +152,16 @@
           <!-- plot-classical viz-card -->
 <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
   <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Classical vs Quantum Turning Points</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Classical turning points ±√(2E) compared to quantum confinement via |ψ|².</p>
-  <!-- plot-classical viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Classical vs Quantum Turning Points</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Classical turning points ±√(2E) compared to quantum confinement via |ψ|².</p>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Classical ±√(2E) turning points overlaid on |ψ|² probability density.</p>
   <div class="plot-container" id="plot-classical" style="min-height:260px; margin-top:1.5rem;"></div>
-</div>
-
 </div>
 
           <!-- Energy levels -->
           <!-- plot-energy viz-card -->
 <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
   <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Energy Eigenvalue Ladder</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Quantized levels Eₙ = (n + ½)ℏω with equal spacing of ℏω.</p>
-  <!-- plot-energy viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Energy Eigenvalue Ladder</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Quantized levels Eₙ = (n + ½)ℏω with equal spacing of ℏω.</p>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Quantized levels Eₙ = (n+½)ℏω with equal spacing of ℏω.</p>
   <div class="plot-container" id="plot-energy" style="min-height:200px; margin-top:1.5rem;"></div>
-</div>
-
 </div>
 
         </div>
@@ -446,14 +416,8 @@
       <!-- plot-laser-levels viz-card -->
 <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
   <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Laser Pump Level Scheme</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Two-level energy scheme (pump + lasing transition) with spontaneous and stimulated rates.</p>
-  <!-- plot-laser-levels viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Laser Pump Level Scheme</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Two-level energy scheme (pump + lasing transition) with spontaneous and stimulated rates.</p>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Two-level energy scheme: pump absorption + stimulated emission.</p>
   <div class="plot-container" id="plot-laser-levels" style="height:200px;margin-top:1rem;"></div>
-</div>
-
 </div>
 
     </div>
@@ -579,14 +543,8 @@
       <!-- plot-selection viz-card -->
 <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
   <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Selection Rules</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Δn parity and transition amplitude governing absorption/emission probabilities.</p>
-  <!-- plot-selection viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Selection Rules</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Δn parity and transition amplitude governing absorption/emission probabilities.</p>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Δn parity and transition amplitude |⟨n'|x|n⟩|² govern spectral line strengths.</p>
   <div class="plot-container" id="plot-selection" style="height:280px;"></div>
-</div>
-
 </div>
 
 
@@ -705,13 +663,13 @@
 <script src="../../shared_interactive.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_effects.js"></script>
-<script src="qho_apps_games.js"></script>
-
-  <!-- Legacy playground container -->
-  <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-    <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">QHO Wavefunction Playground</h4>
-    <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Interactive QHO wavefunction for arbitrary quantum number n. Shows |ψ|² probability density with classical turning points.</p>
-    <div class="plot-container" id="plot-playground" style="min-height:300px;"></div>
-  </div>
+<script src="qho_apps_games.js">
+<!-- plot-playground container -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">QHO Wavefunction Playground</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Interactive QHO wavefunction for arbitrary quantum number n. Shows |ψ|² probability density with classical turning points.</p>
+  <div class="plot-container" id="plot-playground" style="min-height:300px;"></div>
+</div>
+</script>
 </body>
 </html>

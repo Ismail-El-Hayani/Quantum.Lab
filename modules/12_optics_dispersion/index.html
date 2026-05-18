@@ -253,8 +253,20 @@
 
     <!-- Twin Plotly charts -->
     <div class="plots" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;">
-      <div class="viz-card"><div id="plot-eps" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;min-height:300px;"></div></div>
-      <div class="viz-card"><div id="plot-rt" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;min-height:300px;"></div></div>
+      <!-- plot-eps viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Dielectric Function ε(E)</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Real ε₁ = n²-κ² and imaginary ε₂ = 2nκ. Drude + Lorentz oscillators.</p>
+  <div id="plot-eps" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;min-height:300px;"></div>
+</div>
+
+      <!-- plot-rt viz-card -->
+<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;">
+  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Reflectivity & Transmittance</h4>
+  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">R(E), T(E), A(E). Below E_g → transparent. Above → absorbing.</p>
+  <div id="plot-rt" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;min-height:300px;"></div>
+</div>
+
     </div>
   </section>
 
