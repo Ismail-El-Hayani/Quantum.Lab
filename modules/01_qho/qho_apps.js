@@ -241,7 +241,7 @@ function initQHOApps() {
   var cavSlider = document.getElementById('slider-cavity-alpha');
   if (cavSlider) {
     cavSlider.addEventListener('input', function() {
-      var a = Number.parseFloat(this.value);
+      var a = parseFloat(this.value);
       document.getElementById('val-cavity-alpha').textContent = a.toFixed(1);
       plotCavity(a, 0);
     });
@@ -252,7 +252,7 @@ function initQHOApps() {
   var transSlider = document.getElementById('slider-transmon');
   if (transSlider) {
     transSlider.addEventListener('input', function() {
-      var e = Number.parseFloat(this.value);
+      var e = parseFloat(this.value);
       document.getElementById('val-transmon').textContent = e.toFixed(1);
       plotTransmon(e);
     });
@@ -263,8 +263,8 @@ function initQHOApps() {
   var tweezerPower = document.getElementById('slider-tweezer-power');
   var tweezerLambda = document.getElementById('slider-tweezer-lambda');
   function updateTweezer() {
-    var p = Number.parseFloat(tweezerPower ? tweezerPower.value : 100);
-    var l = Number.parseFloat(tweezerLambda ? tweezerLambda.value : 1064);
+    var p = parseFloat(tweezerPower ? tweezerPower.value : 100);
+    var l = parseFloat(tweezerLambda ? tweezerLambda.value : 1064);
     if (document.getElementById('val-tweezer-power')) document.getElementById('val-tweezer-power').textContent = p.toFixed(0);
     if (document.getElementById('val-tweezer-lambda')) document.getElementById('val-tweezer-lambda').textContent = l.toFixed(0);
     plotTweezer(p, l);
