@@ -1882,12 +1882,8 @@
   /* ═══════════════════════════════════════════════════════════════
      ANIMATION LOOP
      ═══════════════════════════════════════════════════════════════ */
-  function animate() {
-    animId = requestAnimationFrame(animate);
-    var dt = 0.016;
-    time += dt;
 
-    // Camera lerp
+  function updateCamera(dt) {
     currentCamZ += (targetCamZ - currentCamZ) * 0.04;
     currentFov += (targetFov - currentFov) * 0.04;
     camera.position.z = currentCamZ;
@@ -1896,15 +1892,16 @@
     currentLookAt.lerp(targetLookAt, 0.04);
     camera.lookAt(currentLookAt);
     if (orbitControls) orbitControls.update();
+  }
 
-    // Thermal vibration on lattice atoms
-    var vib = Math.sin(time * 3) * thermalAmp;
+  function updateThermalVibrations(t) {
+    var vib = Math.sin(t * 3) * thermalAmp;
     atoms.forEach(function(a){
       if (a.userData.basePos) {
         a.position.copy(a.userData.basePos).add(new THREE.Vector3(
-          Math.sin(time * 4 + a.userData.idx) * vib,
-          Math.cos(time * 3.7 + a.userData.idx) * vib,
-          Math.sin(time * 3.3 + a.userData.idx * 0.5) * vib
+          Math.sin(t * 4 + a.userData.idx) * vib,
+          Math.cos(t * 3.7 + a.userData.idx) * vib,
+          Math.sin(t * 3.3 + a.userData.idx * 0.5) * vib
         ));
       }
       if (a.userData.excited) {
@@ -1916,8 +1913,9 @@
         }
       }
     });
+  }
 
-    // Update lattice bonds
+  function updateLatticeBonds() {
     bonds.forEach(function(b){
       var a = atoms[b.userData.atomA];
       var c = atoms[b.userData.atomB];
@@ -1930,30 +1928,26 @@
         b.scale.set(1, Math.max(d, 0.05), 1);
       }
     });
+  }
 
-    // Animate lattice electrons (orbit their parent atoms with tilt)
+  function updateLatticeElectrons() {
     latticeElectrons.forEach(function(e){
       if (!e.visible) return;
       var d = e.userData;
       var atom = atoms[d.atomIdx];
       if (!atom || !atom.visible) return;
       d.angle += 0.012 * d.speed;
-      // Orbit in XZ plane then tilt
       var x = Math.cos(d.angle) * d.orbitR;
       var z = Math.sin(d.angle) * d.orbitR;
-      var y = 0;
-      // tiltX rotation
-      var rx = x * Math.cos(d.tiltX) - y * Math.sin(d.tiltX);
-      var ry = x * Math.sin(d.tiltX) + y * Math.cos(d.tiltX);
-      // tiltZ rotation
+      var rx = x * Math.cos(d.tiltX);
+      var ry = x * Math.sin(d.tiltX);
       var rz = z * Math.cos(d.tiltZ) - ry * Math.sin(d.tiltZ);
       ry = z * Math.sin(d.tiltZ) + ry * Math.cos(d.tiltZ);
-      e.position.set(atom.position.x + rx,
-                     atom.position.y + ry,
-                     atom.position.z + rz);
+      e.position.set(atom.position.x + rx, atom.position.y + ry, atom.position.z + rz);
     });
+  }
 
-    // Update quantum clouds
+  function updateQuantumClouds() {
     clouds.forEach(function(c){
       var a = atoms[c.userData.atomIdx];
       if (a) c.position.copy(a.position);
@@ -1962,68 +1956,60 @@
       var b = bonds[vc.userData.bondIdx];
       if (b) vc.position.copy(b.position);
     });
-
-    // Focus group follows focused lattice atom
     if (focusGroup && atoms[focusedAtomIndex]) {
       focusGroup.position.copy(atoms[focusedAtomIndex].position);
     }
+  }
 
-    // Rotate macro cube
+  function updateMacroCube(t) {
     if (macroCube && macroCube.visible) {
-      macroCube.rotation.y = time * 0.08;
-      macroCube.rotation.x = Math.sin(time * 0.04) * 0.08;
+      macroCube.rotation.y = t * 0.08;
+      macroCube.rotation.x = Math.sin(t * 0.04) * 0.08;
     }
+  }
 
-    // Cluster spring dynamics: atoms pull on bonds, bonds pull back
-    if (clusterAtoms[0] && clusterAtoms[0].visible) {
-      var damping = 0.92;
-      // Accumulate spring forces on atoms
-      var forces = [];
-      for (var i = 0; i < clusterAtoms.length; i++) {
-        forces.push(new THREE.Vector3(0, 0, 0));
-      }
-      clusterSprings.forEach(function(s){
-        var a = clusterAtoms[s.atomA];
-        var b = clusterAtoms[s.atomB];
-        if (!a || !b) return;
-        var dir = new THREE.Vector3().subVectors(b.position, a.position);
-        var len = dir.length();
-        dir.normalize();
-        var f = (len - s.restLength) * s.k;
-        var fa = dir.clone().multiplyScalar(f);
-        var fb = dir.clone().multiplyScalar(-f);
-        forces[s.atomA].add(fa);
-        forces[s.atomB].add(fb);
-      });
-      // Apply forces + damping
-      for (var i = 0; i < clusterAtoms.length; i++) {
-        var atom = clusterAtoms[i];
-        var v = atom.userData.vel;
-        v.add(forces[i].multiplyScalar(dt));
-        v.multiplyScalar(damping);
-        atom.position.add(v.clone().multiplyScalar(dt));
-        // Soft centering pull toward basePos to prevent drift
-        var bp = atom.userData.basePos;
-        var drift = new THREE.Vector3().subVectors(atom.position, bp);
-        drift.multiplyScalar(0.005); // weak home force
-        atom.position.sub(drift);
-        v.sub(drift.multiplyScalar(0.5));
-      }
-      // Update bond meshes to match atom positions
-      clusterBonds.forEach(function(b){
-        var a = clusterAtoms[b.userData.atomA];
-        var c = clusterAtoms[b.userData.atomB];
-        if (!a || !c) return;
-        var mid = new THREE.Vector3().addVectors(a.position, c.position).multiplyScalar(0.5);
-        var d = a.position.distanceTo(c.position);
-        b.position.copy(mid);
-        b.lookAt(c.position);
-        b.rotateX(Math.PI / 2);
-        b.scale.set(1, Math.max(d, 0.02), 1);
-      });
+  function updateClusterSprings(dt) {
+    if (!clusterAtoms[0] || !clusterAtoms[0].visible) return;
+    var damping = 0.92;
+    var forces = [];
+    for (var i = 0; i < clusterAtoms.length; i++) { forces.push(new THREE.Vector3(0,0,0)); }
+    clusterSprings.forEach(function(s){
+      var a = clusterAtoms[s.atomA];
+      var b = clusterAtoms[s.atomB];
+      if (!a || !b) return;
+      var dir = new THREE.Vector3().subVectors(b.position, a.position);
+      var len = dir.length();
+      dir.normalize();
+      var f = (len - s.restLength) * s.k;
+      var fa = dir.clone().multiplyScalar(f);
+      forces[s.atomA].add(fa);
+      forces[s.atomB].add(dir.clone().multiplyScalar(-f));
+    });
+    for (var i = 0; i < clusterAtoms.length; i++) {
+      var atom = clusterAtoms[i];
+      var v = atom.userData.vel;
+      v.add(forces[i].multiplyScalar(dt));
+      v.multiplyScalar(damping);
+      atom.position.add(v.clone().multiplyScalar(dt));
+      var drift = new THREE.Vector3().subVectors(atom.position, atom.userData.basePos);
+      drift.multiplyScalar(0.005);
+      atom.position.sub(drift);
+      v.sub(drift.multiplyScalar(0.5));
     }
+    clusterBonds.forEach(function(b){
+      var a = clusterAtoms[b.userData.atomA];
+      var c = clusterAtoms[b.userData.atomB];
+      if (!a || !c) return;
+      var mid = new THREE.Vector3().addVectors(a.position, c.position).multiplyScalar(0.5);
+      var d = a.position.distanceTo(c.position);
+      b.position.copy(mid);
+      b.lookAt(c.position);
+      b.rotateX(Math.PI / 2);
+      b.scale.set(1, Math.max(d, 0.02), 1);
+    });
+  }
 
-    // Free electrons orbit their parent atom (valence = 4 − bonds)
+  function updateClusterElectrons() {
     clusterElectrons.forEach(function(e){
       if (!e.visible) return;
       var d = e.userData;
@@ -2033,19 +2019,15 @@
       d.angle += 0.016 * d.speed;
       var x = Math.cos(d.angle) * d.orbitR;
       var z = Math.sin(d.angle) * d.orbitR;
-      var y = 0;
-      // tiltX
-      var rx = x * Math.cos(d.tiltX) - y * Math.sin(d.tiltX);
-      var ry = x * Math.sin(d.tiltX) + y * Math.cos(d.tiltX);
-      // tiltZ
+      var rx = x * Math.cos(d.tiltX);
+      var ry = x * Math.sin(d.tiltX);
       var rz = z * Math.cos(d.tiltZ) - ry * Math.sin(d.tiltZ);
       ry = z * Math.sin(d.tiltZ) + ry * Math.cos(d.tiltZ);
-      e.position.set(atom.position.x + rx,
-                     atom.position.y + ry,
-                     atom.position.z + rz);
+      e.position.set(atom.position.x + rx, atom.position.y + ry, atom.position.z + rz);
     });
+  }
 
-    // Band electrons orbit the nucleus (in focusGroup, so local coords)
+  function updateBandElectrons() {
     bandElectrons.forEach(function(e){
       if (!e.visible) return;
       var d = e.userData;
@@ -2055,8 +2037,9 @@
         e.position.z = Math.sin(d.baseAngle) * d.orbitR;
       }
     });
+  }
 
-    // Spin electrons orbit the nucleus + arrows follow them
+  function updateSpinVisuals() {
     spinElectrons.forEach(function(e){
       if (!e.visible) return;
       var d = e.userData;
@@ -2066,18 +2049,17 @@
         e.position.z = Math.sin(d.angle) * d.r;
       }
     });
-
-    // Spin arrows follow their parent electrons
     spinArrows.forEach(function(arrow){
       if (!arrow.visible) return;
       var d = arrow.userData;
       if (d.type === 'spinArrow' && d.parent) {
         arrow.position.copy(d.parent.position);
-        arrow.position.y += d.offset; // slight vertical offset
+        arrow.position.y += d.offset;
       }
     });
+  }
 
-    // Photons & free electrons
+  function updateParticlesAndWaves() {
     updatePhotons();
     updateEMWaves();
     photons.forEach(function(p){
@@ -2087,10 +2069,24 @@
       }
     });
     photons = photons.filter(function(p){ return p.userData.life > 0; });
+  }
 
-    // Cool down
+  function animate() {
+    animId = requestAnimationFrame(animate);
+    var dt = 0.016;
+    time += dt;
+    updateCamera(dt);
+    updateThermalVibrations(time);
+    updateLatticeBonds();
+    updateLatticeElectrons();
+    updateQuantumClouds();
+    updateMacroCube(time);
+    updateClusterSprings(dt);
+    updateClusterElectrons();
+    updateBandElectrons();
+    updateSpinVisuals();
+    updateParticlesAndWaves();
     thermalAmp = Math.max(thermalAmp * 0.9995, 0.02);
-
     renderer.render(scene, camera);
   }
 

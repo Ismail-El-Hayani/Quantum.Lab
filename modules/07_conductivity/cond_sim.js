@@ -273,82 +273,64 @@ function condPhysicsStep() {
 }
 
 /* === Draw frame === */
-function condDrawFrame() {
-  var geo = COND_CANVAS;
-  var ctx = geo.ctx;
-  var w = geo.width, h = geo.height;
-  var st = COND_STATE;
-  var t = geo.frame * 0.03;
-  var mat = COND_MATERIALS[st.material] || COND_MATERIALS['Cu'];
-  var impType = mat.impType || 'substitutional';
 
-  /* Background */
-  ctx.fillStyle = '#0a0a0f';
-  ctx.fillRect(0, 0, w, h);
+function drawBackground(ctx, w, h) {
+  ctx.fillStyle = '#0a0a0f'; ctx.fillRect(0, 0, w, h);
+}
 
-  /* Subtle grid */
+function drawGrid(ctx, w, h) {
   ctx.strokeStyle = 'rgba(255,255,255,0.03)';
   ctx.lineWidth = 1;
   for (var gx = 0; gx < w; gx += 40) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke(); }
   for (var gy = 0; gy < h; gy += 40) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke(); }
+}
 
-  /* Surface roughness walls */
-  if (geo.surfaceRough) {
-    ctx.strokeStyle = 'rgba(59,130,246,0.4)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (var px = 0; px < w; px += 8) {
-      var rough = 4 + Math.sin(px * 0.15 + t) * 3;
-      ctx.lineTo(px, rough);
-    }
-    ctx.stroke();
-    ctx.beginPath();
-    for (var px = 0; px < w; px += 8) {
-      var rough = h - 4 - Math.sin(px * 0.12 + t * 0.7) * 3;
-      ctx.lineTo(px, rough);
-    }
-    ctx.stroke();
-  }
+function drawSurfaceRoughness(ctx, w, h, geo, t) {
+  if (!geo.surfaceRough) return;
+  ctx.strokeStyle = 'rgba(59,130,246,0.4)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (var px = 0; px < w; px += 8) { ctx.lineTo(px, 4 + Math.sin(px * 0.15 + t) * 3); }
+  ctx.stroke();
+  ctx.beginPath();
+  for (var px = 0; px < w; px += 8) { ctx.lineTo(px, h - 4 - Math.sin(px * 0.12 + t * 0.7) * 3); }
+  ctx.stroke();
+}
 
-  /* Phonon bonds */
+function drawPhononBonds(ctx, geo, st, t) {
   var phononAmp = (st.T / 300) * 2.5;
-  if (st.showPhonons && phononAmp > 0.3) {
-    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-    ctx.lineWidth = 1;
-    for (var i = 0; i < geo.phonons.length; i++) {
-      var ph = geo.phonons[i];
-      var a = geo.ions[ph.aIdx];
-      var b = geo.ions[ph.bIdx];
-      if (!a || !b) continue;
-      var segs = 8;
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      for (var s = 1; s <= segs; s++) {
-        var frac = s / segs;
-        var px = a.x + (b.x - a.x) * frac;
-        var py = a.y + (b.y - a.y) * frac;
-        var off = phononAmp * Math.sin(frac * 12.566 + t + ph.phase);
-        if (ph.type === 'horiz') py += off;
-        else px += off;
-        ctx.lineTo(px, py);
-      }
-      ctx.stroke();
+  if (!st.showPhonons || phononAmp <= 0.3) return;
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = 1;
+  for (var i = 0; i < geo.phonons.length; i++) {
+    var ph = geo.phonons[i];
+    var a = geo.ions[ph.aIdx], b = geo.ions[ph.bIdx];
+    if (!a || !b) continue;
+    ctx.beginPath(); ctx.moveTo(a.x, a.y);
+    for (var s = 1; s <= 8; s++) {
+      var frac = s / 8;
+      var px = a.x + (b.x - a.x) * frac;
+      var py = a.y + (b.y - a.y) * frac;
+      var off = phononAmp * Math.sin(frac * 12.566 + t + ph.phase);
+      if (ph.type === 'horiz') py += off; else px += off;
+      ctx.lineTo(px, py);
     }
+    ctx.stroke();
   }
+}
 
-  /* Lattice ions */
+function drawLatticeIons(ctx, geo, st, t) {
   var jiggle = (st.T / 300) * 1.5;
   for (var i = 0; i < geo.ions.length; i++) {
     var ion = geo.ions[i];
     ion.x = ion.baseX + jiggle * Math.sin(t + ion.phase);
     ion.y = ion.baseY + jiggle * Math.cos(t * 0.7 + ion.phase);
     ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    ctx.beginPath();
-    ctx.arc(ion.x, ion.y, 3.5, 0, 6.283);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(ion.x, ion.y, 3.5, 0, 6.283); ctx.fill();
   }
+}
 
-  /* Grain boundaries */
+function drawGrainBoundaries(ctx, geo, t) {
   for (var i = 0; i < geo.grainBoundaries.length; i++) {
     var gb = geo.grainBoundaries[i];
     ctx.strokeStyle = 'rgba(150,150,150,0.5)';
@@ -360,149 +342,110 @@ function condDrawFrame() {
     ctx.stroke();
     ctx.setLineDash([]);
   }
+}
 
-  /* Dislocation */
-  if (geo.dislocation) {
-    var dl = geo.dislocation;
-    ctx.strokeStyle = 'rgba(192,132,252,0.6)';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    var dx1 = dl.x - Math.cos(dl.angle) * dl.length * 0.5;
-    var dy1 = dl.y - Math.sin(dl.angle) * dl.length * 0.5;
-    var dx2 = dl.x + Math.cos(dl.angle) * dl.length * 0.5;
-    var dy2 = dl.y + Math.sin(dl.angle) * dl.length * 0.5;
-    ctx.moveTo(dx1, dy1);
-    ctx.lineTo(dx2, dy2);
-    ctx.stroke();
-    /* Burger's vector symbol */
-    ctx.fillStyle = 'rgba(192,132,252,0.8)';
-    ctx.font = '14px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('\u22a5', dl.x + 12, dl.y - 8);
+function drawDislocation(ctx, geo) {
+  if (!geo.dislocation) return;
+  var dl = geo.dislocation;
+  ctx.strokeStyle = 'rgba(192,132,252,0.6)';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  var dx1 = dl.x - Math.cos(dl.angle) * dl.length * 0.5;
+  var dy1 = dl.y - Math.sin(dl.angle) * dl.length * 0.5;
+  ctx.moveTo(dx1, dy1);
+  ctx.lineTo(dl.x + Math.cos(dl.angle) * dl.length * 0.5, dl.y + Math.sin(dl.angle) * dl.length * 0.5);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(192,132,252,0.8)';
+  ctx.font = '14px monospace'; ctx.textAlign = 'center';
+  ctx.fillText('\u22a5', dl.x + 12, dl.y - 8);
+}
+
+function drawImpurities(ctx, geo, st) {
+  if (!st.showImpurities) return;
+  var mat = COND_MATERIALS[st.material] || COND_MATERIALS['Cu'];
+  var impType = mat.impType || 'substitutional';
+  var impColor, impGlow;
+  switch (impType) {
+    case 'alloy': impColor = 'rgba(251,146,60,0.65)'; impGlow = 'rgba(251,146,60,0.3)'; break;
+    case 'ionized': impColor = 'rgba(239,68,68,0.7)'; impGlow = 'rgba(239,68,68,0.35)'; break;
+    default: impColor = 'rgba(255,68,68,0.6)'; impGlow = 'rgba(255,68,68,0.3)'; break;
   }
-
-  /* Impurities (color-coded) */
-  if (st.showImpurities) {
-    var impColor, impGlow, impLabel;
-    switch (impType) {
-      case 'alloy': impColor = 'rgba(251,146,60,0.65)'; impGlow = 'rgba(251,146,60,0.3)'; break;
-      case 'ionized': impColor = 'rgba(239,68,68,0.7)'; impGlow = 'rgba(239,68,68,0.35)'; break;
-      default: impColor = 'rgba(255,68,68,0.6)'; impGlow = 'rgba(255,68,68,0.3)'; break;
-    }
-
-    for (var i = 0; i < geo.impurities.length; i++) {
-      var imp = geo.impurities[i];
-      ctx.fillStyle = impColor;
-      ctx.beginPath();
-      ctx.arc(imp.x, imp.y, 4.5, 0, 6.283);
-      ctx.fill();
-      ctx.strokeStyle = impGlow;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(imp.x, imp.y, 8, 0, 6.283);
-      ctx.stroke();
-
-      if (impType === 'ionized') {
-        ctx.fillStyle = 'rgba(255,255,255,0.8)';
-        ctx.font = 'bold 10px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText('+', imp.x, imp.y + 3);
-      }
+  for (var i = 0; i < geo.impurities.length; i++) {
+    var imp = geo.impurities[i];
+    ctx.fillStyle = impColor;
+    ctx.beginPath(); ctx.arc(imp.x, imp.y, 4.5, 0, 6.283); ctx.fill();
+    ctx.strokeStyle = impGlow; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(imp.x, imp.y, 8, 0, 6.283); ctx.stroke();
+    if (impType === 'ionized') {
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center';
+      ctx.fillText('+', imp.x, imp.y + 3);
     }
   }
+}
 
-  /* Electrons */
+function drawElectrons(ctx, geo) {
   for (var i = 0; i < geo.electrons.length; i++) {
     var e = geo.electrons[i];
     if (e.flash > 0) {
       var alpha = e.flash / 6;
       ctx.fillStyle = 'rgba(255,215,64,' + (alpha * 0.6) + ')';
-      ctx.beginPath();
-      ctx.arc(e.x, e.y, 6, 0, 6.283);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(e.x, e.y, 6, 0, 6.283); ctx.fill();
       ctx.strokeStyle = 'rgba(255,215,64,' + alpha + ')';
       ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(e.x, e.y, 10, 0, 6.283);
-      ctx.stroke();
+      ctx.beginPath(); ctx.arc(e.x, e.y, 10, 0, 6.283); ctx.stroke();
     }
     ctx.fillStyle = '#00f0ff';
-    ctx.beginPath();
-    ctx.arc(e.x, e.y, 3, 0, 6.283);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(e.x, e.y, 3, 0, 6.283); ctx.fill();
   }
+}
 
-  /* E-field arrow */
-  if (st.Efield > 0.001) {
-    var arrowLen = 30 + st.Efield * 150;
-    var ax = w - 50, ay = 28;
-    ctx.strokeStyle = '#c084fc';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(ax, ay);
-    ctx.lineTo(ax - arrowLen, ay);
-    ctx.stroke();
-    ctx.fillStyle = '#c084fc';
-    ctx.beginPath();
-    ctx.moveTo(ax, ay);
-    ctx.lineTo(ax - 10, ay - 4);
-    ctx.lineTo(ax - 10, ay + 4);
-    ctx.fill();
-    ctx.font = '11px JetBrains Mono, monospace';
-    ctx.textAlign = 'right';
-    ctx.fillStyle = '#c084fc';
-    ctx.fillText('E = ' + st.Efield.toFixed(3) + ' V/nm', ax, ay - 10);
-  }
+function drawEFieldArrow(ctx, w, st) {
+  if (st.Efield <= 0.001) return;
+  var arrowLen = 30 + st.Efield * 150;
+  var ax = w - 50, ay = 28;
+  ctx.strokeStyle = '#c084fc'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax - arrowLen, ay); ctx.stroke();
+  ctx.fillStyle = '#c084fc';
+  ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax - 10, ay - 4); ctx.lineTo(ax - 10, ay + 4); ctx.fill();
+  ctx.font = '11px JetBrains Mono, monospace'; ctx.textAlign = 'right'; ctx.fillStyle = '#c084fc';
+  ctx.fillText('E = ' + st.Efield.toFixed(3) + ' V/nm', ax, ay - 10);
+}
 
-  /* Drift velocity arrow */
+function drawDriftArrow(ctx, w, h, geo) {
   var avgVx = geo.avgVx || 0;
   var driftPx = avgVx * 2;
-  if (Math.abs(driftPx) > 1) {
-    var dx = w / 2, dy = h - 20;
-    ctx.strokeStyle = '#ffd740';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(dx, dy);
-    ctx.lineTo(dx + driftPx * 3, dy);
-    ctx.stroke();
-    ctx.fillStyle = '#ffd740';
-    ctx.beginPath();
-    ctx.moveTo(dx + driftPx * 3, dy);
-    ctx.lineTo(dx + driftPx * 3 - (driftPx > 0 ? 8 : -8), dy - 4);
-    ctx.lineTo(dx + driftPx * 3 - (driftPx > 0 ? 8 : -8), dy + 4);
-    ctx.fill();
-    ctx.font = '11px JetBrains Mono, monospace';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#ffd740';
-    ctx.fillText('v_d', dx + driftPx * 1.5, dy - 8);
-  }
+  if (Math.abs(driftPx) <= 1) return;
+  var dx = w / 2, dy = h - 20;
+  ctx.strokeStyle = '#ffd740'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(dx, dy); ctx.lineTo(dx + driftPx * 3, dy); ctx.stroke();
+  ctx.fillStyle = '#ffd740';
+  ctx.beginPath(); ctx.moveTo(dx + driftPx * 3, dy);
+  ctx.lineTo(dx + driftPx * 3 - (driftPx > 0 ? 8 : -8), dy - 4);
+  ctx.lineTo(dx + driftPx * 3 - (driftPx > 0 ? 8 : -8), dy + 4); ctx.fill();
+  ctx.font = '11px JetBrains Mono, monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#ffd740';
+  ctx.fillText('v_d', dx + driftPx * 1.5, dy - 8);
+}
 
-  /* MFP trails */
-  if (st.showMFP) {
-    ctx.strokeStyle = 'rgba(74,222,128,0.45)';
-    ctx.lineWidth = 1.5;
-    for (var i = 0; i < Math.min(geo.electrons.length, 20); i++) {
-      var e = geo.electrons[i];
-      var mfp = geo.mfpTracks[i];
-      if (mfp > 5) {
-        var speed = Math.sqrt(e.vx * e.vx + e.vy * e.vy);
-        if (speed > 0.1) {
-          var nx = e.vx / speed;
-          var ny = e.vy / speed;
-          var trailLen = Math.min(mfp, 50);
-          ctx.beginPath();
-          ctx.moveTo(e.x, e.y);
-          ctx.lineTo(e.x - nx * trailLen, e.y - ny * trailLen);
-          ctx.stroke();
-        }
-      }
-    }
+function drawMFPTrails(ctx, geo, st) {
+  if (!st.showMFP) return;
+  ctx.strokeStyle = 'rgba(74,222,128,0.45)';
+  ctx.lineWidth = 1.5;
+  for (var i = 0; i < Math.min(geo.electrons.length, 20); i++) {
+    var e = geo.electrons[i];
+    var mfp = geo.mfpTracks[i];
+    if (mfp <= 5) continue;
+    var speed = Math.sqrt(e.vx * e.vx + e.vy * e.vy);
+    if (speed <= 0.1) continue;
+    var nx = e.vx / speed, ny = e.vy / speed;
+    var trailLen = Math.min(mfp, 50);
+    ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(e.x - nx * trailLen, e.y - ny * trailLen); ctx.stroke();
   }
+}
 
-  /* Canvas legend (top-left) */
+function drawCanvasLegend(ctx, impType) {
   var lx = 12, ly = 12, lh = 18;
-  ctx.font = '11px JetBrains Mono, monospace';
-  ctx.textAlign = 'left';
+  ctx.font = '11px JetBrains Mono, monospace'; ctx.textAlign = 'left';
   var items = [
     { c: '#00f0ff', t: 'Electron' },
     { c: 'rgba(255,255,255,0.5)', t: 'Lattice ion' },
@@ -513,33 +456,52 @@ function condDrawFrame() {
   if (impType === 'grain_boundary') items.splice(2, 0, { c: 'rgba(150,150,150,0.6)', t: 'Grain boundary' });
   if (impType === 'thin_film') items.splice(2, 0, { c: 'rgba(59,130,246,0.6)', t: 'Rough surface' });
   if (impType === 'dislocation') items.splice(2, 0, { c: 'rgba(192,132,252,0.6)', t: 'Dislocation \u22a5' });
-
   for (var i = 0; i < items.length; i++) {
-    ctx.fillStyle = items[i].c;
-    ctx.fillRect(lx, ly + i * lh, 10, 10);
-    ctx.fillStyle = '#a0a0c0';
-    ctx.fillText(items[i].t, lx + 16, ly + i * lh + 9);
+    ctx.fillStyle = items[i].c; ctx.fillRect(lx, ly + i * lh, 10, 10);
+    ctx.fillStyle = '#a0a0c0'; ctx.fillText(items[i].t, lx + 16, ly + i * lh + 9);
   }
+}
 
-  /* Live readout bar */
+function drawLiveReadout(ctx, w, h, st) {
   var sigma = st.n * e_charge * e_charge * (st.tau * 1e-15) / m_e_kg;
   var vF = Math.sqrt(2 * 7.0 * e_charge / m_e_kg);
   var mfp = vF * st.tau * 1e-15 * 1e9;
   var mu = e_charge * (st.tau * 1e-15) / m_e_kg;
   var vd_real = (e_charge * st.Efield * 1e9 * st.tau * 1e-15 / m_e_kg) * 1e-3;
-
   ctx.fillStyle = 'rgba(10,10,20,0.85)';
   ctx.fillRect(w - 240, h - 68, 230, 62);
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1;
   ctx.strokeRect(w - 240, h - 68, 230, 62);
-  ctx.font = '10px JetBrains Mono, monospace';
-  ctx.textAlign = 'left';
-  ctx.fillStyle = '#a0a0c0';
+  ctx.font = '10px JetBrains Mono, monospace'; ctx.textAlign = 'left'; ctx.fillStyle = '#a0a0c0';
   ctx.fillText('v_d = ' + vd_real.toFixed(3) + ' mm/s', w - 234, h - 54);
   ctx.fillText('sigma = ' + (sigma / 1e7).toFixed(1) + 'e7 S/m', w - 234, h - 42);
   ctx.fillText('MFP = ' + mfp.toFixed(1) + ' nm', w - 234, h - 30);
   ctx.fillText('mu = ' + (mu * 1e4).toFixed(1) + ' cm2/Vs  tau=' + st.tau + 'fs', w - 234, h - 18);
+}
+
+function condDrawFrame() {
+  var geo = COND_CANVAS;
+  var ctx = geo.ctx;
+  var w = geo.width, h = geo.height;
+  var st = COND_STATE;
+  var t = geo.frame * 0.03;
+  var mat = COND_MATERIALS[st.material] || COND_MATERIALS['Cu'];
+  var impType = mat.impType || 'substitutional';
+
+  drawBackground(ctx, w, h);
+  drawGrid(ctx, w, h);
+  drawSurfaceRoughness(ctx, w, h, geo, t);
+  drawPhononBonds(ctx, geo, st, t);
+  drawLatticeIons(ctx, geo, st, t);
+  drawGrainBoundaries(ctx, geo, t);
+  drawDislocation(ctx, geo);
+  drawImpurities(ctx, geo, st);
+  drawElectrons(ctx, geo);
+  drawEFieldArrow(ctx, w, st);
+  drawDriftArrow(ctx, w, h, geo);
+  drawMFPTrails(ctx, geo, st);
+  drawCanvasLegend(ctx, impType);
+  drawLiveReadout(ctx, w, h, st);
 
   geo.frame++;
 }
