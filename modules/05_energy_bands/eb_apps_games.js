@@ -322,7 +322,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   if (typeof setGameMode === 'function') {
     var orig = setGameMode;
-    window.setGameMode = function(mode) {
+    setGameMode = function(mode) {
       orig(mode);
       if (mode === 'challenge') { startFermiHunter(); startBandgapDetective(); plotEffectiveMass(); }
       if (mode === 'puzzle') { initIntegralPuzzle(); initDiracPuzzle();

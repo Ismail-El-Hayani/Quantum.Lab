@@ -393,7 +393,7 @@ function updateAtomPlot() {
   const w = container.offsetWidth;
   const h = container.offsetHeight;
   if ((w === 0 || h === 0) && !__atomPlotRenderScheduled) {
-    var __atomPlotRenderScheduled = true;
+    __atomPlotRenderScheduled = true;
     requestAnimationFrame(() => {
       __atomPlotRenderScheduled = false;
       updateAtomPlot();
