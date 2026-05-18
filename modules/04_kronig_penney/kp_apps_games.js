@@ -117,13 +117,13 @@ function startCrystalDesigner() {
   var sB = document.getElementById('slider-cd-b');
   if (sV0) {
     sV0.addEventListener('input', function() {
-      document.getElementById('val-cd-v0').textContent = Number.parseFloat(this.value).toFixed(1);
+      document.getElementById('val-cd-v0').textContent = parseFloat(this.value).toFixed(1);
       updateCrystalDesignerPlot();
     });
   }
   if (sB) {
     sB.addEventListener('input', function() {
-      document.getElementById('val-cd-b').textContent = Number.parseFloat(this.value).toFixed(2);
+      document.getElementById('val-cd-b').textContent = parseFloat(this.value).toFixed(2);
       updateCrystalDesignerPlot();
     });
   }
@@ -138,8 +138,8 @@ function newCrystalDesignRound() {
 }
 
 function updateCrystalDesignerPlot() {
-  var V0 = Number.parseFloat(document.getElementById('slider-cd-v0').value);
-  var b_ratio = Number.parseFloat(document.getElementById('slider-cd-b').value);
+  var V0 = parseFloat(document.getElementById('slider-cd-v0').value);
+  var b_ratio = parseFloat(document.getElementById('slider-cd-b').value);
   if (typeof solveBands === 'function') {
     var result = solveBands(V0, 1.0, b_ratio, 200);
     var bands = result.bands;
@@ -295,11 +295,11 @@ function checkBlochOscillation() {
   var omega_THz = omega_B / (2 * Math.PI * 1e12);
   var T_ps = 1000 / omega_THz;
 
-  var guessOmega = Number.parseFloat(document.getElementById('bo-omega').value);
-  var guessT = Number.parseFloat(document.getElementById('bo-T').value);
+  var guessOmega = parseFloat(document.getElementById('bo-omega').value);
+  var guessT = parseFloat(document.getElementById('bo-T').value);
   var fb = document.getElementById('bo-feedback');
 
-  if (!Number.isNaN(guessOmega) && !Number.isNaN(guessT) && Math.abs(guessOmega - omega_THz) < 0.2 * omega_THz && Math.abs(guessT - T_ps) < 0.2 * T_ps) {
+  if (!isNaN(guessOmega) && !isNaN(guessT) && Math.abs(guessOmega - omega_THz) < 0.2 * omega_THz && Math.abs(guessT - T_ps) < 0.2 * T_ps) {
     fb.className = 'challenge-feedback success';
     fb.style.display = 'block';
     fb.textContent = '✓ Correct! ω_B = ' + omega_THz.toFixed(2) + ' THz, T_B = ' + T_ps.toFixed(2) + ' ps. Bloch oscillations are periodic motion of electrons in a lattice under an electric field.';
@@ -358,9 +358,9 @@ function checkBandgapEstimation() {
   var be = __KP.be;
   var V_G = (2 * be.V0 / Math.PI) * Math.sin(Math.PI * be.b_ratio);
   var predictedGap = 2 * Math.abs(V_G);
-  var guess = Number.parseFloat(document.getElementById('be-gap').value);
+  var guess = parseFloat(document.getElementById('be-gap').value);
   var fb = document.getElementById('be-feedback');
-  if (!Number.isNaN(guess) && Math.abs(guess - predictedGap) < 0.15 * predictedGap + 0.05) {
+  if (!isNaN(guess) && Math.abs(guess - predictedGap) < 0.15 * predictedGap + 0.05) {
     fb.className = 'challenge-feedback success';
     fb.style.display = 'block';
     fb.textContent = '✓ Excellent! Nearly-free gap ≈ 2|V_G| = ' + predictedGap.toFixed(3) + ' ℏ²/ma². The Fourier component V_G = (2V₀/π)sin(πb/a) captures the periodic perturbation strength.';

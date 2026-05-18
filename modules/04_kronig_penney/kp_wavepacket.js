@@ -48,7 +48,7 @@ function initWavePacketUI() {
     var display = document.getElementById('wp-val-' + id);
     if (!slider) return;
     slider.addEventListener('input', function() {
-      var v = Number.parseFloat(this.value);
+      var v = parseFloat(this.value);
       if (display) display.textContent = (key === 'count') ? String(v) : v.toFixed(key === 'dt' ? 4 : 2);
       if (_wpStandalone) {
         if (key === 'v0') _wpStandalone.setV0(v);

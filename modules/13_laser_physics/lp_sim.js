@@ -785,14 +785,14 @@ function initLaser() {
 
   if (sEg) {
     sEg.addEventListener('input', function() {
-      lpState.Eg = Number.parseFloat(this.value);
+      lpState.Eg = parseFloat(this.value);
       var el = document.getElementById('val-Eg');
       if (el) el.textContent = lpState.Eg.toFixed(2);
     });
   }
   if (sL) {
     sL.addEventListener('input', function() {
-      lpState.L = Number.parseFloat(this.value);
+      lpState.L = parseFloat(this.value);
       var el = document.getElementById('val-L');
       if (el) el.textContent = lpState.L;
       lpUpdateGeometry();
@@ -800,28 +800,28 @@ function initLaser() {
   }
   if (sN) {
     sN.addEventListener('input', function() {
-      lpState.n = Number.parseFloat(this.value);
+      lpState.n = parseFloat(this.value);
       var el = document.getElementById('val-n-lp');
       if (el) el.textContent = lpState.n.toFixed(2);
     });
   }
   if (sR) {
     sR.addEventListener('input', function() {
-      lpState.R = Number.parseFloat(this.value);
+      lpState.R = parseFloat(this.value);
       var el = document.getElementById('val-R');
       if (el) el.textContent = lpState.R.toFixed(2);
     });
   }
   if (sAlpha) {
     sAlpha.addEventListener('input', function() {
-      lpState.alpha = Number.parseFloat(this.value);
+      lpState.alpha = parseFloat(this.value);
       var el = document.getElementById('val-alpha');
       if (el) el.textContent = lpState.alpha.toFixed(1);
     });
   }
   if (sPump) {
     sPump.addEventListener('input', function() {
-      lpState.pumping = Number.parseFloat(this.value);
+      lpState.pumping = parseFloat(this.value);
       var el = document.getElementById('val-pumping');
       if (el) el.textContent = lpState.pumping.toFixed(1);
     });

@@ -450,7 +450,7 @@ function initSpin() {
 
   if (sliderTh) {
     sliderTh.addEventListener('input', function() {
-      state.theta = Number.parseFloat(this.value) * Math.PI / 180;
+      state.theta = parseFloat(this.value) * Math.PI / 180;
       document.getElementById('val-theta').textContent = this.value + '°';
       if (!state.animating) { plotBlochSphere(); plotSpinComponents(); plotLarmorPrecession(); updateLiveTable(); updateSG(); plotSGHistogram(); }
     });
@@ -458,7 +458,7 @@ function initSpin() {
 
   if (sliderPh) {
     sliderPh.addEventListener('input', function() {
-      state.phi = Number.parseFloat(this.value) * Math.PI / 180;
+      state.phi = parseFloat(this.value) * Math.PI / 180;
       document.getElementById('val-phi').textContent = this.value + '°';
       if (!state.animating) { plotBlochSphere(); plotSpinComponents(); plotLarmorPrecession(); updateLiveTable(); updateSG(); plotSGHistogram(); }
     });
@@ -466,7 +466,7 @@ function initSpin() {
 
   if (sliderB) {
     sliderB.addEventListener('input', function() {
-      state.B = Number.parseFloat(this.value);
+      state.B = parseFloat(this.value);
       document.getElementById('val-B').textContent = state.B.toFixed(2);
       plotLarmorPrecession();
       updateLiveTable();

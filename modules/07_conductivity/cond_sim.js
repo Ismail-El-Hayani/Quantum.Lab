@@ -769,7 +769,7 @@ function condWireSliders() {
     var el = document.getElementById(id);
     if (el) {
       el.addEventListener('input', function(e) {
-        var v = Number.parseFloat(e.target.value);
+        var v = parseFloat(e.target.value);
         ids[e.target.id](v);
         condUpdatePlots();
         condUpdateReadout();

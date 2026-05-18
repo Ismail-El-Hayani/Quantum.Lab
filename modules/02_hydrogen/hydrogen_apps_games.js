@@ -616,7 +616,7 @@ document.addEventListener('DOMContentLoaded', function() {
   /* Mode switch hook */
   if (typeof setGameMode === 'function') {
     var orig = setGameMode;
-    window.setGameMode = function(mode) {
+    setGameMode = function(mode) {
       orig(mode);
       if (mode === 'challenge' && typeof startSpectralChallenge === 'function') {
         startSpectralChallenge(); plotFineStructure();

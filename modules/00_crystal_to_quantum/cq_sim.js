@@ -766,7 +766,7 @@
   }
 
   window.firePhoton = function(energyEV) {
-    energyEV = Number.parseFloat(energyEV);
+    energyEV = parseFloat(energyEV);
     if (!scene) return;
 
     if (viewMode === 'wave') {

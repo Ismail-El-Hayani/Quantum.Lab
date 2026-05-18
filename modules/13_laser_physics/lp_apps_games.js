@@ -110,7 +110,7 @@ function startLamChallenge() {
 function checkLam() {
   var val = document.getElementById('lam-ans'); var fb = document.getElementById('lam-feedback');
   if (!val || !fb) return;
-  var guess = Number.parseFloat(val.value);
+  var guess = parseFloat(val.value);
   var ok = Math.abs(guess - lamCh.lam) / lamCh.lam < 0.05;
   fb.textContent = ok ? 'Correct! λ ≈ ' + lamCh.lam.toFixed(0) + ' nm' : 'Hint: λ (nm) ≈ 1240 / Eg(eV).';
   fb.className = 'challenge-feedback ' + (ok ? 'success' : 'hint');

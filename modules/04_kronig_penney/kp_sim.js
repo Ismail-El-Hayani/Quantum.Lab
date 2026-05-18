@@ -329,14 +329,14 @@ function initKP() {
 
   if(sliderV0){
     sliderV0.addEventListener('input',function(){
-      state.V0 = Number.parseFloat(this.value);
+      state.V0 = parseFloat(this.value);
       var el = document.getElementById('val-v0'); if(el) el.textContent = state.V0.toFixed(1);
       updateAll();
     });
   }
   if(sliderB){
     sliderB.addEventListener('input',function(){
-      state.b = Number.parseFloat(this.value) * state.a;
+      state.b = parseFloat(this.value) * state.a;
       var el = document.getElementById('val-b'); if(el) el.textContent = (state.b/state.a).toFixed(2);
       updateAll();
     });
@@ -344,7 +344,7 @@ function initKP() {
   if(sliderA){
     sliderA.addEventListener('input',function(){
       let ratio = state.b / state.a;
-      state.a = Number.parseFloat(this.value);
+      state.a = parseFloat(this.value);
       state.b = ratio * state.a;
       var elA = document.getElementById('val-a'); if(elA) elA.textContent = state.a.toFixed(1);
       var elB = document.getElementById('val-b'); if(elB) elB.textContent = ratio.toFixed(2);
@@ -353,7 +353,7 @@ function initKP() {
   }
   if(sliderE){
     sliderE.addEventListener('input',function(){
-      state.E = Number.parseFloat(this.value);
+      state.E = parseFloat(this.value);
       var el = document.getElementById('val-e'); if(el) el.textContent = state.E.toFixed(1);
       updateAll();
     });
