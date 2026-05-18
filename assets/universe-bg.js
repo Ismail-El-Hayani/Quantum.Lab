@@ -196,9 +196,9 @@
 
   /* ═════════════════════════ Drawing helpers ═════════════════════════ */
   function shadeColor(hex, pct) {
-    let R = parseInt(hex.substring(1,3),16);
-    let G = parseInt(hex.substring(3,5),16);
-    let B = parseInt(hex.substring(5,7),16);
+    let R = Number.parseInt(hex.substring(1,3),16);
+    let G = Number.parseInt(hex.substring(3,5),16);
+    let B = Number.parseInt(hex.substring(5,7),16);
     R = Math.min(255, Math.floor(R * (100 + pct) / 100));
     G = Math.min(255, Math.floor(G * (100 + pct) / 100));
     B = Math.min(255, Math.floor(B * (100 + pct) / 100));
