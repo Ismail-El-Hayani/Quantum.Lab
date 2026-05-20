@@ -35,7 +35,8 @@
   .lab-glow.kp       { background: radial-gradient(circle at 80% 80%, #facc15, transparent 60%); }
   .lab-glow.bands    { background: radial-gradient(circle at 20% 20%, #4ade80, transparent 60%); }
   .lab-glow.fermi    { background: radial-gradient(circle at 50% 80%, #fb923c, transparent 60%); }
-  .lab-glow.conduct  { background: radial-gradient(circle at 80% 50%, #00f0ff, transparent 60%); }
+  .lab-glow.conduct { background: radial-gradient(circle at 80% 50%, #00f0ff, transparent 60%); }
+  .lab-glow.thinfilm { background: radial-gradient(circle at 50% 30%, #2dd4bf, transparent 60%); }
 
   .lab-content { position: relative; z-index: 1; display: flex; flex-direction: column; gap: var(--space-sm); }
   .lab-badge {
@@ -245,8 +246,12 @@
     <div class="timeline-label">Magnetism</div>
   </div>
   <div class="timeline-node" data-module="15">
-    <div class="timeline-dot">15</div>
-    <div class="timeline-label">Thermal</div>
+    <span class="node-num">15</span>
+    <span class="node-label">Thermal</span>
+  </div>
+  <div class="timeline-node" data-module="16">
+    <span class="node-num">16</span>
+    <span class="node-label">Thin Film</span>
   </div>
 </div>
 
@@ -641,6 +646,30 @@
             <path class="ring-fill" id="ring-15" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
           </svg>
           <span class="ring-text" id="pct-15">0%</span>
+    </div>
+    </div>
+    </a>
+
+    <!-- MODULE 16 -->
+    <a href="modules/16_thin_film/index.html" class="lab-card tilt-card spotlight reveal" data-module="16">
+      <div class="lab-glow thinfilm"></div>
+      <div class="lab-content">
+        <div class="lab-badge"><span class="lab-num">16</span></div>
+        <div class="lab-info">
+          <h3>Thin Film Interference</h3>
+          <p>Fresnel coefficients, round-trip phase &#946;, Airy total &#8476; and &#8460;. Design anti-reflection coatings.</p>
+          <div class="lab-chips">
+            <span class="chip">&#128640; Airy Fringes</span>
+            <span class="chip">&#129514; AR Coating Designer</span>
+            <span class="chip">&#128202; Spectral Response</span>
+          </div>
+        </div>
+        <div class="lab-progress-ring">
+          <svg viewBox="0 0 36 36">
+            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path class="ring-fill" id="ring-16" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          </svg>
+          <span class="ring-text" id="pct-16">0%</span>
         </div>
       </div>
     </a>
@@ -680,7 +709,7 @@
 
   // ── Load progress & animate counts ──
   var explored = 0, totalXP = 0;
-  for (var m = 0; m <= 15; m++) {
+  for (var m = 0; m <= 16; m++) {
     var pad = m < 10 ? '0' + m : m;
     var pct = __GameState.getProgress ? __GameState.getProgress(m) : 0;
     var ring = document.getElementById('ring-' + pad);
@@ -691,7 +720,7 @@
   }
   totalXP = __GameState.xp ? __GameState.xp() : 0;
   document.getElementById('nav-xp').textContent = totalXP + ' XP';
-  document.getElementById('nav-explored').textContent = explored + '/16 modules';
+  document.getElementById('nav-explored').textContent = explored + '/17 modules';
 
   // XP bar
   var levelFn = __GameState.level;

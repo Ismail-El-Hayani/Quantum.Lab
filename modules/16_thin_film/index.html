@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 16 — Thin Film Interference</title>
+<link rel="stylesheet" href="../../shared_styles.css">
+<style>
+  body { zoom: 1.25; }
+  .mode-bar { display:flex; gap:0.5rem; justify-content:center; padding:0.6rem 1rem; position:sticky; top:52px; z-index:10; background:rgba(0,0,0,0.35); backdrop-filter:blur(8px); }
+  .macro-panel { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-top:1rem; }
+  .macro-panel h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
+  .material-presets { margin-bottom:0.5rem; }
+  .preset-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap:0.5rem; }
+  .preset-btn { padding:0.5rem; border-radius:var(--radius-md); border:1px solid var(--glass-border); background:var(--bg-deep); color:var(--text-main); cursor:pointer; font-weight:600; transition:all .2s; }
+  .preset-btn:hover { border-color:var(--accent-cyan); }
+  .preset-btn.active { background:var(--grad-hero); border-color:transparent; color:#fff; }
+  .control-row { display:flex; flex-wrap:wrap; gap:1rem; margin-top:0.6rem; }
+  .slider-group { flex:1 1 200px; }
+  .slider-group label { display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:0.3rem; }
+  .slider-group input[type=range] { width:100%; }
+  .slider-value { font-family:var(--font-mono); color:var(--accent-cyan); font-weight:700; }
+  .slider-desc { font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; }
+  .readout-section { margin-top:1rem; }
+  .readout-table { width:100%; border-collapse:collapse; font-size:0.82rem; margin-top:0.4rem; }
+  .readout-table th, .readout-table td { padding:6px 8px; border-bottom:1px solid var(--glass-border); text-align:center; }
+  .readout-table th { color:var(--accent-cyan); font-weight:600; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em; }
+  .readout-table td { color:var(--text-bright); font-family:var(--font-mono); }
+  .insights { display:grid; grid-template-columns:1fr; gap:1rem; margin-top:1rem; }
+  @media (min-width:768px) { .insights { grid-template-columns:1fr 1fr; } }
+  .insight-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; }
+  .insight-card h4 { margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright); }
+  .insight-card p { font-size:0.88rem; color:var(--text-muted); line-height:1.55; margin:0.4rem 0; }
+  .sidebar-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-bottom:1rem; }
+  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
+  .stats { list-style:none; padding:0; font-size:0.85rem; color:var(--text-muted); }
+  .stats li { display:flex; justify-content:space-between; margin-bottom:0.4rem; }
+  .badge-grid { display:flex; flex-wrap:wrap; gap:0.4rem; }
+  .material-badge { display:inline-block; padding:2px 8px; border-radius:12px; font-size:0.72rem; font-weight:700; border:1px solid; }
+  .challenge-interface, .puzzle-interface { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1.5rem; margin-top:1rem; }
+  .ch-question { font-size:1rem; margin-bottom:1rem; color:var(--text-main); }
+  .ch-options { display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:1rem; }
+  .ch-score { font-size:1rem; color:var(--accent-cyan); font-family:var(--font-mono); margin-top:1rem; }
+  .puz-list { margin:1rem 0; }
+  .submit-btn { padding:0.5rem 1.2rem; border-radius:var(--radius-md); border:1px solid var(--glass-border); background:var(--bg-elevated); color:var(--text-main); cursor:pointer; font-weight:600; }
+  .submit-btn:hover { border-color:var(--accent-cyan); }
+  .feedback { font-size:0.9rem; margin-top:0.5rem; min-height:1.2em; }
+  .eq-ribbon { background:linear-gradient(135deg,#0a0e1f,#080c18); border:1px solid var(--glass-border); border-radius:12px; padding:1rem 1.2rem; margin-bottom:1rem; }
+  .live-bar { display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
+  .live-box { flex:1 1 120px; background:var(--bg-deep); padding:8px 12px; border-radius:6px; border:1px solid var(--glass-border); text-align:center; }
+  .live-box .label { font-size:0.68rem; color:var(--text-dim); text-transform:uppercase; }
+  .live-box .val { font-family:var(--font-mono); color:var(--accent-cyan); font-size:1.05rem; font-weight:700; }
+  @media (max-width:720px) { .preset-grid { grid-template-columns: repeat(2,1fr); } }
+</style>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js" crossorigin></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.min.js" async crossorigin></script>
+</head>
+<body>
+
+<nav class="game-nav">
+  <div class="nav-brand"><a href="../../index.html" style="text-decoration:none;color:inherit;"><span class="nav-logo">&#9883;</span> Physics Playground</a></div>
+  <div class="nav-stats">
+    <div class="stat-badge"><span class="stat-icon">&#128301;</span><span class="stat-value">16 — Thin Film Interference</span></div>
+    <div class="stat-badge"><span class="stat-icon">&#11088;</span><span class="stat-value" id="nav-xp">0 XP</span></div>
+  </div>
+</nav>
+
+<div class="game-hero" style="padding-bottom:0;">
+  <div class="level-badge">LEVEL 16</div>
+  <h1 style="font-size:2.4rem;"><span style="background:var(--grad-hero);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Thin Film Interference &amp; Airy Formulas</span></h1>
+  <p class="hero-desc">
+    A plane wave hits a thin film n<sub>2</sub> of thickness <i>d</i> on substrate n<sub>3</sub>.
+    Internal reflections interfere, giving oscillating reflectance and transmittance.
+  </p>
+  <div style="margin-top:0.5rem;font-size:0.95rem;color:var(--text-dim);" id="eq-hero-text">
+    \(\displaystyle \beta = \frac{2\pi}{\lambda}\,n_2 d \cos\theta_2 \quad ; \quad
+    \mathcal{R} = \frac{|r_{12} + r_{23} e^{2i\beta}|^2}{|1 + r_{12} r_{23} e^{2i\beta}|^2} \quad ; \quad
+    \mathcal{T} = \frac{n_3\cos\theta_3}{n_1\cos\theta_1}\,|t|^2\)
+  </div>
+</div>
+
+<div class="mode-bar">
+  <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">&#128300; Playground</button>
+  <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">&#127919; Challenges</button>
+  <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">&#129513; Puzzle</button>
+</div>
+
+<div class="game-layout" style="max-width:1400px;margin:0 auto;padding:0 2rem 3rem;">
+<div class="game-main">
+
+<!-- ═════════════════════ PLAYGROUND ═════════════════════ -->
+<div class="mode-section" id="section-play">
+
+  <section class="material-presets">
+    <h3>&#129514; Layer Presets</h3>
+    <div class="preset-grid">
+      <button class="preset-btn active" onclick="tfSetPreset('air-SiO2-Si')">Air / SiO&#8322; / Si</button>
+      <button class="preset-btn" onclick="tfSetPreset('air-MgF2-glass')">Air / MgF&#8322; / Glass</button>
+      <button class="preset-btn" onclick="tfSetPreset('glass-water-glass')">Glass / Water / Glass</button>
+      <button class="preset-btn" onclick="tfSetPreset('water-oil-air')">Water / Oil / Air</button>
+    </div>
+  </section>
+
+  <section class="macro-panel">
+    <h3>&#128640; Thin Film Ray Diagram</h3>
+    <p class="slider-desc">
+      Incident (n<sub>1</sub>, yellow) &#8594; reflected (cyan) + film-internal (n<sub>2</sub>, green)
+      &#8594; substrate-transmitted (n<sub>3</sub>, purple). Internal bounces interfere.
+    </p>
+    <canvas id="tf-canvas" style="display:block;width:100%;border-radius:8px;background:#060810;"></canvas>
+    <div class="live-bar">
+      <div class="live-box"><div class="label">Reflectance &#8476;</div><div class="val" id="live-R">—</div></div>
+      <div class="live-box"><div class="label">Transmittance &#8460;</div><div class="val" id="live-T">—</div></div>
+      <div class="live-box"><div class="label">Phase &#946; (rad)</div><div class="val" id="live-beta">—</div></div>
+      <div class="live-box"><div class="label">&#952;&#8322;</div><div class="val" id="live-theta2">—</div></div>
+      <div class="live-box"><div class="label">&#952;&#8323;</div><div class="val" id="live-theta3">—</div></div>
+    </div>
+  </section>
+
+  <section class="macro-panel">
+    <h3>&#128295; Controls</h3>
+    <div class="control-row">
+      <div class="slider-group"><label>n&#8321; (incident)</label><input type="range" min="1.0" max="2.5" step="0.01" value="1.00" id="slider-n1" oninput="tfSliderN1(this.value)"><span class="slider-value" id="val-n1">1.00</span></div>
+      <div class="slider-group"><label>n&#8322; (film)</label><input type="range" min="1.0" max="4.5" step="0.01" value="1.46" id="slider-n2" oninput="tfSliderN2(this.value)"><span class="slider-value" id="val-n2">1.46</span></div>
+      <div class="slider-group"><label>n&#8323; (substrate)</label><input type="range" min="1.0" max="5.0" step="0.01" value="3.50" id="slider-n3" oninput="tfSliderN3(this.value)"><span class="slider-value" id="val-n3">3.50</span></div>
+      <div class="slider-group"><label>Thickness d (nm)</label><input type="range" min="10" max="800" step="5" value="195" id="slider-d" oninput="tfSliderD(this.value)"><span class="slider-value" id="val-d">195 nm</span></div>
+      <div class="slider-group"><label>Incident angle &#952;&#8321; (&#176;)</label><input type="range" min="0" max="89" step="1" value="30" id="slider-theta1" oninput="tfSliderTheta1(this.value)"><span class="slider-value" id="val-theta1">30&#176;</span></div>
+      <div class="slider-group"><label>Wavelength &#955; (nm)</label><input type="range" min="300" max="1200" step="10" value="620" id="slider-lam" oninput="tfSliderLam(this.value)"><span class="slider-value" id="val-lam">620 nm</span></div>
+    </div>
+  </section>
+
+  <section class="macro-panel">
+    <h3>&#128202; Spectral Response &#8476;(&#955;) + &#8460;(&#955;)</h3>
+    <div class="plots" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;">
+        <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Reflectance &amp; Transmittance</h4>
+        <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;">Airy fringes vs wavelength. Vertical cursor marks current &#955;.</p>
+        <div id="plot-RT" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;min-height:300px;"></div>
+      </div>
+      <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;">
+        <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Standing Wave |E(z)|&#178; inside Film</h4>
+        <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;">Interference of forward + backward waves in n&#8322;.</p>
+        <div id="plot-standing" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;min-height:300px;"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="macro-panel">
+    <h3>&#128220; Fresnel Coefficients &amp; Airy Summary</h3>
+    <div style="font-size:0.88rem;color:var(--text-muted);line-height:1.8;" id="eq-summary">
+      Interface 1&#8594;2: &nbsp;
+      \(r_{12} = \dfrac{n_1\cos\theta_1 - n_2\cos\theta_2}{n_1\cos\theta_1 + n_2\cos\theta_2}\)
+      &nbsp;&nbsp;
+      \(t_{12} = \dfrac{2n_1\cos\theta_1}{n_1\cos\theta_1 + n_2\cos\theta_2}\)
+      <br>
+      Interface 2&#8594;3: &nbsp;
+      \(r_{23} = \dfrac{n_2\cos\theta_2 - n_3\cos\theta_3}{n_2\cos\theta_2 + n_3\cos\theta_3}\)
+      &nbsp;&nbsp;
+      \(t_{23} = \dfrac{2n_2\cos\theta_2}{n_2\cos\theta_2 + n_3\cos\theta_3}\)
+      <br>
+      Total: &nbsp;
+      \(r = \dfrac{r_{12} + r_{23}e^{2i\beta}}{1 + r_{12}r_{23}e^{2i\beta}}\)
+      &nbsp;&nbsp;
+      \(t = \dfrac{t_{12}t_{23}e^{i\beta}}{1 + r_{12}r_{23}e^{2i\beta}}\)
+    </div>
+  </section>
+
+  <section class="insights">
+    <div class="insight-card">
+      <h4>&#128214; Physical Motivation — Why does R oscillate?</h4>
+      <p>
+        Each time the wave reflects inside the film it picks up a round-trip phase
+        \(2\beta = (4\pi/\lambda)\,n_2 d \cos\theta_2\).
+        When \(2\beta = 2m\pi\) the internal reflections add constructively and R is maximum.
+        When \(2\beta = (2m+1)\pi\) they cancel and R drops.
+      </p>
+      <p>
+        A <strong>quarter-wave anti-reflection coating</strong> satisfies
+        \(n_2 = \sqrt{n_1 n_3}\) and \(d = \lambda/(4n_2)\), giving \(r_{12} = -r_{23}\)
+        and \(\beta = \pi/2\) so the numerator of \(r\) vanishes.
+      </p>
+    </div>
+    <div class="insight-card">
+      <h4>&#128300; Fabry&#8211;P&#233;rot Resonance</h4>
+      <p>
+        When \(r_{23}\) is large (e.g. SiO&#8322; on Si) and \(2\beta = 2m\pi\),
+        the denominator \(1 + r_{12}r_{23}e^{2i\beta}\) approaches its minimum,
+        giving sharp transmission peaks. This is the principle of optical filters,
+        VCSEL cavities, and spectroscopic etalons.
+      </p>
+    </div>
+  </section>
+
+  <section class="readout-section">
+    <h3>&#128202; Live Readout</h3>
+    <table class="readout-table">
+      <thead><tr>
+        <th>n&#8321;</th><th>n&#8322;</th><th>n&#8323;</th><th>d (nm)</th><th>&#955; (nm)</th><th>&#952;&#8321;</th>
+        <th>&#952;&#8322;</th><th>&#952;&#8323;</th><th>r&#8321;&#8322;</th><th>r&#8322;&#8323;</th>
+        <th>&#946; (rad)</th><th>&#8476; (%)</th><th>&#8460; (%)</th>
+      </tr></thead>
+      <tbody><tr>
+        <td id="live-n1">—</td><td id="live-n2">—</td><td id="live-n3">—</td>
+        <td id="live-d">—</td><td id="live-lam">—</td><td id="live-th1">—</td>
+        <td id="live-th2">—</td><td id="live-th3">—</td>
+        <td id="live-r12">—</td><td id="live-r23">—</td>
+        <td id="live-beta-t">—</td><td id="live-R-t">—</td><td id="live-T-t">—</td>
+      </tr></tbody>
+    </table>
+  </section>
+
+</div>
+
+<!-- ═════════════════════ CHALLENGES ═════════════════════ -->
+<div class="mode-section" id="section-challenge" style="display:none;">
+  <section class="challenge-interface">
+    <h3>&#127919; Predict the Outcome</h3>
+    <div class="timer-bar"><div class="timer-fill" id="ch-timer"></div></div>
+    <div id="ch-question" class="ch-question"></div>
+    <div id="ch-options" class="ch-options"></div>
+    <div id="ch-feedback" class="feedback"></div>
+    <div id="ch-score" class="ch-score">Score: 0</div>
+  </section>
+</div>
+
+<!-- ═════════════════════ PUZZLE ═════════════════════ -->
+<div class="mode-section" id="section-puzzle" style="display:none;">
+  <section class="puzzle-interface">
+    <h3>&#129513; Design an AR Coating</h3>
+    <p>For each substrate, choose the correct film index and thickness for minimum reflection at &#955;=550 nm.</p>
+    <div id="puz-list" class="puz-list"></div>
+    <button class="submit-btn" onclick="checkTFPuzzle()">Check Answers</button>
+    <div id="puz-feedback" class="feedback"></div>
+  </section>
+</div>
+
+</div>
+
+<aside class="game-sidebar">
+  <div class="sidebar-card"><h4>&#127942; Badges</h4><div id="badge-list" class="badge-grid"></div></div>
+  <div class="sidebar-card">
+    <h4>&#128202; Scoreboard</h4>
+    <ul class="stats">
+      <li>Challenges: <span id="stat-challenges">0</span></li>
+      <li>Puzzles:    <span id="stat-puzzles">0</span></li>
+      <li>Badges:     <span id="stat-badges">0</span></li>
+      <li>XP:         <span id="stat-xp">0</span></li>
+    </ul>
+  </div>
+  <div class="sidebar-card"><h4>&#129517; Lab Navigator</h4><div id="module-nav"></div></div>
+</aside>
+
+</div>
+
+<script src="../../shared_ui.js"></script>
+<script src="../../shared_games.js"></script>
+<script src="../../shared_interactive.js"></script>
+<script src="tf_sim.js?v=1"></script>
+<script src="tf_apps_games.js?v=1"></script>
+<script src="../../shared_effects.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  if(typeof initTF==='function') initTF();
+  if(typeof initTFGames==='function') initTFGames();
+});
+</script>
+
+</body>
+</html>
