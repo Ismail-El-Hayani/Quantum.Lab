@@ -166,8 +166,8 @@ window.eqInitSnell = function() {
 function eqResizeSnell() {
   var wrap = document.getElementById('eq-wrap-snell');
   if (!wrap || !canvSnell) return;
-  var w = Math.max(360, Math.min(wrap.clientWidth, 720)); /* cap width for stability */
-  var h = 300;  /* compact height: equivalent to ~0.83× prior 360 px */
+  var w = Math.max(360, wrap.clientWidth);
+  var h = 360;
   canvSnell.width = w; canvSnell.height = h;
 }
 window.eqDrawSnell = function() {
@@ -806,8 +806,8 @@ window.eqInitThinFilm = function() {
 function eqResizeThinFilm() {
   var wrap = document.getElementById('eq-wrap-thinfilm');
   if (!wrap || !canvThinFilm) return;
-  var w = Math.max(360, Math.min(wrap.clientWidth, 720)); /* cap width for stability */
-  var h = 300;  /* compact, same as Snell: symmetric 100px per layer */
+  var w = Math.max(360, wrap.clientWidth);
+  var h = 340;
   canvThinFilm.width = w; canvThinFilm.height = h;
 }
 

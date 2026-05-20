@@ -61,6 +61,11 @@
   .beam-legend { position:absolute; bottom:12px; right:12px; z-index:2; background:rgba(10,12,24,0.72); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:8px 12px; font-size:0.72rem; color:var(--text-dim); display:flex; flex-direction:column; gap:4px; pointer-events:none; }
   .beam-legend span { display:flex; align-items:center; gap:6px; }
   .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+  /* Zoom all 4 equation canvases to 90% for tighter refraction frames */
+  #eq-canvas-snell, #eq-canvas-damping, #eq-canvas-fresnel, #eq-canvas-thinfilm {
+    transform: scale(0.90);
+    transform-origin: center;
+  }
   @media (max-width:720px) { .preset-grid { grid-template-columns: repeat(2,1fr); } #macro-canvas-container { height:320px !important; } .insights { grid-template-columns:1fr; } }
 </style>
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" crossorigin></script>
