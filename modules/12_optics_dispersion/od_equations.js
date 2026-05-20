@@ -743,13 +743,21 @@ function eqTFComputeTheta3() {
 }
 function eqTFComputeBeta() {
   /* Phase accumulated during one round-trip through the film:
-   *   β = (2π/λ) · n₂ · d · cos θ₂   [radians]
-   * λ, d in nm → result is dimensionless angle */
+   *   β = (2π / λ) · n₂ · d · cos θ₂   [radians]
+   *
+   * λ  : wavelength in vacuum (nm)
+   * n₂ : refractive index of film
+   * d  : physical thickness of film (nm)
+   * θ₂ : refraction angle inside film (Snell: n₁ sin θ₁ = n₂ sin θ₂)
+   *
+   * β is dimensionless; it counts how many radians the E-field
+   * rotates during one extra pass through the film. */
   var th2 = eqTFComputeTheta2();
-  if (th2 === null) return null;
+  if (th2 === null) return null; /* TIR: no propagating wave in film */
   var lam_nm = eqState.lambda;
   var n2 = eqState.n2, d_nm = eqState.d;
   var cos2 = Math.cos(th2 * Math.PI / 180);
+  /* β = (2π/λ) n₂ d cos θ₂ */
   return (2 * Math.PI / lam_nm) * n2 * d_nm * cos2;
 }
 function eqTFComputeFresnel() {
@@ -771,10 +779,16 @@ function eqTFComputeFresnel() {
   return {r12:r12, t12:t12, r23:r23, t23:t23};
 }
 function eqTFComputeAiry() {
-  /* Total reflection and transmission for thin film (Airy formulas).
-   *   r = (r12 + r23·e^{2iβ}) / (1 + r12·r23·e^{2iβ})
-   *   t = (t12·t23·e^{iβ})   / (1 + r12·r23·e^{2iβ})
-   *   R = |r|² ,  T = (n3 cos θ3 / n1 cos θ1) · |t|²
+  /* Airy total reflection / transmission for a single-layer thin film.
+   *
+   *   Amplitude reflection          r = (r₁₂ + r₂₃·e^{2iβ}) / (1 + r₁₂·r₂₃·e^{2iβ})
+   *   Amplitude transmission        t = (t₁₂·t₂₃·e^{iβ})   / (1 + r₁₂·r₂₃·e^{2iβ})
+   *
+   *   Total reflectance             ℛ = |r|²
+   *   Total transmittance           𝒯 = (n₃ cos θ₃ / n₁ cos θ₁) · |t|²
+   *
+   * The factor (n₃ cos θ₃ / n₁ cos θ₁) conserves energy flux across
+   * the three-media stack: ℛ + 𝒯 = 1 (for non-absorbing media).
    */
   var beta = eqTFComputeBeta();
   if (beta === null) return {R:1, T:0, r12:1, r23:1, beta:0, theta2:null, theta3:null};
@@ -1091,9 +1105,9 @@ window.eqDrawThinFilm = function() {
   c.fillStyle = 'rgba(6,8,16,0.80)'; c.fillRect(w-220, 6, 214, 56);
   c.strokeStyle = 'rgba(255,255,255,0.12)'; c.strokeRect(w-220, 6, 214, 56);
   c.fillStyle = '#ccc'; c.font = 'bold 12px monospace'; c.textAlign = 'left';
-  c.fillText('R=' + (airy.R*100).toFixed(1) + '%', w-212, 22);
-  c.fillText('T=' + (airy.T*100).toFixed(1) + '%', w-212, 38);
-  c.fillText('β=' + airy.beta.toFixed(2) + ' rad', w-212, 54);
+  c.fillText('ℛ = ' + (airy.R*100).toFixed(1) + '%', w-212, 22);
+  c.fillText('𝒯 = ' + (airy.T*100).toFixed(1) + '%', w-212, 38);
+  c.fillText('β = ' + airy.beta.toFixed(2) + ' rad', w-212, 54);
 };
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1124,6 +1138,10 @@ window.eqSetScreen = function(name) {
     if (tab) tab.classList.toggle('active', s===name);
   });
   eqUpdateRibbon();
+  /* Trigger MathJax re-typeset for newly-visible tab */
+  if (name === 'thinfilm' && typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+    setTimeout(function() { MathJax.typesetPromise(); }, 200);
+  }
   /* restart pulse when entering Snell */
   if (name === 'snell') eqResetSnellPulse();
   if (eqState.animating && animId) {
