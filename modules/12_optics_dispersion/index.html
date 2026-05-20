@@ -126,12 +126,7 @@
     <!-- Equation Ribbon -->
     <div class="eq-ribbon" id="eq-ribbon" style="background:linear-gradient(135deg,#0a0e1f,#080c18);border:1px solid var(--glass-border);border-radius:12px;padding:1rem 1.2rem;margin-bottom:1rem;">
       <div style="color:var(--text-dim);font-size:0.78rem;margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.06em;">Active Equation</div>
-      <div id="eq-active-text" style="font-family:var(--font-mono);font-size:1.05rem;color:var(--text-bright);line-height:1.8;">
-        <span class="eq-eq-name" style="color:var(--accent-cyan);font-weight:700;">Snell's Law:</span>
-        n₁ sin θ₁ = n₂ sin θ₂
-        &nbsp;&nbsp;→&nbsp;&nbsp;θ₂ =
-        <span class="eq-computed" data-computed="theta2" style="color:var(--accent-green);font-weight:700;">—</span>
-      </div>
+      <div id="eq-active-text" style="font-family:var(--font-mono);font-size:1.05rem;color:var(--text-bright);line-height:1.8;"></div>
       <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem;">
         <span class="material-badge" style="color:#ffdd44;border-color:#ffdd44;">n₁ = <span class="eq-param" data-symbol="n1">1.00</span></span>
         <span class="material-badge" style="color:#4ade80;border-color:#4ade80;">n₂ = <span class="eq-param" data-symbol="n2">3.50</span></span>
@@ -153,7 +148,13 @@
       <!-- Snell Canvas -->
       <div class="viz-card" id="eq-wrap-snell" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;">
         <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Wave Refraction</h4>
-        <p class="slider-desc">Animated wavefronts hitting an interface. Watch the wavelength shorten and the angle change as n₂ changes.</p>
+        <p class="slider-desc">
+          Snell's law governs refraction:
+          \(\displaystyle n_1\sin\theta_1 = n_2\sin\theta_2 \).
+          The wave slows down in the denser medium:
+          \(v_2 = c/n_2\) and the wavelength shortens to
+          \(\lambda_2 = \lambda_1\,n_1/n_2\).
+        </p>
         <canvas id="eq-canvas-snell" style="display:block;width:100%;border-radius:8px;background:#060810;"></canvas>
         <div style="display:flex;flex-wrap:wrap;gap:1rem;margin-top:0.6rem;">
           <div class="slider-group" style="flex:1 1 200px;">
@@ -170,7 +171,16 @@
       <!-- Damped Wave Canvas -->
       <div class="viz-card" id="eq-wrap-damping" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;display:none;">
         <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Damped Electromagnetic Wave</h4>
-        <p class="slider-desc">E(z,t) = E₀ exp(−ωκz/c) · cos[ω(t − nz/c)]. The envelope shrinks with depth. Intensity I(z) ∝ |E|² decays as exp(−z/W).</p>
+        <p class="slider-desc">
+          In an absorbing medium the refractive index is complex: \(\tilde{n} = n + i\kappa\).
+          The electric field is
+          \(\displaystyle E(z,t) = E_0\,e^{-\kappa k_0 z}\cos(\omega t - n k_0 z) \)
+          where \(k_0 = 2\pi/\lambda\).
+          The intensity decays as \(I(z) = I_0\,e^{-z/W}\) with penetration depth
+          \(\displaystyle W = \frac{\lambda}{4\pi\kappa}\)
+          and absorption coefficient
+          \(\displaystyle \alpha = \frac{4\pi\kappa}{\lambda}\).
+        </p>
         <canvas id="eq-canvas-damping" style="display:block;width:100%;border-radius:8px;background:#060810;"></canvas>
         <div style="display:flex;flex-wrap:wrap;gap:1rem;margin-top:0.6rem;">
           <div class="slider-group" style="flex:1 1 200px;">
@@ -197,7 +207,13 @@
       <!-- Fresnel Canvas -->
       <div class="viz-card" id="eq-wrap-fresnel" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;display:none;">
         <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Fresnel Reflectivity vs Angle</h4>
-        <p class="slider-desc">R(θ) for s and p polarization. At Brewster's angle R_p = 0 — only reflected light is s-polarized. Polaroid sunglasses exploit this to cut glare.</p>
+        <p class="slider-desc">
+          Fresnel coefficients for reflection at an interface (s and p polarisation):
+          \(\displaystyle r_s = \frac{n_1\cos\theta_1 - n_2\cos\theta_2}{n_1\cos\theta_1 + n_2\cos\theta_2} \);
+          \(\displaystyle r_p = \frac{n_2\cos\theta_1 - n_1\cos\theta_2}{n_2\cos\theta_1 + n_1\cos\theta_2} \).
+          Reflectance \(\mathcal{R}_{s,p} = |r_{s,p}|^2\).  Brewster's angle
+          \(\theta_B = \arctan(n_2/n_1)\) where \(\mathcal{R}_p = 0\).
+        </p>
         <canvas id="eq-canvas-fresnel" style="display:block;width:100%;border-radius:8px;background:#060810;"></canvas>
         <div style="display:flex;flex-wrap:wrap;gap:1rem;margin-top:0.6rem;">
           <div class="slider-group" style="flex:1 1 200px;">

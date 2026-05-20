@@ -46,7 +46,42 @@ window.eqUpdateRibbon = function() {
     else if (sym === 'E') s.textContent = eqState.E.toFixed(2);
     else if (sym === 'mat') s.textContent = eqState.mat;
   }
-  /* computed values */
+  /* Build MathJax-friendly HTML per active screen */
+  var html = '';
+  if (eqState.screen === 'snell') {
+    html = '\u003cspan class="eq-eq-name" style="color:var(--accent-cyan);font-weight:700;"\u003eSnell\'s Law\u003c/span\u003e: ' +
+           'n₁ sin θ₁ = n₂ sin θ₂\u0026nbsp;\u0026nbsp;→\u0026nbsp;\u0026nbsp;θ₂ = ' +
+           '\u003cspan class="eq-computed" data-computed="theta2" style="color:var(--accent-green);font-weight:700;"\u003e—\u003c/span\u003e';
+  } else if (eqState.screen === 'damping') {
+    html = '\u003cspan class="eq-eq-name" style="color:var(--accent-cyan);font-weight:700;"\u003eComplex index\u003c/span\u003e: ' +
+           '\\(\tilde{n} = n + i\\kappa\\)\u003cbr\u003e' +
+           '\u003cspan style="color:var(--text-dim);font-size:0.88rem;"\u003e' +
+           '\\( E(z,t) = E_0\\,e^{i(n+i\\kappa)k_0 z - i\\omega t} \\)' +
+           '\u0026nbsp;·\u0026nbsp;\\( W = \\frac{\\lambda}{4\\pi\\kappa} \\)' +
+           '\u0026nbsp;·\u0026nbsp;\\( \\alpha = \\frac{4\\pi\\kappa}{\\lambda} \\)' +
+           '\u003c/span\u003e';
+  } else if (eqState.screen === 'fresnel') {
+    html = '\u003cspan class="eq-eq-name" style="color:var(--accent-cyan);font-weight:700;"\u003eFresnel reflectivity\u003c/span\u003e: ' +
+           '\u003cspan style="color:var(--text-dim);font-size:0.88rem;"\u003e' +
+           'R_s = \\left|\\frac{n_1\\cos\\theta_1 - n_2\\cos\\theta_2}{n_1\\cos\\theta_1 + n_2\\cos\\theta_2}\\right|^2' +
+           '\u0026nbsp;·\u0026nbsp;R_p = \\left|\\frac{n_2\\cos\\theta_1 - n_1\\cos\\theta_2}{n_2\\cos\\theta_1 + n_1\\cos\\theta_2}\\right|^2' +
+           '\u003c/span\u003e';
+  } else if (eqState.screen === 'thinfilm') {
+    html = '\u003cspan class="eq-eq-name" style="color:var(--accent-cyan);font-weight:700;"\u003eAirysum\u003c/span\u003e: ' +
+           '\u003cspan style="color:var(--text-dim);font-size:0.88rem;"\u003e' +
+           '\\( \\displaystyle \\mathcal{R} = \\frac{|r_{12} + r_{23}e^{2i\\beta}|^2}{|1 + r_{12}r_{23}e^{2i\\beta}|^2} \\)' +
+           '\u0026nbsp;·\u0026nbsp;\\( \\beta = \\frac{2\\pi}{\\lambda} n_2 d \\cos\\theta_2 \\)' +
+           '\u003c/span\u003e';
+  }
+
+  var activeText = document.getElementById('eq-active-text');
+  if (activeText) {
+    activeText.innerHTML = html;
+    /* Re-typeset MathJax in the ribbon */
+    if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+      setTimeout(function() { MathJax.typesetPromise([activeText]); }, 50);
+    }
+  }
   var cspans = document.querySelectorAll('.eq-computed');
   for (var i=0; i<cspans.length; i++) {
     var s = cspans[i];
@@ -1138,8 +1173,8 @@ window.eqSetScreen = function(name) {
     if (tab) tab.classList.toggle('active', s===name);
   });
   eqUpdateRibbon();
-  /* Trigger MathJax re-typeset for newly-visible tab */
-  if (name === 'thinfilm' && typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+  /* Trigger MathJax re-typeset for newly-visible tab description + ribbon */
+  if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
     setTimeout(function() { MathJax.typesetPromise(); }, 200);
   }
   /* restart pulse when entering Snell */
@@ -1178,9 +1213,9 @@ window.eqToggleAnimation = function() {
 /* ─── SLIDER WIRING (called by HTML + od_sim) ─── */
 window.eqSliderN1 = function(v) { eqState.n1 = parseFloat(v); eqUpdateRibbon(); eqDrawActive(); };
 window.eqSliderN2 = function(v) { eqState.n2 = parseFloat(v); eqUpdateRibbon(); eqDrawActive(); eqResetSnellPulse(); };
-window.eqSliderTheta = function(v) { eqState.theta1 = parseFloat(v); eqUpdateRibbon(); eqDrawActive(); odChangeSliderAngle(v); eqResetSnellPulse(); };
+window.eqSliderTheta = function(v) { eqState.theta1 = parseFloat(v); eqUpdateRibbon(); eqDrawActive(); };
 window.eqSliderKappa = function(v) { eqState.kappa = parseFloat(v); eqUpdateRibbon(); eqDrawActive(); };
-window.eqSliderE = function(v) { eqState.E = parseFloat(v); eqUpdateRibbon(); eqDrawActive(); odChangeSliderE(v); };
+window.eqSliderE = function(v) { eqState.E = parseFloat(v); eqUpdateRibbon(); eqDrawActive(); };
 
 /* ─── THIN FILM SLIDER WIRING ─── */
 window.eqSliderTFN1  = function(v) { eqState.n1     = parseFloat(v); eqUpdateRibbon(); eqDrawActive();
@@ -1207,12 +1242,10 @@ window.eqMatSelect = function(name) {
   var def = OD_MATERIALS[name];
   if (def) {
     if (def.n0) eqState.n2 = def.n0;
-    /* get current optical values from Drude/Lorentz engine */
     var o = _odOptical ? _odOptical(Math.max(eqState.E, 0.01), name) : null;
     if (o) { eqState.n2 = o.n; eqState.kappa = o.k; }
   }
   eqUpdateRibbon(); eqDrawActive();
-  odSetMaterial(name);
 };
 
 function eqDrawActive() {

@@ -95,8 +95,8 @@
                 "sortOrder": "alphabetical",
                 "showSearch": false,
                 "searchQuery": "",
-                "backlinkCollapsed": false,
-                "unlinkedCollapsed": true
+                "backlinkCollapsed": true,
+                "unlinkedCollapsed": false
               },
               "icon": "links-coming-in",
               "title": "Backlinks"
@@ -162,8 +162,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -176,9 +175,9 @@
       "bases:Create new base": false
     }
   },
-  "active": "05ebdda811f2ed1c",
+  "active": "2dbc2778fbf6affe",
   "lastOpenFiles": [
-    "Quantum Lab Master Memory.md",
+    "Untitled/Quantum Lab Master Memory.md",
     "Untitled.base",
     "Achievement Log.md",
     "Session Continuity.md",

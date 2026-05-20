@@ -6,5 +6,7 @@
   "monospaceFontFamily": "JetBrains Mono",
   "baseFontSize": 16,
   "translucency": false,
-  "enabledCssSnippets": ["dark-elegant"]
+  "enabledCssSnippets": [
+    "dark-elegant"
+  ]
 }

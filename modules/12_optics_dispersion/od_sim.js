@@ -733,9 +733,15 @@ window.odSetMaterial = function(name){
   odUpdateSpectralPlots();
   updateOverlay();
 
-  // sync equation engine
-  if (typeof eqSyncFromMaterial === 'function') {
-    eqSyncFromMaterial(name, odState.E);
+  // sync equation engine — avoid mutual recursion by writing directly
+  if (typeof window.eqState !== 'undefined') {
+    window.eqState.mat = name;
+    var def = OD_MATERIALS[name];
+    if (def && def.n0) window.eqState.n2 = def.n0;
+    var o = (typeof _odOptical === 'function') ? _odOptical(Math.max(odState.E, 0.01), name) : null;
+    if (o) { window.eqState.n2 = o.n; window.eqState.kappa = o.k; }
+    if (typeof eqUpdateRibbon === 'function') eqUpdateRibbon();
+    if (typeof eqDrawActive === 'function') eqDrawActive();
   }
 };
 
@@ -747,7 +753,12 @@ window.odChangeSliderE = function(v){
   if (lamEl) lamEl.textContent = wavelengthNm(odState.E);
   odComputeSpectra(); odUpdateLiveReadouts();
   odUpdateSpectralPlots();
-  if (typeof eqSliderE === 'function') eqSliderE(v);
+  /* ── Sync to equation engine WITHOUT calling back to avoid mutual recursion ── */
+  if (typeof window.eqState !== 'undefined') {
+    window.eqState.E = odState.E;
+    if (typeof eqUpdateRibbon === 'function') eqUpdateRibbon();
+    if (typeof eqDrawActive === 'function') eqDrawActive();
+  }
 };
 
 /* ═══════════════════════════════════════════════════════════════
