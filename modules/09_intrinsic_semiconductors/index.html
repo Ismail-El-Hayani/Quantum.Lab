@@ -7,7 +7,9 @@
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"
         integrity="sha384-Hl48Kq2HifOWdXEjMsKo6qxqvRLTYqIGbvlENBmkHAxZKIGCXv43H6W1jA671RzC"
         crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"
+        integrity="sha384-qOkzR5Ke/XkQxuGVJ9hpFEpDlcoLtWwVYhnJf06cLIZa2vaIptSqaubivErzmD5O"
+        crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <link rel="stylesheet" href="../../shared_styles.css">
@@ -155,13 +157,7 @@
                   At low T, carriers are frozen out — only dopants contribute. At high T, thermal generation dominates and ni² = np. The dashed yellow line marks your current T.
                 </div>
               </details>
-              <!-- plot-carrier-density viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Carrier Concentration n_i(T)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Intrinsic: n_i = √(N_c N_v) exp(-E_g/2k_BT).</p>
-  <div class="plot-container" id="plot-carrier-density"></div>
-</div>
-
+              <div class="plot-container" id="plot-carrier-density"></div>
             </div>
 
             <!-- Bandgap Plot -->
@@ -176,13 +172,7 @@
                   Lattice vibrations (phonons) reduce the effective periodic potential, shrinking the bandgap. Different materials have unique α and β coefficients.
                 </div>
               </details>
-              <!-- plot-bandgap viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Bandgap E_g(T)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Varshni fit: E_g(T) = E_g(0) - αT²/(T+β). Shrinks with phonons.</p>
-  <div class="plot-container" id="plot-bandgap"></div>
-</div>
-
+              <div class="plot-container" id="plot-bandgap"></div>
               <div class="overlay-toggle">
                 <div class="toggle-pill" id="mat-overlay-toggle" onclick="toggleMaterialOverlay()"></div>
                 <span style="font-size:0.75rem;color:var(--text-dim)">Overlay all materials (Si · GaAs · Ge)</span>
@@ -204,13 +194,7 @@
                 <strong>Intrinsic:</strong> High T, ni dominates but μ falls via phonon scattering → σ plateaus or drops.
               </div>
             </details>
-            <!-- plot-conductivity viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Intrinsic Conductivity σ(T)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">σ = q(μ_e n + μ_h p). Thermally activated carriers dominate.</p>
-  <div class="plot-container" id="plot-conductivity"></div>
-</div>
-
+            <div class="plot-container" id="plot-conductivity"></div>
           </div>
         </div>
 

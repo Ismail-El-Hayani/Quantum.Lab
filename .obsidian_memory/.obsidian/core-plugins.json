@@ -1,0 +1,20 @@
+{
+  "file-explorer": true,
+  "global-search": true,
+  "switcher": true,
+  "graph": true,
+  "backlink": true,
+  "canvas": true,
+  "tag-pane": true,
+  "properties": true,
+  "page-preview": true,
+  "command-palette": true,
+  "slash-command": true,
+  "editor-status": true,
+  "starred": true,
+  "outline": true,
+  "word-count": true,
+  "status-bar": true,
+  "sync": false,
+  "publish": false
+}

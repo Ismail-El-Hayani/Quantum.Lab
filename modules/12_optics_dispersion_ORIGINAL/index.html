@@ -114,185 +114,6 @@
     </div>
   </section>
 
-  <!-- ═════════════════════ EQUATION-DRIVEN PLAYGROUND ═════════════════════ -->
-  <section class="macro-panel">
-    <h3>📐 Equation Playground — Interact with the Physics</h3>
-
-    <!-- Equation Ribbon -->
-    <div class="eq-ribbon" id="eq-ribbon" style="background:linear-gradient(135deg,#0a0e1f,#080c18);border:1px solid var(--glass-border);border-radius:12px;padding:1rem 1.2rem;margin-bottom:1rem;">
-      <div style="color:var(--text-dim);font-size:0.78rem;margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.06em;">Active Equation</div>
-      <div id="eq-active-text" style="font-family:var(--font-mono);font-size:1.05rem;color:var(--text-bright);line-height:1.8;">
-        <span class="eq-eq-name" style="color:var(--accent-cyan);font-weight:700;">Snell's Law:</span>
-        n₁ sin θ₁ = n₂ sin θ₂
-        &nbsp;&nbsp;→&nbsp;&nbsp;θ₂ =
-        <span class="eq-computed" data-computed="theta2" style="color:var(--accent-green);font-weight:700;">—</span>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem;">
-        <span class="material-badge" style="color:#ffdd44;border-color:#ffdd44;">n₁ = <span class="eq-param" data-symbol="n1">1.00</span></span>
-        <span class="material-badge" style="color:#4ade80;border-color:#4ade80;">n₂ = <span class="eq-param" data-symbol="n2">3.50</span></span>
-        <span class="material-badge" style="color:#00f0ff;border-color:#00f0ff;">θ₁ = <span class="eq-param" data-symbol="theta1">30</span>°</span>
-        <span class="material-badge" style="color:#ff4ecd;border-color:#ff4ecd;">κ = <span class="eq-param" data-symbol="kappa">0.000</span></span>
-        <span class="material-badge" style="color:#ff6b35;border-color:#ff6b35;">E = <span class="eq-param" data-symbol="E">2.00</span> eV</span>
-      </div>
-    </div>
-
-    <!-- Mode tabs for equation screens -->
-    <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">
-      <button class="preset-btn active" id="eq-tab-snell" onclick="eqSetScreen('snell')">Refraction (Snell)</button>
-      <button class="preset-btn" id="eq-tab-damping" onclick="eqSetScreen('damping')">Damped Wave</button>
-      <button class="preset-btn" id="eq-tab-fresnel" onclick="eqSetScreen('fresnel')">Fresnel R(θ)</button>
-      <button class="preset-btn" id="eq-tab-thinfilm" onclick="eqSetScreen('thinfilm')">Thin Film Airy</button>
-    </div>
-
-    <div class="plots" style="display:grid;grid-template-columns:1fr;gap:14px;">
-      <!-- Snell Canvas -->
-      <div class="viz-card" id="eq-wrap-snell" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;">
-        <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Wave Refraction</h4>
-        <p class="slider-desc">Animated wavefronts hitting an interface. Watch the wavelength shorten and the angle change as n₂ changes.</p>
-        <canvas id="eq-canvas-snell" style="display:block;width:100%;border-radius:8px;background:#060810;"></canvas>
-        <div style="display:flex;flex-wrap:wrap;gap:1rem;margin-top:0.6rem;">
-          <div class="slider-group" style="flex:1 1 200px;">
-            <label>Incident angle θ₁</label>
-            <input type="range" min="0" max="89" step="1" value="30" oninput="eqSliderTheta(this.value)">
-          </div>
-          <div class="slider-group" style="flex:1 1 200px;">
-            <label>Material index n₂</label>
-            <input type="range" min="0.5" max="5.0" step="0.05" value="3.5" oninput="eqSliderN2(this.value)">
-          </div>
-        </div>
-      </div>
-
-      <!-- Damped Wave Canvas -->
-      <div class="viz-card" id="eq-wrap-damping" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;display:none;">
-        <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Damped Electromagnetic Wave</h4>
-        <p class="slider-desc">E(z,t) = E₀ exp(−ωκz/c) · cos[ω(t − nz/c)]. The envelope shrinks with depth. Intensity I(z) ∝ |E|² decays as exp(−z/W).</p>
-        <canvas id="eq-canvas-damping" style="display:block;width:100%;border-radius:8px;background:#060810;"></canvas>
-        <div style="display:flex;flex-wrap:wrap;gap:1rem;margin-top:0.6rem;">
-          <div class="slider-group" style="flex:1 1 200px;">
-            <label>Extinction κ</label>
-            <input type="range" min="0" max="4.0" step="0.05" value="0.0" oninput="eqSliderKappa(this.value)">
-          </div>
-          <div class="slider-group" style="flex:1 1 200px;">
-            <label>Photon energy E (eV)</label>
-            <input type="range" min="0.1" max="10" step="0.1" value="2.0" oninput="eqSliderE(this.value)">
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
-          <div style="flex:1 1 140px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">Penetration W (nm)</div>
-            <div class="eq-computed" data-computed="W" style="font-family:var(--font-mono);color:var(--accent-cyan);font-size:1rem;font-weight:700;">—</div>
-          </div>
-          <div style="flex:1 1 140px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">Absorbance α (nm⁻¹)</div>
-            <div class="eq-computed" data-computed="alpha" style="font-family:var(--font-mono);color:var(--accent-pink);font-size:1rem;font-weight:700;">—</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Fresnel Canvas -->
-      <div class="viz-card" id="eq-wrap-fresnel" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;display:none;">
-        <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Fresnel Reflectivity vs Angle</h4>
-        <p class="slider-desc">R(θ) for s and p polarization. At Brewster's angle R_p = 0 — only reflected light is s-polarized. Polaroid sunglasses exploit this to cut glare.</p>
-        <canvas id="eq-canvas-fresnel" style="display:block;width:100%;border-radius:8px;background:#060810;"></canvas>
-        <div style="display:flex;flex-wrap:wrap;gap:1rem;margin-top:0.6rem;">
-          <div class="slider-group" style="flex:1 1 200px;">
-            <label>Incident angle θ₁</label>
-            <input type="range" min="0" max="89" step="1" value="30" oninput="eqSliderTheta(this.value)">
-          </div>
-          <div class="slider-group" style="flex:1 1 200px;">
-            <label>Material index n₂</label>
-            <input type="range" min="0.5" max="5.0" step="0.05" value="3.5" oninput="eqSliderN2(this.value)">
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
-          <div style="flex:1 1 140px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">R_normal (%)</div>
-            <div class="eq-computed" data-computed="Rnorm" style="font-family:var(--font-mono);color:var(--accent-green);font-size:1rem;font-weight:700;">—</div>
-          </div>
-          <div style="flex:1 1 140px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">R_s @ this θ (%)</div>
-            <div class="eq-computed" data-computed="Rangle" style="font-family:var(--font-mono);color:var(--accent-cyan);font-size:1rem;font-weight:700;">—</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Thin Film Canvas -->
-      <div class="viz-card" id="eq-wrap-thinfilm" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;display:none;">
-        <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Thin Film Reflection & Transmission (Airy)</h4>
-        <p class="slider-desc">
-          A plane wave hits a thin film n₂ of thickness d on substrate n₃.
-          Internal reflections interfere, giving oscillating R(λ) and T(λ).
-          <br>
-          <strong>Phase:</strong> β = (2π/λ) n₂ d cos θ₂ &nbsp;·&nbsp; <strong>Airy total R:</strong> R_total = |r₁₂ + r₂₃ e^{2iβ}|² / |1 + r₁₂ r₂₃ e^{2iβ}|²
-        </p>
-        <canvas id="eq-canvas-thinfilm" style="display:block;width:100%;border-radius:8px;background:#060810;"></canvas>
-        <div style="display:flex;flex-wrap:wrap;gap:1rem;margin-top:0.6rem;">
-          <div class="slider-group" style="flex:1 1 160px;">
-            <label>n₁ (incident)</label>
-            <input type="range" min="1.0" max="2.5" step="0.05" value="1.0" id="slider-tf-n1" oninput="eqSliderTFN1(this.value)">
-            <span class="slider-value" id="val-tf-n1">1.00</span>
-          </div>
-          <div class="slider-group" style="flex:1 1 160px;">
-            <label>n₂ (film)</label>
-            <input type="range" min="1.2" max="3.0" step="0.05" value="1.50" id="slider-tf-n2" oninput="eqSliderTFN2(this.value)">
-            <span class="slider-value" id="val-tf-n2">1.50</span>
-          </div>
-          <div class="slider-group" style="flex:1 1 160px;">
-            <label>n₃ (substrate)</label>
-            <input type="range" min="1.0" max="5.0" step="0.05" value="3.5" id="slider-tf-n3" oninput="eqSliderTFN3(this.value)">
-            <span class="slider-value" id="val-tf-n3">3.50</span>
-          </div>
-          <div class="slider-group" style="flex:1 1 160px;">
-            <label>Film thickness d (nm)</label>
-            <input type="range" min="10" max="1000" step="5" value="200" id="slider-tf-d" oninput="eqSliderTFD(this.value)">
-            <span class="slider-value" id="val-tf-d">200</span> nm
-          </div>
-          <div class="slider-group" style="flex:1 1 160px;">
-            <label>Incident angle θ₁ (°)</label>
-            <input type="range" min="0" max="89" step="1" value="30" id="slider-tf-theta" oninput="eqSliderTFTheta(this.value)">
-            <span class="slider-value" id="val-tf-theta">30</span>°
-          </div>
-          <div class="slider-group" style="flex:1 1 160px;">
-            <label>Wavelength λ (nm)</label>
-            <input type="range" min="300" max="1200" step="5" value="620" id="slider-tf-lam" oninput="eqSliderTFLam(this.value)">
-            <span class="slider-value" id="val-tf-lam">620</span> nm
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
-          <div style="flex:1 1 130px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">r₁₂ (s)</div>
-            <div class="eq-computed" data-computed="tf-r12" style="font-family:var(--font-mono);color:var(--accent-green);font-size:0.95rem;font-weight:700;">—</div>
-          </div>
-          <div style="flex:1 1 130px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">r₂₃ (s)</div>
-            <div class="eq-computed" data-computed="tf-r23" style="font-family:var(--font-mono);color:var(--accent-cyan);font-size:0.95rem;font-weight:700;">—</div>
-          </div>
-          <div style="flex:1 1 130px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">Phase β (rad)</div>
-            <div class="eq-computed" data-computed="tf-beta" style="font-family:var(--font-mono);color:var(--accent-pink);font-size:0.95rem;font-weight:700;">—</div>
-          </div>
-          <div style="flex:1 1 130px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">R_total (%)</div>
-            <div class="eq-computed" data-computed="tf-R" style="font-family:var(--font-mono);color:var(--accent-green);font-size:0.95rem;font-weight:700;">—</div>
-          </div>
-          <div style="flex:1 1 130px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">T_total (%)</div>
-            <div class="eq-computed" data-computed="tf-T" style="font-family:var(--font-mono);color:var(--accent-cyan);font-size:0.95rem;font-weight:700;">—</div>
-          </div>
-          <div style="flex:1 1 130px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">θ₂ (°)</div>
-            <div class="eq-computed" data-computed="tf-theta2" style="font-family:var(--font-mono);color:var(--text-bright);font-size:0.95rem;font-weight:700;">—</div>
-          </div>
-        </div>
-        <div id="plot-thinfilm" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;margin-top:10px;min-height:260px;"></div>
-      </div>
-    </div>
-
-    <div style="display:flex;justify-content:center;margin-top:0.8rem;gap:0.5rem;">
-      <button class="preset-btn" id="eq-anim-toggle" onclick="eqToggleAnimation()">▶ Play Animation</button>
-    </div>
-  </section>
-
   <!-- Macroscopic Panel — 3D photon stream -->
   <section class="macro-panel">
     <h3>🔭 Macroscopic View — Photon Beam Interacting with Material</h3>
@@ -595,7 +416,6 @@
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
 <script src="od_sim.js"></script>
-<script src="od_equations.js"></script>
 <script src="od_apps_games.js"></script>
 <script src="../../shared_effects.js"></script>
 
@@ -603,7 +423,6 @@
 document.addEventListener('DOMContentLoaded', function(){
   if(typeof initOD==='function') initOD();
   if(typeof initODGames==='function') initODGames();
-  if(typeof eqInitAll==='function') setTimeout(eqInitAll, 300);
 });
 </script>
 

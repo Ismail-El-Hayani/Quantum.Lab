@@ -44,7 +44,7 @@ function initPlayground() {
 
   // If spin_sim.js initSpin hasn't run yet, trigger it
   if (typeof initSpin === 'function' && document.getElementById('plot-bloch')) {
-    try { initSpin(); } catch(e) {}
+    try { initSpin(); } catch(e) { console.log('spin_sim init:', e); }
   }
 
   // First exploration bonus
@@ -149,7 +149,7 @@ function startCh1Timer() {
 }
 
 function ch1Check() {
-  var thetaDeg = Number.parseInt(document.getElementById('ch1-slider').value);
+  var thetaDeg = parseInt(document.getElementById('ch1-slider').value);
   var targetP = cos2(deg2rad(SpinGame.ch1.targetTheta) / 2);
   var userP = cos2(deg2rad(thetaDeg) / 2);
   var diff = Math.abs(userP - targetP);
@@ -508,19 +508,14 @@ function pz1Step(choice) {
   }
 
   fb.className = 'challenge-feedback success';
-  fb.textContent = 'Good! ' + stage.next[choice].label;
+  fb.innerHTML = '<strong>Good!</strong> ' + stage.next[choice].label;
 
   var nextStage = stages[SpinGame.pz1.stage];
   document.getElementById('pz1-stage-text').textContent = nextStage.text;
   var btns = document.getElementById('pz1-buttons');
-  btns.innerHTML = '';
-  nextStage.next.forEach(function(opt, i) {
-    var b = document.createElement('button');
-    b.className = 'btn';
-    b.textContent = opt.label;
-    b.onclick = function() { pz1Step(i); };
-    btns.appendChild(b);
-  });
+  btns.innerHTML = nextStage.next.map(function(opt, i) {
+    return '<button class="btn" onclick="pz1Step(' + i + ')">' + opt.label + '</button>';
+  }).join('');
 }
 
 // ============ PUZZLE 2: PAULI MATRIX ALGEBRA (Hard, 80XP) ============

@@ -356,21 +356,21 @@ function initBandgapEstimation() {
 
 function checkBandgapEstimation() {
   var be = __KP.be;
-  var V_G = (2 * be.V0 / Math.PI) * Math.sin(Math.PI * be.b_ratio);
+  var V_G = (be.V0 / Math.PI) * Math.sin(Math.PI * be.b_ratio);
   var predictedGap = 2 * Math.abs(V_G);
   var guess = parseFloat(document.getElementById('be-gap').value);
   var fb = document.getElementById('be-feedback');
   if (!isNaN(guess) && Math.abs(guess - predictedGap) < 0.15 * predictedGap + 0.05) {
     fb.className = 'challenge-feedback success';
     fb.style.display = 'block';
-    fb.textContent = '✓ Excellent! Nearly-free gap ≈ 2|V_G| = ' + predictedGap.toFixed(3) + ' ℏ²/ma². The Fourier component V_G = (2V₀/π)sin(πb/a) captures the periodic perturbation strength.';
+    fb.textContent = '✓ Excellent! Nearly-free gap ≈ 2|V_G| = ' + predictedGap.toFixed(3) + ' ℏ²/ma². The Fourier component V_G = (V₀/π)sin(πb/a) captures the periodic perturbation strength.';
     _GameState.addXP(100, 'Bandgap estimated!');
     celebrateCorrect();
     _GameState.unlock({ id: 'bandgap_architect', title: 'Bandgap Architect', desc: 'Mastered nearly-free electron gap estimation', icon: '📐', xp: 30 });
   } else {
     fb.className = 'challenge-feedback error';
     fb.style.display = 'block';
-    fb.textContent = '✗ Try again. V_G = (2V₀/π) sin(πb/a). Then E_gap ≈ 2|V_G|.';
+    fb.textContent = '✗ Try again. V_G = (V₀/π) sin(πb/a). Then E_gap ≈ 2|V_G|.';
   }
 }
 

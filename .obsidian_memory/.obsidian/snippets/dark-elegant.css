@@ -1,0 +1,130 @@
+/* === Dark Elegant Theme for Quantum Lab Memory Vault === */
+.theme-dark {
+  --background-primary: #0a0a0f;
+  --background-primary-alt: #0f0f17;
+  --background-secondary: #08080c;
+  --background-secondary-alt: #0c0c14;
+  --background-modifier-border: #1a1a2e;
+  --background-modifier-form-field: #0f0f17;
+  --background-modifier-form-field-highlighted: #141420;
+  --background-modifier-success: #4ade80;
+  --background-modifier-error: #ff5555;
+  --background-modifier-hover: rgba(255, 255, 255, 0.05);
+  --text-normal: #e2e2f0;
+  --text-muted: #8888a0;
+  --text-faint: #555566;
+  --text-accent: #00f0ff;
+  --text-accent-hover: #c084fc;
+  --text-on-accent: #05050a;
+  --text-highlight-bg: rgba(0, 240, 255, 0.15);
+  --interactive-accent: #00f0ff;
+  --interactive-accent-hover: #c084fc;
+  --interactive-success: #4ade80;
+  --tag-background: rgba(0, 240, 255, 0.1);
+  --tag-color: #00f0ff;
+  --code-background: #0f0f17;
+  --code-normal: #00f0ff;
+  --code-comment: #6a6a8a;
+  --code-keyword: #c084fc;
+  --code-string: #4ade80;
+  --code-number: #ff4ecd;
+  --code-function: #facc15;
+  --inline-code-color: #00f0ff;
+  --link-color: #00f0ff;
+  --link-external-color: #c084fc;
+  --link-color-hover: #ffffff;
+  --hr-color: #1a1a2e;
+  --blockquote-border-color: #00f0ff;
+  --blockquote-background: rgba(0, 240, 255, 0.04);
+  --table-header-background: #0c0c14;
+  --table-row-alt-background: #0a0a0f;
+  --table-border-color: #1a1a2e;
+  --checkbox-color: #00f0ff;
+  --checkbox-marker-color: #0a0a0f;
+  --graph-node: #00f0ff;
+  --graph-line: #1a1a2e;
+  --graph-text: #8888a0;
+  --graph-fill: #0a0a0f;
+  --graph-tag: #ff4ecd;
+  --graph-attachment: #4ade80;
+  --graph-focused: #facc15;
+}
+
+/* === Custom UI tweaks === */
+.nav-folder-title-content {
+  font-weight: 600;
+  color: var(--text-accent);
+}
+
+.nav-file-title-content {
+  color: var(--text-muted);
+}
+
+.nav-file-title.is-active .nav-file-title-content {
+  color: var(--text-accent);
+}
+
+/* === Status bar styling === */
+.status-bar {
+  background: var(--background-secondary-alt);
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+/* === Mermaid / Tables === */
+.markdown-rendered th {
+  border-bottom: 2px solid var(--interactive-accent);
+}
+
+.markdown-rendered td {
+  border-bottom: 1px solid var(--table-border-color);
+}
+
+/* === Callouts === */
+.callout[data-callout="bug"] {
+  --callout-color: 255, 85, 85;
+  --callout-icon: lucide-bug;
+}
+
+.callout[data-callout="fix"] {
+  --callout-color: 74, 222, 128;
+  --callout-icon: lucide-check-circle;
+}
+
+.callout[data-callout="decision"] {
+  --callout-color: 250, 204, 21;
+  --callout-icon: lucide-lightbulb;
+}
+
+.callout[data-callout="convention"] {
+  --callout-color: 0, 240, 255;
+  --callout-icon: lucide-book-open;
+}
+
+.callout[data-callout="achievement"] {
+  --callout-color: 192, 132, 252;
+  --callout-icon: lucide-trophy;
+}
+
+.callout[data-callout="danger"] {
+  --callout-color: 255, 85, 85;
+  --callout-icon: lucide-alert-triangle;
+}
+
+.callout[data-callout="info"] {
+  --callout-color: 0, 240, 255;
+  --callout-icon: lucide-info;
+}
+
+/* === Inline tags === */
+.tag {
+  background: var(--tag-background) !important;
+  color: var(--tag-color) !important;
+  border: none !important;
+  padding: 2px 8px !important;
+  border-radius: 4px !important;
+}
+
+/* === Graph view glow === */
+.graph-view.color-fill {
+  filter: drop-shadow(0 0 4px var(--text-accent));
+}

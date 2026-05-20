@@ -1,0 +1,10 @@
+{
+  "accentColor": "#00f0ff",
+  "cssTheme": "",
+  "interfaceFontFamily": "Inter",
+  "textFontFamily": "Inter",
+  "monospaceFontFamily": "JetBrains Mono",
+  "baseFontSize": 16,
+  "translucency": false,
+  "enabledCssSnippets": ["dark-elegant"]
+}

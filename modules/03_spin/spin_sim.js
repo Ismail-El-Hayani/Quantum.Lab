@@ -82,13 +82,13 @@ function measureProbZ(a) {
 
 function measureProbX(a) {
   // Project onto |+x⟩ = (|↑⟩ + |↓⟩)/√2
-  const pPlus = 0.5 * (Math.pow(a.up_re + a.down_re, 2) + Math.pow(a.up_im + a.down_im, 2));
+  const pPlus = 0.5 * ((a.up_re + a.down_re)**2 + (a.up_im + a.down_im)**2);
   return { plus: pPlus, minus: 1 - pPlus };
 }
 
 function measureProbY(a) {
   // Project onto |+y⟩ = (|↑⟩ + i|↓⟩)/√2
-  const pPlus = 0.5 * (Math.pow(a.up_re - a.down_im, 2) + Math.pow(a.up_im + a.down_re, 2));
+  const pPlus = 0.5 * ((a.up_re - a.down_im)**2 + (a.up_im + a.down_re)**2);
   return { plus: pPlus, minus: 1 - pPlus };
 }
 
@@ -339,22 +339,15 @@ function plotSGHistogram() {
 
 // ===== ANIMATION =====
 let currentAmplitude = null;
-let lastAnimTime = 0;
-
-const LARMOR_ANIM_SCALE = 6.2831853; // rad/s per tesla -\u003e period = 1s at B = 1T
 
 function animateLoop() {
   if (!state.animating) return;
-  const now = performance.now();
-  if (lastAnimTime === 0) lastAnimTime = now;
-  const dt = (now - lastAnimTime) / 1000;  // seconds
-  lastAnimTime = now;
+  state.time += 0.03;
 
-  // Larmor precession: angular velocity proportional to B
-  const omegaAnim = LARMOR_ANIM_SCALE * state.B;  // rad/s
-  state.phi += omegaAnim * dt;
-  while (state.phi \u003e= 2 * Math.PI) state.phi -= 2 * Math.PI;
-  while (state.phi \u003c 0) state.phi += 2 * Math.PI;
+  const omega = state.gFactor * muB_eV * state.B / h;  // rad/s
+  // Simplify: just advance phi
+  state.phi += 0.06;
+  if (state.phi > 2 * Math.PI) state.phi -= 2 * Math.PI;
 
   plotBlochSphere();
   plotSpinComponents();
@@ -485,11 +478,9 @@ function initSpin() {
       state.animating = !state.animating;
       this.classList.toggle('active', state.animating);
       if (state.animating) {
-        lastAnimTime = 0;
         animateLoop();
       } else {
         cancelAnimationFrame(state.animFrame);
-        lastAnimTime = 0;
         plotBlochSphere(); plotSpinComponents(); updateLiveTable();
       }
     });

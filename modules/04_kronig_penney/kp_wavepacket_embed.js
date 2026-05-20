@@ -2,6 +2,16 @@
  * Wave Packet Canvas Embed — reusable TDSE engine for Playground and standalone modes.
  * Split-operator FFT, multi-barrier, diverging blue-red colormap.
  * Call wpCanvasEmbed({canvas:'id', ...}) to instantiate.
+ *
+ * Time-dependent Schrodinger equation (units: ℏ = m = 1):
+ *   i·∂ψ/∂t = −½·∂²ψ/∂x² + V(x)·ψ
+ *
+ * Strang split-operator stepping (second-order, unitary):
+ *   ψ(t+Δt) = exp(−i·V̂·Δt/2) · F⁻¹{ exp(−i·k²·Δt/2) · F{ exp(−i·V̂·Δt/2) · ψ(t) } }
+ * where F = forward FFT, F⁻¹ = inverse FFT, k_j = 2π·j/L.
+ *
+ * Boundary mask: Gaussian taper at edges (L×12%) suppresses wraparound
+ * from periodic FFT discretization, breaking strict unitarity slightly.
  */
 
 'use strict';
@@ -85,7 +95,13 @@ function wpCanvasEmbed(opts) {
   for (var i = 0; i <= N / 2; i++) kArr[i] = i * dk;
   for (var i = N / 2 + 1; i < N; i++) kArr[i] = (i - N) * dk;
 
-  /* ---------- potential builder ---------- */
+  /* ---------- potential builder ----------
+   * Three barrier shapes (centered at xc, half-width w/2):
+   *   Square:     V(x) = V₀   for |x-xc| ≤ w/2
+   *   Semicircle:  V(x) = V₀·√(1-t²)  with t = 2(x-xc)/w,  |x-xc| ≤ w/2
+   *   Gaussian:    V(x) = V₀·exp(-(x-xc)²/(2σ²))  with σ = w/4
+   * Max-of-all-barriers ensures overlapping barriers take the taller value.
+   */
   function buildPotential() {
     var w = barrierWidth;
     var V0 = barrierHeight;
@@ -114,7 +130,12 @@ function wpCanvasEmbed(opts) {
     }
   }
 
-  /* ---------- packet init ---------- */
+  /* ---------- packet init ----------
+   * Gaussian wave packet (minimum uncertainty):
+   *   ψ(x,0) = (2πσ²)^{-1/4} · exp(-(x-x₀)²/(4σ²)) · exp(i·k₀·x)
+   * σ = position width, k₀ = initial momentum, E₀ = k₀²/2.
+   * Normalization: Σ |ψ_i|² · dx = 1  →  rescale = 1/√(Σ |ψ_i|² · dx)
+   */
   function initPacket() {
     var x0 = packetCenter;
     var sigma = packetWidth;
@@ -136,10 +157,15 @@ function wpCanvasEmbed(opts) {
     time = 0.0;
   }
 
-  /* ---------- time step ---------- */
+  /* ---------- time step ----------
+   * Strang splitting (second-order, norm-preserving):
+   *   ψ → e^{-i·V̂·Δt/2} → F → e^{-i·k²·Δt/2} → F⁻¹ → e^{-i·V̂·Δt/2} ψ
+   * where e^{-i·V̂·Δt/2} acts pointwise in x-space and e^{-i·k²·Δt/2}
+   * acts pointwise in k-space after/before FFT.
+   */
   function step() {
     var re = psiRe, im = psiIm;
-    // half V
+    // half potential step:  ψ → e^{-iVΔt/2} ψ  (pointwise rotation in complex plane)
     for (var i = 0; i < N; i++) {
       var c = Math.cos(-V[i] * dt * 0.5);
       var s = Math.sin(-V[i] * dt * 0.5);
@@ -147,18 +173,18 @@ function wpCanvasEmbed(opts) {
       var j = re[i] * s + im[i] * c;
       re[i] = r; im[i] = j;
     }
-    _fftCore(re, im, false);
-    // kinetic
+    _fftCore(re, im, false);   // ψ(x) → ψ̃(k)
+    // kinetic step:  ψ̃ → e^{-ik²Δt/2} ψ̃  (exact free propagation in k-space)
     for (var i = 0; i < N; i++) {
-      var K = kArr[i] * kArr[i] * 0.5;
+      var K = kArr[i] * kArr[i] * 0.5;   // K = k²/2  (ℏ = m = 1)
       var c = Math.cos(-K * dt);
       var s = Math.sin(-K * dt);
       var r = re[i] * c - im[i] * s;
       var j = re[i] * s + im[i] * c;
       re[i] = r; im[i] = j;
     }
-    _fftCore(re, im, true);
-    // half V
+    _fftCore(re, im, true);    // ψ̃(k) → ψ(x)
+    // half potential step (second half of the symmetric split)
     for (var i = 0; i < N; i++) {
       var c = Math.cos(-V[i] * dt * 0.5);
       var s = Math.sin(-V[i] * dt * 0.5);
@@ -169,7 +195,12 @@ function wpCanvasEmbed(opts) {
     time += dt;
   }
 
-  /* ---------- damping mask ---------- */
+  /* ---------- damping mask ----------
+   * Gaussian absorbing boundary at domain edges:
+   *   factor = exp(-(x_edge/(0.35·edge))²)
+   * where edge = L×0.12. Suppresses wraparound artifacts from periodic FFT.
+   * Slightly breaks unitarity — norm slowly decreases (open boundary simulation).
+   */
   function applyMask() {
     var edge = L * 0.12;
     var L2 = L / 2.0;
@@ -304,6 +335,40 @@ function wpCanvasEmbed(opts) {
     ctx.fillStyle = '#8080a0';
     ctx.font = '11px JetBrains Mono,monospace';
     ctx.fillText('Re(ψ)  blue(-) → red(+)     |ψ|²     barriers: ' + bcount, 10, 16);
+
+    // ---------- probability readout: P(left), P(barrier), P(right) ----------
+    // Integrate |ψ|² dx over three regions relative to the barrier array:
+    //  P_left   = Σ_{x <  first_barrier_left}  |ψ_i|² · dx
+    //  P_mid    = Σ_{barrier regions}          |ψ_i|² · dx
+    //  P_right  = Σ_{x >  last_barrier_right}  |ψ_i|² · dx
+    // Total = P_left + P_mid + P_right + P_absorbed, where P_absorbed
+    // accounts for the tail removed by the Gaussian edge mask.
+    var bstartX = -(bcount - 1) * barrierSpacing * 0.5;
+    var firstL = bstartX - barrierWidth / 2.0;
+    var lastR  = bstartX + (bcount - 1) * barrierSpacing + barrierWidth / 2.0;
+    var pLeft = 0.0, pMid = 0.0, pRight = 0.0;
+    for (var i = 0; i < N; i++) {
+      var prob_i = re[i] * re[i] + im[i] * im[i];
+      var x = xArr[i];
+      if (x < firstL) {
+        pLeft  += prob_i;
+      } else if (x > lastR) {
+        pRight += prob_i;
+      } else {
+        // Inside the 'forbidden' zone (covers all barriers when count > 1)
+        pMid += prob_i;
+      }
+    }
+    pLeft  *= dx;
+    pMid   *= dx;
+    pRight *= dx;
+
+    var elLeft  = document.getElementById('wp-p-left');
+    var elMid   = document.getElementById('wp-p-mid');
+    var elRight = document.getElementById('wp-p-right');
+    if (elLeft)  elLeft.textContent  = pLeft.toFixed(4);
+    if (elMid)   elMid.textContent   = pMid.toFixed(4);
+    if (elRight) elRight.textContent = pRight.toFixed(4);
   }
 
   /* ---------- animation loop ---------- */

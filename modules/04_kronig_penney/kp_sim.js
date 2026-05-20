@@ -71,27 +71,44 @@ function solveBands(V0, a, b, numK) {
 
 /**
  * Tunneling Physics Solver
- * Calculates the wave function psi(x) for a single barrier of width 'w' at x=[0, w]
- * Implementation based on Schrödinger continuity conditions.
+ * Calculates the wave function psi(x) for a single barrier of width 'w' at x=[0, w].
+ * Uses exact stationary-state matching. Three regions:
+ *   I   (x < 0):       ψ_I   = A e^{ikx} + B e^{-ikx}
+ *   II  (0 ≤ x ≤ w):   ψ_II  = C e^{κx} + D e^{-κx}   (E < V₀, κ = √(2m(V₀−E))/ℏ)
+ *                      ψ_II  = C e^{ik'x} + D e^{-ik'x} (E > V₀, k' = √(2m(E−V₀))/ℏ)
+ *   III (x > w):       ψ_III = F e^{ik(x−w)}
+ *
+ * Transmission coefficient (exact, from continuity at x=0 and x=w):
+ *   E < V₀:   T = [1 + V₀² sinh²(κw) / (4E(V₀−E))]⁻¹
+ *   E > V₀:   T = [1 + V₀² sin²(k'w)  / (4E(E−V₀))]⁻¹
+ *   E = V₀:   T = [1 + V₀w²/2]⁻¹          (limit of both branches)
+ * Reflection: R = 1 − T, but the reflection amplitude B is complex.
+ * The visual below is a qualitative real-part sketch, not the exact matching solution.
  */
 function solveTunneling(E, V0, w, x_range) {
   const k = Math.sqrt(2 * E);
   let psi_real = [], psi_prob = [], potential = [];
 
-  // Transmission coefficient T calculation
+  // Exact transmission coefficient T
   let T;
   if (E < V0) {
     const kappa = Math.sqrt(2 * (V0 - E));
+    // T = [1 + V0² sinh²(κw) / (4E(V0−E))]⁻¹
     T = 1 / (1 + Math.pow(V0, 2) * Math.pow(Math.sinh(kappa * w), 2) / (4 * E * (V0 - E)));
   } else if (E > V0) {
     const k_prime = Math.sqrt(2 * (E - V0));
+    // T = [1 + V0² sin²(k'w) / (4E(E−V0))]⁻¹
     T = 1 / (1 + Math.pow(V0, 2) * Math.pow(Math.sin(k_prime * w), 2) / (4 * E * (E - V0)));
   } else {
-    T = 1; // E = V0 case
+    // E = V0 limit: both E<V0 and E>V0 formulas converge to T = 1/(1 + V0*w²/2)
+    T = 1 / (1 + 0.5 * V0 * w * w);
   }
 
-  // For visualization, we'll simulate a wave packet/steady state
-  // We Use a normalized incident amplitude A=1
+  // Visualization uses a qualitative real-part sketch (not exact matching)
+  // Region I:  Re(ψ) ≈ cos(kx−ωt) + √R·cos(−kx−ωt)  (interference fringes)
+  // Region II: Re(ψ) ≈ cos(ωt)·exp(−κx)  for E<V0  (exponential decay)
+  //            Re(ψ) ≈ cos(k'x−ωt)        for E>V0  (oscillation inside barrier)
+  // Region III: Re(ψ) ≈ √T·cos(k(x−w)−ωt)
   const A = 1.0;
   const time = Date.now() * 0.002;
 
@@ -100,33 +117,33 @@ function solveTunneling(E, V0, w, x_range) {
     let prob = 0;
 
     if (x < 0) {
-      // Region I: Incident + Reflected
-      // Re(psi) = cos(kx - wt) + Reflectance*cos(-kx - wt)
-      const R = Math.sqrt(1-T);
+      // Region I: Incident + Reflected  →  |ψ|² = 1 + R + 2√R·cos(2kx)
+      const R = Math.sqrt(1 - T);
       val = A * (Math.cos(k * x - time) + R * Math.cos(-k * x - time));
-      prob = A*A * (1 + R*R + 2*R*Math.cos(2*k*x));
+      prob = A * A * (1 + R * R + 2 * R * Math.cos(2 * k * x));
     } else if (x >= 0 && x <= w) {
-      // Region II: Inside Barrier (Evanescent or higher-k)
+      // Region II: Inside Barrier
       if (E < V0) {
         const kappa = Math.sqrt(2 * (V0 - E));
-        // Simplified decay for visual clarity
+        // Evanescent wave: |ψ|² ∝ exp(−2κx), decay length = 1/(2κ)
         const decay = Math.exp(-kappa * x);
         val = A * Math.cos(time) * decay;
-        prob = A*A * Math.exp(-2 * kappa * x);
+        prob = A * A * Math.exp(-2 * kappa * x);
       } else {
         const k_prime = Math.sqrt(2 * (E - V0));
+        // E > V0: propagating inside barrier
         val = A * Math.cos(k_prime * x - time);
-        prob = A*A;
+        prob = A * A;
       }
     } else {
       // Region III: Transmitted
       const F = Math.sqrt(T);
       val = F * Math.cos(k * (x - w) - time);
-      prob = F*F;
+      prob = F * F;
     }
     psi_real.push(val);
     psi_prob.push(prob);
-    potential.push( (x >= 0 && x <= w) ? V0 : 0 );
+    potential.push((x >= 0 && x <= w) ? V0 : 0);
   });
 
   return { psi_real, psi_prob, potential, T };

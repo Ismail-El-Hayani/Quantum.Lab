@@ -732,11 +732,6 @@ window.odSetMaterial = function(name){
   odComputeSpectra(); odUpdateLiveReadouts();
   odUpdateSpectralPlots();
   updateOverlay();
-
-  // sync equation engine
-  if (typeof eqSyncFromMaterial === 'function') {
-    eqSyncFromMaterial(name, odState.E);
-  }
 };
 
 window.odChangeSliderE = function(v){
@@ -747,7 +742,6 @@ window.odChangeSliderE = function(v){
   if (lamEl) lamEl.textContent = wavelengthNm(odState.E);
   odComputeSpectra(); odUpdateLiveReadouts();
   odUpdateSpectralPlots();
-  if (typeof eqSliderE === 'function') eqSliderE(v);
 };
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1047,115 +1041,6 @@ window.odInitSpectralEngine = function() {
   _odSpecData = null;
   _odInitSpectralPlots();
   _odUpdateSpectralCursor();
-  _odInitThinFilmPlot();
-};
-
-/* ═══════════════════════════════════════════════════════════════
-   THIN FILM SPECTRAL PLOT  R(λ) & T(λ)
-   ═══════════════════════════════════════════════════════════════ */
-var _tfPlotData = null;
-
-function _tfComputeAiryAtLambda(lam_nm) {
-  /* Compute Airy R and T at a given λ using current eqState */
-  var th1 = eqState.theta1 * Math.PI / 180;
-  var n1 = eqState.n1, n2 = eqState.n2, n3 = eqState.n3;
-  var d_nm = eqState.d;
-  var s2 = n1 * Math.sin(th1) / n2;
-  if (Math.abs(s2) > 1) return {R:1, T:0};
-  var th2 = Math.asin(s2);
-  var s3 = n1 * Math.sin(th1) / n3;
-  if (Math.abs(s3) > 1) return {R:1, T:0};
-  var th3 = Math.asin(s3);
-  var c1 = Math.cos(th1), c2 = Math.cos(th2), c3 = Math.cos(th3);
-  var r12 = (n1*c1 - n2*c2) / (n1*c1 + n2*c2);
-  var t12 = (2*n1*c1) / (n1*c1 + n2*c2);
-  var r23 = (n2*c2 - n3*c3) / (n2*c2 + n3*c3);
-  var t23 = (2*n2*c2) / (n2*c2 + n3*c3);
-  var beta = (2 * Math.PI / lam_nm) * n2 * d_nm * c2;
-  var e2ib = { re: Math.cos(2*beta), im: Math.sin(2*beta) };
-  var numR = { re: r12 + r23*e2ib.re, im: r23*e2ib.im };
-  var den  = { re: 1 + r12*r23*e2ib.re, im: r12*r23*e2ib.im };
-  var denMag2 = den.re*den.re + den.im*den.im;
-  var R = (numR.re*numR.re + numR.im*numR.im) / denMag2;
-  var numT = { re: t12*t23*Math.cos(beta), im: t12*t23*Math.sin(beta) };
-  var Tamp2 = (numT.re*numT.re + numT.im*numT.im) / denMag2;
-  var T = (n3 * c3 / (n1 * c1)) * Tamp2;
-  return {R:R, T:T};
-}
-
-function _odGenerateThinFilmCurves() {
-  var lam = [];
-  var R = [], T = [];
-  for (var i = 300; i <= 1200; i += 5) {
-    var a = _tfComputeAiryAtLambda(i);
-    lam.push(i);
-    R.push(a.R);
-    T.push(a.T);
-  }
-  return { lam: lam, R: R, T: T };
-}
-
-window._odInitThinFilmPlot = function() {
-  if (typeof Plotly === 'undefined') return;
-  var data = _odGenerateThinFilmCurves();
-  _tfPlotData = data;
-  Plotly.newPlot('plot-thinfilm', [
-    { x: data.lam, y: data.R, name: 'R(λ) · Reflectivity', type: 'scatter', mode: 'lines',
-      line: { color: '#4ade80', width: 2 }, fill: 'tozeroy', fillcolor: 'rgba(74,222,128,0.08)' },
-    { x: data.lam, y: data.T, name: 'T(λ) · Transmission', type: 'scatter', mode: 'lines',
-      line: { color: '#00f0ff', width: 2 }, fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.06)' }
-  ], {
-    paper_bgcolor: '#0a0a1a', plot_bgcolor: '#0a0a1a',
-    font: { color: '#bbb', size: 11 },
-    title: { text: 'Thin Film Airy Interference  R(λ) & T(λ)', font: { color: '#ccc', size: 13 } },
-    xaxis: { title: 'Wavelength λ (nm)', gridcolor: '#1a1a2e', color: '#888' },
-    yaxis: { title: 'Fraction', gridcolor: '#1a1a2e', color: '#888', range: [0, 1.05] },
-    margin: { t: 36, b: 40, l: 52, r: 16 },
-    legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(10,10,26,0.7)', font: { size: 10 } },
-    hovermode: 'x unified',
-    shapes: [{
-      type: 'line',
-      line: { color: '#ffffff', width: 1.5, dash: 'dash' },
-      x0: eqState.lambda, x1: eqState.lambda, y0: 0, y1: 1.05
-    }]
-  }, { displayModeBar: false, responsive: true });
-};
-
-window._odUpdateThinFilmCursor = function() {
-  if (typeof Plotly === 'undefined' || !document.getElementById('plot-thinfilm')) return;
-  Plotly.relayout('plot-thinfilm', {
-    shapes: [{
-      type: 'line',
-      line: { color: '#ffffff', width: 1.5, dash: 'dash' },
-      x0: eqState.lambda, x1: eqState.lambda, y0: 0, y1: 1.05
-    }]
-  });
-};
-
-window._odRefreshThinFilmPlot = function() {
-  if (typeof Plotly === 'undefined') return;
-  var data = _odGenerateThinFilmCurves();
-  _tfPlotData = data;
-  Plotly.react('plot-thinfilm', [
-    { x: data.lam, y: data.R, name: 'R(λ) · Reflectivity', type: 'scatter', mode: 'lines',
-      line: { color: '#4ade80', width: 2 }, fill: 'tozeroy', fillcolor: 'rgba(74,222,128,0.08)' },
-    { x: data.lam, y: data.T, name: 'T(λ) · Transmission', type: 'scatter', mode: 'lines',
-      line: { color: '#00f0ff', width: 2 }, fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.06)' }
-  ], {
-    paper_bgcolor: '#0a0a1a', plot_bgcolor: '#0a0a1a',
-    font: { color: '#bbb', size: 11 },
-    title: { text: 'Thin Film Airy Interference  R(λ) & T(λ)', font: { color: '#ccc', size: 13 } },
-    xaxis: { title: 'Wavelength λ (nm)', gridcolor: '#1a1a2e', color: '#888' },
-    yaxis: { title: 'Fraction', gridcolor: '#1a1a2e', color: '#888', range: [0, 1.05] },
-    margin: { t: 36, b: 40, l: 52, r: 16 },
-    legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(10,10,26,0.7)', font: { size: 10 } },
-    hovermode: 'x unified',
-    shapes: [{
-      type: 'line',
-      line: { color: '#ffffff', width: 1.5, dash: 'dash' },
-      x0: eqState.lambda, x1: eqState.lambda, y0: 0, y1: 1.05
-    }]
-  }, { displayModeBar: false, responsive: true });
 };
 
 window.initODMacro3D = function(){ /* unified into initOD */ };
