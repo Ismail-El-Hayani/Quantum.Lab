@@ -166,8 +166,8 @@ window.eqInitSnell = function() {
 function eqResizeSnell() {
   var wrap = document.getElementById('eq-wrap-snell');
   if (!wrap || !canvSnell) return;
-  var w = Math.max(360, wrap.clientWidth);
-  var h = 360;
+  var w = Math.max(360, Math.min(wrap.clientWidth, 720)); /* cap width for stability */
+  var h = 300;  /* compact height: equivalent to ~0.83× prior 360 px */
   canvSnell.width = w; canvSnell.height = h;
 }
 window.eqDrawSnell = function() {
