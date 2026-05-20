@@ -806,8 +806,8 @@ window.eqInitThinFilm = function() {
 function eqResizeThinFilm() {
   var wrap = document.getElementById('eq-wrap-thinfilm');
   if (!wrap || !canvThinFilm) return;
-  var w = Math.max(360, wrap.clientWidth);
-  var h = 340;
+  var w = Math.max(360, Math.min(wrap.clientWidth, 720)); /* cap width for stability */
+  var h = 300;  /* compact, same as Snell: symmetric 100px per layer */
   canvThinFilm.width = w; canvThinFilm.height = h;
 }
 
