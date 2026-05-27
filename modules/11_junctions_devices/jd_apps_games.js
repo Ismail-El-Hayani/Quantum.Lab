@@ -15,7 +15,7 @@ var JD_MODULE_NAV = [
   { name: 'Intrinsic Semi', path: '../09_intrinsic_semiconductors/index.html', current: false },
   { name: 'Doped Semi', path: '../10_doped_semiconductors/index.html', current: false },
   { name: 'Junctions', path: './index.html', current: true },
-  { name: 'Optics', path: '../12_optics_dispersion/index.html', current: false },
+  { name: 'Optics & Dispersion', path: '../12_optics_dispersion/index.html', current: false },
   { name: 'Lasers', path: '../13_laser_physics/index.html', current: false },
   { name: 'Magnetism', path: '../14_magnetism/index.html', current: false },
   { name: 'Thermal', path: '../15_thermal_properties/index.html', current: false }

@@ -19,7 +19,7 @@ var FS_MODULE_NAV = [
   { name: 'Superconductivity',  path: '../08_superconductivity/index.html' },
   { name: 'Doped Semiconductors', path: '../10_doped_semiconductors/index.html' },
   { name: 'Junctions',          path: '../11_junctions_devices/index.html' },
-  { name: 'Optics',             path: '../12_optics_dispersion/index.html' },
+  { name: 'Optics & Dispersion',             path: '../12_optics_dispersion/index.html' },
   { name: 'Laser Physics',      path: '../13_laser_physics/index.html' },
   { name: 'Magnetism',          path: '../14_magnetism/index.html' },
   { name: 'Nanostructures',     path: '../15_nanostructures/index.html' },
