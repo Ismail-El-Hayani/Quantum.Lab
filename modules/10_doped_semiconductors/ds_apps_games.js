@@ -466,7 +466,7 @@ function setGameMode(mode) {
   document.querySelectorAll('.game-mode-btn').forEach(function (b) { b.classList.remove('active'); });
   var btn = document.getElementById('mode-' + mode);
   if (btn) btn.classList.add('active');
-  ['play', 'challenge', 'puzzle'].forEach(function (m) {
+  ['story', 'theory', 'play', 'challenge', 'puzzle'].forEach(function (m) {
     var el = document.getElementById('section-' + m);
     if (el) el.style.display = (m === mode) ? 'block' : 'none';
   });
@@ -480,9 +480,7 @@ function setGameMode(mode) {
     initNeutralityBuilder();
     initDopeDetective();
   }
-  if (mode === 'play') {
-    if (window.initDoped) window.initDoped();
-  }
+  // Playground init deferred — handled by HTML wrapper
 }
 
 /* ═══════════════════════════════════════════════════════════════

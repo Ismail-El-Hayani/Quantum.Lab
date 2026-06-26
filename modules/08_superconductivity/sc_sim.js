@@ -17,7 +17,18 @@ let scState = {
   Tc: 9.2,
   H: 0.0,
   H0: 0.2,
-  material: 'Nb'
+  material: 'Niobium (Nb)',
+  lambda0: 40,
+  type: 'II',
+  kappa: 5
+};
+
+const SC_MATERIAL_DATA = {
+  'Niobium (Nb)': { lambda0: 40, type: 'II', kappa: 5 },
+  'Mercury (Hg)': { lambda0: 50, type: 'I', kappa: 0.3 },
+  'Aluminum (Al)': { lambda0: 50, type: 'I', kappa: 0.1 },
+  'YBCO': { lambda0: 150, type: 'II', kappa: 50 },
+  'Nb\u2083Sn': { lambda0: 100, type: 'II', kappa: 20 }
 };
 
 function gapRatio(T, Tc) {
@@ -49,8 +60,15 @@ function londonPenetration(T, Tc, lambda0) {
 
 function susceptibility(T, Tc, H) {
   const Hc = criticalField(T, Tc, scState.H0);
-  if (T < Tc && H < Hc) return -1;
-  return 0;
+  if (T >= Tc || Hc <= 0) return 0;
+  if (scState.type === 'I') {
+    return H < Hc ? -1 : 0;
+  }
+  const Hc1 = Hc / scState.kappa;
+  const Hc2 = scState.kappa * Hc;
+  if (H < Hc1) return -1;
+  if (H > Hc2) return 0;
+  return -1 + (H - Hc1) / (Hc2 - Hc1);
 }
 
 
@@ -75,6 +93,8 @@ function plotGapVsTemp() {
   const gap = [];
   const Tc = scState.Tc;
   const gap0 = gapZero(Tc);
+  const currentR = gapRatio(scState.T, Tc);
+  const currentGap = currentR * gap0;
 
   for (let t = 0.1; t <= 15; t += 0.1) {
     T.push(t);
@@ -87,7 +107,7 @@ function plotGapVsTemp() {
       line: { color: '#00f0ff', width: 2.5 },
       fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.08)'
     },
-    { x: [scState.T, scState.T], y: [0, gap0], mode: 'lines',
+    { x: [scState.T, scState.T], y: [0, currentGap], mode: 'lines',
       line: { color: '#facc15', width: 2, dash: 'dot' },
       name: 'Current T = ' + scState.T.toFixed(1) + ' K'
     }
@@ -109,12 +129,22 @@ function plotMagnetization() {
   const Tc = scState.Tc;
   const H0 = scState.H0;
   const H = scState.H;
+  const type = scState.type;
+  const kappa = scState.kappa;
 
   for (let t = 0.1; t <= 15; t += 0.1) {
     T.push(t);
     const Hc = criticalField(t, Tc, H0);
-    if (t < Tc && H < Hc) {
-      M.push(-1);
+    if (t < Tc && Hc > 0) {
+      if (type === 'I') {
+        M.push(H < Hc ? -1 : 0);
+      } else {
+        const Hc1 = Hc / kappa;
+        const Hc2 = kappa * Hc;
+        if (H < Hc1) M.push(-1);
+        else if (H > Hc2) M.push(0);
+        else M.push(-1 + (H - Hc1) / (Hc2 - Hc1));
+      }
     } else {
       M.push(0);
     }
@@ -137,7 +167,7 @@ function plotPenetration() {
   const B = [];
   const Tc = scState.Tc;
   const T = scState.T;
-  const lambda0 = 40;
+  const lambda0 = scState.lambda0;
 
   if (T >= Tc) {
     for (let xi = 0; xi <= 200; xi += 2) {
@@ -174,7 +204,7 @@ function updateLiveSC() {
   const r = gapRatio(T, Tc);
   const gap = r * gap0;
   const Hc = criticalField(T, Tc, scState.H0);
-  const lambda = londonPenetration(T, Tc, 40);
+  const lambda = londonPenetration(T, Tc, scState.lambda0);
   const chi = susceptibility(T, Tc, scState.H);
 
   const elGap = document.getElementById('live-gap');
@@ -218,6 +248,7 @@ function initSuperconductivity() {
   }
 
   if (sliderH) {
+    sliderH.max = scState.H0.toString();
     sliderH.addEventListener('input', function() {
       scState.H = parseFloat(this.value);
       var el = document.getElementById('val-H');
@@ -233,6 +264,22 @@ function initSuperconductivity() {
       var el = document.getElementById('val-Tc');
       if (el) el.textContent = scState.Tc.toFixed(1);
       scState.H0 = scState.Tc > 20 ? 15 : (scState.Tc > 5 ? 0.2 : 0.05);
+      var matData = SC_MATERIAL_DATA[scState.material];
+      if (matData) {
+        scState.lambda0 = matData.lambda0;
+        scState.type = matData.type;
+        scState.kappa = matData.kappa;
+      }
+      var sliderH = document.getElementById('slider-H');
+      if (sliderH) {
+        sliderH.max = scState.H0.toString();
+        if (parseFloat(sliderH.value) > scState.H0) {
+          sliderH.value = scState.H0.toString();
+          scState.H = scState.H0;
+          var elH = document.getElementById('val-H');
+          if (elH) elH.textContent = scState.H.toFixed(2);
+        }
+      }
       plotGapVsTemp(); plotMagnetization(); plotPenetration(); updateLiveSC();
     });
   }
@@ -375,10 +422,29 @@ function buildCooperEffects(scene) {
     scene.add(m);
     trailPool.push({ mesh: m, life: 0 });
   }
-  return { wakeLight: wakeLight, pairLight: pairLight, trailPool: trailPool };
+  // Phonon wave rings
+  var ringGeom = new THREE.TorusGeometry(0.3, 0.05, 12, 24);
+  var ringMat = new THREE.MeshBasicMaterial({ color: 0xffaa44, transparent: true, opacity: 0, side: THREE.DoubleSide });
+  var phononRings = [];
+  for (var ri = 0; ri < 5; ri++) {
+    var rm = new THREE.Mesh(ringGeom, ringMat.clone());
+    rm.rotation.x = Math.PI / 2;
+    rm.visible = false;
+    scene.add(rm);
+    phononRings.push({ mesh: rm, life: 0, active: false });
+  }
+  // Pair bond line
+  var bondPositions = new Float32Array([0, 0, 0, 0, 0, 0]);
+  var bondGeom = new THREE.BufferGeometry();
+  bondGeom.setAttribute('position', new THREE.BufferAttribute(bondPositions, 3));
+  var bondMat = new THREE.LineBasicMaterial({ color: 0xc084fc, transparent: true, opacity: 0 });
+  var bondLine = new THREE.Line(bondGeom, bondMat);
+  scene.add(bondLine);
+
+  return { wakeLight: wakeLight, pairLight: pairLight, trailPool: trailPool, phononRings: phononRings, bondLine: bondLine };
 }
 
-function updateCooperIons(ions, e1, e2) {
+function updateCooperIons(ions, e1, e2, thermalFactor, time) {
   for (var i = 0; i < ions.length; i++) {
     var ion = ions[i];
     var d1 = Math.hypot(ion.mesh.position.x - e1.x, ion.mesh.position.y - e1.y, ion.mesh.position.z - e1.z);
@@ -404,11 +470,38 @@ function updateCooperIons(ions, e1, e2) {
     ion.mesh.material.emissiveIntensity = 0.1 + Math.min(0.5, disp * 0.4);
     ion.mesh.material.emissive.setHSL(0.08, 0.8, 0.35 + Math.min(0.3, disp * 0.2));
     ion.mesh.position.set(ion.bx + ion.dx, ion.by + ion.dy, ion.bz + ion.dz);
+    if (thermalFactor > 0) {
+      var phase_ = i * 1.73 + (time || 0) * 0.002;
+      var tj = thermalFactor * 0.08;
+      ion.mesh.position.x += Math.sin(phase_) * tj;
+      ion.mesh.position.y += Math.sin(phase_ * 1.37 + 1) * tj;
+      ion.mesh.position.z += Math.sin(phase_ * 0.71 + 2) * tj;
+    }
   }
 }
 
-function advanceCooperPhase(phase, phaseT, e1, e2, wakeStrength, pairGlow) {
+function advanceCooperPhase(phase, phaseT, e1, e2, wakeStrength, pairGlow, isSC) {
   var dist = Math.hypot(e1.x - e2.x, e1.y - e2.y);
+  if (!isSC) {
+    if (phase === 'approach') {
+      if (dist < 0.8) return { phase: 'pass', phaseT: 0, wakeStrength: 0, pairGlow: 0 };
+    } else if (phase === 'pass') {
+      e1.vx *= 0.97; e2.vx *= 0.97;
+      if (phaseT > 20) return { phase: 'drift', phaseT: 0, wakeStrength: 0, pairGlow: 0 };
+    } else if (phase === 'drift') {
+      var drift = 0.045;
+      e1.vx += (drift - e1.vx) * 0.03; e2.vx += (drift - e2.vx) * 0.03;
+      e1.vy += (0 - e1.vy) * 0.03; e2.vy += (0 - e2.vy) * 0.03;
+      if (e1.x > 9 || e2.x > 9) return { phase: 'reset', phaseT: 0, wakeStrength: 0, pairGlow: 0 };
+    } else if (phase === 'reset') {
+      if (phaseT > 40) {
+        e1.x = -9; e1.y = 0; e1.z = 0; e1.vx = 0.06; e1.vy = 0; e1.vz = 0;
+        e2.x = 9; e2.y = 0; e2.z = 0; e2.vx = -0.06; e2.vy = 0; e2.vz = 0;
+        return { phase: 'approach', phaseT: 0, wakeStrength: 0, pairGlow: 0, resetIons: true };
+      }
+    }
+    return { phase: phase, phaseT: phaseT + 1, wakeStrength: 0, pairGlow: 0 };
+  }
   if (phase === 'approach') {
     if (dist < 1.8) return { phase: 'wake', phaseT: 0, wakeStrength: wakeStrength, pairGlow: pairGlow };
   } else if (phase === 'wake') {
@@ -466,10 +559,15 @@ function initCooperAnimation(containerId) {
   var container = document.getElementById(containerId);
   if (!container) return;
   if (typeof THREE === 'undefined') {
+    // Three.js ESM module may not have loaded yet — wait for three-ready event
     var msg = document.createElement('div');
     msg.style.cssText = 'padding:20px;color:#888;font-size:12px;text-align:center;';
-    msg.textContent = 'Three.js not loaded';
+    msg.textContent = 'Loading 3D scene…';
     container.appendChild(msg);
+    window.addEventListener('three-ready', function() {
+      container.removeChild(msg);
+      initCooperAnimation(containerId);
+    }, { once: true });
     return;
   }
 
@@ -486,9 +584,16 @@ function initCooperAnimation(containerId) {
     wakeStrength: 0, pairGlow: 0, trailIdx: 0
   };
 
+  var animTime = 0;
+  var phaseOverlay = document.createElement('div');
+  phaseOverlay.style.cssText = 'position:absolute;bottom:10px;left:0;right:0;text-align:center;font-size:12px;font-family:JetBrains Mono,monospace;pointer-events:none;z-index:10;text-shadow:0 0 10px rgba(0,0,0,0.95);transition:color 0.3s;';
+  container.appendChild(phaseOverlay);
+
   function physicsStep() {
-    updateCooperIons(ions, state.e1, state.e2);
-    var res = advanceCooperPhase(state.phase, state.phaseT, state.e1, state.e2, state.wakeStrength, state.pairGlow);
+    var isSC = scState.T < scState.Tc;
+    var thermalFactor = Math.max(0, Math.min(1, scState.T / scState.Tc));
+    updateCooperIons(ions, state.e1, state.e2, thermalFactor, animTime);
+    var res = advanceCooperPhase(state.phase, state.phaseT, state.e1, state.e2, state.wakeStrength, state.pairGlow, isSC);
     state.phase = res.phase; state.phaseT = res.phaseT;
     state.wakeStrength = res.wakeStrength; state.pairGlow = res.pairGlow;
     if (res.resetIons) {
@@ -501,7 +606,69 @@ function initCooperAnimation(containerId) {
     state.trailIdx = updateCooperTrails(effects.trailPool, state.e1, state.e2, state.trailIdx, state.phase);
   }
 
+  function animatePhononRings() {
+    var rings = effects.phononRings;
+    var midX = (state.e1.x + state.e2.x) / 2;
+    var midY = (state.e1.y + state.e2.y) / 2;
+    if (state.phase === 'wake' && state.phaseT % 12 === 0) {
+      for (var ri = 0; ri < rings.length; ri++) {
+        if (!rings[ri].active) {
+          rings[ri].mesh.position.set(midX, -1.2, 0);
+          rings[ri].mesh.scale.setScalar(1);
+          rings[ri].mesh.material.opacity = 0.7;
+          rings[ri].mesh.visible = true;
+          rings[ri].active = true;
+          rings[ri].life = 0;
+          break;
+        }
+      }
+    }
+    for (var ri = 0; ri < rings.length; ri++) {
+      if (rings[ri].active) {
+        rings[ri].life += 1;
+        rings[ri].mesh.scale.setScalar(1 + rings[ri].life * 0.12);
+        rings[ri].mesh.material.opacity = Math.max(0, 0.7 - rings[ri].life * 0.02);
+        if (rings[ri].life > 40) {
+          rings[ri].mesh.visible = false;
+          rings[ri].active = false;
+        }
+      }
+    }
+  }
+
+  function updatePairBond() {
+    var isPaired = (state.phase === 'pair' || (state.phase === 'drift' && state.pairGlow > 0.1)) && scState.T < scState.Tc;
+    if (isPaired) {
+      var pos = effects.bondLine.geometry.attributes.position.array;
+      pos[0] = state.e1.x; pos[1] = state.e1.y; pos[2] = state.e1.z;
+      pos[3] = state.e2.x; pos[4] = state.e2.y; pos[5] = state.e2.z;
+      effects.bondLine.geometry.attributes.position.needsUpdate = true;
+      effects.bondLine.material.opacity = Math.min(0.6, state.pairGlow * 0.7);
+      effects.bondLine.visible = true;
+    } else {
+      effects.bondLine.visible = false;
+    }
+  }
+
+  function updatePhaseOverlay() {
+    var isSC = scState.T < scState.Tc;
+    var phaseTexts = {
+      approach: { text: 'Approaching\u2026', color: 'rgba(0,240,255,0.8)' },
+      wake: { text: '\u26A1 Phonon exchange', color: 'rgba(255,215,64,0.9)' },
+      pass: { text: 'No pairing \u2014 T > T_c', color: 'rgba(255,80,80,0.8)' },
+      pair: { text: '\u2728 Cooper pair formed!', color: 'rgba(192,132,252,0.9)' },
+      drift: { text: isSC ? 'Drifting through lattice\u2026' : 'Electrons scatter (normal)', color: 'rgba(0,240,255,0.6)' },
+      reset: { text: '', color: 'rgba(0,240,255,0.4)' }
+    };
+    var p = phaseTexts[state.phase];
+    if (p) {
+      phaseOverlay.textContent = p.text;
+      phaseOverlay.style.color = p.color;
+    }
+  }
+
   function animate() {
+    animTime++;
     physicsStep();
     electrons.e1Mesh.position.set(state.e1.x, state.e1.y, state.e1.z);
     electrons.e2Mesh.position.set(state.e2.x, state.e2.y, state.e2.z);
@@ -513,33 +680,66 @@ function initCooperAnimation(containerId) {
     electrons.e2Mesh.material.emissiveIntensity = 0.6 + state.pairGlow * 0.4;
     sc.camera.position.x = Math.sin(Date.now() * 0.0003) * 1.5;
     sc.camera.lookAt(0, 0, 0);
+    animatePhononRings();
+    updatePairBond();
+    updatePhaseOverlay();
     sc.renderer.render(sc.scene, sc.camera);
     cooperAnimId = requestAnimationFrame(animate);
   }
 
   animate();
 
-  function onResize() {
+  // Expose resize + resume for sub-tab switching
+  var _cooperSc = sc;
+  window._cooperResize = function() {
+    if (!_cooperSc || !container) return;
     var w = container.clientWidth || 340;
     var h = container.clientHeight || 180;
-    sc.camera.aspect = w / h;
-    sc.camera.updateProjectionMatrix();
-    sc.renderer.setSize(w, h);
-  }
-  window.addEventListener('resize', onResize);
+    if (w < 10 || h < 10) return;
+    _cooperSc.camera.aspect = w / h;
+    _cooperSc.camera.updateProjectionMatrix();
+    _cooperSc.renderer.setSize(w, h);
+  };
+  window._cooperResume = function() {
+    if (cooperAnimId) return;
+    animate();
+  };
+  window.addEventListener('resize', window._cooperResize);
 }
 /* ════════════════════════════════════════════════════════════════════════
    2. MEISSNER EFFECT CANVAS  (v4)
    ════════════════════════════════════════════════════════════════════════ */
 let meissnerAnimId = null;
+let _meissnerCtx = null, _meissnerCanvas = null, _meissnerT = 0;
 function initMeissnerAnimation(canvasId) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
+  _meissnerCanvas = canvas;
   const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
-  let t = 0;
+  if (!ctx) return;
+  _meissnerCtx = ctx;
+  _meissnerT = 0;
+
+  function resizeCanvas() {
+    var wrap = canvas.parentElement;
+    if (!wrap) return;
+    var w = wrap.clientWidth || 340;
+    if (w < 10) w = 340;
+    canvas.width = w;
+    canvas.height = 180;
+  }
+  resizeCanvas();
+  window._meissnerResize = resizeCanvas;
+  window._meissnerResume = function() {
+    if (meissnerAnimId) return;
+    draw();
+  };
+  window.addEventListener('resize', resizeCanvas);
 
   function draw() {
+    if (!_meissnerCtx) return;
+    const W = canvas.width, H = canvas.height;
+    var t = _meissnerT;
     const isSC = scState.T < scState.Tc && scState.H < criticalField(scState.T, scState.Tc, scState.H0);
     const lambda = londonPenetration(scState.T, scState.Tc, 40);
     ctx.clearRect(0, 0, W, H);
@@ -641,7 +841,7 @@ function initMeissnerAnimation(canvasId) {
     niceText(ctx, '──  magnetic field B', lx + 6, ly + 30, { size: 8.5, color: 'rgba(0,240,255,0.6)' });
     niceText(ctx, '↻  shielding supercurrent', lx + 6, ly + 46, { size: 8.5, color: 'rgba(0,240,255,0.5)' });
 
-    t++;
+    _meissnerT++;
     meissnerAnimId = requestAnimationFrame(draw);
   }
   draw();
@@ -651,17 +851,39 @@ function initMeissnerAnimation(canvasId) {
    3. ENERGY-GAP / DOS CANVAS  (v4)
    ════════════════════════════════════════════════════════════════════════ */
 let gapAnimId = null;
+let _gapCtx = null, _gapCanvas = null, _gapT = 0;
 function initGapAnimation(canvasId) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
+  _gapCanvas = canvas;
   const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
-  let t = 0;
+  if (!ctx) return;
+  _gapCtx = ctx;
+  _gapT = 0;
+
+  function resizeCanvas() {
+    var wrap = canvas.parentElement;
+    if (!wrap) return;
+    var w = wrap.clientWidth || 700;
+    if (w < 10) w = 700;
+    canvas.width = w;
+    canvas.height = 140;
+  }
+  resizeCanvas();
+  window._gapResize = resizeCanvas;
+  window._gapResume = function() {
+    if (gapAnimId) return;
+    draw();
+  };
+  window.addEventListener('resize', resizeCanvas);
 
   const quasiparticles = [];
   for (let i = 0; i < 6; i++) quasiparticles.push({ x: -20 - i * 40, speed: 0.6 + Math.random() * 0.4, side: i % 2 === 0 ? -1 : 1 });
 
   function draw() {
+    if (!_gapCtx) return;
+    const W = canvas.width, H = canvas.height;
+    var t = _gapT;
     const Tc = scState.Tc, T = scState.T;
     const r = gapRatio(T, Tc);
     const gap0 = gapZero(Tc);
@@ -740,7 +962,7 @@ function initGapAnimation(canvasId) {
     ctx.fillStyle = 'rgba(180,120,255,0.6)'; ctx.fillRect(lx + 7, ly + 40, 6, 2);
     niceText(ctx, 'superconducting gap', lx + 18, ly + 43, { size: 8.5, color: 'rgba(160,160,190,0.6)' });
 
-    t++;
+    _gapT++;
     gapAnimId = requestAnimationFrame(draw);
   }
   draw();
@@ -807,20 +1029,60 @@ function injectLegendPanel() {
 }
 
 /* ════════════════════════════════════════════════════════════════════════
-   G. INIT v4
+   G. INIT v5 — deferred until Playground visible + sub-tab routing
    ════════════════════════════════════════════════════════════════════════ */
+var _scInited = false;
+var _scActiveSubTab = 'cooper';
+
 function initSuperconductivityV2() {
+  if (_scInited) return;
+  _scInited = true;
   initSuperconductivity();
-  injectPlotDescriptions();
-  injectLegendPanel();
   initCooperAnimation('cooper-wrap');
   initMeissnerAnimation('canvas-meissner');
   initGapAnimation('canvas-gap');
+  setPlayMode('cooper');
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initSuperconductivityV2);
-} else {
-  initSuperconductivityV2();
+/* Sub-tab switching with selective controls + canvas resize/pause */
+function setPlayMode(mode) {
+  _scActiveSubTab = mode;
+  var modes = ['cooper', 'meissner', 'gap'];
+  modes.forEach(function(m) {
+    var btn = document.getElementById('pg-mode-' + m);
+    var view = document.getElementById('pg-view-' + m);
+    if (btn) btn.classList.toggle('active', m === mode);
+    if (view) view.style.display = (m === mode ? '' : 'none');
+  });
+  // Show/hide sidebar controls
+  document.querySelectorAll('.pg-control-scope').forEach(function(el) {
+    var show = el.classList.contains('scope-global');
+    if (mode === 'meissner' && el.classList.contains('scope-meissner')) show = true;
+    el.style.display = show ? '' : 'none';
+  });
+  // Resize / resume the active visualization
+  requestAnimationFrame(function() {
+    if (mode === 'cooper' && typeof _cooperResize === 'function') _cooperResize();
+    if (mode === 'meissner' && typeof _meissnerResize === 'function') _meissnerResize();
+    if (mode === 'gap') {
+      if (typeof _gapResize === 'function') _gapResize();
+      // Resize Plotly plots
+      ['plot-gap-temp','plot-magnetization','plot-penetration'].forEach(function(pid) {
+        var el = document.getElementById(pid);
+        if (el && el.data && typeof Plotly !== 'undefined') {
+          try { Plotly.Plots.resize(el); } catch(e) {}
+        }
+      });
+    }
+  });
+  // Pause inactive canvas animations
+  if (mode !== 'cooper' && cooperAnimId) { cancelAnimationFrame(cooperAnimId); cooperAnimId = null; }
+  if (mode !== 'meissner' && meissnerAnimId) { cancelAnimationFrame(meissnerAnimId); meissnerAnimId = null; }
+  if (mode !== 'gap' && gapAnimId) { cancelAnimationFrame(gapAnimId); gapAnimId = null; }
+  // Resume active animation
+  if (mode === 'cooper' && !cooperAnimId && typeof _cooperResume === 'function') _cooperResume();
+  if (mode === 'meissner' && !meissnerAnimId && typeof _meissnerResume === 'function') _meissnerResume();
+  if (mode === 'gap' && !gapAnimId && typeof _gapResume === 'function') _gapResume();
 }
+window.setPlayMode = setPlayMode;
 window.initSuperconductivityV2 = initSuperconductivityV2;

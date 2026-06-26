@@ -15,25 +15,136 @@
   .draggable-target { cursor:grab; border:2px dashed var(--glass-border); border-radius:var(--radius-sm); padding:0.5rem 0.8rem; background:var(--bg-elevated); display:inline-block; }
   .drop-zone { border:2px dashed var(--glass-border); border-radius:var(--radius-sm); padding:0.6rem; min-height:40px; min-width:50px; display:inline-block; background:var(--bg-panel); }
   .drop-zone.dragover { border-color:var(--accent-cyan); background:rgba(0,240,255,0.04); }
-  .mat-btn { padding: 0.35rem 0.6rem; border-radius:6px; border:1px solid var(--border-subtle); background:var(--bg-elevated); color:var(--text-main); font-size:0.78rem; cursor:pointer; transition:all .2s; }
+  .mat-btn { padding:0.35rem 0.6rem; border-radius:6px; border:1px solid var(--border-subtle); background:var(--bg-elevated); color:var(--text-main); font-size:0.78rem; cursor:pointer; transition:all .2s; }
   .mat-btn:hover { border-color:var(--accent-cyan); color:var(--accent-cyan); }
   .mat-btn.active { background:rgba(0,240,255,0.12); border-color:var(--accent-cyan); color:var(--accent-cyan); }
-  #ising-wrapper { position:relative; width:100%; height:320px; background:var(--bg-elevated); border-radius:var(--radius-md); overflow:hidden; margin-top:1.5rem; border:1px solid var(--glass-border); }
+  #ising-wrapper { position:relative; width:100%; height:320px; background:var(--bg-elevated); border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--glass-border); }
   #ising-canvas { display:block; width:100%; height:100%; }
-  .ising-legend { font-size:0.78rem; color:var(--text-muted); margin-top:0.4rem; display:flex; gap:1rem; flex-wrap:wrap; }
+  .ising-legend { font-size:0.78rem; color:var(--text-muted); margin-top:0.6rem; display:flex; gap:1rem; flex-wrap:wrap; }
   .ising-legend span::before { content:''; display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:4px; }
-  .spin-up::before { background: #00f0ff; }
-  .spin-down::before { background: #ff4ecd; }
-  .spin-domain::before { background: #facc15; }
-  .spin-bond-strong::before { background: #00f0ff; opacity:0.5; }
-  .spin-bond-weak::before { background: #ff4ecd; opacity:0.3; }
+  .spin-up::before { background:#00f0ff; }
+  .spin-down::before { background:#ff4ecd; }
+  .spin-domain::before { background:#facc15; }
+  .spin-bond-strong::before { background:#00f0ff; opacity:0.5; }
+  .spin-bond-weak::before { background:#ff4ecd; opacity:0.3; }
   .bar-magnet-label::before { background:linear-gradient(to right,#00f0ff 50%,#ff4ecd 50%); border-radius:2px; width:14px; height:6px; }
   .field-arrow::before { content:'→'; background:none; color:#00f0ff; font-size:0.9rem; width:auto; height:auto; display:inline; }
   .uniform-h-arrow::before { content:'→'; background:none; color:#a0b8ff; font-size:0.85rem; width:auto; height:auto; display:inline; }
-  /* magnet toggle switch */
   .mag-switch .mag-slider::before { position:absolute; content:''; height:14px; width:14px; left:3px; bottom:3px; background:var(--text-muted); border-radius:50%; transition:.3s; }
   #magnet-toggle-check:checked + .mag-slider { background:rgba(0,240,255,0.25); }
   #magnet-toggle-check:checked + .mag-slider::before { transform:translateX(16px); background:#00f0ff; }
+
+  /* === Module canonical layout === */
+  .game-layout { max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg); align-items:start; }
+  @media (max-width:1000px) { .game-layout { grid-template-columns:1fr; } }
+  .game-main { min-width:0; }
+  .game-sidebar { min-width:0; position:sticky; top:5rem; align-self:start; max-height:calc(100vh - 6rem); overflow-y:auto; padding-right:0.3rem; }
+  .game-sidebar::-webkit-scrollbar { width:4px; }
+  .game-sidebar::-webkit-scrollbar-thumb { background:var(--glass-border); border-radius:2px; }
+  .game-sidebar.static { position:static; max-height:none; overflow-y:visible; }
+  .macro-panel { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-top:1rem; }
+  .macro-panel:first-of-type { margin-top:0; }
+  .macro-panel h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
+  .sidebar-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-bottom:1rem; }
+  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
+  .insights { display:grid; grid-template-columns:1fr; gap:1rem; margin-top:1rem; }
+  @media (min-width:900px) { .insights { grid-template-columns:1fr 1fr; } }
+  .insight-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; }
+  .insight-card .insight-title { margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright); }
+  .viz-card { background:var(--bg-elevated); border:1px solid var(--glass-border); border-radius:var(--radius-sm); padding:0.8rem; margin-bottom:1rem; }
+  .viz-card h4 { margin:0 0 0.4rem; font-size:0.9rem; color:var(--text-bright); }
+  .slider-group { margin-bottom:1rem; }
+  .slider-group label { display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:0.3rem; }
+  .slider-group input[type=range], .slider-group select { width:100%; }
+  .slider-value { font-family:var(--font-mono); color:var(--accent-cyan); font-weight:700; }
+  .slider-desc { font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; }
+        .dash-row { display:flex; align-items:center; justify-content:space-between; padding:0.45rem 0.5rem; margin-bottom:0.35rem; border-radius:var(--radius-sm); background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); transition:background 0.2s; }
+        .dash-row:hover { background:rgba(255,255,255,0.05); }
+        .dash-label { font-size:0.78rem; color:var(--text-dim); display:flex; align-items:center; gap:0.4rem; }
+        .dash-icon { font-size:0.85rem; }
+        .dash-val { font-family:var(--font-mono); font-size:0.8rem; color:#fff; min-width:80px; text-align:center; padding:0.25rem 0.55rem; border-radius:999px; font-weight:600; box-shadow:0 2px 8px rgba(0,0,0,0.25); }
+        .dash-val.cyan  { background:linear-gradient(135deg, rgba(0,240,255,0.85), rgba(0,180,255,0.7)); }
+        .dash-val.pink  { background:linear-gradient(135deg, rgba(255,78,205,0.85), rgba(255,120,160,0.7)); }
+        .dash-val.green { background:linear-gradient(135deg, rgba(74,222,128,0.85), rgba(34,197,94,0.7)); }
+        .dash-val.yellow{ background:linear-gradient(135deg, rgba(250,204,21,0.9),  rgba(234,179,8,0.75)); color:#111; }
+        .dash-val.blue  { background:linear-gradient(135deg, rgba(96,165,250,0.85), rgba(59,130,246,0.7)); }
+        .dash-val.purple{ background:linear-gradient(135deg, rgba(192,132,252,0.85), rgba(147,51,234,0.7)); }
+        .dash-val.state { background:var(--bg-elevated); color:var(--text-main); border:1px solid var(--glass-border); font-weight:500; }
+
+        /* Readout panel accent */
+        #readout-panel-mag { border-left:3px solid var(--accent-cyan); }
+        #readout-panel-mag h4 { background:linear-gradient(135deg, var(--accent-cyan), var(--accent-pink)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+
+  /* === Equation styling === */
+  .equation-box {
+    background:rgba(0,0,0,0.18);
+    border:1px solid var(--glass-border);
+    border-left:3px solid var(--accent-cyan);
+    border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+    padding:0.8rem 1rem;
+    font-size:0.85rem;
+    color:var(--text-main);
+    line-height:1.7;
+    overflow-x:auto;
+  }
+  .mjx-chtml { font-size:105% !important; }
+
+  /* === Sub-tab bar (pill style, mirrors game-mode-bar) === */
+  .mag-sub-bar { display:flex; justify-content:center; gap:0.6rem; flex-wrap:wrap; margin:0 auto 1.5rem; padding:0.4rem; background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:999px; width:fit-content; max-width:95%; }
+  .mag-sub-btn { appearance:none; border:1px solid transparent; background:transparent; color:var(--text-dim); font-family:inherit; font-size:0.8rem; padding:0.4rem 1rem; border-radius:999px; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:0.35rem; }
+  .mag-sub-btn:hover { background:rgba(255,255,255,0.05); color:var(--text-main); border-color:var(--glass-border); }
+  .mag-sub-btn.active { background:linear-gradient(135deg, rgba(0,240,255,0.85), rgba(255,78,205,0.85)); color:#fff; border-color:transparent; box-shadow:0 4px 18px rgba(0,240,255,0.25); font-weight:600; }
+  .mag-sub-section { margin-top:0; display:none; }
+  .mag-sub-section.active { display:block; }
+
+  /* === Ambient bar for canvas === */
+  .ambient-bar-mag { display:flex; flex-wrap:wrap; gap:0.75rem; align-items:center; justify-content:space-between; background:var(--bg-deep); border:1px solid var(--glass-border); border-radius:var(--radius-md); padding:0.45rem 0.8rem; margin-bottom:0.5rem; font-size:0.78rem; color:var(--text-dim); }
+  .ambient-stat-mag { display:flex; align-items:center; gap:0.3rem; }
+  .ambient-stat-mag b { color:var(--accent-cyan); font-family:var(--font-mono); font-weight:600; }
+
+  /* === Canvas overlay === */
+  .lattice-overlay-mag { position:absolute; top:10px; left:10px; z-index:2; background:rgba(10,12,24,0.72); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:5px 10px; font-family:var(--font-mono); font-size:0.7rem; color:var(--accent-cyan); pointer-events:none; }
+
+  .game-mode-bar {
+    display:flex;
+    justify-content:center;
+    gap:0.75rem;
+    flex-wrap:wrap;
+    margin:1.5rem auto 2rem;
+    padding:0.5rem;
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--glass-border);
+    border-radius:999px;
+    width:fit-content;
+    max-width:95%;
+  }
+  .game-mode-btn {
+    appearance:none;
+    border:1px solid transparent;
+    background:transparent;
+    color:var(--text-dim);
+    font-family:inherit;
+    font-size:0.85rem;
+    padding:0.55rem 1.25rem;
+    border-radius:999px;
+    cursor:pointer;
+    transition:all 0.2s ease;
+    display:inline-flex;
+    align-items:center;
+    gap:0.45rem;
+  }
+  .game-mode-btn:hover {
+    background:rgba(255,255,255,0.05);
+    color:var(--text-main);
+    border-color:var(--glass-border);
+  }
+  .game-mode-btn.active {
+    background:linear-gradient(135deg, rgba(0,240,255,0.85), rgba(255,78,205,0.85));
+    color:#fff;
+    border-color:transparent;
+    box-shadow:0 4px 18px rgba(0,240,255,0.25);
+    font-weight:600;
+  }
 </style>
 </head>
 <body>
@@ -46,86 +157,410 @@
   </div>
 </nav>
 <div class="game-hero" style="padding-bottom:0;">
-  <div class="level-badge">Module 14 · Level <span id="current-level">1</span> · Moment Designer</div>
-  <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-purple),var(--accent-pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Magnetism</span></h1>
-  <p class="hero-desc">From dia- to ferromagnetism: how magnetic moments respond, interact, and order.</p>
+  <div class="hero-text" style="min-width:0;">
+    <div class="level-badge">Module 14 · Level <span id="current-level">1</span> · Moment Designer</div>
+    <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-purple),var(--accent-pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Magnetism</span></h1>
+    <p class="hero-desc">From dia- to ferromagnetism: how magnetic moments respond, interact, and order.</p>
+  </div>
 </div>
 <div class="game-container">
   <div class="game-mode-bar">
-    <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
+    <button class="game-mode-btn active" id="mode-story" onclick="setGameMode('story')">📖 Story</button>
+    <button class="game-mode-btn" id="mode-theory" onclick="setGameMode('theory')">🔬 Theory</button>
+    <button class="game-mode-btn" id="mode-play" onclick="setGameMode('play')">🎮 Playground</button>
     <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">🎯 Challenges</button>
     <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">🧩 Puzzles</button>
   </div>
-  <div class="mode-section" id="section-play">
-    <div class="playground-area">
-      <div class="playground-header">
-        <div class="playground-title">🔬 Susceptibility, Hysteresis & Ising Lattice</div>
-        <div class="playground-level">Adjust temperature and field to see spins flip, domains grow, and hysteresis emerge.</div>
+
+  <!-- STORY -->
+  <div class="mode-section" id="section-story">
+    <div class="game-layout">
+      <div class="game-main">
+
+        <section class="macro-panel">
+          <h3>📖 The Story of Magnetism</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+            Magnetism has been known since antiquity — naturally magnetized lodestone (Fe₃O₄) was used as a compass
+            by the Han dynasty (206 BC). In 1820 <strong>Hans Christian Ørsted</strong> discovered that an electric
+            current deflects a compass needle, linking electricity and magnetism. <strong>Michael Faraday</strong>
+            (1831) showed that a changing magnetic field induces an electric current — the principle behind generators
+            and transformers. <strong>James Clerk Maxwell</strong> (1865) unified electricity, magnetism, and optics
+            into a single theory of electromagnetism.
+          </p>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-top:0.6rem;">
+            The quantum understanding emerged with the <strong>Pauli exclusion principle</strong> (1925),
+            <strong>Heisenberg exchange</strong> (1928), and <strong>Louis Néel</strong>'s theory of
+            antiferromagnetism (1936). <strong>Nobel Prizes</strong>: Fert & Grünberg (2007) for giant
+            magnetoresistance (GMR) — the foundation of modern hard-drive read heads; and the 2023 prize
+            to L'Huillier, Corkum & Krausz for attosecond physics, which now probes magnetic switching
+            on femtosecond timescales.
+          </p>
+        </section>
+
+        <section class="macro-panel">
+          <h3>🧲 Types of Magnetism</h3>
+          <div style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+            <p style="margin-bottom:0.5rem;"><strong>Diamagnetism</strong> — χ < 0, weak, present in all materials.
+            Arises from induced orbital currents opposing the applied field. Examples: water (χ ≈ −9×10⁻⁶),
+            graphite, copper, superconductors (χ = −1, perfect diamagnet).</p>
+            <p style="margin-bottom:0.5rem;"><strong>Paramagnetism</strong> — χ > 0, χ ∝ 1/T (Curie law).
+            Independent atomic moments align with the field against thermal disorder. Examples: Al, Pt,
+            O₂ gas, rare-earth ions. Pauli paramagnetism in metals: χ is T-independent because only
+            electrons near E<sub>F</sub> respond.</p>
+            <p style="margin-bottom:0.5rem;"><strong>Ferromagnetism</strong> — spontaneous magnetization below T<sub>c</sub>.
+            Exchange interaction J > 0 aligns neighbouring spins. Domains form to reduce stray field energy.
+            Examples: Fe (T<sub>c</sub>=1043 K), Ni (627 K), Co (1388 K), Gd (293 K).</p>
+            <p style="margin-bottom:0.5rem;"><strong>Antiferromagnetism</strong> — J < 0, spins alternate
+            (checkerboard). Zero net M but nonzero sublattice magnetization. Peaks in χ at T<sub>N</sub>.
+            Examples: Cr (T<sub>N</sub>=311 K), MnO (116 K), NiO (525 K).</p>
+            <p style="margin-bottom:0.5rem;"><strong>Ferrimagnetism</strong> — antiparallel sublattices with
+            unequal moments, giving net spontaneous M. Examples: Fe₃O₄ magnetite (T<sub>c</sub>=858 K),
+            YIG (yttrium iron garnet), ferrites used in transformers.</p>
+          </div>
+        </section>
+
+        <section class="macro-panel">
+          <h3>⚡ Everyday Applications</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+            <strong>Hard disk drives</strong> store bits as magnetic domains in CoCrPt thin films.
+            The read head uses GMR: resistance changes by 5–20% when the sense-layer magnetization
+            switches relative to a pinned reference layer. <strong>MRI</strong> (3 T clinical scanners)
+            uses the Larmor precession of proton spins in water — the same physics as the Bloch sphere
+            in Module 3. <strong>Transformers</strong> use laminated ferrite cores (soft magnets, low H<sub>c</sub>)
+            to efficiently couple AC power. <strong>Spintronics</strong> exploits the electron's spin degree
+            of freedom beyond charge: spin-transfer torque, magnetic tunnel junctions (MTJ), and
+            racetrack memory are the frontier.
+          </p>
+        </section>
+
+        <section class="macro-panel">
+          <h3>🔭 Open Questions</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+            Why do some 2D materials (CrI₃, Cr₂Ge₂Te₆) remain ferromagnetic down to monolayer thickness?
+            Can we build an <strong>antiskyrmion</strong>-based racetrack memory? What is the role of
+            spin-orbit coupling in <strong>topological magnets</strong> like MnSi and Co₃Sn₂S₂?
+            How does <strong>ultrafast demagnetization</strong> work — electrons, spins, and lattice
+            exchange energy within 100 fs after a laser pulse? These are the questions driving
+            modern magnetism research.
+          </p>
+        </section>
+
       </div>
-      <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem;">
-        <div>
-          <!-- Ising Canvas FIRST (primary visual) -->
-          <div id="ising-wrapper">
-            <canvas id="ising-canvas"></canvas>
-          </div>
-          <div class="ising-legend">
-            <span class="spin-up">Spin up (↑)</span>
-            <span class="spin-down">Spin down (↓)</span>
-            <span class="spin-domain">Domain wall</span>
-            <span class="spin-bond-strong">Strong coupling</span>
-            <span class="spin-bond-weak">Weak coupling</span>
-            <span class="bar-magnet-label">Bar magnet (N-S)</span>
-            <span class="field-arrow">Local field arrow</span>
-            <span class="uniform-h-arrow">Uniform H field</span>
-          </div>
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.6;">
-            <strong>What it shows:</strong> A 2D Ising lattice (20×20) where each arrow is a spin-½ moment. At low T, exchange J locks neighbours into domains (thick cyan bonds). At T > Tc, thermal noise randomizes the lattice (thin pink bonds). The uniform background arrows show the global external field H direction. Drag the bar magnet (blue=North, red=South) across the crystal and toggle its power — the local dipole arrows show how its reorients nearby spins.<br>
-            <strong>Why it matters:</strong> Domains are why a ferromagnet can have zero net M even when cold — spins are locally ordered but globally cancelling. The lattice is the microscopic origin of the macroscopic curves below.
-          </div>
-
-          <!-- plot-susceptibility viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Magnetic Susceptibility χ(T)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Curie-Weiss: χ = C/(T-θ). Peaks at Néel T for antiferromagnets.</p>
-  <div class="plot-container" id="plot-susceptibility" style="min-height:280px;margin-top:1.5rem;"></div>
-</div>
-
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
-            <strong>What it shows:</strong> Magnetic susceptibility versus temperature, distinguishing paramagnetic Curie-law decay (χ = C/T), ferromagnetic Curie–Weiss divergence near Tc (χ = C/(T−θ)), and the antiferromagnetic peak at T<sub>N</sub>.<br>
-            <strong>Why it matters:</strong> The χ(T) fingerprint tells you the dominant interaction — weak independent moments versus strong exchange coupling — and predicts phase transitions.
-          </div>
-          <!-- plot-M-T viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Magnetization vs Temperature</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Spontaneous M_s(T) ∝ √(T_c-T) in mean-field theory.</p>
-  <div class="plot-container" id="plot-M-T" style="min-height:220px; margin-top:1.5rem;"></div>
-</div>
-
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
-            <strong>What it shows:</strong> Normalized magnetization M(T)/M<sub>s</sub> versus temperature. Below Tc, exchange interactions win over thermal disorder and spontaneous order appears (Brillouin-like tanh law).<br>
-            <strong>Why it matters:</strong> The M(T) knee is the smoking gun for a ferromagnetic transition and lets you read Tc off a magnetization experiment directly.
-          </div>
-          <!-- plot-hysteresis viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Hysteresis Loop M(H)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Ferromagnetic: coercivity H_c, remanence M_r, saturation M_s.</p>
-  <div class="plot-container" id="plot-hysteresis" style="min-height:260px; margin-top:1.5rem;"></div>
-</div>
-
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
-            <strong>What it shows:</strong> The classic M–H hysteresis loop: sweep external field H up (green) and down (magenta). Captures remanence M<sub>r</sub>, coercivity H<sub>c</sub>, and saturation M<sub>s</sub>. At T → Tc the loop collapses because thermal energy destroys domains.<br>
-            <strong>Why it matters:</strong> The loop area and coercivity decide whether a material is a soft transformer core (low Hc) or a hard permanent magnet / storage medium (high Hc, high Mr).
-          </div>
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-story"></div>
         </div>
-        <div>
-          <div class="challenge-panel" style="margin-bottom:1rem;">
-            <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙</span><span class="challenge-title">Controls</span></div>
-            <div class="control-row"><span class="control-label">Temperature T</span><span class="control-value" id="val-T-mag">300</span><span class="unit-tag">K</span></div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-story" style="font-size:0.8rem;color:var(--text-dim);line-height:1.6;">Complete challenges to earn badges!</div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- THEORY -->
+  <div class="mode-section" id="section-theory" style="display:none;">
+    <div class="game-layout">
+      <div class="game-main">
+
+        <section class="macro-panel">
+          <h3>🔬 Curie-Weiss Theory</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+            Pierre Curie (1895) observed that paramagnetic susceptibility follows χ = C/T.
+            <strong>Pierre Weiss</strong> (1907) introduced a molecular field H<sub>m</sub> = λM
+            to explain ferromagnetism: each spin feels an effective field from its neighbours.
+            The susceptibility becomes:
+          </p>
+          <div class="equation-box">
+            $$\chi = \frac{C}{T - \theta}, \qquad \theta = \lambda C, \qquad
+            M_s(T) \propto \sqrt{T_c - T} \quad (\text{mean-field})$$
+          </div>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-top:0.4rem;">
+            θ > 0 for ferromagnets (Tc ≈ θ), θ < 0 for antiferromagnets (T<sub>N</sub> = −θ).
+          </p>
+        </section>
+
+        <section class="macro-panel">
+          <h3>🔗 Heisenberg Exchange</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+            The quantum origin of the molecular field is the <strong>exchange interaction</strong>:
+            the Coulomb repulsion combined with the Pauli principle favours parallel (ferro) or
+            antiparallel (antiferro) alignment depending on orbital overlap.
+          </p>
+          <div class="equation-box">
+            $$\mathcal{H}_{\text{Heis}} = -J \sum_{\langle ij \rangle} \mathbf{S}_i \cdot \mathbf{S}_j,
+            \qquad J = \frac{1}{2}(E_{\text{singlet}} - E_{\text{triplet}})$$
+          </div>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-top:0.4rem;">
+            J > 0 → ferromagnetic (triplet lower energy), J < 0 → antiferromagnetic (singlet lower).
+            The mean-field transition temperature scales as T<sub>c</sub> ≈ z|J|/k<sub>B</sub>
+            where z is the coordination number.
+          </p>
+        </section>
+
+        <section class="macro-panel">
+          <h3>📉 Landau Theory of Phase Transitions</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+            Lev Landau (1937) described continuous phase transitions using a free-energy functional
+            expanded in powers of the order parameter M:
+          </p>
+          <div class="equation-box">
+            $$G(M) = a(T - T_c) M^2 + b M^4 - \mu_0 H M, \qquad
+            \frac{\partial G}{\partial M} = 0 \;\Rightarrow\; M(T) \propto \sqrt{T_c - T}$$
+          </div>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-top:0.4rem;">
+            Below T<sub>c</sub> the quadratic coefficient becomes negative, producing a double-well
+            potential. The system spontaneously chooses M = ±M<sub>s</sub> — symmetry breaking.
+            Adding the −HM term tilts the well, favouring one direction.
+          </p>
+        </section>
+
+        <section class="macro-panel">
+          <h3>🏛 Domains & Hysteresis</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+            A ferromagnet below T<sub>c</sub> breaks into <strong>magnetic domains</strong> —
+            regions of uniform magnetization — to minimize the magnetostatic (stray field) energy.
+            Domain walls (Bloch or Néel type) have a finite width set by the competition between
+            exchange (wants wide walls) and anisotropy (wants narrow walls).
+          </p>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-top:0.4rem;">
+            <strong>Hysteresis</strong> arises because domain walls are pinned by defects, grain
+            boundaries, or inclusions. The <strong>coercivity</strong> H<sub>c</sub> is the field
+            needed to unpin walls and reverse magnetization. Soft magnets (H<sub>c</sub> < 1 kA/m)
+            are used in transformers; hard magnets (H<sub>c</sub> > 10 kA/m) are permanent magnets.
+          </p>
+          <div class="equation-box">
+            $$M(H) = M_s \tanh\!\left(\frac{H \pm H_c}{\alpha}\right), \qquad
+            H_c(T) = H_c(0)\left[1 - \left(\frac{T}{T_c}\right)^{1/2}\right]$$
+          </div>
+        </section>
+
+        <section class="macro-panel">
+          <h3>🧊 Magnons (Spin Waves)</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+            At low temperature, the ordered magnet supports collective excitations called
+            <strong>magnons</strong> — quantized spin waves. In a simple cubic ferromagnet
+            with nearest-neighbour exchange:
+          </p>
+          <div class="equation-box">
+            $$\hbar\omega(q) = 2JS(1 - \cos qa), \qquad
+            \text{low-}q:\; \hbar\omega \approx JS(qa)^2$$
+          </div>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-top:0.4rem;">
+            Magnons carry spin −ℏ and reduce the magnetization at finite T: the Bloch T<sup>3/2</sup>
+            law. In the <strong>Magnon sub-tab</strong> of the Playground, you can inject a magnon
+            wavepacket into the Ising lattice and watch it propagate — a real-space visualization
+            of spin-wave dynamics.
+          </p>
+        </section>
+
+      </div>
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-theory"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-theory" style="font-size:0.8rem;color:var(--text-dim);line-height:1.6;">Complete challenges to earn badges!</div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- PLAYGROUND -->
+  <div class="mode-section" id="section-play" style="display:none;">
+
+    <!-- Sub-tab bar (centered pill style) -->
+    <div class="mag-sub-bar">
+      <button class="mag-sub-btn active" onclick="magSubTab('lattice')">🧲 Lattice</button>
+      <button class="mag-sub-btn" onclick="magSubTab('curves')">📈 Curves</button>
+      <button class="mag-sub-btn" onclick="magSubTab('landau')">📐 Landau</button>
+      <button class="mag-sub-btn" onclick="magSubTab('magnon')">🧊 Magnon</button>
+    </div>
+
+    <div class="game-layout">
+      <div class="game-main">
+
+        <!-- Sub-tab: Lattice -->
+        <div class="mag-sub-section active" id="magsub-lattice">
+          <section class="macro-panel">
+            <h3>🧲 Ising Lattice — Microscopic Magnetism</h3>
+            <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.6;">
+              Real-time 2D Ising model (20×20). Adjust T, H, J below. Red/pink = spin up, blue/magenta = spin down. Thick bonds = aligned neighbours. Yellow tint = domain wall.
+            </p>
+
+            <!-- Ambient bar -->
+            <div class="ambient-bar-mag">
+              <span class="ambient-stat-mag"><span>🧲</span> <b id="amb-mat">Fe</b></span>
+              <span class="ambient-stat-mag"><span>🌡</span> T = <b id="amb-temp">300</b> K</span>
+              <span class="ambient-stat-mag"><span>↔️</span> H = <b id="amb-h">0.00</b></span>
+              <span class="ambient-stat-mag"><span>📊</span> M = <b id="amb-m">—</b></span>
+              <span class="ambient-stat-mag"><span>💠</span> <b id="amb-state">Paramagnetic</b></span>
+            </div>
+
+            <div id="ising-wrapper">
+              <canvas id="ising-canvas"></canvas>
+              <div class="lattice-overlay-mag" id="lattice-info">20×20 Ising · Fe · T=300K</div>
+            </div>
+
+            <div style="display:flex; gap:0.6rem; flex-wrap:wrap; margin-top:0.5rem;">
+              <button class="mat-btn" id="btn-spinwave" onclick="toggleSpinWaveMode()">Magnon: OFF</button>
+              <button class="mat-btn" id="btn-inject-magnon" onclick="injectMagnon()">💥 Inject Magnon</button>
+            </div>
+
+            <p style="font-size:0.82rem;color:var(--text-muted);margin-top:0.8rem;line-height:1.6;">
+              <strong>What it shows:</strong> Each arrow is a spin‑½ moment. At low T, exchange J locks neighbours into domains (thick cyan/red bonds). At T > T<sub>c</sub>, thermal noise randomizes the lattice (thin bonds). The uniform arrows show the global field H. Drag the bar magnet across the crystal to reorient nearby spins.
+            </p>
+            <p style="font-size:0.82rem;color:var(--text-muted);line-height:1.6;">
+              <strong>Why it matters:</strong> Domains explain how a ferromagnet can have zero net M even when cold — spins are locally ordered but globally cancelling. The lattice is the microscopic origin of the macroscopic curves in the <strong>Curves</strong> tab.
+            </p>
+          </section>
+        </div>
+
+        <!-- Sub-tab: Curves -->
+        <div class="mag-sub-section" id="magsub-curves" style="display:none;">
+          <section class="macro-panel">
+            <h3>📈 Magnetic Susceptibility χ(T)</h3>
+            <p style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;margin-bottom:0.8rem;">Curie-Weiss: χ = C/(T−θ). Peaks at Néel temperature for antiferromagnets.</p>
+            <div class="viz-card">
+              <div class="plot-container" id="plot-susceptibility" style="min-height:280px;"></div>
+            </div>
+            <p style="font-size:0.82rem;color:var(--text-muted);margin-top:0.6rem;line-height:1.6;">
+              <strong>What it shows:</strong> χ(T) distinguising paramagnetic Curie-law decay (χ = C/T), ferromagnetic Curie–Weiss divergence near T<sub>c</sub> (χ = C/(T−θ)), and the antiferromagnetic peak at T<sub>N</sub>.
+            </p>
+            <p style="font-size:0.82rem;color:var(--text-muted);line-height:1.6;">
+              <strong>Why it matters:</strong> The χ(T) fingerprint tells you the dominant interaction — weak independent moments vs strong exchange — and predicts phase transitions.
+            </p>
+          </section>
+
+          <section class="macro-panel">
+            <h3>📈 Magnetization vs Temperature</h3>
+            <p style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;margin-bottom:0.8rem;">Spontaneous M<sub>s</sub>(T) ∝ √(Tc−T) in mean-field.</p>
+            <div class="viz-card">
+              <div class="plot-container" id="plot-M-T" style="min-height:220px;"></div>
+            </div>
+            <p style="font-size:0.82rem;color:var(--text-muted);margin-top:0.6rem;line-height:1.6;">
+              <strong>What it shows:</strong> Normalized M(T)/M<sub>s</sub> vs T. Below T<sub>c</sub>, exchange wins over thermal disorder.
+            </p>
+            <p style="font-size:0.82rem;color:var(--text-muted);line-height:1.6;">
+              <strong>Why it matters:</strong> The M(T) knee is the smoking gun for a ferromagnetic transition.
+            </p>
+          </section>
+
+          <section class="macro-panel">
+            <h3>📈 Hysteresis Loop M(H)</h3>
+            <p style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;margin-bottom:0.8rem;">Coercivity H<sub>c</sub>, remanence M<sub>r</sub>, saturation M<sub>s</sub>.</p>
+            <div class="viz-card">
+              <div class="plot-container" id="plot-hysteresis" style="min-height:260px;"></div>
+            </div>
+            <p style="font-size:0.82rem;color:var(--text-muted);margin-top:0.6rem;line-height:1.6;">
+              <strong>What it shows:</strong> Classic M–H loop: sweep H up (green) and down (magenta). As T → T<sub>c</sub> the loop collapses.
+            </p>
+            <p style="font-size:0.82rem;color:var(--text-muted);line-height:1.6;">
+              <strong>Why it matters:</strong> Loop area and coercivity decide soft vs hard magnet — transformer core vs permanent magnet.
+            </p>
+          </section>
+
+          <section class="macro-panel">
+            <h3>✨ Why does this matter?</h3>
+            <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+              In paramagnets, moments align against thermal disorder (χ ∝ 1/T). In ferromagnets, exchange produces spontaneous order below T<sub>c</sub>. Domains are the microscopic consequence: locally aligned regions that can cancel globally until a field aligns them. The hysteresis loop encodes memory: coercivity, remanence, and saturation determine whether a material is soft or hard.
+            </p>
+            <div class="equation-box">
+              $$\chi = \frac{C}{T - \theta}, \qquad M \propto \tanh\left(\frac{\mu H}{k_B T}\right), \qquad B = \mu_0(H + M)$$
+            </div>
+          </section>
+        </div>
+
+        <!-- Sub-tab: Landau -->
+        <div class="mag-sub-section" id="magsub-landau" style="display:none;">
+          <section class="macro-panel">
+            <h3>📐 Landau Free Energy G(M)</h3>
+            <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.6;">
+              G(M) = a(T − T<sub>c</sub>)M² + bM⁴ − HM. Below T<sub>c</sub> the quadratic coefficient becomes negative → double-well → spontaneous symmetry breaking.
+            </p>
+            <div class="viz-card">
+              <div class="plot-container" id="plot-landau" style="min-height:300px;"></div>
+            </div>
+            <p style="font-size:0.82rem;color:var(--text-muted);margin-top:0.6rem;line-height:1.6;">
+              <strong>What it shows:</strong> The Landau free-energy functional. At T < T<sub>c</sub> the double minima at ±M<sub>s</sub> represent the two degenerate ferromagnetic ground states. External field H tilts the well, favouring one orientation. The barrier between minima determines how stable domains are against thermal fluctuations.
+            </p>
+            <p style="font-size:0.82rem;color:var(--text-muted);line-height:1.6;">
+              <strong>Why it matters:</strong> Landau theory is the universal framework for continuous phase transitions — used for superconductivity (Ginzburg-Landau), ferroelectrics, liquid crystals, and the Higgs mechanism.
+            </p>
+            <div class="equation-box">
+              $$G(M) = a(T - T_c)M^2 + bM^4 - \mu_0 H M, \qquad
+              \frac{\partial G}{\partial M} = 0 \;\Rightarrow\; M \propto \sqrt{T_c - T}$$
+            </div>
+          </section>
+        </div>
+
+        <!-- Sub-tab: Magnon -->
+        <div class="mag-sub-section" id="magsub-magnon" style="display:none;">
+          <section class="macro-panel">
+            <h3>🧊 Spin-Wave (Magnon) Dynamics</h3>
+            <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.6;">
+              Toggle magnon mode (📈 <strong>Magnon: ON</strong> button in the Lattice tab) to replace thermal
+              Metropolis with deterministic spin-wave dynamics. Then click <strong>💥 Inject Magnon</strong>
+              to seed a Gaussian wavepacket at the centre of the Ising lattice.
+            </p>
+            <p style="font-size:0.82rem;color:var(--text-muted);line-height:1.6;">
+              The wavepacket propagates via the discrete Laplacian of the precession angle φ(i,j):
+              ∂φ/∂t = J ∇²φ. The continuous precession angles are quantized back to ±1 Ising spins
+              for real-time visualization — you see the magnon ripple through the lattice as it flips
+              spins. Tune the exchange coupling J in the sidebar to change the propagation speed.
+            </p>
+            <div class="equation-box">
+              $$\frac{\partial \phi}{\partial t} = J \nabla^2 \phi, \qquad
+              \phi(i,j) \in [-\pi, \pi], \qquad
+              \hbar\omega(q) = 2JS(1 - \cos qa)$$
+            </div>
+          </section>
+
+          <section class="macro-panel">
+            <h3>📈 Magnon Dispersion ω(q)</h3>
+            <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.6;">
+              ℏω(q) = 2JS(1 − cos qa). Low‑q: ω ∝ q² (Goldstone mode). Zone boundary: ω = 4JS.
+            </p>
+            <div class="viz-card">
+              <div class="plot-container" id="plot-magnon" style="min-height:280px;"></div>
+            </div>
+            <p style="font-size:0.82rem;color:var(--text-muted);margin-top:0.6rem;line-height:1.6;">
+              <strong>What it shows:</strong> The magnon dispersion for a nearest-neighbour Heisenberg ferromagnet
+              on a square lattice. The quadratic low‑q behaviour is characteristic of ferromagnets
+              (antiferromagnets have ω ∝ q). The exchange coupling J (sidebar) directly scales the
+              energy axis — higher J = stiffer spin waves = faster propagation.
+            </p>
+            <p style="font-size:0.82rem;color:var(--text-muted);line-height:1.6;">
+              <strong>Why it matters:</strong> Magnon spectra measured by inelastic neutron scattering
+              directly reveal J. The T<sup>3/2</sup> Bloch law for M(T) follows from integrating the
+              magnon density of states.
+            </p>
+          </section>
+        </div>
+
+      </div>
+
+      <aside class="game-sidebar">
+
+        <!-- Sidebar: global controls (T, H, material, J) — used by all sub-tabs -->
+        <div class="sidebar-card mag-side-lattice mag-side-curves mag-side-landau mag-side-magnon">
+          <h4>⚙ Controls</h4>
+          <div class="slider-group">
+            <label>Temperature T <span class="slider-value" id="val-T-mag">300</span> <span class="unit-tag">K</span></label>
             <input type="range" id="slider-T-mag" min="10" max="1400" value="300" step="5">
-            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">External field H</span><span class="control-value" id="val-H">0.0</span></div>
+            <div class="slider-desc">Thermal disorder vs exchange coupling.</div>
+          </div>
+          <div class="slider-group">
+            <label>External field H <span class="slider-value" id="val-H">0.0</span> <span class="unit-tag">arb.</span></label>
             <input type="range" id="slider-H" min="-0.3" max="0.3" value="0" step="0.005">
-            <div style="margin-top:0.8rem;font-size:0.78rem;color:var(--text-muted);">Material:</div>
-            <div style="display:flex; gap:0.35rem; flex-wrap:wrap; margin-top:0.3rem;">
+            <div class="slider-desc">Positive = right, negative = left.</div>
+          </div>
+          <div class="slider-group">
+            <label>Material</label>
+            <div style="display:flex; gap:0.35rem; flex-wrap:wrap;">
               <button class="mat-btn active" id="btn-Fe" onclick="setMagMaterial('Fe')">Fe</button>
               <button class="mat-btn" id="btn-Ni" onclick="setMagMaterial('Ni')">Ni</button>
               <button class="mat-btn" id="btn-Co" onclick="setMagMaterial('Co')">Co</button>
@@ -133,143 +568,354 @@
               <button class="mat-btn" id="btn-Cu" onclick="setMagMaterial('Cu')">Cu</button>
               <button class="mat-btn" id="btn-Cr" onclick="setMagMaterial('Cr')">Cr</button>
               <button class="mat-btn" id="btn-MnO" onclick="setMagMaterial('MnO')">MnO</button>
+              <button class="mat-btn" id="btn-Graphite" onclick="setMagMaterial('Graphite')">Graphite</button>
+              <button class="mat-btn" id="btn-Na" onclick="setMagMaterial('Na')">Na</button>
+              <button class="mat-btn" id="btn-Fe3O4" onclick="setMagMaterial('Fe3O4')">Fe₃O₄</button>
             </div>
-            <div style="margin-top:1rem;font-size:0.78rem;color:var(--text-muted);border-top:1px solid var(--border-subtle);padding-top:0.6rem;">Properties:</div>
+          </div>
+          <div class="slider-group" style="margin-bottom:0;">
+            <label>Properties</label>
             <div style="font-size:0.78rem;color:var(--text-muted);line-height:1.8;">
               T<sub>c</sub>: <span id="val-Tc">1043</span> K · T<sub>N</sub>: <span id="val-TN">0</span> K<br>
               M<sub>s</sub>: <span id="val-Ms">1.70</span> · H<sub>c</sub>: <span id="val-Hc">0.05</span> · M<sub>r</sub>: <span id="val-Mr">0.65</span><br>
               θ: <span id="val-theta">1043</span> K · C: <span id="val-C">1.0</span> · J: <span id="val-J">1.0</span>
             </div>
-            <div style="margin-top:1rem;font-size:0.78rem;color:var(--text-muted);border-top:1px solid var(--border-subtle);padding-top:0.6rem;">Applied Field:</div>
-            <div style="display:flex;align-items:center;gap:0.6rem;margin-top:0.4rem;">
-              <div style="font-size:0.72rem;color:var(--text-muted);">OFF</div>
-              <label class="mag-switch" style="position:relative;display:inline-block;width:36px;height:20px;cursor:pointer;">
-                <input type="checkbox" id="magnet-toggle-check" style="opacity:0;width:0;height:0;">
-                <span class="mag-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#2a2a3a;border-radius:10px;transition:.3s;"></span>
-              </label>
-              <div style="font-size:0.72rem;color:var(--text-muted);">ON</div>
-            </div>
-            <div class="control-row" style="margin-top:0.6rem;"><span class="control-label">Magnet Strength</span><span class="control-value" id="val-magnet-strength">0.15</span></div>
+          </div>
+          <div class="slider-group" style="margin-bottom:0; padding-top:0.8rem; border-top:1px solid var(--border-subtle);">
+            <label>Exchange coupling J <span class="slider-value" id="val-J-slider">1.00</span> <span class="unit-tag">arb.</span></label>
+            <input type="range" id="slider-J" min="-2.0" max="2.0" value="1.0" step="0.05">
+            <div class="slider-desc">J > 0 = ferro; J < 0 = antiferro.</div>
+          </div>
+        </div>
+
+        <!-- Sidebar: magnet panel (lattice only) -->
+        <div class="sidebar-card mag-side-lattice">
+          <h4>🧲 Applied Field Magnet</h4>
+          <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.8rem;">
+            <div style="font-size:0.72rem;color:var(--text-muted);">OFF</div>
+            <label class="mag-switch" style="position:relative;display:inline-block;width:36px;height:20px;cursor:pointer;">
+              <input type="checkbox" id="magnet-toggle-check" style="opacity:0;width:0;height:0;">
+              <span class="mag-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#2a2a3a;border-radius:10px;transition:.3s;"></span>
+            </label>
+            <div style="font-size:0.72rem;color:var(--text-muted);">ON</div>
+          </div>
+          <div class="slider-group" style="margin-bottom:0;">
+            <label>Magnet Strength <span class="slider-value" id="val-magnet-strength">0.15</span></label>
             <input type="range" id="slider-magnet-strength" min="0.05" max="0.50" value="0.15" step="0.01">
-            <div style="margin-top:0.4rem;font-size:0.72rem;color:var(--text-muted);line-height:1.5;">
-              Drag the bar magnet on the lattice. N pole (blue) repels ↑; S pole (red) attracts ↑. Arrows show local field direction. Higher strength = stronger domain reorientation.
+            <div class="slider-desc">Drag the bar magnet on the lattice. N (blue) repels ↑; S (red) attracts ↑.</div>
+          </div>
+        </div>
+
+        <!-- Sidebar: lattice readout (lattice only) -->
+        <div class="sidebar-card mag-side-lattice">
+          <h4>📊 Live Lattice Readout</h4>
+          <div class="dash-row"><span class="dash-label"><span class="dash-icon">🌡️</span>Temperature</span><span class="dash-val purple" id="live-lattice-T">—</span></div>
+          <div class="dash-row"><span class="dash-label"><span class="dash-icon">🔍</span>Lattice M</span><span class="dash-val cyan" id="live-lattice-M">—</span></div>
+          <div class="dash-row" style="border-bottom:none;"><span class="dash-label"><span class="dash-icon">💠</span>State</span><span class="dash-val state" id="live-lattice-state">—</span></div>
+        </div>
+
+        <!-- Sidebar: macroscopic readout (curves/landau/magnon) -->
+        <div class="sidebar-card mag-side-curves mag-side-landau mag-side-magnon">
+          <h4>📊 Macroscopic Readout</h4>
+          <div class="dash-row"><span class="dash-label"><span class="dash-icon">⚡</span>χ (paramag)</span><span class="dash-val cyan" id="live-chi">—</span></div>
+          <div class="dash-row"><span class="dash-label"><span class="dash-icon">🧲</span>H<sub>eff</sub> (coercivity)</span><span class="dash-val pink" id="live-Hc">—</span></div>
+          <div class="dash-row"><span class="dash-label"><span class="dash-icon">🔒</span>M<sub>r</sub> (remanence)</span><span class="dash-val green" id="live-Mr">—</span></div>
+          <div class="dash-row"><span class="dash-label"><span class="dash-icon">📈</span>M(T)</span><span class="dash-val yellow" id="live-M">—</span></div>
+          <div class="dash-row"><span class="dash-label"><span class="dash-icon">↔️</span>H (field)</span><span class="dash-val blue" id="live-Hf">—</span></div>
+          <div class="dash-row"><span class="dash-label"><span class="dash-icon">🌡️</span>T<sub>N</sub> / T<sub>c</sub></span><span class="dash-val purple" id="live-TN">—</span></div>
+          <div class="dash-row" style="border-bottom:none;"><span class="dash-label"><span class="dash-icon">💠</span>State</span><span class="dash-val state" id="live-mag-state">—</span></div>
+        </div>
+
+        <!-- Sidebar: progress (all tabs) -->
+        <div class="sidebar-card mag-side-all">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-play" style="font-size:0.8rem;color:var(--text-dim);line-height:1.6;">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card mag-side-all">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+
+        <!-- Sidebar: always visible, placed below controls -->
+        <div class="sidebar-card mag-side-all">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav"></div>
+        </div>
+
+      </aside>
+    </div>
+  </div>
+
+  <!-- CHALLENGES -->
+  <div class="mode-section" id="section-challenge" style="display:none;">
+    <div class="game-layout">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>🎮 Challenges</h3>
+          <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.6; margin-bottom:1rem;">
+            Test your magnetism intuition. Classify materials, estimate Curie temperatures, and predict GMR signs.
+          </p>
+          <div class="insights">
+            <div class="insight-card">
+              <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span><span class="challenge-title">Dia-, Para-, or Ferro-?</span><span class="challenge-difficulty easy">Easy</span></div>
+              <div class="challenge-desc">Given χ(T) behavior, classify the magnetic material.</div>
+              <div class="challenge-reward">🏆 Reward: 50 XP</div>
+              <div class="timer-bar"><div class="timer-fill" id="mag-timer" style="width:100%"></div></div>
+              <div id="mag-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <button class="btn" onclick="guessMag('diamagnet')">Diamagnet</button>
+                <button class="btn" onclick="guessMag('paramagnet')">Paramagnet</button>
+                <button class="btn" onclick="guessMag('ferromagnet')">Ferromagnet</button>
+              </div>
+              <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;"><strong>Score:</strong> <span id="mag-score">0</span> · <strong>Combo:</strong> <span id="mag-combo">0</span></div>
+              <div class="challenge-feedback" id="mag-feedback"></div>
+            </div>
+            <div class="insight-card">
+              <div class="challenge-header"><span class="challenge-icon" style="background:rgba(74,222,128,0.12);">📐</span><span class="challenge-title">Curie Temperature Estimator</span><span class="challenge-difficulty medium">Medium</span></div>
+              <div class="challenge-desc">Given χ vs T data and the Curie-Weiss fit, estimate Tc (θ).</div>
+              <div class="challenge-reward">🏆 Reward: 75 XP</div>
+              <div id="tc-mag-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+              <input type="text" id="tc-mag-ans" placeholder="K" style="width:120px;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
+              <button class="btn" onclick="checkTcMag()" style="margin-left:0.5rem;">Submit</button>
+              <div class="challenge-feedback" id="tc-mag-feedback"></div>
+            </div>
+            <div class="insight-card">
+              <div class="challenge-header"><span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🌡</span><span class="challenge-title">GMR Sign Predictor</span><span class="challenge-difficulty hard">Hard</span></div>
+              <div class="challenge-desc">In a magnetic multilayer, does applying a magnetic field increase or decrease resistance?</div>
+              <div class="challenge-reward">🏆 Reward: 100 XP</div>
+              <div id="gmr-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+              <div style="display:flex; gap:0.5rem;">
+                <button class="btn" onclick="guessGMR('increase')">Increase</button>
+                <button class="btn" onclick="guessGMR('decrease')">Decrease</button>
+              </div>
+              <div class="challenge-feedback" id="gmr-feedback"></div>
             </div>
           </div>
-          <div class="challenge-panel">
-            <div class="challenge-header"><span class="challenge-icon" style="background:rgba(192,132,252,0.1);">📊</span><span class="challenge-title">Live Readout</span></div>
-            <table>
-              <tr><th>Quantity</th><th>Value</th></tr>
-              <tr><td>χ (paramag)</td><td class="highlight-num" id="live-chi">—</td></tr>
-              <tr><td>H<sub>eff</sub> (coercivity)</td><td class="highlight-pink" id="live-Hc">—</td></tr>
-              <tr><td>M<sub>r</sub> (remanence)</td><td class="highlight-num" id="live-Mr">—</td></tr>
-              <tr><td>M(T)</td><td class="highlight-num" id="live-M">—</td></tr>
-              <tr><td>H (field)</td><td class="highlight-num" id="live-Hf">—</td></tr>
-              <tr><td>T<sub>N</sub> / T<sub>c</sub></td><td class="highlight-num" id="live-TN">—</td></tr>
-              <tr><td>State</td><td id="live-mag-state">—</td></tr>
-              <tr><td>Lattice M</td><td class="highlight-num" id="live-lattice-M">—</td></tr>
-            </table>
+        </section>
+      </div>
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-challenge"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-challenge" style="font-size:0.8rem;color:var(--text-dim);line-height:1.6;">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-chal-ch">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puz-ch">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp-ch">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges-ch">0</div><div class="score-label">Badges</div></div>
           </div>
         </div>
-      </div>
-    </div>
-    <div class="insight-card" style="margin-top:1rem;">
-      <div class="insight-title">✨ Why does this matter?</div>
-      <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
-        Magnetism arises from how atomic moments respond to external fields and to each other. In paramagnets, moments align against thermal disorder (χ ∝ 1/T). In ferromagnets, exchange interactions produce spontaneous order below Tc. Domains are the microscopic consequence: locally aligned regions that can cancel globally until a field aligns them. The hysteresis loop encodes memory: coercivity, remanence, and saturation determine whether a material is a soft or hard magnet.
-      </p>
-      <div class="equation-box" style="font-size:0.85rem;">
-        $$\chi = \frac{C}{T - \theta}, \qquad M \propto \tanh\left(\frac{\mu H}{k_B T}\right), \qquad B = \mu_0(H + M)$$
-      </div>
+      </aside>
     </div>
   </div>
-  <div class="mode-section" id="section-challenge" style="display:none;">
-    <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span><span class="challenge-title">Challenge 1: Dia-, Para-, or Ferro-?</span><span class="challenge-difficulty easy">Easy</span></div>
-      <div class="challenge-desc">Given χ(T) behavior, classify the magnetic material.</div>
-      <div class="challenge-reward">🏆 Reward: 50 XP</div>
-      <div class="timer-bar"><div class="timer-fill" id="mag-timer" style="width:100%"></div></div>
-      <div id="mag-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-        <button class="btn" onclick="guessMag('diamagnet')">Diamagnet</button>
-        <button class="btn" onclick="guessMag('paramagnet')">Paramagnet</button>
-        <button class="btn" onclick="guessMag('ferromagnet')">Ferromagnet</button>
-      </div>
-      <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;"><strong>Score:</strong> <span id="mag-score">0</span> · <strong>Combo:</strong> <span id="mag-combo">0</span></div>
-      <div class="challenge-feedback" id="mag-feedback"></div>
-    </div>
-    <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(74,222,128,0.12);">📐</span><span class="challenge-title">Challenge 2: Curie Temperature Estimator</span><span class="challenge-difficulty medium">Medium</span></div>
-      <div class="challenge-desc">Given χ vs T data and the Curie-Weiss fit, estimate Tc (θ).</div>
-      <div class="challenge-reward">🏆 Reward: 75 XP</div>
-      <div id="tc-mag-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <input type="text" id="tc-mag-ans" placeholder="K" style="width:120px;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
-      <button class="btn" onclick="checkTcMag()" style="margin-left:0.5rem;">Submit</button>
-      <div class="challenge-feedback" id="tc-mag-feedback"></div>
-    </div>
-    <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🌡</span><span class="challenge-title">Challenge 3: GMR Sign Predictor</span><span class="challenge-difficulty hard">Hard</span></div>
-      <div class="challenge-desc">In a magnetic multilayer, does applying a magnetic field increase or decrease resistance?</div>
-      <div class="challenge-reward">🏆 Reward: 100 XP</div>
-      <div id="gmr-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <div style="display:flex; gap:0.5rem;">
-        <button class="btn" onclick="guessGMR('increase')">Increase</button>
-        <button class="btn" onclick="guessGMR('decrease')">Decrease</button>
-      </div>
-      <div class="challenge-feedback" id="gmr-feedback"></div>
-    </div>
-  </div>
+
+  <!-- PUZZLES -->
   <div class="mode-section" id="section-puzzle" style="display:none;">
-    <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🔧</span><span class="challenge-title">Puzzle 1: Magnetic Ordering Match</span><span class="challenge-difficulty medium">Medium</span></div>
-      <div class="challenge-desc">Match each material description to its magnetic ordering type.</div>
-      <div class="challenge-reward">🏆 Reward: 60 XP</div>
-      <div id="order-list" style="margin-top:0.5rem;"></div>
-      <button class="btn" onclick="checkOrderPuzzle()">✓ Check</button>
-      <div class="challenge-feedback" id="order-feedback"></div>
-    </div>
-    <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.12);">📐</span><span class="challenge-title">Puzzle 2: Hysteresis Parameters</span><span class="challenge-difficulty medium">Medium</span></div>
-      <div class="challenge-desc">Match each hysteresis parameter to its definition.</div>
-      <div class="challenge-reward">🏆 Reward: 70 XP</div>
-      <div id="hyst-list" style="margin-top:0.5rem;"></div>
-      <button class="btn" onclick="checkHystPuzzle()">✓ Check</button>
-      <div class="challenge-feedback" id="hyst-feedback"></div>
-    </div>
-    <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(255,78,205,0.12);">💡</span><span class="challenge-title">Puzzle 3: Neutron Diffraction Role</span><span class="challenge-difficulty master">Master</span></div>
-      <div class="challenge-desc">Why is neutron diffraction used for magnetic structures?</div>
-      <div class="challenge-reward">🏆 Reward: 120 XP</div>
-      <div id="neutron-list" style="margin-top:0.5rem;"></div>
-      <button class="btn" onclick="checkNeutronPuzzle()">✓ Check</button>
-      <div class="challenge-feedback" id="neutron-feedback"></div>
-    </div>
-  </div>
-  <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; margin-top:2rem;">
-    <div></div>
-    <div>
-      <div class="challenge-panel" style="position:sticky; top:5rem;">
-        <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.08);">🗺</span><span class="challenge-title">Lab Navigator</span></div>
-        <div id="module-nav"></div>
-        <div class="section-divider" style="margin:1rem 0;"></div>
-        <div class="challenge-header"><span class="challenge-icon" style="background:rgba(74,222,128,0.08);">🏆</span><span class="challenge-title">Your Badges</span></div>
-        <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        <div class="section-divider" style="margin:1rem 0;"></div>
-        <div class="scoreboard">
-          <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
-        </div>
+    <div class="game-layout">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>🧩 Puzzles</h3>
+          <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.6; margin-bottom:1rem;">
+            Match ordering types, hysteresis parameters, and the role of neutron diffraction.
+          </p>
+          <div class="insights">
+            <div class="insight-card">
+              <div class="challenge-header"><span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🔧</span><span class="challenge-title">Magnetic Ordering Match</span><span class="challenge-difficulty medium">Medium</span></div>
+              <div class="challenge-desc">Match each material description to its magnetic ordering type.</div>
+              <div class="challenge-reward">🏆 Reward: 60 XP</div>
+              <div id="order-list" style="margin-top:0.5rem;"></div>
+              <button class="btn" onclick="checkOrderPuzzle()">✓ Check</button>
+              <div class="challenge-feedback" id="order-feedback"></div>
+            </div>
+            <div class="insight-card">
+              <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.12);">📐</span><span class="challenge-title">Hysteresis Parameters</span><span class="challenge-difficulty medium">Medium</span></div>
+              <div class="challenge-desc">Match each hysteresis parameter to its definition.</div>
+              <div class="challenge-reward">🏆 Reward: 70 XP</div>
+              <div id="hyst-list" style="margin-top:0.5rem;"></div>
+              <button class="btn" onclick="checkHystPuzzle()">✓ Check</button>
+              <div class="challenge-feedback" id="hyst-feedback"></div>
+            </div>
+            <div class="insight-card">
+              <div class="challenge-header"><span class="challenge-icon" style="background:rgba(255,78,205,0.12);">💡</span><span class="challenge-title">Neutron Diffraction Role</span><span class="challenge-difficulty master">Master</span></div>
+              <div class="challenge-desc">Why is neutron diffraction used for magnetic structures?</div>
+              <div class="challenge-reward">🏆 Reward: 120 XP</div>
+              <div id="neutron-list" style="margin-top:0.5rem;"></div>
+              <button class="btn" onclick="checkNeutronPuzzle()">✓ Check</button>
+              <div class="challenge-feedback" id="neutron-feedback"></div>
+            </div>
+          </div>
+        </section>
       </div>
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-puzzle"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-puzzle" style="font-size:0.8rem;color:var(--text-dim);line-height:1.6;">Complete puzzles to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-chal-puz">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puz-puz">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp-puz">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges-puz">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
     </div>
   </div>
 </div>
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
-<script src="mag_sim.js?v=4"></script>
-<script src="mag_apps.js?v=3"></script>
-<script src="mag_apps_games.js?v=4"></script>
+<script src="mag_sim.js"></script>
+<script src="mag_apps.js"></script>
+<script src="mag_apps_games.js"></script>
 <script src="../../shared_effects.js"></script>
+
+<script>
+/**
+ * Deferred init for Module 14 — Magnetism.
+ *
+ *  - Story is the default tab on load.
+ *  - Playground init (initMagnetism) is deferred until first Playground visit.
+ *  - Sub-tab switching with lazy plot init.
+ */
+(function() {
+  var __MAG_ready = false;
+  var __MAG_inited = false;
+  var __MAG_gamesInited = false;
+
+  function bootMAG() {
+    // Populate module nav in all sidebars before first render
+    if (typeof buildModuleNavMAG === 'function') buildModuleNavMAG();
+    if (typeof setGameMode === 'function') {
+      setGameMode('story');
+    }
+    __MAG_ready = true;
+  }
+
+  // Wrap setGameMode to defer heavy init until first visit to each mode
+  var _origSM = window.setGameMode;
+  if (_origSM && typeof _origSM === 'function') {
+    window.setGameMode = function(mode) {
+      _origSM(mode);
+      if (mode === 'play' && !__MAG_inited) {
+        if (typeof initMagnetism === 'function') {
+          initMagnetism();
+          if (typeof magSubTab === 'function') magSubTab('lattice');
+        }
+        __MAG_inited = true;
+      }
+      if ((mode === 'challenge' || mode === 'puzzle') && !__MAG_gamesInited) {
+        if (typeof initMAGGames === 'function') initMAGGames();
+        __MAG_gamesInited = true;
+      }
+    };
+  }
+
+  // Sub-tab switching
+  var __MAG_lastSub = '';
+
+  window.magSubTab = function(name) {
+    // Stop Ising animation when leaving lattice sub-tab
+    if (__MAG_lastSub === 'lattice' && name !== 'lattice') {
+      if (typeof destroyIsing === 'function') destroyIsing();
+    }
+
+    __MAG_lastSub = name;
+
+    // Hide all sub-sections
+    var subs = document.querySelectorAll('#section-play .mag-sub-section');
+    for (var si = 0; si < subs.length; si++) subs[si].style.display = 'none';
+
+    // Show selected
+    var el = document.getElementById('magsub-' + name);
+    if (el) {
+      el.style.display = 'block';
+      el.style.visibility = 'visible';
+      el.style.opacity = '1';
+    }
+
+    // Update button active states
+    var btns = document.querySelectorAll('#section-play .mag-sub-btn');
+    for (var bi = 0; bi < btns.length; bi++) btns[bi].classList.remove('active');
+    var activeBtn = document.querySelector('#section-play .mag-sub-btn[onclick*="' + name + '"]');
+    if (activeBtn) activeBtn.classList.add('active');
+
+    // Show/hide sidebar cards by class
+    var allCards = document.querySelectorAll('#section-play .game-sidebar > .sidebar-card');
+    for (var ci = 0; ci < allCards.length; ci++) {
+      var card = allCards[ci];
+      if (card.classList.contains('mag-side-all')) {
+        card.style.display = '';
+      } else if (card.classList.contains('mag-side-' + name)) {
+        card.style.display = '';
+      } else {
+        card.style.display = 'none';
+      }
+    }
+
+    // Lazy init: restart lattice if returning
+    if (name === 'lattice') {
+      if (typeof initIsing === 'function') initIsing();
+    }
+
+    // Lazy update plots after the tab has become visible so Plotly measures real sizes
+    window.__MAG_plotResizeQueue = window.__MAG_plotResizeQueue || [];
+    if (name === 'curves') {
+      if (typeof plotSusceptibility === 'function') {
+        setTimeout(function(){ plotSusceptibility(); plotMagnetizationCurve(); plotHysteresis(); }, 80);
+        setTimeout(function(){ resizeMAGPlots(['plot-susceptibility','plot-M-T','plot-hysteresis']); }, 120);
+      }
+    }
+    if (name === 'landau') {
+      if (typeof plotLandauGM === 'function') {
+        setTimeout(function(){ plotLandauGM(); }, 80);
+        setTimeout(function(){ resizeMAGPlots(['plot-landau']); }, 120);
+      }
+    }
+    if (name === 'magnon') {
+      if (typeof plotMagnonDispersion === 'function') {
+        setTimeout(function(){ plotMagnonDispersion(); updateLiveMAG(); }, 80);
+        setTimeout(function(){ resizeMAGPlots(['plot-magnon']); }, 120);
+      }
+    }
+  };
+
+  window.resizeMAGPlots = function(ids) {
+    if (typeof Plotly === 'undefined' || !Plotly.Plots || !Plotly.Plots.resize) return;
+    ids = ids || (window.__MAG_plotResizeQueue || []);
+    ids.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) Plotly.Plots.resize(el);
+      }
+    });
+  };
+
+  // Boot when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootMAG);
+  } else {
+    bootMAG();
+  }
+})();
+</script>
 </body>
 </html>

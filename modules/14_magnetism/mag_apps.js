@@ -5,14 +5,13 @@
 'use strict';
 
 function setupMAGPlayground() {
-  // Prevent duplicate listeners - this module's sliders are already wired in mag_sim.js
-  // Just attach XP logging as a pass-through.
-  var sliders = ['slider-T-mag','slider-C','slider-theta','slider-Ms','slider-Tc','slider-H','slider-TN','slider-Mr'];
+  // XP logging pass-through for sliders that actually exist in the DOM.
+  var sliders = ['slider-T-mag','slider-H','slider-J','slider-magnet-strength'];
   sliders.forEach(function(k){
     var el = document.getElementById(k); if (!el) return;
     // one-time XP bump on first interaction
     el.addEventListener('input', function once() {
-      if (window._GameState) _GameState.addXP(1, 'mag_playground');
+      if (window.__GameState) __GameState.addXP(1, 'mag_playground');
       el.removeEventListener('input', once);
     });
   });

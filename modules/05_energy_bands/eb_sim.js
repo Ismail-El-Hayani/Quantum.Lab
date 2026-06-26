@@ -250,12 +250,17 @@ function plotARPES() {
 
 /* ====== Live readout ====== */
 function updateLiveTable() {
+  const matEl = document.getElementById('live-material');
   const dimEl = document.getElementById('live-dim');
   const tEl   = document.getElementById('live-t');
   const bwEl  = document.getElementById('live-bw');
   const gapEl = document.getElementById('live-gap');
 
-  if (dimEl) dimEl.textContent = state.dim === '0D' ? '0D (Quantum Dot)' : state.dim;
+  if (matEl && state.mat && EB_MATERIALS[state.mat]) matEl.textContent = EB_MATERIALS[state.mat].label;
+  if (dimEl) {
+    const labels = { '3D':'3D Bulk', '2D':'2D Layer', '1D':'1D Wire', '0D':'0D Quantum Dot', 'graphene':'Dirac Cone' };
+    dimEl.textContent = labels[state.dim] || state.dim;
+  }
   if (tEl)   tEl.textContent   = state.t.toFixed(2) + ' eV';
   if (gapEl) gapEl.textContent = state.gap.toFixed(2) + ' eV';
 
@@ -336,6 +341,7 @@ function setEBMaterial(name) {
   state.dim = mat.dim;
   state.t   = mat.t;
   state.eps = mat.eps;
+  state.mat = name;
   state.gap = (name === 'CNT' || name === 'Fullerene') ? mat.gap : ((name === 'Graphene' || name === 'Graphite') ? 0.0 : mat.gap);
 
   const sliderT   = document.getElementById('slider-t');
@@ -348,17 +354,55 @@ function setEBMaterial(name) {
   if (sliderGap) sliderGap.value = state.gap;
   if (valGap)    valGap.textContent = state.gap.toFixed(2);
 
-  // Carbon allotrope subsection visibility
+  // Disable gap slider for carbon allotropes where gap is forced to zero
+  const gapLocked = (name === 'Graphene' || name === 'Graphite');
+  if (sliderGap) sliderGap.disabled = gapLocked;
+  const gapGroup = sliderGap ? sliderGap.closest('.slider-group') : null;
+  if (gapGroup) gapGroup.style.opacity = gapLocked ? '0.45' : '1';
+
+  // Show carbon allotropes for any carbon-based material; hide for bulks
   const carbonSub = document.getElementById('carbon-subsection');
+  const isCarbon = ['Graphene','Graphite','CNT','Fullerene'].indexOf(name) >= 0;
   if (carbonSub) {
-    if (name === 'Graphene') carbonSub.style.display = 'block';
-    else carbonSub.style.display = 'none';
+    carbonSub.style.display = isCarbon ? 'block' : 'none';
   }
 
-  document.querySelectorAll('.dim-btn').forEach(b => b.classList.remove('active'));
-  const btnId = 'dim-' + (state.dim === 'graphene' ? 'dirac' : (state.dim === '0D' ? '1d' : state.dim.toLowerCase()));
-  const btn = document.getElementById(btnId);
-  if (btn) btn.classList.add('active');
+  // Determine allowed dimension modes from the selected card
+  const card = document.querySelector('.material-card[data-mat="' + name + '"]');
+  const allowedModes = card && card.dataset.modes ? card.dataset.modes.split(',') : [state.dim];
+
+  // If current dimension is not allowed, switch to the first allowed mode
+  if (allowedModes.indexOf(state.dim) === -1) {
+    state.dim = allowedModes[0];
+  }
+
+  // Map each allowed mode to a contextual label based on the selected material
+  const modeLabels = {
+    '3D': '3D (Bulk)',
+    '2D': name === 'Graphite' ? '2D Graphite sheet' : '2D (Layer)',
+    '1D': name === 'CNT' ? '1D Nanotube' : '1D (Wire)',
+    '0D': name === 'Fullerene' ? '0D Fullerene' : '0D (Dot)',
+    'graphene': 'Dirac (Graphene)'
+  };
+
+  // Show/hide dimension buttons according to allowed modes
+  document.querySelectorAll('#dim-bar .dim-btn').forEach(b => {
+    const mode = b.dataset.mode;
+    if (allowedModes.indexOf(mode) >= 0) {
+      b.style.display = 'inline-block';
+      b.textContent = modeLabels[mode] || b.dataset.defaultLabel;
+      b.classList.toggle('active', mode === state.dim);
+    } else {
+      b.style.display = 'none';
+    }
+  });
+
+  // Sync material-card selection highlight
+  document.querySelectorAll('.material-card').forEach(c => {
+    const isSelected = c.dataset.mat === name;
+    c.classList.toggle('selected', isSelected);
+    c.classList.toggle('active', isSelected);
+  });
 
   plotBandStructure(); plotDOS(); plotARPES(); updateLiveTable(); renderLattice();
 }
@@ -386,9 +430,8 @@ function initEB() {
 
 window.setEBDim = function(dim) {
   state.dim = dim;
-  document.querySelectorAll('.dim-btn').forEach(b => b.classList.remove('active'));
-  const btnId = 'dim-' + (dim === 'graphene' ? 'dirac' : (dim === '0D' ? '1d' : dim.toLowerCase()));
-  const btn = document.getElementById(btnId);
+  document.querySelectorAll('#dim-bar .dim-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector('#dim-bar .dim-btn[data-mode="' + dim + '"]');
   if (btn) btn.classList.add('active');
   plotBandStructure(); plotDOS(); plotARPES(); updateLiveTable(); renderLattice();
 };
@@ -397,3 +440,4 @@ window.setEBMaterial = setEBMaterial;
 window.initEB = initEB;
 window.state = state;
 initEB();
+setEBMaterial('Cu');

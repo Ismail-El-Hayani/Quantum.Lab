@@ -66,6 +66,8 @@ var __KP = {
 };
 
 // ===== PLAYGROUND =====
+var _playgroundInitialized = false;
+
 function initPlayground() {
   // Sliders wired in kp_sim.js; just sync scheme buttons and state
   var btnR = document.getElementById('btn-reduced');
@@ -78,8 +80,13 @@ function initPlayground() {
     state.a = __KP.a;
     state.scheme = __KP.scheme;
   }
-  if (typeof updateAll === 'function') updateAll();
+  // Only do the expensive full recompute the first time Playground opens.
+  if (!_playgroundInitialized) {
+    _playgroundInitialized = true;
+    if (typeof updateAll === 'function') updateAll();
+  }
 }
+window.initPlayground = initPlayground;
 
 function updatePlayground() {
   if (typeof state !== 'undefined') {
@@ -276,7 +283,9 @@ function startBlochAnim() {
     var E = bo.E_field;
     var e = 1.6e-19;
     var hbar = 1.055e-34;
-    var omega_B = e * E * a * 1e-9 / hbar;
+    // E_field is in units of 10^5 V/m (shown as "E = X × 10⁵ V/m")
+    // omega_B = eEa/ℏ where E is in V/m → multiply by 1e5
+    var omega_B = e * E * 1e5 * a * 1e-9 / hbar;
     var x = 0.5 * a * (1 - Math.cos(omega_B * t));
     var pct = (x / a) * 80 + 10; // map to 10-90% width
     el.style.left = pct + '%';
@@ -293,7 +302,7 @@ function checkBlochOscillation() {
   var hbar = 1.055e-34;
   var omega_B = e * bo.E_field * 1e5 * bo.a_nm * 1e-9 / hbar; // rad/s
   var omega_THz = omega_B / (2 * Math.PI * 1e12);
-  var T_ps = 1000 / omega_THz;
+  var T_ps = 1 / omega_THz; // period in picoseconds = 1 / f(THz)
 
   var guessOmega = parseFloat(document.getElementById('bo-omega').value);
   var guessT = parseFloat(document.getElementById('bo-T').value);
@@ -393,14 +402,38 @@ function initTightBinding() {
 function initDragAndDrop(prefix) {
   var pool = document.getElementById(prefix + '-pool');
   if (!pool) return;
+
+  // Preferred slot index for each chip value (when available).
+  // KP has two 'cos' chips; we assign them to slots 0 and 1 in order.
+  var preferredSlot = {};
+  if (prefix === 'tb') {
+    preferredSlot = { E0: 0, t: 1, ka: 2 };
+  }
+
   pool.querySelectorAll('.term-chip').forEach(function(chip) {
     chip.onclick = function() {
-      // Mobile-friendly click-to-place
-      var slots = document.querySelectorAll('#' + prefix + '-slot-0, #' + prefix + '-slot-1, #' + prefix + '-slot-2, #' + prefix + '-slot-3');
+      var val = chip.dataset.val;
+      var slots = document.querySelectorAll('[id^="' + prefix + '-slot-"]');
+      var preferred = preferredSlot[val];
+
+      // For KP, the two 'cos' chips go to slots 0 and 1 respectively.
+      if (prefix === 'kp' && val === 'cos') {
+        if (slots[0].textContent === '?') { slots[0].textContent = val; __KP.kpFilled[0] = val; return; }
+        if (slots[1].textContent === '?') { slots[1].textContent = val; __KP.kpFilled[1] = val; return; }
+      }
+
+      // Try preferred slot if empty
+      if (preferred !== undefined && slots[preferred] && slots[preferred].textContent === '?') {
+        slots[preferred].textContent = val;
+        __KP[prefix + 'Filled'][preferred] = val;
+        return;
+      }
+
+      // Otherwise fill first empty slot
       for (var i = 0; i < slots.length; i++) {
         if (slots[i].textContent === '?') {
-          slots[i].textContent = chip.dataset.val;
-          __KP[prefix + 'Filled'][i] = chip.dataset.val;
+          slots[i].textContent = val;
+          __KP[prefix + 'Filled'][i] = val;
           break;
         }
       }
@@ -493,7 +526,7 @@ function initBraggPuzzle() {
   b.k = (1 + Math.floor(Math.random() * 3)) * Math.PI / b.a;
   b.n_target = Math.round(b.k * b.a / Math.PI);
   document.getElementById('bragg-a').textContent = b.a.toFixed(2);
-  document.getElementById('bragg-k').textContent = b.k.toFixed(2) + 'π';
+  document.getElementById('bragg-k').textContent = (b.k / Math.PI).toFixed(2) + 'π';
 
   var opts = document.getElementById('bragg-options');
   opts.textContent = '';
@@ -552,7 +585,7 @@ function checkBragg() {
   if (b.selected_n === b.n_target) {
     fb.className = 'challenge-feedback success';
     fb.style.display = 'block';
-    fb.textContent = '✓ Correct! Bragg condition: nλ = 2a. With λ = 2π/k, this gives k = nπ/a. For a = ' + b.a.toFixed(2) + ' nm and k = ' + b.k.toFixed(2) + 'π nm⁻¹, n = ' + b.n_target + '.';
+    fb.textContent = '✓ Correct! Bragg condition: nλ = 2a. With λ = 2π/k, this gives k = nπ/a. For a = ' + b.a.toFixed(2) + ' nm and k = ' + (b.k / Math.PI).toFixed(2) + 'π nm⁻¹, n = ' + b.n_target + '.';
     _GameState.addXP(120, 'Bragg reflection mastered!');
     celebrateCorrect();
     _GameState.unlock({ id: 'bragg_master', title: 'Bragg Master', desc: 'Matched all Bragg reflections', icon: '💎', xp: 35 });
@@ -580,33 +613,35 @@ var KP_BADGES = [
 ];
 
 function renderBadgesKP() {
-  var list = document.getElementById('badge-list');
-  if (!list) return;
   var earned = _GameState.get('achievements') || [];
   var earnedIds = earned.map(function(a){ return a.id; });
-  list.textContent = '';
-  KP_BADGES.forEach(function(b){
-    var isEarned = earnedIds.indexOf(b.id) >= 0;
-    var div = document.createElement('div');
-    div.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0;border-bottom:1px solid var(--glass-border);';
-    var iconSpan = document.createElement('span');
-    iconSpan.style.fontSize = '1.1rem';
-    iconSpan.textContent = isEarned ? b.icon : '🔒';
-    div.appendChild(iconSpan);
-    var infoDiv = document.createElement('div');
-    infoDiv.style.flex = '1';
-    var nameDiv = document.createElement('div');
-    nameDiv.style.fontSize = '0.8rem';
-    nameDiv.style.color = isEarned ? 'var(--text-main)' : 'var(--text-dim)';
-    nameDiv.textContent = b.name;
-    infoDiv.appendChild(nameDiv);
-    var descDiv = document.createElement('div');
-    descDiv.style.fontSize = '0.7rem';
-    descDiv.style.color = 'var(--text-dim)';
-    descDiv.textContent = b.desc;
-    infoDiv.appendChild(descDiv);
-    div.appendChild(infoDiv);
-    list.appendChild(div);
+  ['badge-list','badge-list-story','badge-list-theory'].forEach(function(listId){
+    var list = document.getElementById(listId);
+    if (!list) return;
+    list.textContent = '';
+    KP_BADGES.forEach(function(b){
+      var isEarned = earnedIds.indexOf(b.id) >= 0;
+      var div = document.createElement('div');
+      div.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0;border-bottom:1px solid var(--glass-border);';
+      var iconSpan = document.createElement('span');
+      iconSpan.style.fontSize = '1.1rem';
+      iconSpan.textContent = isEarned ? b.icon : '🔒';
+      div.appendChild(iconSpan);
+      var infoDiv = document.createElement('div');
+      infoDiv.style.flex = '1';
+      var nameDiv = document.createElement('div');
+      nameDiv.style.fontSize = '0.8rem';
+      nameDiv.style.color = isEarned ? 'var(--text-main)' : 'var(--text-dim)';
+      nameDiv.textContent = b.name;
+      infoDiv.appendChild(nameDiv);
+      var descDiv = document.createElement('div');
+      descDiv.style.fontSize = '0.7rem';
+      descDiv.style.color = 'var(--text-dim)';
+      descDiv.textContent = b.desc;
+      infoDiv.appendChild(descDiv);
+      div.appendChild(infoDiv);
+      list.appendChild(div);
+    });
   });
 }
 
@@ -615,19 +650,25 @@ function updateScoreboardKP() {
   var xp = _GameState.xp();
   var ch = _GameState.get('challengesCompleted') || 0;
   var pz = _GameState.get('puzzlesCompleted') || 0;
-  var elCh = document.getElementById('stat-challenges'); if (elCh) elCh.textContent = ch;
-  var elPz = document.getElementById('stat-puzzles'); if (elPz) elPz.textContent = pz;
-  var elXp = document.getElementById('stat-xp'); if (elXp) elXp.textContent = xp;
-  var elBd = document.getElementById('stat-badges'); if (elBd) elBd.textContent = earned.length;
+  var counts = { challenges: ch, puzzles: pz, xp: xp, badges: earned.length };
+  var bases = ['stat-challenges','stat-puzzles','stat-xp','stat-badges'];
+  bases.forEach(function(base, idx){
+    var key = Object.keys(counts)[idx];
+    var v = counts[key];
+    var el = document.getElementById(base); if (el) el.textContent = v;
+    ['-story','-theory'].forEach(function(suffix){
+      var el2 = document.getElementById(base + suffix); if (el2) el2.textContent = v;
+    });
+  });
   var elNav = document.getElementById('nav-xp'); if (elNav) elNav.textContent = xp + ' XP';
   renderBadgesKP();
 }
 
 // ===== MODULE NAV =====
 function buildModuleNav() {
-  var nav = document.getElementById('module-nav');
-  if (!nav) return;
-  nav.textContent = '';
+  var ids = ['module-nav', 'module-nav-story', 'module-nav-theory'];
+  var containers = ids.map(function(id){ return document.getElementById(id); }).filter(Boolean);
+  if (containers.length === 0) return;
 
   var modules = [
     { num: '00', name: 'Crystal to Quantum', url: '../00_crystal_to_quantum/index.html' },
@@ -648,22 +689,25 @@ function buildModuleNav() {
     { num: '15', name: 'Thermal Properties', url: '../15_thermal_properties/index.html' }
   ];
 
-  modules.forEach(function(m) {
-    var el = document.createElement(m.current ? 'div' : 'a');
-    if (!m.current) { el.href = m.url; el.style.textDecoration = 'none'; }
-    el.style.cssText = 'display:block;padding:0.5rem 0.7rem;border-radius:8px;margin-bottom:0.3rem;font-size:0.85rem;';
-    if (m.current) {
-      el.style.background = 'rgba(179,136,255,0.1)';
-      el.style.border = '1px solid rgba(179,136,255,0.3)';
-      el.style.color = 'var(--accent-purple)';
-      el.textContent = m.num + '. ' + m.name + ' (here)';
-    } else {
-      el.style.background = 'var(--bg-elevated)';
-      el.style.border = '1px solid var(--border-subtle)';
-      el.style.color = 'var(--text-dim)';
-      el.textContent = m.num + '. ' + m.name;
-    }
-    nav.appendChild(el);
+  containers.forEach(function(nav){
+    nav.textContent = '';
+    modules.forEach(function(m) {
+      var el = document.createElement(m.current ? 'div' : 'a');
+      if (!m.current) { el.href = m.url; el.style.textDecoration = 'none'; }
+      el.style.cssText = 'display:block;padding:0.5rem 0.7rem;border-radius:8px;margin-bottom:0.3rem;font-size:0.85rem;';
+      if (m.current) {
+        el.style.background = 'rgba(179,136,255,0.1)';
+        el.style.border = '1px solid rgba(179,136,255,0.3)';
+        el.style.color = 'var(--accent-purple)';
+        el.textContent = m.num + '. ' + m.name + ' (here)';
+      } else {
+        el.style.background = 'var(--bg-elevated)';
+        el.style.border = '1px solid var(--border-subtle)';
+        el.style.color = 'var(--text-dim)';
+        el.textContent = m.num + '. ' + m.name;
+      }
+      nav.appendChild(el);
+    });
   });
 }
 

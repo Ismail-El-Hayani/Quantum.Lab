@@ -25,11 +25,46 @@
   .material-card { padding: 1rem; background: var(--bg-elevated); border-radius: var(--radius-sm); border: 1px solid var(--glass-border); text-align: center; cursor: pointer; transition: all 0.2s; }
   .material-card:hover { border-color: var(--accent-cyan); }
   .material-card.selected { border-color: var(--accent-purple); background: rgba(192,132,252,0.08); }
-  
-  .viz-hub { 
-    display: grid; 
-    grid-template-columns: 300px 1fr; 
-    gap: 1rem; 
+
+  /* ─── Module 12-style layout utilities ─── */
+  .game-mode-bar { display:flex; justify-content:center; gap:0.5rem; padding:0.6rem; background:rgba(0,0,0,0.35); backdrop-filter:blur(8px); border-bottom:1px solid var(--glass-border); margin-bottom:1.5rem; flex-wrap:wrap; }
+  .macro-panel { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-top:1rem; }
+  .macro-panel h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
+  .game-layout { max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg); align-items:start; }
+  @media (max-width:1000px) { .game-layout { grid-template-columns:1fr; } }
+  .game-main { min-width:0; }
+  .game-sidebar { min-width:0; position:sticky; top:5rem; }
+  .sidebar-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-bottom:1rem; }
+  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
+  .slider-group { margin-bottom:1rem; }
+  .slider-group label { display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:0.3rem; }
+  .slider-group input[type=range] { width:100%; }
+  .slider-value { font-family:var(--font-mono); color:var(--accent-cyan); font-weight:700; }
+  .slider-desc { font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; }
+  .insights { display:grid; grid-template-columns:1fr; gap:1rem; margin-top:1rem; }
+  @media (min-width:900px) { .insights { grid-template-columns:1fr 1fr; } }
+  .insight-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; }
+  .insight-card .insight-title { margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright); }
+  .readout-row { display:flex; flex-wrap:wrap; gap:0.5rem; }
+  .readout-tile { flex:1 1 90px; background:var(--bg-deep); padding:8px 10px; border-radius:6px; border:1px solid var(--glass-border); text-align:center; }
+  .readout-tile .readout-label { font-size:0.65rem; color:var(--text-dim); text-transform:uppercase; }
+  .readout-tile .readout-value { font-family:var(--font-mono); font-size:1.05rem; font-weight:700; }
+  .readout-tile .readout-unit { font-size:0.65rem; color:var(--text-muted); }
+  .unit-tag { display:inline-block; background:rgba(0,240,255,0.08); color:var(--accent-cyan); font-family:var(--font-mono); font-size:0.7rem; padding:0.15rem 0.4rem; border-radius:4px; margin-left:0.3rem; }
+
+  /* Story / Theory helpers (mirroring modules 01/03/04) */
+  .theory-content { font-size:0.95rem; line-height:1.7; color:var(--text-main); }
+  .theory-content p { margin-bottom:1rem; }
+  .theory-content strong { color:var(--accent-cyan); font-weight:500; }
+  .equation-box { background:var(--bg-deep); border:1px solid var(--glass-border); border-radius:10px; padding:1rem 1.2rem; margin:1rem 0; font-size:0.85rem; overflow-x:auto; color:var(--text-main); }
+  .equation-box .mjx-chtml { font-size:1.1em !important; }
+  .insight-callout { background:linear-gradient(90deg, rgba(0,240,255,0.08), transparent); border-left:3px solid var(--accent-cyan); padding:1rem 1.2rem; border-radius:0 8px 8px 0; margin:1rem 0; font-size:0.92rem; color:var(--text-main); }
+  .insight-callout .label { font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent-cyan); font-weight:600; margin-bottom:0.4rem; }
+
+  .viz-hub {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 1rem;
     background: rgba(10, 10, 20, 0.6);
     border-radius: 15px;
     border: 1px solid var(--glass-border);
@@ -83,125 +118,463 @@
 <div class="game-container">
 
   <div class="game-mode-bar">
-    <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
+    <button class="game-mode-btn active" id="mode-story" onclick="setGameMode('story')">📖 Story</button>
+    <button class="game-mode-btn" id="mode-theory" onclick="setGameMode('theory')">🎓 Theory</button>
+    <button class="game-mode-btn" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
     <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">🎯 Challenges</button>
     <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">🧩 Puzzles</button>
   </div>
 
-  <div class="mode-section" id="section-play">
-    <div class="playground-area">
-      <div class="playground-header">
-        <div class="playground-title">🔬 Quantum State Spectrometer</div>
-        <div class="playground-level">Symmetry $\to$ Dispersion $\to$ Density of States.</div>
-      </div>
-
-      <div class="challenge-panel" style="margin-bottom: 1.5rem;">
-        <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">💎</span>
-          <span class="challenge-title">Material Presets</span>
-        </div>
-        <div class="challenge-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));">
-          <div class="material-card" onclick="setEBMaterial('Cu')">Copper (Bulk)</div>
-          <div class="material-card" onclick="setEBMaterial('Si')">Silicon (SC)</div>
-          <div class="material-card" onclick="setEBMaterial('Diamond')">Diamond (Ins)</div>
-          <div class="material-card" onclick="setEBMaterial('Graphene')">Graphene</div>
-        </div>
-        <!-- Carbon Allotropes subsection (hidden until Graphene selected) -->
-        <div id="carbon-subsection" class="challenge-panel" style="display:none; margin-top:1rem; background:rgba(0,0,0,0.0);">
-          <div class="challenge-header" style="border-top:1px solid var(--glass-border); padding-top:1rem;">
-            <span class="challenge-icon" style="background:rgba(255,78,205,0.1);">🌑</span>
-            <span class="challenge-title">Carbon Allotropes</span>
-          </div>
-          <div class="challenge-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));">
-            <div class="material-card" onclick="setEBMaterial('Graphite')">Graphite (2D)</div>
-            <div class="material-card" onclick="setEBMaterial('CNT')">Nanotube (1D)</div>
-            <div class="material-card" onclick="setEBMaterial('Fullerene')">Fullerene (0D)</div>
-          </div>
-        </div>
-      </div>
-
-      <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
-        <button class="dim-btn active" id="dim-3d" onclick="setEBDim('3D')">3D (Bulk)</button>
-        <button class="dim-btn" id="dim-2d" onclick="setEBDim('2D')">2D (Layer)</button>
-        <button class="dim-btn" id="dim-1d" onclick="setEBDim('1D')">1D (Wire/Dot)</button>
-        <button class="dim-btn" id="dim-dirac" onclick="setEBDim('graphene')">Dirac (Graphene)</button>
-      </div>
-
-      <div class="viz-hub">
-        <div class="lattice-canvas-container">
-            <div class="hub-label">Structure Σ</div>
-            <canvas id="lattice-canvas" width="300" height="350"></canvas>
-        </div>
-        <div class="band-plot-container">
-            <div class="hub-label">Dispersion E(k)</div>
-            <div id="plot-band-structure" style="height:100%; width:100%;"></div>
-        </div>
-      </div>
-
-      <div style="display:grid; grid-template-columns: 320px 1fr; gap: 1rem; margin-bottom: 1rem;">
-        <div style="display:flex; flex-direction:column; gap:1rem;">
-          <div class="challenge-panel">
-            <div class="challenge-header">
-              <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙️</span>
-              <span class="challenge-title">Quantum Controls</span>
+  <!-- ═══════════════ STORY ═══════════════ -->
+  <div class="mode-section" id="section-story" style="display:block;">
+    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>📖 The Story — From Atoms to Bands to Materials</h3>
+          <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.6;margin-bottom:1rem;">
+            A single atom has sharp energy levels. Bring atoms together in a crystal and those levels
+            blur into <strong style="color:var(--accent-cyan);">energy bands</strong> — continuous ranges of
+            allowed electron energies separated by <strong style="color:var(--accent-cyan);">forbidden gaps</strong>.
+            The width of the bands, the size of the gaps, and the shape of the
+            <strong style="color:var(--accent-cyan);">density of states</strong> determine whether a material is a
+            conductor, a semiconductor, or an insulator. This module lets you explore how
+            <strong style="color:var(--accent-cyan);">dimensionality</strong> — from 3D bulk crystals down to 0D
+            quantum dots — reshapes the electronic structure, and how carbon arranges itself into radically
+            different allotropes: graphene, nanotubes, and fullerenes.
+          </p>
+          <div class="insights">
+            <div class="insight-card">
+              <div class="insight-title">🧩 The Big Idea</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                In a 3D crystal, the number of states per unit energy <i>g(E)</i> rises as <i>√E</i> near a band edge.
+                Confine the crystal to 2D and <i>g(E)</i> becomes a staircase. Confine it further to 1D and
+                <i>g(E)</i> diverges — these are the <b>Van Hove singularities</b>. In 0D, you get discrete
+                spikes: the quantum dot limit. The playground lets you sweep through all four dimensionalities
+                and watch the DOS morph in real time.
+              </p>
             </div>
-            <div class="control-row" style="margin-top:1rem;">
-              <span class="control-label">Hopping t</span>
-              <span class="control-value" id="val-t">1.0</span><span class="unit-tag">eV</span>
+            <div class="insight-card">
+              <div class="insight-title">🔬 Why Carbon Is Special</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Carbon's four valence electrons let it form <b>sp²</b> (graphene, graphite) or <b>sp³</b>
+                (diamond, fullerene) bonds. In graphene the <i>p<sub>z</sub></i> orbitals form a linear
+                <b>Dirac cone</b> — electrons behave as if massless, moving at effective speed <i>v<sub>F</sub></i>
+                ≈ 10⁶ m/s. Roll graphene into a nanotube and the periodic boundary quantises the transverse
+                momentum, creating a 1D band structure. Wrap it into a fullerene and you reach 0D: discrete
+                molecular levels.
+              </p>
             </div>
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">🎮 How the Playground Lets You Feel It</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Use the <strong style="color:var(--accent-cyan);">Playground</strong> to switch between Cu, Si,
+                Diamond, and Graphene. Tune the hopping parameter <i>t</i> to widen or narrow the bands;
+                set a non-zero <i>E<sub>g</sub></i> to open a gap. Watch the dispersion <i>E(k)</i>, the DOS
+                <i>g(E)</i>, and the ARPES intensity map all update together. Reduce dimensionality from 3D
+                to 2D to 1D to 0D and see how the DOS transforms from smooth parabola → staircase → divergent
+                spikes → discrete lines.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-story"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-story" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges-story">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles-story">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp-story">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges-story">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ═══════════════ THEORY ═══════════════ -->
+  <div class="mode-section" id="section-theory" style="display:none;">
+    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>🎓 Theory — Tight-Binding, DOS, and Dimensionality</h3>
+          <div class="theory-content">
+            <p>
+              The tight-binding model approximates the electronic band structure of a crystal by assuming
+              that electrons hop between nearest-neighbour atomic orbitals with amplitude <i>t</i>. In a
+              1D chain of lattice constant <i>a</i>, the dispersion is:
+            </p>
+            <div class="equation-box">
+              $$E(k) = \varepsilon_0 - 2t\cos(ka)$$
+            </div>
+            <p>
+              where \(\varepsilon_0\) is the on-site energy. The bandwidth is \(W = 4t\) and the bandgap
+              (if the two atoms in the unit cell have different on-site energies \(\Delta\varepsilon\)) is
+              \(E_g = 2|\Delta\varepsilon|\).
+            </p>
+          </div>
+
+          <div class="insights">
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">1. Density of States by Dimension</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                The DOS <i>g(E)</i> counts states per unit energy. Near a parabolic band edge
+                \(E_c\) in <b>d</b> dimensions:
+              </p>
+              <div class="equation-box">
+                $$g(E) \propto (E - E_c)^{d/2 - 1}$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                3D: \(g(E) \propto \sqrt{E - E_c}\) — smooth onset. &nbsp;
+                2D: \(g(E) = \text{const}\) — step function. &nbsp;
+                1D: \(g(E) \propto 1/\sqrt{E - E_c}\) — Van Hove singularity. &nbsp;
+                0D: discrete delta spikes.
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">2. Effective Mass</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Near a band minimum the dispersion is approximately parabolic. Matching
+                \(E(k) \approx E_c + \hbar^2 k^2 / (2m^*)\) to the tight-binding curvature gives:
+              </p>
+              <div class="equation-box">
+                $$m^* = \frac{\hbar^2}{2ta^2}, \qquad \frac{1}{m^*} = \frac{1}{\hbar^2}\frac{\partial^2 E}{\partial k^2}$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Narrow bands (small <i>t</i>) give heavy effective masses; wide bands (large <i>t</i>) give
+                light masses. This is why high-mobility semiconductors have large bandwidths.
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">3. Dirac Dispersion in Graphene</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Near the K point of graphene's honeycomb lattice, the <i>p<sub>z</sub></i> bands cross
+                linearly:
+              </p>
+              <div class="equation-box">
+                $$E(\mathbf{q}) = \pm \hbar v_F |\mathbf{q}|, \qquad v_F \approx 10^6 \;\text{m/s}$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                The effective mass is <b>zero</b> — electrons behave as massless Dirac fermions. The DOS
+                vanishes linearly: \(g(E) \propto |E|\). This gives graphene its remarkable conductivity,
+                broadband absorption (\(\pi\alpha \approx 2.3\%\)), and half-integer quantum Hall effect.
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">4. ARPES: Probing the Occupied States</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Angle-resolved photoemission spectroscopy (ARPES) measures the intensity of electrons
+                emitted from a crystal as a function of energy <i>E</i> and emission angle <i>θ</i>
+                (which maps to crystal momentum <i>k</i>). Because only occupied states can emit electrons,
+                ARPES directly visualises the band structure for <i>E &lt; E<sub>F</sub></i>. The Fermi
+                surface appears where bands cross <i>E<sub>F</sub></i>.
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">5. Carbon Allotropes as Dimensional Reductions</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Carbon is unique: the same element gives <b>3D diamond</b> (insulator, <i>E<sub>g</sub></i> ≈ 5.5 eV),
+                <b>2D graphene</b> (zero-gap semimetal, Dirac cones), <b>1D nanotubes</b> (metal or semiconductor
+                depending on chirality), and <b>0D fullerenes</b> (discrete molecular levels). Each is a
+                dimensional reduction of the sp² sheet: rolling it up quantises the transverse momentum,
+                wrapping it into a sphere quantises all directions. The playground lets you explore all
+                four from a single starting point.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-theory"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-theory" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges-theory">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles-theory">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp-theory">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges-theory">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="mode-section" id="section-play" style="display:none;">
+    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
+      <div class="game-main">
+
+        <section class="macro-panel">
+          <h3>🔬 Quantum State Spectrometer</h3>
+          <p class="slider-desc" style="font-size:0.9rem; line-height:1.6;">
+            Explore how <b>crystal symmetry</b> determines the <b>electronic dispersion</b> <i>E(k)</i>,
+            and how that dispersion produces the <b>Density of States</b> <i>g(E)</i>.
+            Switch between 3D bulk, 2D layers, 1D wires and Dirac cones to see how confinement reshapes the electronic states.
+          </p>
+        </section>
+
+        <section class="macro-panel">
+          <h3>💎 Material Presets</h3>
+          <p class="slider-desc" style="font-size:0.85rem; margin-bottom:0.8rem; line-height:1.55;">
+            Pick a starting material to load realistic tight-binding parameters.
+            Selecting <b>Graphene</b> reveals the carbon allotropes (graphite, nanotube, fullerene)
+            and hides the bulk-crystal structures.
+          </p>
+
+          <!-- Bulk crystals -->
+          <div style="margin-bottom:1.1rem;">
+            <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:0.5rem;">Bulk Crystals</div>
+            <div class="challenge-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));">
+              <div class="material-card" data-dim="3D" data-modes="3D,2D,1D,0D" data-mat="Cu" onclick="setEBMaterial('Cu')">
+                <div style="font-size:0.95rem;">Copper</div>
+                <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">Metal · 3D</div>
+              </div>
+              <div class="material-card" data-dim="3D" data-modes="3D,2D,1D,0D" data-mat="Si" onclick="setEBMaterial('Si')">
+                <div style="font-size:0.95rem;">Silicon</div>
+                <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">Semiconductor · 3D</div>
+              </div>
+              <div class="material-card" data-dim="3D" data-modes="3D" data-mat="Diamond" onclick="setEBMaterial('Diamond')">
+                <div style="font-size:0.95rem;">Diamond</div>
+                <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">Insulator · 3D only</div>
+              </div>
+              <div class="material-card" data-dim="graphene" data-modes="graphene" data-mat="Graphene" onclick="setEBMaterial('Graphene')">
+                <div style="font-size:0.95rem;">Graphene</div>
+                <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">Dirac · 2D sheet</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Carbon allotropes (shown only when Graphene is selected) -->
+          <div id="carbon-subsection" style="display:none; margin-bottom:1.1rem;">
+            <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:0.5rem;">Carbon Allotropes</div>
+            <div class="challenge-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));">
+              <div class="material-card" data-dim="2D" data-modes="2D" data-mat="Graphite" onclick="setEBMaterial('Graphite')">
+                <div style="font-size:0.95rem;">Graphite</div>
+                <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">Stacked · 2D layer</div>
+              </div>
+              <div class="material-card" data-dim="1D" data-modes="1D" data-mat="CNT" onclick="setEBMaterial('CNT')">
+                <div style="font-size:0.95rem;">Nanotube</div>
+                <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">1D wire</div>
+              </div>
+              <div class="material-card" data-dim="0D" data-modes="0D" data-mat="Fullerene" onclick="setEBMaterial('Fullerene')">
+                <div style="font-size:0.95rem;">Fullerene</div>
+                <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">0D dot</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dimension selector (contents controlled by selected material) -->
+          <div id="dim-bar" style="display:flex; gap:0.5rem; margin-top:1rem; flex-wrap:wrap;">
+            <button class="dim-btn" id="dim-3d" data-mode="3D" data-default-label="3D (Bulk)" onclick="setEBDim('3D')">3D (Bulk)</button>
+            <button class="dim-btn" id="dim-2d" data-mode="2D" data-default-label="2D (Layer)" onclick="setEBDim('2D')">2D (Layer)</button>
+            <button class="dim-btn" id="dim-1d" data-mode="1D" data-default-label="1D (Wire)" onclick="setEBDim('1D')">1D (Wire)</button>
+            <button class="dim-btn" id="dim-0d" data-mode="0D" data-default-label="0D (Dot)" onclick="setEBDim('0D')">0D (Dot)</button>
+            <button class="dim-btn" id="dim-dirac" data-mode="graphene" data-default-label="Dirac (Graphene)" onclick="setEBDim('graphene')">Dirac (Graphene)</button>
+          </div>
+        </section>
+
+        <!-- Structure + Dispersion -->
+        <section class="macro-panel pg-section">
+          <h3>Structure Σ &amp; Dispersion E(k)</h3>
+          <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
+            The lattice view shows the real-space arrangement of atoms and bonds;
+            the dispersion plot shows the allowed energy as a function of crystal momentum <i>k</i>.
+            Lower dimensionality removes allowed <i>k</i>-states and changes the shape of the bands.
+          </p>
+
+          <div class="viz-hub">
+            <div class="lattice-canvas-container">
+              <div class="hub-label">Structure Σ</div>
+              <canvas id="lattice-canvas" width="300" height="350"></canvas>
+            </div>
+            <div class="band-plot-container">
+              <div class="hub-label">Dispersion E(k)</div>
+              <div id="plot-band-structure" style="height:100%; width:100%;"></div>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:center; gap:1.5rem; flex-wrap:wrap; font-size:0.78rem; color:var(--text-dim); margin-top:0.6rem;">
+            <span><span style="display:inline-block; width:12px; height:3px; background:#00f0ff; vertical-align:middle; margin-right:4px;"></span><b>Valence Band</b></span>
+            <span><span style="display:inline-block; width:12px; height:3px; background:#c084fc; vertical-align:middle; margin-right:4px;"></span><b>Conduction Band</b></span>
+            <span><span style="display:inline-block; width:12px; height:3px; background:#fbbf24; vertical-align:middle; margin-right:4px;"></span><b>Bandgap</b> forbidden region</span>
+            <span><span style="display:inline-block; width:12px; height:3px; background:#ff4ecd; vertical-align:middle; margin-right:4px;"></span><b>Fermi level</b> <i>E_F</i></span>
+          </div>
+
+          <p style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:0.5rem; line-height:1.5;">
+            <b>Figure 1.</b> Tight-binding band structure for the selected dimensionality and material.
+            The gap size distinguishes metals, semiconductors, and insulators.
+          </p>
+        </section>
+
+        <!-- DOS + ARPES -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+          <section class="macro-panel pg-section">
+            <h3>Density of States g(E)</h3>
+            <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
+              Number of electronic states per unit energy. In 3D <i>g(E) ∝ √E</i> near a parabolic band edge;
+              in 2D it is step-like; in 1D it diverges as Van-Hove singularities at sub-band edges.
+            </p>
+            <div class="viz-card">
+              <div class="plot-container" id="plot-dos-playground" style="min-height:350px;"></div>
+            </div>
+            <div style="display:flex; justify-content:center; gap:1.5rem; flex-wrap:wrap; font-size:0.78rem; color:var(--text-dim); margin-top:0.6rem;">
+              <span><span style="display:inline-block; width:12px; height:3px; background:#00f0ff; vertical-align:middle; margin-right:4px;"></span><b>g(E)</b> total DOS</span>
+              <span><span style="display:inline-block; width:12px; height:3px; background:#fbbf24; vertical-align:middle; margin-right:4px;"></span><b>Gap</b> no states</span>
+              <span><span style="display:inline-block; width:12px; height:3px; background:#ff4ecd; vertical-align:middle; margin-right:4px;"></span><b>E_F</b> Fermi level</span>
+            </div>
+            <p style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:0.5rem; line-height:1.5;">
+              <b>Figure 2.</b> DOS profile. The shape reveals dimensionality; the gap reveals metal vs semiconductor vs insulator.
+            </p>
+          </section>
+
+          <section class="macro-panel pg-section">
+            <h3>ARPES Intensity Map</h3>
+            <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
+              Angle-resolved photoemission intensity <i>I(E,θ)</i> for the <b>occupied</b> states (<i>E &lt; E_F</i>).
+              Bright lines trace the band dispersion; the Fermi surface appears where bands cross <i>E_F</i>.
+            </p>
+            <div class="viz-card">
+              <div class="plot-container" id="plot-arpes-main" style="min-height:350px;"></div>
+            </div>
+            <div style="display:flex; justify-content:center; gap:1.5rem; flex-wrap:wrap; font-size:0.78rem; color:var(--text-dim); margin-top:0.6rem;">
+              <span><span style="display:inline-block; width:12px; height:3px; background:#c084fc; vertical-align:middle; margin-right:4px;"></span><b>Occupied bands</b> <i>E &lt; E_F</i></span>
+              <span><span style="display:inline-block; width:12px; height:3px; background:#ff4ecd; vertical-align:middle; margin-right:4px;"></span><b>E_F</b> cutoff</span>
+              <span><span style="display:inline-block; width:12px; height:3px; background:rgba(255,255,255,0.2); vertical-align:middle; margin-right:4px;"></span><b>Unoccupied</b> shadow region</span>
+            </div>
+            <p style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:0.5rem; line-height:1.5;">
+              <b>Figure 3.</b> Photoemission map. Only states below the Fermi level can emit electrons.
+            </p>
+          </section>
+        </div>
+
+        <!-- Lab Notes -->
+        <div class="insights" style="margin-top:1rem;">
+          <div class="insight-card">
+            <div class="insight-title">📖 Lab Notes: Dimensionality &amp; DOS</div>
+            <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.7;">
+              The Density of States, \(<span style="font-family:var(--font-mono)">g(E)</span>\), counts the number of available electronic states per unit energy per unit volume.
+              <br><br>
+              1. <b style="color:var(--accent-cyan)">3D Bulk</b>: \(<span style="font-family:var(--font-mono)">g(E) \propto \sqrt{E - E_c}</span>\) — parabolic dispersion near the conduction-band edge.
+              <br>
+              2. <b style="color:var(--accent-cyan)">2D Layer (Quantum Well)</b>: \(<span style="font-family:var(--font-mono)">g(E)</span>\) is a step-function — constant for each sub-band.
+              <br>
+              3. <b style="color:var(--accent-cyan)">1D Wire (Quantum Wire)</b>: \(<span style="font-family:var(--font-mono)">g(E) \propto 1/\sqrt{E - E_c}</span>\) — Van Hove singularities at sub-band edges.
+              <br>
+              4. <b style="color:var(--accent-purple)">Carbon Allotropes</b>: Graphene → linear \(<span style="font-family:var(--font-mono)">g(E) \propto |E|</span>\); CNT → spiky Van Hove peaks; Fullerene → discrete delta-like spikes.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right sidebar -->
+      <aside class="game-sidebar">
+        <div class="sidebar-card">
+          <h4>⚙ Quantum Controls</h4>
+
+          <div class="slider-group" style="margin-bottom:1rem;">
+            <label>Hopping <i>t</i> <span class="unit-tag">eV</span></label>
+            <span class="slider-value" id="val-t">1.0</span>
             <input type="range" id="slider-t" min="0.1" max="3" value="1.0" step="0.1">
-            <div class="control-row" style="margin-top:1rem;">
-              <span class="control-label">Gap E_g</span>
-              <span class="control-value" id="val-gap">0.0</span><span class="unit-tag">eV</span>
-            </div>
+            <div class="slider-desc">Nearest-neighbour hopping amplitude. Larger <i>t</i> widens the band.</div>
+          </div>
+
+          <div class="slider-group" style="margin-bottom:1rem;">
+            <label>Gap <i>E_g</i> <span class="unit-tag">eV</span></label>
+            <span class="slider-value" id="val-gap">0.0</span>
             <input type="range" id="slider-gap" min="0" max="6" value="0" step="0.1">
-            <div class="control-row" style="margin-top:1rem;">
-              <span class="control-label">Offset ε</span>
-              <span class="control-value" id="val-eps">0.0</span><span class="unit-tag">eV</span>
-            </div>
+            <div class="slider-desc">On-site potential difference between atoms. Non-zero values open a bandgap.</div>
+          </div>
+
+          <div class="slider-group" style="margin-bottom:1rem;">
+            <label>Offset <i>ε</i> <span class="unit-tag">eV</span></label>
+            <span class="slider-value" id="val-eps">0.0</span>
             <input type="range" id="slider-eps" min="-2" max="2" value="0" step="0.1">
-          </div>
-          <div class="challenge-panel">
-            <div class="challenge-header">
-              <span class="challenge-icon" style="background:rgba(74,222,128,0.1);">📊</span>
-              <span class="challenge-title">Live Readout</span>
-            </div>
-            <table style="width:100%; margin-top:0.5rem;">
-              <tr style="text-align:left;"><th style="color:var(--text-dim);font-weight:normal;">Metric</th><th style="color:var(--text-dim);font-weight:normal;">Value</th></tr>
-              <tr style="color:var(--accent-cyan)"><td id="live-dim-label">Symmetry</td><td class="highlight-num" id="live-dim">3D</td></tr>
-              <tr style="color:var(--text-main)"><td style="color:var(--text-main)">Hopping t</td><td class="highlight-num" id="live-t">1.0 eV</td></tr>
-              <tr style="color:var(--text-main)"><td style="color:var(--text-main)">Bandgap E_g</td><td class="highlight-num" id="live-gap">0.00 eV</td></tr>
-              <tr style="color:var(--text-main)"><td style="color:var(--text-main)">Bandwidth</td><td class="highlight-num" id="live-bw">4.0 eV</td></tr>
-            </table>
+            <div class="slider-desc">Rigid shift of the whole band structure up or down in energy.</div>
           </div>
         </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <div>
-            <!-- plot-dos-playground viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Density of States g(E)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">States per unit energy. Van-Hove singularities at band edges.</p>
-  <div class="plot-container" id="plot-dos-playground" style="min-height:350px;"></div>
-</div>
 
-            <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
-              🔬 <b>DOS g(E)</b> — number of states per unit energy. Gap size reveals metal vs semiconductor.
+        <div class="sidebar-card">
+          <h4>📊 Live Readout</h4>
+
+          <div class="readout-row">
+            <div class="readout-tile">
+              <div class="readout-label">Material</div>
+              <div class="readout-value" id="live-material" style="color:var(--accent-cyan);">Copper</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">Symmetry</div>
+              <div class="readout-value" id="live-dim" style="color:var(--accent-cyan);">3D</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">Hopping <i>t</i></div>
+              <div class="readout-value" id="live-t" style="color:var(--text-bright);">1.0 eV</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">Bandgap <i>E_g</i></div>
+              <div class="readout-value" id="live-gap" style="color:var(--accent-purple);">0.00 eV</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">Bandwidth</div>
+              <div class="readout-value" id="live-bw" style="color:var(--text-bright);">4.0 eV</div>
             </div>
           </div>
-          <div>
-            <!-- plot-arpes-main viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">ARPES Intensity Map</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Photoemission intensity I(E,θ) revealing band dispersion and Fermi surface.</p>
-  <div class="plot-container" id="plot-arpes-main" style="min-height:350px;"></div>
-</div>
 
-            <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
-              🔬 <b>ARPES intensity</b> — photoemission map of occupied states vs momentum.
+          <p style="font-size:0.75rem; color:var(--text-dim); line-height:1.5; margin-top:0.6rem;">
+            Values update automatically when you change material, dimensionality, or sliders.
+          </p>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav"></div>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list" style="font-size:0.8rem; color:var(--text-dim); line-height:1.6;">Complete challenges to earn badges!</div>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell">
+              <div class="score-num" id="stat-challenges">0</div>
+              <div class="score-label">Challenges</div>
+            </div>
+            <div class="score-cell">
+              <div class="score-num" id="stat-puzzles">0</div>
+              <div class="score-label">Puzzles</div>
+            </div>
+            <div class="score-cell">
+              <div class="score-num" id="stat-xp">0</div>
+              <div class="score-label">Total XP</div>
+            </div>
+            <div class="score-cell">
+              <div class="score-num" id="stat-badges">0</div>
+              <div class="score-label">Badges</div>
             </div>
           </div>
         </div>
-      </div>
+      </aside>
     </div>
   </div>
 
@@ -332,59 +705,13 @@
       <div class="challenge-feedback" id="dirac-feedback"></div>
     </div>
   </div>
-
-  <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; margin-top:2rem;">
-    <div style="display:flex; gap:1rem; align-items:flex-start;">
-       <div class="challenge-panel" style="flex:1;">
-         <div class="challenge-header">
-           <span class="challenge-icon" style="background:rgba(0,240,255,0.08);">📖</span>
-           <span class="challenge-title">Lab Notes</span>
-         </div>
-         <div class="insight-card" style="font-size:0.9rem; line-height:1.6; color:var(--text-dim);">
-           The Density of States, \( g(E) \), describes the number of available electronic states per unit energy per unit volume.
-           <br><br>
-           1. <b style="color:var(--accent-cyan)">3D Bulk</b>: \( g(E) \propto \sqrt{E - E_c} \) — parabolic dispersion near the conduction-band edge.
-           <br>
-           2. <b style="color:var(--accent-cyan)">2D Layer (Quantum Well)</b>: \( g(E) \) is a step-function — constant for each sub-band.
-           <br>
-           3. <b style="color:var(--accent-cyan)">1D Wire (Quantum Wire)</b>: \( g(E) \propto 1/\sqrt{E - E_c} \) — Van Hove singularities at sub-band edges.
-           <br>
-           4. <b style="color:var(--accent-purple)">Carbon Allotropes</b>: Graphene → linear \( g(E) \propto |E| \); CNT → spiky Van Hove peaks; Fullerene → discrete delta-like spikes.
-         </div>
-       </div>
-    </div>
-    <div class="challenge-panel" style="position:sticky; top:5rem;">
-        <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(0,240,255,0.08);">🗺</span>
-          <span class="challenge-title">Lab Navigator</span>
-        </div>
-        <div id="module-nav"></div>
-        <div class="section-divider" style="margin:1rem 0;"></div>
-        <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(74,222,128,0.08);">🏆</span>
-          <span class="challenge-title">Your Badges</span>
-        </div>
-        <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        <div class="section-divider" style="margin:1rem 0;"></div>
-        <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(255,215,64,0.08);">📊</span>
-          <span class="challenge-title">Progress</span>
-        </div>
-        <div class="scoreboard">
-          <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
-        </div>
-      </div>
-  </div>
 </div>
 
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
 <script src="eb_sim.js?v=7"></script>
-<script src="eb_apps_games.js?v=7"></script>
+<script src="eb_apps_games.js?v=8"></script>
 <script src="../../shared_effects.js"></script>
 </body>
 </html>

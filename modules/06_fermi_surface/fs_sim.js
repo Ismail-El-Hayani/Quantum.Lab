@@ -36,9 +36,9 @@ function setFSMaterial(name) {
   var sEF = document.getElementById('slider-EF');
   if (sEF) { sEF.value = mat.EF.toFixed(1); var v = document.getElementById('val-EF'); if (v) v.textContent = mat.EF.toFixed(1); }
 
-  var btns = document.querySelectorAll('.preset-btn');
-  for (var i = 0; i < btns.length; i++) {
-    btns[i].classList.toggle('active', btns[i].id === 'preset-' + name);
+  var cards = document.querySelectorAll('.material-card');
+  for (var i = 0; i < cards.length; i++) {
+    cards[i].classList.toggle('selected', cards[i].dataset.mat === name);
   }
 
   var elMat = document.getElementById('fs-overlay-mat');
@@ -123,7 +123,7 @@ function fsPlotdFdE() {
     var ex = Math.exp(x);
     df.push(ex / ((1 + ex) * (1 + ex)) / (fs_kB_eV * Math.max(fsState.T, 1)));
   }
-  _plotFS('plot-dfdE', [{ x: E, y: df, mode: 'lines', name: '-df/dE', line: { color: '#4ade80', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(74,222,128,0.08)' }], fsLayout(null, 'E - mu (eV)', '-df/dE (eV^-1)'), { responsive: true, displayModeBar: false });
+  _plotFS('plot-dfdE', [{ x: E, y: df, mode: 'lines', name: '-df/dE', line: { color: '#4ade80', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(74,222,128,0.08)' }], fsLayout(null, 'E − μ (eV)', '−∂f/∂E (eV⁻¹)'), { responsive: true, displayModeBar: false });
 }
 
 // ============ C. 2D OCCUPATION MAP ============
@@ -146,8 +146,8 @@ function fsPlotOccupation() {
   }], {
     margin: { t: 20, r: 10, b: 40, l: 40 },
     paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
-    xaxis: { title: 'kx (nm^-1)', color: '#505070', range: [-3, 3] },
-    yaxis: { title: 'ky (nm^-1)', color: '#505070', range: [-3, 3] },
+    xaxis: { title: 'k_x (nm⁻¹)', color: '#505070', range: [-3, 3] },
+    yaxis: { title: 'k_y (nm⁻¹)', color: '#505070', range: [-3, 3] },
     aspectratio: { x: 1, y: 1 }
   }, { responsive: true, displayModeBar: false });
 }
@@ -290,7 +290,7 @@ window.destroyFSCanvas = destroyFSCanvas;
 function fsPlotPauli() {
   var T = [], chi = [];
   for (var t = 1; t <= 1000; t += 10) { T.push(t); chi.push(Math.sqrt(Math.max(fsChemicalPotential(fsState.EF, t), 0))); }
-  _plotFS('plot-pauli', [{ x: T, y: chi, mode: 'lines', name: 'Chi_Pauli', line: { color: '#ff4ecd', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(255,78,205,0.08)' }], fsLayout(null, 'T (K)', 'chi (arb. units)'), { responsive: true, displayModeBar: false });
+  _plotFS('plot-pauli', [{ x: T, y: chi, mode: 'lines', name: 'Chi_Pauli', line: { color: '#ff4ecd', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(255,78,205,0.08)' }], fsLayout(null, 'T (K)', 'χ_P ∝ √μ(E_F) (arb. units)'), { responsive: true, displayModeBar: false });
 }
 
 function fsPlotThermionic() {
@@ -304,7 +304,7 @@ function fsPlotThermionic() {
 function fsPlotWhiteDwarf() {
   var n = [], P = [];
   for (var ni = 1e27; ni <= 1e36; ni *= 1.5) { n.push(ni); P.push(Math.pow(ni, 5.0/3.0)); }
-  _plotFS('plot-wd', [{ x: n.map(function(x) { return x / 1e30; }), y: P.map(function(x) { return x / 1e50; }), mode: 'lines', name: 'P ~ n^{5/3}', line: { color: '#00f0ff', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.08)' }], fsLayout(null, 'n (10^{30} m^{-3})', 'P (10^{50} arb. units)'), { responsive: true, displayModeBar: false });
+  _plotFS('plot-wd', [{ x: n.map(function(x) { return x / 1e30; }), y: P.map(function(x) { return x / 1e50; }), mode: 'lines', name: 'P ~ n^{5/3}', line: { color: '#00f0ff', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.08)' }], fsLayout(null, 'n (10³⁰ m⁻³)', 'P (10⁵⁰ arb. units)'), { responsive: true, displayModeBar: false });
 }
 
 // ============ LIVE READOUT ============
@@ -314,11 +314,12 @@ function fsUpdateLiveTable() {
   var TF = fsState.EF / fs_kB_eV;
   var lam = fsDeBroglie(fsState.T);
   var sets = {
+    'live-material': FS_MATERIALS[fsState.material] ? FS_MATERIALS[fsState.material].label : fsState.material,
     'live-T': fsState.T + ' K',
     'live-EF': fsState.EF.toFixed(2) + ' eV',
     'live-mu': mu.toFixed(3) + ' eV',
-    'live-kF': kF.toFixed(2) + ' nm^{-1}',
-    'live-TF': (TF / 1e4).toFixed(1) + 'x10^4 K',
+    'live-kF': kF.toFixed(2) + ' nm⁻¹',
+    'live-TF': (TF / 1e4).toFixed(1) + '×10⁴ K',
     'live-debroglie': (lam < 10 ? lam.toFixed(2) : lam.toFixed(1)) + ' nm',
     'live-smear': (fs_kB_eV * fsState.T * 1000).toFixed(1) + ' meV',
     'live-degen': (fsState.T / TF).toFixed(3)
@@ -381,6 +382,8 @@ function initFS() {
   if (FS_CANVAS.canvas && !FS_CANVAS.animId) {
     fsDrawFrame();
   }
+
+  setFSMaterial('Free');
 }
 window.initFS = initFS;
 

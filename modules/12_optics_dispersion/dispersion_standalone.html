@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>Dispersion — n(λ), ε(ω), Material Response</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.min.js" async></script>
+<style>
+:root{
+  --bg-deep:#0a0a1a; --bg-panel:#111122; --glass-border:rgba(255,255,255,0.08);
+  --text-main:#d1d5db; --text-bright:#e5e7eb; --text-dim:#94a3b8; --text-muted:#6b7280;
+  --accent-cyan:#00f0ff; --accent-green:#4ade80; --accent-pink:#ff4ecd; --accent-orange:#ff6b35;
+  --radius-lg:10px; --radius-md:6px; --font-mono:'SFMono-Regular','Consolas','monospace';
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{background:var(--bg-deep); color:var(--text-main); font-family:'Segoe UI',system-ui,sans-serif; zoom:1.2; min-height:100vh; padding:1rem 2rem;}
+h1{font-size:1.8rem; background:linear-gradient(90deg,#00f0ff,#4ade80); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:0.3rem;}
+.subtitle{font-size:0.95rem; color:var(--text-dim); margin-bottom:1.5rem;}
+
+/* ─── macro-panel ─── */
+.macro-panel{background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-bottom:1rem;}
+.macro-panel h3{margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); border-bottom:1px solid var(--glass-border); padding-bottom:0.3rem;}
+
+/* ─── sub-subsection ─── */
+.sub-section{border-left:3px solid var(--accent-cyan); padding-left:1rem; margin:0.8rem 0 0.8rem 0.4rem;}
+.sub-section h4{font-size:0.95rem; color:var(--text-bright); margin-bottom:0.4rem;}
+.sub-section p, .sub-section .note-body{font-size:0.88rem; color:var(--text-muted); line-height:1.55;}
+
+/* ─── physics-note ─── */
+.physics-note{margin-bottom:0.6rem;}
+.physics-note summary{font-size:0.9rem; color:var(--accent-cyan); cursor:pointer; font-weight:600;}
+.note-body{font-size:0.88rem; color:var(--text-muted); line-height:1.6; margin-top:0.4rem;}
+.note-body code{background:rgba(0,240,255,0.08); padding:2px 6px; border-radius:4px; font-size:0.85rem;}
+.note-body pre{background:rgba(0,0,0,0.3); padding:8px; border-radius:6px; font-size:0.85rem; overflow-x:auto; color:var(--text-dim); margin:0.4rem 0;}
+
+/* ─── presets ─── */
+.preset-grid{display:flex; flex-wrap:wrap; gap:0.5rem; margin:0.6rem 0;}
+.preset-btn{padding:0.5rem 1rem; border-radius:var(--radius-md); border:1px solid var(--glass-border); background:var(--bg-deep); color:var(--text-main); cursor:pointer; font-weight:600; font-size:0.85rem; transition:all .2s;}
+.preset-btn:hover{border-color:var(--accent-cyan);}
+.preset-btn.active{background:linear-gradient(135deg,#00f0ff44,#4ade8044); border-color:var(--accent-cyan); color:#fff;}
+
+/* ─── controls ─── */
+.control-row{display:flex; flex-wrap:wrap; gap:1rem; margin-top:0.6rem; align-items:center;}
+.slider-group{flex:1 1 240px;}
+.slider-group label{display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:0.3rem;}
+.slider-group input[type=range]{width:100%;}
+.slider-group .val{font-family:var(--font-mono); color:var(--accent-cyan); font-weight:700; font-size:1rem;}
+
+/* ─── hero canvas ─── */
+.hero-wrap{position:relative; width:100%; border-radius:12px; overflow:hidden; background:linear-gradient(135deg,#060e1f,#0a0e1a);}
+#macro-canvas{display:block; width:100%; height:400px;}
+.hero-overlay{position:absolute; top:10px; left:14px; font-family:var(--font-mono); font-size:0.72rem; color:var(--accent-cyan); pointer-events:none;}
+.hero-btn{margin-top:0.6rem; display:flex; gap:1rem; align-items:center; flex-wrap:wrap;}
+.fire-btn{padding:8px 22px; border-radius:var(--radius-md); border:1px solid var(--glass-border); background:var(--bg-deep); color:var(--text-main); cursor:pointer; font-weight:600; font-size:1rem;}
+.fire-btn:hover{border-color:var(--accent-cyan); background:rgba(0,240,255,0.08);}
+
+/* ─── readout cards ─── */
+.readout-bar{display:flex; flex-wrap:wrap; gap:10px; margin:0.8rem 0;}
+.rd-card{flex:1 1 100px; background:rgba(10,10,30,0.6); padding:8px 10px; border-radius:6px; border:1px solid var(--glass-border); text-align:center;}
+.rd-card .lbl{font-size:0.65rem; color:var(--text-dim); text-transform:uppercase; margin-bottom:2px;}
+.rd-card .val{font-family:var(--font-mono); color:var(--accent-cyan); font-size:1rem; font-weight:700;}
+
+/* ─── plots ─── */
+.plots{display:grid; grid-template-columns:1fr; gap:14px; margin-top:0.6rem;}
+@media(min-width:900px){.plots{grid-template-columns:1fr 1fr;}}
+.viz-card{background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem;}
+.viz-card h4{font-size:0.95rem; color:var(--text-bright); margin:0 0 0.3rem;}
+.viz-card p{font-size:0.8rem; color:var(--text-dim); margin:0 0 0.6rem; line-height:1.5;}
+
+/* ─── live readout table ─── */
+.readout-table{width:100%; border-collapse:collapse; font-size:0.78rem; margin-top:0.4rem; overflow-x:auto; display:block;}
+.readout-table th, .readout-table td{padding:5px 6px; border-bottom:1px solid var(--glass-border); text-align:center; white-space:nowrap;}
+.readout-table th{color:var(--accent-cyan); font-weight:600; font-size:0.68rem; text-transform:uppercase;}
+.readout-table td{color:var(--text-bright); font-family:var(--font-mono);}
+
+/* ─── insights ─── */
+.insights{display:grid; grid-template-columns:1fr; gap:1rem; margin-top:1rem;}
+@media(min-width:768px){.insights{grid-template-columns:1fr 1fr;}}
+.insight-card{background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem;}
+.insight-card h4{margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright);}
+.insight-card p{font-size:0.88rem; color:var(--text-muted); line-height:1.55; margin:0.4rem 0;}
+.insight-card code{background:rgba(0,240,255,0.08); padding:2px 6px; border-radius:4px; font-size:0.85rem;}
+
+/* ─── compact color widget ─── */
+.color-widget{display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap; padding:0.8rem; background:var(--bg-deep); border-radius:8px; border:1px solid var(--glass-border);}
+.swatch{width:120px; height:80px; border-radius:8px; background:#444; border:2px solid rgba(255,255,255,0.3); box-shadow:0 0 20px rgba(0,240,255,0.15);}
+
+@media(max-width:720px){body{padding:0.5rem 1rem;} #macro-canvas{height:280px;}}
+</style>
+</head>
+<body>
+
+<h1>Dispersion</h1>
+<p class="subtitle">How the refractive index n and extinction coefficient κ depend on photon energy E (and thus on wavelength λ = hc/E).</p>
+
+<!-- ═══════════ 5a. THE BIG PICTURE ═══════════ -->
+<section class="macro-panel" id="sec-hero">
+  <h3>5a. The Big Picture — Photon Interacts with a Material Slab</h3>
+  <div class="physics-note">
+    <details>
+      <summary>What the canvas shows</summary>
+      <div class="note-body">
+        <p>A <strong>photon packet</strong> (coloured by energy) hits a material slab. Depending on E and the material type:</p>
+        <ul style="margin-left:1.2rem; line-height:1.7;">
+          <li><strong style="color:#ffdd44">Incident</strong> — packet travels from source toward the slab.</li>
+          <li><strong style="color:#00f0ff">Reflected</strong> — electrons screen the E-field; packet bounces back.</li>
+          <li><strong style="color:#4ade80">Transmitted</strong> — below bandgap / above plasma edge, packet passes through.</li>
+          <li><strong style="color:#ff4ecd">Absorption glow</strong> — above-gap photons excite electron-hole pairs.</li>
+          <li><strong style="color:#ff6b35">Phonon ring</strong> — energy deposited into lattice vibrations (NaCl).</li>
+        </ul>
+        <p>The <strong>colour of the photon</strong> tracks its energy: red (IR, ~1 eV) → yellow-green (visible, ~2.5 eV) → violet (UV, >3 eV).</p>
+      </div>
+    </details>
+  </div>
+
+  <!-- material presets -->
+  <div class="preset-grid">
+    <button class="preset-btn active" onclick="setMat('Cu')">Copper</button>
+    <button class="preset-btn" onclick="setMat('Ag')">Silver</button>
+    <button class="preset-btn" onclick="setMat('Al')">Aluminium</button>
+    <button class="preset-btn" onclick="setMat('Si')">Silicon</button>
+    <button class="preset-btn" onclick="setMat('GaAs')">GaAs</button>
+    <button class="preset-btn" onclick="setMat('NaCl')">NaCl</button>
+  </div>
+
+  <!-- 2D hero canvas (replaces Three.js 3D for standalone portability) -->
+  <div class="hero-wrap">
+    <canvas id="macro-canvas" width="900" height="400"></canvas>
+    <div class="hero-overlay" id="canvas-overlay">Cu · E=2.00 eV · λ=620 nm</div>
+  </div>
+  <div class="hero-btn">
+    <button class="fire-btn" onclick="fireAnimation()">🔥 Fire Photon</button>
+    <span style="color:#8899aa; font-size:0.85rem;">Photon colour = energy (red→green→violet)</span>
+  </div>
+
+  <!-- live spectral readout cards -->
+  <div class="readout-bar">
+    <div class="rd-card"><div class="lbl">Reflectivity R</div><div class="val" id="card-R">—</div></div>
+    <div class="rd-card"><div class="lbl">Transmission T</div><div class="val" id="card-T">—</div></div>
+    <div class="rd-card"><div class="lbl">Absorption A</div><div class="val" id="card-A">—</div></div>
+    <div class="rd-card"><div class="lbl">n · refractive index</div><div class="val" id="card-n">—</div></div>
+    <div class="rd-card"><div class="lbl">κ · extinction</div><div class="val" id="card-k">—</div></div>
+    <div class="rd-card"><div class="lbl">ε₁ · real</div><div class="val" id="card-e1">—</div></div>
+    <div class="rd-card"><div class="lbl">ε₂ · imag</div><div class="val" id="card-e2">—</div></div>
+  </div>
+
+  <!-- controls -->
+  <div class="control-row" style="margin-top:0.8rem;">
+    <div class="slider-group">
+      <label>Photon Energy E (eV) &nbsp; <span style="color:var(--text-dim)">λ = hc/E</span></label>
+      <input type="range" id="slider-E" min="0.1" max="15" step="0.05" value="2.0" oninput="onE(this.value)">
+      <span class="val" id="lbl-E">2.00 eV</span> &nbsp;·&nbsp; <span class="val" id="lbl-lam" style="color:#ffdd44">620</span> nm
+    </div>
+    <div class="slider-group">
+      <label>Incident Angle θ (°)</label>
+      <input type="range" id="slider-θ" min="0" max="89" step="1" value="0" oninput="onTheta(this.value)">
+      <span class="val" id="lbl-θ">0°</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 5b. MICROSCOPIC VIEW ═══════════ -->
+<section class="macro-panel" id="sec-micro">
+  <h3>5b. Microscopic View — What Happens at the Atomic Scale?</h3>
+  <div class="sub-section">
+    <h4>Metal lattice (Cu, Ag, Al)</h4>
+    <p>Ion cores sit in a <strong>free-electron sea</strong>. Below the plasma edge ωₚ, surface electrons screen the incoming E-field almost perfectly → <strong>total reflection</strong>. Above ωₚ the electrons cannot follow the field → partial transmission. This is the <strong>Drude model</strong> (Hummel Ch 11.1).</p>
+  </div>
+  <div class="sub-section">
+    <h4>Semiconductor lattice (Si, GaAs)</h4>
+    <p>Covalent bonds hold shared valence electrons. Below the bandgap E &lt; E_g there are no empty states → the lattice is <strong>transparent</strong>. Above E_g a photon breaks a bond: a valence electron jumps to the conduction band, leaving a hole behind → <strong>strong absorption</strong>.</p>
+  </div>
+  <div class="sub-section">
+    <h4>Insulator lattice (NaCl)</h4>
+    <p>Ionic crystal with alternating Na⁺ and Cl⁻ sites. The bandgap is enormous (&gt;8 eV) so visible photons cannot excite electrons across it. At far-IR energies <strong>phonon modes</strong> resonate → the lattice absorbs photons as quantized vibrations (Lorentz oscillator, Hummel Ch 11.5).</p>
+  </div>
+</section>
+
+<!-- ═══════════ 5c. NORMAL VS ANOMALOUS DISPERSION ═══════════ -->
+<section class="macro-panel" id="sec-dispersion-curve">
+  <h3>5c. Normal vs Anomalous Dispersion — n(E)</h3>
+  <div class="physics-note">
+    <details>
+      <summary>Why does n look like this?</summary>
+      <div class="note-body">
+        <p>The refractive index n(ω) is the real part of the complex dielectric function:</p>
+        <pre>n(ω) = Re √ε(ω)      where ε(ω) = ε₁(ω) + i ε₂(ω)
+
+Normal dispersion:    dn/dE &lt; 0  (n decreases as E rises — most glasses)
+Anomalous dispersion: dn/dE &gt; 0  (near a resonance or absorption edge)</pre>
+        <p>Near a strong resonance (e.g. NaCl phonon at ~0.02 eV) n diverges. In metals, ε₁ becomes negative below the plasma edge → n is imaginary → total reflection.</p>
+      </div>
+    </details>
+  </div>
+  <div class="viz-card" style="margin-top:0.6rem;">
+    <h4>Refractive Index n(E) — with current-energy cursor</h4>
+    <p>Vertical dashed line marks current E from slider. Hover to explore the curve.</p>
+    <div id="plot-n-vs-E" style="background:var(--bg-deep); border-radius:8px; border:1px solid var(--glass-border); padding:6px; min-height:320px;"></div>
+  </div>
+</section>
+
+<!-- ═══════════ 5d.1 ε(E) ═══════════ -->
+<section class="macro-panel" id="sec-eps">
+  <h3>5d.1 Dielectric Function ε(E) = ε₁(E) + i ε₂(E)</h3>
+  <div class="viz-card">
+    <p>Real part ε₁ = n² − κ² (cyan). Imaginary part ε₂ = 2nκ (pink). For a Drude metal: ε₁ → −∞ as E→0 and crosses zero at the plasma edge.</p>
+    <div id="plot-eps" style="background:var(--bg-deep); border-radius:8px; border:1px solid var(--glass-border); padding:6px; min-height:320px;"></div>
+  </div>
+</section>
+
+<!-- ═══════════ 5d.2 R/T/A(E) ═══════════ -->
+<section class="macro-panel" id="sec-rta">
+  <h3>5d.2 Reflectivity, Transmittance, Absorption — R(E), T(E), A(E)</h3>
+  <div class="viz-card">
+    <p>Below the bandgap / above the plasma edge: material is transparent (T ≈ 1). Near strong transitions: absorption dominates. Metals: R ≈ 1 below ωₚ.</p>
+    <div id="plot-rt" style="background:var(--bg-deep); border-radius:8px; border:1px solid var(--glass-border); padding:6px; min-height:320px;"></div>
+  </div>
+</section>
+
+<!-- ═══════════ 5d.3 Reflected Colour (compact) ═══════════ -->
+<section class="macro-panel" id="sec-color">
+  <h3>5d.3 Reflected Colour — What Do You See?</h3>
+  <div class="physics-note">
+    <details>
+      <summary>How the colour is computed</summary>
+      <div class="note-body">
+        <p>The apparent colour comes from which wavelengths are reflected, not absorbed. Computed via CIE 1931 XYZ under D65 daylight:</p>
+        <pre>X = Σ_λ R(λ)·I_D65(λ)·x̄(λ)
+Y = Σ_λ R(λ)·I_D65(λ)·ȳ(λ)    -- luminance
+Z = Σ_λ R(λ)·I_D65(λ)·z̄(λ)
+
+R' = 3.2406·X − 1.5372·Y − 0.4986·Z   [IEC 61966-2-1 sRGB matrix]</pre>
+        <p>Gold appears yellow-green in transmission → those colours are <em>missing</em> in reflection → appears reddish-yellow (Goethe / Hummel Ch 10.1).</p>
+      </div>
+    </details>
+  </div>
+  <div class="color-widget">
+    <div>
+      <div style="font-size:0.7rem; color:var(--text-dim); margin-bottom:0.3rem;">Reflected Colour (D65)</div>
+      <div id="color-swatch" class="swatch"></div>
+    </div>
+    <div style="flex:1; min-width:200px;">
+      <div id="color-rgb" style="font-family:var(--font-mono); color:var(--accent-cyan); font-size:1rem; font-weight:600;">RGB(—, —, —)</div>
+      <div style="font-size:0.82rem; color:var(--text-muted); margin-top:0.3rem;">
+        Dominant absorbed λ: <span id="color-peak" style="color:var(--accent-pink);">—</span> nm
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 5e. LIVE READOUT TABLE ═══════════ -->
+<section class="macro-panel" id="sec-readout">
+  <h3>5e. Live Readout</h3>
+  <div style="overflow-x:auto;">
+    <table class="readout-table">
+      <thead><tr>
+        <th>Material</th><th>E (eV)</th><th>λ (nm)</th><th>θ₁</th>
+        <th>R (%)</th><th>T (%)</th><th>A (%)</th>
+        <th>n</th><th>κ</th><th>ε₁</th><th>ε₂</th>
+        <th>θ₂</th><th>Outcome</th>
+      </tr></thead>
+      <tbody><tr>
+        <td id="tab-mat">Cu</td><td id="tab-E">2.00</td><td id="tab-lam">620</td><td id="tab-theta">0°</td>
+        <td id="tab-R">—</td><td id="tab-T">—</td><td id="tab-A">—</td>
+        <td id="tab-n">—</td><td id="tab-k">—</td><td id="tab-e1">—</td><td id="tab-e2">—</td>
+        <td id="tab-th2">—</td><td id="tab-out">—</td>
+      </tr></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════ 5f. PHYSICS INSIGHTS ═══════════ -->
+<section class="macro-panel" id="sec-insights">
+  <h3>5f. Physics Insights</h3>
+  <div class="insights">
+    <div class="insight-card">
+      <h4>Drude Model — Free-Envelope Electrons</h4>
+      <p>For a metal with plasma frequency ωₚ and damping γ = 1/τ:</p>
+      <code>ε₁(ω) = 1 − ωₚ² / (ω² + γ²)</code><br>
+      <code>ε₂(ω) = ωₚ² γ / [ω(ω² + γ²)]</code>
+      <p>When ε₁ &lt; 0 → n becomes imaginary → total reflection. The plasma edge marks the boundary between mirror and transparent behaviour.</p>
+    </div>
+    <div class="insight-card">
+      <h4>Lorentz Oscillator — Bound Electrons</h4>
+      <p>Classical harmonic oscillator with natural frequency ω₀:</p>
+      <code>ε(ω) = 1 + (Ne²/ε₀m)·(ω₀² − ω² − iγω)⁻¹</code>
+      <p>Near resonance n → ∞ (anomalous dispersion). This explains the sharp phonon absorption in ionic crystals like NaCl.</p>
+    </div>
+    <div class="insight-card">
+      <h4>Kramers–Kronig Causality</h4>
+      <p>Because the response must be causal, ε₁ and ε₂ are Hilbert-transform pairs. A peak in ε₂ at a given ω forces a rapid change in ε₁ nearby — this is why absorption and dispersion always go together.</p>
+    </div>
+    <div class="insight-card">
+      <h4>Why Does Dispersion Matter?</h4>
+      <p>• <strong>Chromatic aberration</strong> — lenses focus different colours to different points.<br>
+         • <strong>Pulse broadening</strong> — in fibre optics, different wavelengths travel at different speeds.<br>
+         • <strong>AR coatings</strong> — designed for a specific λ; performance degrades off-centre.</p>
+    </div>
+  </div>
+</section>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   dispersion_standalone.js — Self-contained optics engine
+   Equation comments on every major physics function.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── MATERIAL DATABASE ───
+   Each entry stores: type (metal/sc/ins), bandgap Eg or plasma Ep,
+   base refractive index n0, display colour, and a descriptive label.   */
+var MATERIALS = {
+  Si:   { type:'sc',    Eg:1.12, n0:3.50, color:'#7da4c4', label:'Silicon'     },
+  GaAs: { type:'sc',    Eg:1.42, n0:3.30, color:'#aabb88', label:'GaAs'        },
+  NaCl: { type:'ins',   Eg:8.50, n0:1.54, color:'#ff8844', label:'NaCl',
+         model:'lorentz', epsInf:2.25, eps0:5.9, omegaTO:0.020, omegaLO:0.026, damp:0.003 },
+  Cu:   { type:'metal', Ep:8.80, damp:0.05, interband:{center:3.5, width:2.0, strength:2.5},
+         color:'#d4a574', label:'Copper'     },
+  Ag:   { type:'metal', Ep:9.60, damp:0.05, interband:false,
+         color:'#e8e8f0', label:'Silver'     },
+  Al:   { type:'metal', Ep:15.0, damp:0.35, interband:false,
+         color:'#c0c8d0', label:'Aluminium'  }
+};
+
+/* ─── STATE ─── */
+var state = { mat:'Cu', E:2.0, theta:0 };
+
+/* ─── CIE 1931 XYZ colour-matching functions & D65 illuminant
+   Sampled every 5 nm from 380–780 nm (81 points).
+   Sources: CIE 15:2004 Colorimetry, 3rd Ed.                         ─── */
+var CIE_X = [0.001,0.005,0.018,0.038,0.061,0.091,0.131,0.189,0.285,0.431,0.612,0.810,0.991,1.159,1.282,1.337,1.310,1.195,1.006,0.791,0.600,0.431,0.297,0.199,0.132,0.086,0.055,0.034,0.021,0.013,0.008,0.005,0.003,0.002,0.001,0.001,0.001,0.001,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000];
+var CIE_Y = [0.000,0.002,0.007,0.016,0.029,0.043,0.061,0.089,0.140,0.220,0.329,0.460,0.601,0.749,0.890,1.000,1.047,1.023,0.914,0.756,0.594,0.441,0.313,0.217,0.150,0.102,0.068,0.044,0.028,0.017,0.011,0.007,0.004,0.003,0.002,0.001,0.001,0.001,0.001,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000];
+var CIE_Z = [0.007,0.032,0.127,0.295,0.537,0.870,1.319,1.882,2.532,3.187,3.825,4.383,4.779,4.956,4.870,4.580,4.069,3.456,2.780,2.125,1.552,1.088,0.736,0.481,0.315,0.206,0.134,0.087,0.056,0.035,0.022,0.014,0.009,0.006,0.004,0.002,0.001,0.001,0.001,0.001,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000];
+var D65_ILL = [50.0,52.3,54.6,56.9,59.1,60.5,63.0,64.6,65.8,68.6,75.1,82.5,87.8,90.5,90.8,91.2,95.4,96.7,93.4,96.2,99.1,99.1,95.8,86.1,97.8,91.5,99.0,104.0,95.1,95.9,95.8,86.5,109.0,108.0,104.0,107.0,102.0,98.0,96.0,97.0,98.0,99.0,99.0,95.0,93.0,88.0,84.0,85.0,81.0,82.0,80.0,83.0,85.0,87.0,88.0,92.0,91.0,89.0,90.0,91.0,93.0,93.0,89.0,86.0,88.0,89.0,88.0,87.0,84.0,80.0,73.0,71.0,74.0,81.0,86.0,92.0,94.0,91.0,85.0,80.0,76.0,74.0,70.0,70.0];
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CORE PHYSICS: computeOptics(matName, E, thetaDeg)
+   Returns the complex optical response for a given material at photon
+   energy E (eV) and angle of incidence θ (degrees).
+
+   Physics model by material type:
+   • Metal: Drude model  ε₁ = 1 − ωₚ²/(ω²+γ²),  ε₂ = ωₚ²γ/[ω(ω²+γ²)]
+     With optional interband (Lorentzian) correction.
+   • Semiconductor: below E_g → transparent dielectric; above E_g →
+     exponential rise of κ, linear correction to n.
+   • Insulator (NaCl): Lorentz phonon oscillator at far-IR.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function computeOptics(name, E, thetaDeg) {
+  var mat = MATERIALS[name];
+  var theta = thetaDeg * Math.PI / 180;
+  var n = 1, k = 0, R = 0, T = 0, A = 0, outcome = '', theta2 = 0;
+  var ep1, ep2;
+
+  if (mat.type === 'metal') {
+    /* ─── Drude free-electron model ───
+       Hummel Eq (10.6)-(10.8): ñ² = ε − iσ/(ε₀ω)
+       For a metal σ/ε₀ = ωₚ²/ω  →  ñ² = 1 − ωₚ²/(ω²+iγω)        */
+    var wp = mat.Ep, g = mat.damp;
+    ep1 = 1 - wp * wp / (E * E + g * g);
+    ep2 = wp * wp * g / (E * (E * E + g * g));
+    /* Interband correction (Lorentz oscillator approximation) */
+    if (mat.interband && E > 2.0) {
+      ep2 += 2.5 * Math.exp(-(E - 3.5) * (E - 3.5) / 2.0);
+    }
+    /* Recover n, κ from ε₁, ε₂:
+       n  = √[(|ε| + ε₁)/2]    (Hummel Eq 10.15)
+       κ  = √[(|ε| − ε₁)/2]    (Hummel Eq 10.16)                */
+    var mag = Math.sqrt(ep1 * ep1 + ep2 * ep2);
+    n = Math.sqrt((mag + ep1) / 2);
+    k = Math.sqrt((mag - ep1) / 2);
+    /* Normal-incidence reflectivity (Hummel Eq 10.24):
+       R = [(n−1)² + κ²] / [(n+1)² + κ²]                        */
+    R = ((n - 1) * (n - 1) + k * k) / ((n + 1) * (n + 1) + k * k);
+    if (E < wp) { outcome = 'reflect'; T = 0; A = Math.max(0, 1 - R); }
+    else {
+      T = Math.max(0, 1 - R - 0.08);
+      A = Math.max(0, 1 - R - T);
+      outcome = (T > 0.15) ? 'transmit' : 'reflect';
+    }
+  } else if (mat.type === 'sc') {
+    /* ─── Semiconductor ───
+       Below E_g: transparent, n ≈ n0, κ ≈ 0.
+       Above E_g: Urbach-tail κ rises exponentially; n corrected.   */
+    n = mat.n0;
+    if (E >= mat.Eg) {
+      k = 0.35 * Math.exp((E - mat.Eg) / 0.45);
+      n = mat.n0 + 0.18 * (E - mat.Eg);
+      ep1 = n * n - k * k;
+      ep2 = 2 * n * k;
+      R = ((n - 1) * (n - 1) + k * k) / ((n + 1) * (n + 1) + k * k);
+      T = 0; A = Math.max(0, 1 - R); outcome = 'absorb';
+    } else {
+      ep1 = n * n; ep2 = 0;
+      R = Math.pow((n - 1) / (n + 1), 2);
+      if (thetaDeg > 0) R = R + (1 - R) * Math.pow(Math.sin(theta), 4);
+      T = Math.max(0, 1 - R); A = 0; outcome = 'transmit';
+    }
+  } else if (mat.type === 'ins') {
+    /* ─── Lorentz phonon oscillator (NaCl) ───
+       Hummel Ch 11.5: bounded electrons driven at ω near ω₀.
+       ε(ω) = ε∞ + (ε₀−ε∞)·ωTO² / (ωTO² − ω² − iγω)           */
+    var eInf = mat.epsInf, e0 = mat.eps0;
+    var wTO = mat.omegaTO, wLO = mat.omegaLO, gam = mat.damp;
+    var w = E; /* in model units */
+    var denom = (wTO * wTO - w * w) * (wTO * wTO - w * w) + gam * gam * w * w;
+    ep1 = eInf + (e0 - eInf) * wTO * wTO * (wTO * wTO - w * w) / denom;
+    ep2 = (e0 - eInf) * wTO * wTO * gam * w / denom;
+    var mag = Math.sqrt(ep1 * ep1 + ep2 * ep2);
+    n = Math.sqrt((mag + ep1) / 2);
+    k = Math.sqrt((mag - ep1) / 2);
+    R = ((n - 1) * (n - 1) + k * k) / ((n + 1) * (n + 1) + k * k);
+    T = (1.0 - R) * Math.exp(-(4 * Math.PI * k / Math.max(1240 / E, 1)) * 200);
+    A = Math.max(0.0, 1.0 - R - T);
+    outcome = (A > 0.3) ? 'absorb' : 'transmit';
+  }
+  /* ─── Snell refraction angle ───
+     n₁ sin θ₁ = n₂ sin θ₂  →  sin θ₂ = (n₁/n₂) sin θ₁
+     Guard for total internal reflection (TIR).                 */
+  var sin2 = Math.sin(theta) / n;
+  if (sin2 >= 1) { theta2 = 90; }
+  else { theta2 = Math.asin(sin2) * 180 / Math.PI; }
+  if (n < 1.0 && Math.sin(theta) > n) { outcome = 'reflect'; T = 0; A = 0; R = 1; theta2 = 90; }
+
+  return { n:n, k:k, R:R, T:T, A:A, outcome:outcome, theta2:theta2, ep1:ep1, ep2:ep2 };
+}
+
+/* ─── wavelength from energy: λ(nm) = hc / (eV) ≈ 1240 / E ─── */
+function nmFromE(E) { return Math.round(1240 / Math.max(E, 0.01)); }
+
+/* ─── photon colour by energy (for canvas drawing) ─── */
+function energyColor(E) {
+  if (E < 0.5) return '#ff2200';
+  if (E < 1.5) return '#ffaa00';
+  if (E < 2.5) return '#aaff00';
+  if (E < 3.5) return '#00aaff';
+  if (E < 5.0) return '#aa00ff';
+  return '#00f0ff';
+}
+
+/* ─── material colour for canvas slab ─── */
+function slabColor(name) { return MATERIALS[name].color; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MACROSCOPIC VIEW — 2D CANVAS RENDERER
+   Draws the material slab, incident / reflected / transmitted photon
+   beams, and absorption glow. Called on every requestAnimationFrame.
+   ═══════════════════════════════════════════════════════════════════════════ */
+var animT = 0, animRunning = false;
+function drawScene() {
+  var c = document.getElementById('macro-canvas');
+  var ctx = c.getContext('2d');
+  var w = c.width, h = c.height;
+  ctx.clearRect(0, 0, w, h);
+  /* ── background ── */
+  ctx.fillStyle = '#060e1f'; ctx.fillRect(0, 0, w, h);
+  /* ── grid ── */
+  ctx.strokeStyle = '#111122'; ctx.lineWidth = 1;
+  for (var gx = 0; gx < w; gx += 40) { ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,h); ctx.stroke(); }
+  for (var gy = 0; gy < h; gy += 40) { ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(w,gy); ctx.stroke(); }
+
+  var res = computeOptics(state.mat, state.E, state.theta);
+  var mat = MATERIALS[state.mat];
+  var pc = energyColor(state.E);
+  var cx = w / 2, cy = h / 2;
+  var sw = 130, sh = 160;
+
+  /* ── material slab ── */
+  ctx.fillStyle = mat.color; ctx.globalAlpha = 0.18;
+  ctx.fillRect(cx - sw/2, cy - sh/2, sw, sh);
+  ctx.globalAlpha = 1.0;
+  ctx.strokeStyle = mat.color; ctx.lineWidth = 2;
+  ctx.strokeRect(cx - sw/2, cy - sh/2, sw, sh);
+  /* ionic cross-hatch for NaCl */
+  if (mat.type === 'ins') {
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.beginPath(); ctx.moveTo(cx-sw/2+8, cy-sh/2+8); ctx.lineTo(cx+sw/2-8, cy+sh/2-8); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx+sw/2-8, cy-sh/2+8); ctx.lineTo(cx-sw/2+8, cy+sh/2-8); ctx.stroke();
+  }
+  /* label */
+  ctx.fillStyle = '#ccc'; ctx.font = '13px Segoe UI'; ctx.textAlign = 'center';
+  ctx.fillText(mat.label, cx, cy + sh/2 + 22);
+  ctx.fillStyle = '#888'; ctx.font = '11px monospace';
+  ctx.fillText(state.E.toFixed(2) + ' eV', cx, cy + sh/2 + 38);
+
+  /* ── animated photon path ── */
+  var progress = animRunning ? Math.min(1, animT / 60) : 0;
+  var packetX = cx - sw/2 - 6 - (w/2 - 60) * progress;
+  var packetY = cy;
+  if (animRunning && progress >= 1) {
+    animRunning = false; animT = 0;
+  }
+  if (animRunning) animT++;
+
+  /* incident beam */
+  ctx.strokeStyle = pc; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(40, cy); ctx.lineTo(cx - sw/2 - 6, cy); ctx.stroke();
+  /* photon packet */
+  ctx.fillStyle = pc; ctx.shadowColor = pc; ctx.shadowBlur = 14;
+  ctx.beginPath(); ctx.arc(packetX, packetY, 5, 0, Math.PI*2); ctx.fill();
+  ctx.shadowBlur = 0;
+
+  /* reflected beam (drawn after impact) */
+  if (progress >= 1 && res.R > 0.03) {
+    ctx.strokeStyle = pc; ctx.lineWidth = 2 + res.R * 5;
+    ctx.globalAlpha = Math.min(1.0, res.R + 0.2);
+    ctx.beginPath(); ctx.moveTo(cx - sw/2, cy); ctx.lineTo(50, cy - 80); ctx.stroke();
+    /* arrowhead */
+    ctx.beginPath(); ctx.moveTo(50, cy-80); ctx.lineTo(60, cy-72); ctx.lineTo(56, cy-86); ctx.closePath(); ctx.fillStyle = pc; ctx.fill();
+  }
+  /* transmitted beam */
+  if (progress >= 1 && res.T > 0.03) {
+    ctx.strokeStyle = pc; ctx.lineWidth = 2 + res.T * 5;
+    ctx.globalAlpha = Math.min(1.0, res.T + 0.2);
+    ctx.beginPath(); ctx.moveTo(cx + sw/2, cy); ctx.lineTo(w - 40, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w-40, cy); ctx.lineTo(w-52, cy-7); ctx.lineTo(w-52, cy+7); ctx.closePath(); ctx.fillStyle = pc; ctx.fill();
+  }
+  /* absorption glow inside slab */
+  if (progress >= 1 && res.A > 0.05) {
+    ctx.globalAlpha = Math.min(0.75, res.A);
+    var g = ctx.createRadialGradient(cx, cy, 4, cx, cy, sw * 0.55);
+    if (mat.type === 'ins') {
+      g.addColorStop(0, 'rgba(255,107,53,0.85)'); g.addColorStop(1, 'rgba(255,107,53,0)');
+    } else {
+      g.addColorStop(0, 'rgba(0,240,255,0.55)'); g.addColorStop(1, 'rgba(0,240,255,0)');
+    }
+    ctx.fillStyle = g;
+    ctx.fillRect(cx - sw/2 - 10, cy - sh/2 - 10, sw + 20, sh + 20);
+    /* phonon rings for NaCl */
+    if (mat.type === 'ins') {
+      ctx.strokeStyle = '#ff6b35'; ctx.lineWidth = 2;
+      var now = Date.now() / 250;
+      for (var ri = 8; ri < 42; ri += 10) {
+        var pulse = (Math.sin(now + ri * 0.25) + 1) * 0.5;
+        ctx.globalAlpha = pulse * res.A * 0.9;
+        ctx.beginPath(); ctx.arc(cx, cy, ri, 0, Math.PI*2); ctx.stroke();
+      }
+    }
+    /* electron oscillation rings for metals below plasma edge */
+    if (mat.type === 'metal' && state.E < mat.Ep) {
+      ctx.strokeStyle = '#00f0ff'; ctx.lineWidth = 1.5;
+      var t2 = Date.now() / 200;
+      for (var r2 = 8; r2 < 36; r2 += 12) {
+        var p2 = (Math.sin(t2 + r2 * 0.3) + 1) * 0.5;
+        ctx.globalAlpha = p2 * (1 - res.R) * 0.7;
+        ctx.beginPath(); ctx.arc(cx - sw*0.22, cy, r2, 0, Math.PI*2); ctx.stroke();
+      }
+    }
+  }
+  ctx.globalAlpha = 1.0;
+
+  /* ── corner readout ── */
+  ctx.fillStyle = '#666'; ctx.font = '11px monospace'; ctx.textAlign = 'left';
+  ctx.fillText('R ' + (res.R*100).toFixed(1) + '%', 8, 16);
+  ctx.fillText('T ' + (res.T*100).toFixed(1) + '%', 8, 32);
+  ctx.fillText('A ' + (res.A*100).toFixed(1) + '%', 8, 48);
+
+  /* overlay text */
+  document.getElementById('canvas-overlay').textContent =
+    state.mat + ' · E=' + state.E.toFixed(2) + ' eV · λ=' + nmFromE(state.E) + ' nm';
+
+  requestAnimationFrame(drawScene);
+}
+
+function fireAnimation() { animT = 0; animRunning = true; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SPECTRAL CURVE GENERATOR
+   Samples computeOptics() over a log-spaced energy grid (0.01–25 eV).
+   Returns arrays: E, ε₁, ε₂, n, κ, R, T, A.
+   ═══════════════════════════════════════════════════════════════════════════ */
+var specData = null;
+function generateCurves(matName) {
+  var N = 400;
+  var logMin = -2.0, logMax = 1.398;
+  var Earr = [], eps1 = [], eps2 = [], narr = [], karr = [], Rarr = [], Tarr = [], Aarr = [];
+  for (var i = 0; i < N; i++) {
+    var f = i / (N - 1);
+    var logE = logMin + f * (logMax - logMin);
+    var E = Math.pow(10, logE);
+    Earr.push(E);
+    var o = computeOptics(matName, E, 0);
+    eps1.push(o.ep1); eps2.push(o.ep2);
+    narr.push(o.n); karr.push(o.k);
+    Rarr.push(o.R); Tarr.push(o.T); Aarr.push(o.A);
+  }
+  return { E:Earr, eps1:eps1, eps2:eps2, n:narr, k:karr, R:Rarr, T:Tarr, A:Aarr };
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PLOTLY RENDERERS
+   Three plots: n(E) vs E, ε(E), and R/T/A(E).
+   Each gets a vertical dashed cursor at the current slider energy.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function initPlots() {
+  if (typeof Plotly === 'undefined') { setTimeout(initPlots, 500); return; }
+  specData = generateCurves(state.mat);
+  refreshPlots();
+}
+
+function refreshPlots() {
+  if (!specData || typeof Plotly === 'undefined') return;
+  var E = state.E;
+
+  /* ── 5c. n(E) ── */
+  Plotly.react('plot-n-vs-E', [
+    { x:specData.E, y:specData.n, name:'n(E)', type:'scatter', mode:'lines',
+      line:{color:'#4ade80', width:2}, fill:'tozeroy', fillcolor:'rgba(74,222,128,0.08)' },
+    { x:specData.E, y:specData.k, name:'κ(E)', type:'scatter', mode:'lines',
+      line:{color:'#ff6b35', width:1.5, dash:'dot'}, visible:'legendonly' }
+  ], {
+    paper_bgcolor:'#0a0a1a', plot_bgcolor:'#0a0a1a',
+    font:{color:'#bbb', size:11},
+    title:{text:'Refractive Index n(E) and Extinction κ(E)', font:{color:'#ccc', size:13}},
+    xaxis:{title:'Photon Energy E (eV)', type:'log', gridcolor:'#1a1a2e', color:'#888'},
+    yaxis:{title:'Value', gridcolor:'#1a1a2e', color:'#888'},
+    margin:{t:36, b:40, l:52, r:16},
+    legend:{x:0.02, y:0.98, bgcolor:'rgba(10,10,26,0.7)', font:{size:10}},
+    hovermode:'x unified',
+    shapes:[{type:'line', x0:E, x1:E, y0:0, y1:100,
+      line:{color:'#ffffff', width:1.5, dash:'dash'}}]
+  }, {displayModeBar:false, responsive:true});
+
+  /* ── 5d.1 ε(E) ── */
+  Plotly.react('plot-eps', [
+    { x:specData.E, y:specData.eps1, name:'ε₁ · real', type:'scatter', mode:'lines',
+      line:{color:'#00f0ff', width:2} },
+    { x:specData.E, y:specData.eps2, name:'ε₂ · imag', type:'scatter', mode:'lines',
+      line:{color:'#ff4ecd', width:2} },
+    { x:specData.E, y:specData.n, name:'n · refractive', type:'scatter', mode:'lines', visible:'legendonly',
+      line:{color:'#4ade80', width:1, dash:'dot'} },
+    { x:specData.E, y:specData.k, name:'κ · extinction', type:'scatter', mode:'lines', visible:'legendonly',
+      line:{color:'#ff6b35', width:1, dash:'dot'} }
+  ], {
+    paper_bgcolor:'#0a0a1a', plot_bgcolor:'#0a0a1a',
+    font:{color:'#bbb', size:11},
+    title:{text:'Dielectric Function ε = ε₁ + iε₂', font:{color:'#ccc', size:13}},
+    xaxis:{title:'Photon Energy E (eV)', type:'log', gridcolor:'#1a1a2e', color:'#888'},
+    yaxis:{title:'Value', gridcolor:'#1a1a2e', color:'#888'},
+    margin:{t:36, b:40, l:52, r:16},
+    legend:{x:0.02, y:0.98, bgcolor:'rgba(10,10,26,0.7)', font:{size:10}},
+    hovermode:'x unified',
+    shapes:[{type:'line', x0:E, x1:E, y0:-100, y1:100,
+      line:{color:'#ffffff', width:1.5, dash:'dash'}}]
+  }, {displayModeBar:false, responsive:true});
+
+  /* ── 5d.2 R/T/A(E) ── */
+  Plotly.react('plot-rt', [
+    { x:specData.E, y:specData.R, name:'Reflectivity R', type:'scatter', mode:'lines',
+      line:{color:'#4ade80', width:2}, fill:'tozeroy', fillcolor:'rgba(74,222,128,0.08)' },
+    { x:specData.E, y:specData.T, name:'Transmission T', type:'scatter', mode:'lines',
+      line:{color:'#00f0ff', width:2}, fill:'tozeroy', fillcolor:'rgba(0,240,255,0.06)' },
+    { x:specData.E, y:specData.A, name:'Absorption A', type:'scatter', mode:'lines',
+      line:{color:'#ff6b35', width:2}, fill:'tozeroy', fillcolor:'rgba(255,107,53,0.06)' }
+  ], {
+    paper_bgcolor:'#0a0a1a', plot_bgcolor:'#0a0a1a',
+    font:{color:'#bbb', size:11},
+    title:{text:'Reflectivity · Transmission · Absorption', font:{color:'#ccc', size:13}},
+    xaxis:{title:'Photon Energy E (eV)', type:'log', gridcolor:'#1a1a2e', color:'#888'},
+    yaxis:{title:'Fraction', gridcolor:'#1a1a2e', color:'#888', range:[0,1.05]},
+    margin:{t:36, b:40, l:52, r:16},
+    legend:{x:0.02, y:0.98, bgcolor:'rgba(10,10,26,0.7)', font:{size:10}},
+    hovermode:'x unified',
+    shapes:[{type:'line', x0:E, x1:E, y0:0, y1:1.05,
+      line:{color:'#ffffff', width:1.5, dash:'dash'}}],
+    annotations:[{x:E, y:1.02, xref:'x', yref:'y', text:'E = ' + E.toFixed(2) + ' eV',
+      showarrow:false, font:{color:'#fff', size:10}}]
+  }, {displayModeBar:false, responsive:true});
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COLOUR RENDERING ENGINE (CIE 1931 XYZ → sRGB under D65)
+   Steps:
+   1. Build R(λ) by calling computeOptics for every 5 nm from 380–780 nm.
+   2. Convolve with D65 illuminant and CIE CMFs to get XYZ tristimulus values.
+   3. Convert XYZ → linear sRGB via IEC 61966-2-1 matrix.
+   4. Apply gamma correction to get displayable sRGB.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function computeColor(matName) {
+  var X = 0, Y = 0, Z = 0;
+  var step = 5, nPts = 81;
+  for (var i = 0; i < nPts; i++) {
+    var lam = 380 + i * step;
+    var E_eV = 1240.0 / lam;
+    var o = computeOptics(matName, E_eV, 0);
+    var I = D65_ILL[i];
+    X += o.R * I * CIE_X[i];
+    Y += o.R * I * CIE_Y[i];
+    Z += o.R * I * CIE_Z[i];
+  }
+  /* Normalise by sum of Y for perfect white reflector under D65 */
+  var Yn = 0;
+  for (var i = 0; i < nPts; i++) Yn += D65_ILL[i] * CIE_Y[i];
+  if (Yn > 0) { X /= Yn; Y /= Yn; Z /= Yn; }
+  /* XYZ → linear sRGB (IEC 61966-2-1) */
+  var Rlin =  3.2406*X - 1.5372*Y - 0.4986*Z;
+  var Glin = -0.9689*X + 1.8758*Y + 0.0415*Z;
+  var Blin =  0.0557*X - 0.2040*Y + 1.0570*Z;
+  function gamma(v) { return v <= 0.0031308 ? 12.92*v : 1.055*Math.pow(v,1/2.4)-0.055; }
+  var r = Math.max(0, Math.min(1, gamma(Rlin)));
+  var g = Math.max(0, Math.min(1, gamma(Glin)));
+  var b = Math.max(0, Math.min(1, gamma(Blin)));
+  /* peak absorbed λ = λ where R(λ) is minimum */
+  var minR = 2, peakAbsorbLam = 0;
+  for (var i = 0; i < nPts; i++) {
+    var lam = 380 + i * step;
+    var o = computeOptics(matName, 1240/lam, 0);
+    if (o.R < minR) { minR = o.R; peakAbsorbLam = lam; }
+  }
+  return { rgb:[Math.round(r*255),Math.round(g*255),Math.round(b*255)], peak:peakAbsorbLam };
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UI UPDATE — called whenever a slider moves or material changes.
+   Refreshes all readouts, table, and colour widget. Fires the beam again.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function updateAll() {
+  var res = computeOptics(state.mat, state.E, state.theta);
+  /* readout cards */
+  setText('card-R', (res.R*100).toFixed(1));
+  setText('card-T', (res.T*100).toFixed(1));
+  setText('card-A', (res.A*100).toFixed(1));
+  setText('card-n',  res.n.toFixed(2));
+  setText('card-k',  res.k.toFixed(3));
+  setText('card-e1', res.ep1 !== undefined ? res.ep1.toFixed(3) : '—');
+  setText('card-e2', res.ep2 !== undefined ? res.ep2.toFixed(3) : '—');
+  /* table */
+  setText('tab-mat', state.mat);
+  setText('tab-E',   state.E.toFixed(2));
+  setText('tab-lam', nmFromE(state.E));
+  setText('tab-theta', state.theta + '\u00b0');
+  setText('tab-R', (res.R*100).toFixed(1));
+  setText('tab-T', (res.T*100).toFixed(1));
+  setText('tab-A', (res.A*100).toFixed(1));
+  setText('tab-n', res.n.toFixed(2));
+  setText('tab-k', res.k.toFixed(3));
+  setText('tab-e1', res.ep1 !== undefined ? res.ep1.toFixed(3) : '—');
+  setText('tab-e2', res.ep2 !== undefined ? res.ep2.toFixed(3) : '—');
+  setText('tab-th2', res.theta2.toFixed(1));
+  setText('tab-out', res.outcome);
+  /* colour */
+  var c = computeColor(state.mat);
+  var rgbS = 'rgb(' + c.rgb[0] + ',' + c.rgb[1] + ',' + c.rgb[2] + ')';
+  var sw = document.getElementById('color-swatch');
+  if (sw) { sw.style.background = rgbS; sw.style.borderColor = 'rgba(255,255,255,0.3)'; }
+  setText('color-rgb', 'RGB(' + c.rgb[0] + ', ' + c.rgb[1] + ', ' + c.rgb[2] + ')');
+  setText('color-peak', c.peak);
+  /* fire beam */
+  animRunning = true; animT = 0;
+  /* plots */
+  if (specData && specData.mat === state.mat) { refreshPlots(); }
+  else { specData = generateCurves(state.mat); refreshPlots(); }
+  specData.mat = state.mat;
+}
+
+function setText(id, txt) {
+  var el = document.getElementById(id);
+  if (el) el.textContent = txt;
+}
+
+/* ─── sliders ─── */
+function onE(v) {
+  state.E = parseFloat(v);
+  setText('lbl-E', state.E.toFixed(2) + ' eV');
+  setText('lbl-lam', nmFromE(state.E));
+  updateAll();
+}
+function onTheta(v) {
+  state.theta = parseFloat(v);
+  setText('lbl-\u03b8', state.theta + '\u00b0');
+  updateAll();
+}
+
+/* ─── material preset buttons ─── */
+function setMat(name) {
+  state.mat = name;
+  document.querySelectorAll('.preset-btn').forEach(function(b){ b.classList.remove('active'); });
+  var btns = document.querySelectorAll('.preset-btn');
+  for (var i = 0; i < btns.length; i++) {
+    if (btns[i].textContent.indexOf(MATERIALS[name].label) !== -1) btns[i].classList.add('active');
+  }
+  updateAll();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', function(){
+  updateAll();
+  drawScene();
+  initPlots();
+});
+</script>
+</body>
+</html>

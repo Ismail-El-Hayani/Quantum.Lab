@@ -26,6 +26,112 @@
   .drop-zone.correct { border-color:var(--accent-green); background:rgba(74,222,128,0.06); }
   .drop-zone.wrong { border-color:var(--accent-red); background:rgba(255,85,85,0.06); animation:shake 0.4s; }
   #band-canvas-ds { width:100%; height:220px; border-radius:var(--radius-sm); background:var(--bg-elevated); margin-top:1rem; }
+
+  /* === Module 06/07 Layout Utilities === */
+  .game-layout { max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg); align-items:start; }
+  @media (max-width:1000px) { .game-layout { grid-template-columns:1fr; } }
+  .game-main { min-width:0; }
+  .game-sidebar { min-width:0; position:sticky; top:5rem; align-self:start; max-height:calc(100vh - 6rem); overflow-y:auto; padding-right:0.3rem; }
+  .game-sidebar::-webkit-scrollbar { width:4px; }
+  .game-sidebar::-webkit-scrollbar-thumb { background:var(--glass-border); border-radius:2px; }
+  .game-sidebar.static { position:static; max-height:none; overflow-y:visible; }
+  .macro-panel { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-top:1rem; }
+  .macro-panel:first-of-type { margin-top:0; }
+  .macro-panel h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
+  .sidebar-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-bottom:1rem; }
+  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
+  .slider-group { margin-bottom:1rem; }
+  .slider-group label { display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:0.3rem; }
+  .slider-group input[type=range], .slider-group select { width:100%; }
+  .slider-value { font-family:var(--font-mono); color:var(--accent-cyan); font-weight:700; }
+  .slider-desc { font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; }
+  .insights { display:grid; grid-template-columns:1fr; gap:1rem; margin-top:1rem; }
+  @media (min-width:900px) { .insights { grid-template-columns:1fr 1fr; } }
+  .insight-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; }
+  .insight-card .insight-title { margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright); }
+  .viz-card { background:var(--bg-elevated); border:1px solid var(--glass-border); border-radius:var(--radius-sm); padding:0.8rem; margin-bottom:1rem; }
+  .viz-card h4 { margin:0 0 0.4rem; font-size:0.9rem; color:var(--text-bright); }
+  .dash-row { display:flex; align-items:center; justify-content:space-between; padding:0.35rem 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+  .dash-label { font-size:0.78rem; color:var(--text-dim); }
+  .dash-val { font-family:var(--font-mono); font-size:0.82rem; color:var(--text-main); min-width:90px; text-align:right; }
+
+  /* === Equation styling === */
+  .equation-box {
+    background:rgba(0,0,0,0.18);
+    border:1px solid var(--glass-border);
+    border-left:3px solid var(--accent-cyan);
+    border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+    padding:0.8rem 1rem;
+    font-size:0.85rem;
+    color:var(--text-main);
+    line-height:1.7;
+    overflow-x:auto;
+  }
+  .mjx-chtml { font-size:105% !important; }
+
+  /* === Centered pill mode bar === */
+  .game-mode-bar {
+    display:flex;
+    justify-content:center;
+    gap:0.75rem;
+    flex-wrap:wrap;
+    margin:1.5rem auto 2rem;
+    padding:0.5rem;
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--glass-border);
+    border-radius:999px;
+    width:fit-content;
+    max-width:95%;
+  }
+  .game-mode-btn {
+    appearance:none;
+    border:1px solid transparent;
+    background:transparent;
+    color:var(--text-dim);
+    font-family:inherit;
+    font-size:0.85rem;
+    padding:0.55rem 1.25rem;
+    border-radius:999px;
+    cursor:pointer;
+    transition:all 0.2s ease;
+    display:inline-flex;
+    align-items:center;
+    gap:0.45rem;
+  }
+  .game-mode-btn:hover {
+    background:rgba(255,255,255,0.05);
+    color:var(--text-main);
+    border-color:var(--glass-border);
+  }
+  .game-mode-btn.active {
+    background:linear-gradient(135deg, rgba(0,240,255,0.85), rgba(255,78,205,0.85));
+    color:#fff;
+    border-color:transparent;
+    box-shadow:0 4px 18px rgba(0,240,255,0.25);
+    font-weight:600;
+  }
+  .mode-icon { font-size:0.95rem; line-height:1; }
+
+  /* Story / Theory helpers */
+  .theory-content { font-size:0.95rem; line-height:1.7; color:var(--text-main); }
+  .theory-content p { margin-bottom:1rem; }
+  .theory-content strong { color:var(--accent-cyan); font-weight:500; }
+  .insight-callout { background:linear-gradient(90deg, rgba(0,240,255,0.08), transparent); border-left:3px solid var(--accent-cyan); padding:1rem 1.2rem; border-radius:0 8px 8px 0; margin:1rem 0; font-size:0.92rem; color:var(--text-main); }
+
+  /* Sub-tab bar inside Playground — centered */
+  .ds-sub-bar {
+    display:flex; justify-content:center; gap:0.5rem; flex-wrap:wrap;
+    margin-top:0.8rem; padding-top:0.8rem;
+    border-top:1px solid var(--glass-border);
+  }
+  .ds-sub-btn {
+    appearance:none; border:1px solid var(--glass-border); background:var(--bg-elevated);
+    color:var(--text-dim); font-family:inherit; font-size:0.78rem; padding:0.4rem 0.9rem;
+    border-radius:999px; cursor:pointer; transition:all 0.2s;
+  }
+  .ds-sub-btn:hover { border-color:var(--accent-cyan); color:var(--accent-cyan); }
+  .ds-sub-btn.active { background:rgba(0,240,255,0.12); border-color:var(--accent-cyan); color:var(--accent-cyan); }
+  .ds-sub-section { margin-top:0; }
 </style>
 </head>
 <body>
@@ -44,210 +150,493 @@
 </div>
 <div class="game-container">
   <div class="game-mode-bar">
-    <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
+    <button class="game-mode-btn active" id="mode-story" onclick="setGameMode('story')">📖 Story</button>
+    <button class="game-mode-btn" id="mode-theory" onclick="setGameMode('theory')">🎓 Theory</button>
+    <button class="game-mode-btn" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
     <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">🎯 Challenges</button>
     <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">🧩 Puzzles</button>
   </div>
 
-  <!-- PLAYGROUND -->
-  <div class="mode-section" id="section-play">
-    <div class="playground-area">
-      <div class="playground-header">
-        <div class="playground-title">🔬 Doping & Fermi Level Lab</div>
-        <div class="playground-level">Adjust doping type and concentration. Watch the Fermi level shift and conductivity evolve.</div>
-      </div>
-      <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem;">
-        <div>
-          <!-- plot-fermi-shift viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Fermi Level Shift</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">N-doping pushes E_F toward CBM; P-doping toward VBM.</p>
-  <div class="plot-container" id="plot-fermi-shift" style="min-height:280px;"></div>
-</div>
-
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
-            <strong>What it shows:</strong> How donor/acceptor doping pushes the Fermi level toward the conduction or valence band edge.<br>
-            <strong>Why it matters:</strong> The Fermi-level position decides whether electrons or holes dominate — the core principle behind every transistor and diode.
-          </div>
-          <!-- plot-carrier-temp viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Carrier Density vs T</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Freeze-out → extrinsic plateau → intrinsic. Devices work in the plateau.</p>
-  <div class="plot-container" id="plot-carrier-temp" style="min-height:260px; margin-top:1.5rem;"></div>
-</div>
-
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
-            <strong>What it shows:</strong> The three temperature regimes — freeze-out, extrinsic, and intrinsic — where carrier control shifts from dopants to thermal generation.<br>
-            <strong>Why it matters:</strong> Devices are engineered to operate in the flat extrinsic plateau so doping alone sets conductivity.
-          </div>
-          <!-- plot-conductivity-doped viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Doped Conductivity σ(T)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Ionized-impurity scattering (low T) → phonon scattering (high T).</p>
-  <div class="plot-container" id="plot-conductivity-doped" style="min-height:260px; margin-top:1.5rem;"></div>
-</div>
-
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:-0.5rem;margin-bottom:1rem;line-height:1.6;">
-            <strong>What it shows:</strong> How conductivity scales with doping density and temperature, reflecting the balance between carrier density and mobility.<br>
-            <strong>Why it matters:</strong> Engineers choose doping levels precisely to hit target sheet resistance for interconnects and channel layers.
-          </div>
-          <canvas id="band-canvas-ds" width="800" height="220"></canvas>
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:0.3rem;margin-bottom:1rem;line-height:1.6;">
-            <strong>What it shows:</strong> A visual band diagram with Ec, Ev, EF and impurity levels, turning abstract energies into a spatial picture.<br>
-            <strong>Why it matters:</strong> Band diagrams are the universal language of semiconductor device physics — every junction story starts here.
-          </div>
-        </div>
-        <div>
-          <div class="challenge-panel" style="margin-bottom:1rem;">
-            <div class="challenge-header">
-              <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙</span>
-              <span class="challenge-title">Controls</span>
+  <!-- ═══════════════ STORY ═══════════════ -->
+  <div class="mode-section" id="section-story" style="display:block;">
+    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>📖 The Story — Engineering Conductivity with Impurities</h3>
+          <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.6;margin-bottom:1rem;">
+            In 1947, the transistor at Bell Labs used a <strong style="color:var(--accent-cyan);">doped</strong>
+            germanium crystal — a pure semiconductor intentionally contaminated with trace amounts of
+            specific impurities. This was the breakthrough: by adding <strong style="color:var(--accent-cyan);">donor</strong>
+            atoms (Group V: P, As, Sb) or <strong style="color:var(--accent-pink);">acceptor</strong>
+            atoms (Group III: B, Al, Ga), you can tune the carrier type and concentration independently of
+            temperature. Modern CMOS fabrication uses ion implantation — firing dopant ions at a silicon
+            wafer — to create nanoscale n-type and p-type regions that form transistors, the building
+            blocks of every microchip.
+          </p>
+          <div class="insights">
+            <div class="insight-card">
+              <div class="insight-title">🧩 Donors vs Acceptors</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                <strong style="color:var(--accent-cyan);">Donors</strong> (P, As) have five valence electrons;
+                four bond with Si, the fifth is loosely bound (~45 meV) and easily ionised into the
+                conduction band, leaving a fixed positive charge. <strong style="color:var(--accent-pink);">Acceptors</strong>
+                (B, Al) have three valence electrons; they create a "missing bond" that captures an electron
+                from the valence band, producing a mobile hole and a fixed negative charge.
+              </p>
             </div>
-            <div class="control-row" style="margin-top:0.5rem;"><span class="control-label">Donor Nd</span><span class="control-value" id="val-Nd">1.0e15</span><span class="unit-tag">cm⁻³</span></div>
+            <div class="insight-card">
+              <div class="insight-title">🔬 Compensation</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                When both donors and acceptors are present, they <strong style="color:var(--accent-yellow);">compensate</strong>
+                each other. The net carrier density is |N<sub>d</sub> − N<sub>a</sub>| in the extrinsic
+                regime. Heavily compensated material behaves like a lightly doped semiconductor — with
+                <strong style="color:var(--accent-red);">much lower mobility</strong> due to charged
+                impurity scattering. This is a critical issue in radiation-damaged detectors and
+                poorly annealed implants.
+              </p>
+            </div>
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">🎮 How the Playground Lets You Explore</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Use the sliders to set N<sub>d</sub> and N<sub>a</sub> independently and watch the
+                <strong style="color:var(--accent-cyan);">Fermi level</strong> shift in real time.
+                Observe the three temperature regimes — <strong style="color:var(--accent-cyan);">freeze-out</strong>,
+                <strong style="color:var(--accent-green);">extrinsic plateau</strong>, and
+                <strong style="color:var(--accent-yellow);">intrinsic</strong> — in the carrier-density
+                plot. The <strong style="color:var(--accent-purple);">band-diagram canvas</strong> visualises
+                E<sub>c</sub>, E<sub>v</sub>, E<sub>F</sub>, and impurity levels with animated carrier
+                particles.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+      <aside class="game-sidebar static">
+        <div class="sidebar-card"><h4>🗺 Lab Navigator</h4><div id="module-nav-story"></div></div>
+        <div class="sidebar-card"><h4>🏆 Your Badges</h4><div id="badge-list-story" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div></div>
+        <div class="sidebar-card"><h4>📊 Progress</h4><div class="scoreboard">
+          <div class="score-cell"><div class="score-num" id="stat-challenges-story">0</div><div class="score-label">Challenges</div></div>
+          <div class="score-cell"><div class="score-num" id="stat-puzzles-story">0</div><div class="score-label">Puzzles</div></div>
+          <div class="score-cell"><div class="score-num" id="stat-xp-story">0</div><div class="score-label">Total XP</div></div>
+          <div class="score-cell"><div class="score-num" id="stat-badges-story">0</div><div class="score-label">Badges</div></div>
+        </div></div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ═══════════════ THEORY ═══════════════ -->
+  <div class="mode-section" id="section-theory" style="display:none;">
+    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>🎓 Theory — Charge Neutrality, Fermi Level, and Scattering</h3>
+          <div class="theory-content">
+            <p>
+              In a doped semiconductor, thermal equilibrium demands <strong>charge neutrality</strong>:
+              the net charge from mobile carriers and ionised impurities must sum to zero:
+            </p>
+            <div class="equation-box">
+              $$n + N_a^- = p + N_d^+$$
+            </div>
+            <p>
+              For shallow donors/acceptors at room temperature, \(N_d^+ \approx N_d\) and
+              \(N_a^- \approx N_a\). The solution for the majority carrier is:
+            </p>
+            <div class="equation-box">
+              $$n = \frac{N_d - N_a}{2} + \sqrt{\left(\frac{N_d - N_a}{2}\right)^2 + n_i^2}, \qquad
+                p = \frac{n_i^2}{n}$$
+            </div>
+            <p>
+              When \(|N_d - N_a| \gg n_i\) the material is <strong>extrinsic</strong>; when
+              \(|N_d - N_a| \ll n_i\) it becomes <strong>intrinsic</strong>.
+            </p>
+          </div>
+
+          <div class="insights">
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">1. Fermi Level Shift</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                The intrinsic Fermi level sits near mid-gap. Doping moves it:
+              </p>
+              <div class="equation-box">
+                $$E_F = E_i + k_BT\ln\frac{n}{n_i} \quad (\text{n-type}), \qquad
+                  E_F = E_i - k_BT\ln\frac{p}{n_i} \quad (\text{p-type})$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                The shift grows logarithmically with doping: \(\Delta E_F \propto k_BT \ln(N_d/n_i)\).
+                Heavy doping pushes \(E_F\) into the band — the <strong>degenerate</strong> regime where
+                Maxwell-Boltzmann statistics break down.
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">2. Three Temperature Regimes</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                <strong style="color:var(--accent-cyan);">Freeze-out</strong> (T → 0): carriers freeze onto
+                dopant sites; <i>n</i> and <i>p</i> vanish.<br>
+                <strong style="color:var(--accent-green);">Extrinsic</strong> (50–500 K): dopants fully
+                ionised; <i>n ≈ N<sub>d</sub> − N<sub>a</sub></i> (flat plateau).<br>
+                <strong style="color:var(--accent-yellow);">Intrinsic</strong> (high T): thermal generation
+                overwhelms doping; <i>n ≈ p ≈ n<sub>i</sub></i>.
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">3. Mobility and Conductivity</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Total conductivity combines both carriers:
+              </p>
+              <div class="equation-box">
+                $$\sigma = e(n\mu_n + p\mu_p), \qquad
+                  \mu_n \propto T^{-3/2}, \qquad
+                  \mu_p \propto T^{-3/2}$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                At low T, <strong>ionised-impurity scattering</strong> (\(\mu \propto T^{3/2}/N_i)\)
+                dominates. At high T, <strong>phonon scattering</strong> (\(\mu \propto T^{-3/2}\))
+                dominates. The peak in \(\sigma(T)\) arises from the transition between these regimes.
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">4. Compensation</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                When \(N_d \approx N_a\) the material is <strong>compensated</strong>. Although the net
+                carrier density \(|N_d - N_a|\) is small, the <strong>total</strong> ionised impurity
+                density \(N_d + N_a\) is large, causing strong scattering and low mobility. This is the
+                bane of radiation-damaged detectors and poorly annealed ion implants.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+      <aside class="game-sidebar static">
+        <div class="sidebar-card"><h4>🗺 Lab Navigator</h4><div id="module-nav-theory"></div></div>
+        <div class="sidebar-card"><h4>🏆 Your Badges</h4><div id="badge-list-theory" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div></div>
+        <div class="sidebar-card"><h4>📊 Progress</h4><div class="scoreboard">
+          <div class="score-cell"><div class="score-num" id="stat-challenges-theory">0</div><div class="score-label">Challenges</div></div>
+          <div class="score-cell"><div class="score-num" id="stat-puzzles-theory">0</div><div class="score-label">Puzzles</div></div>
+          <div class="score-cell"><div class="score-num" id="stat-xp-theory">0</div><div class="score-label">Total XP</div></div>
+          <div class="score-cell"><div class="score-num" id="stat-badges-theory">0</div><div class="score-label">Badges</div></div>
+        </div></div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PLAYGROUND ═══════════════ -->
+  <div class="mode-section" id="section-play" style="display:none;">
+    <div class="game-layout">
+      <div class="game-main">
+
+        <section class="macro-panel">
+          <h3>🔬 Doping & Fermi Level Lab</h3>
+          <p class="slider-desc" style="font-size:0.9rem; line-height:1.6;">
+            Adjust donor/acceptor doping and temperature. Watch the Fermi level shift, carrier densities evolve, and conductivity respond.
+          </p>
+
+          <!-- Sub-tab navigation for plots -->
+          <div class="ds-sub-bar">
+            <button class="ds-sub-btn active" data-sub="fermi" onclick="dsSubTab('fermi')">📊 Fermi Shift</button>
+            <button class="ds-sub-btn" data-sub="carrier" onclick="dsSubTab('carrier')">🌡 Carriers</button>
+            <button class="ds-sub-btn" data-sub="conductivity" onclick="dsSubTab('conductivity')">⚡ Conductivity</button>
+            <button class="ds-sub-btn" data-sub="band" onclick="dsSubTab('band')">🌌 Band Diagram</button>
+          </div>
+        </section>
+
+        <div class="ds-sub-section" id="sub-fermi" style="display:block;">
+          <section class="macro-panel pg-section">
+            <h3>📈 Fermi Level Shift</h3>
+            <p class="slider-desc" style="font-size:0.85rem; line-height:1.55; margin-bottom:0.8rem;">
+              N-doping pushes E<sub>F</sub> toward the conduction-band minimum; P-doping pulls it toward the valence-band maximum.
+            </p>
+            <div class="viz-card">
+              <div class="plot-container" id="plot-fermi-shift" style="min-height:280px;"></div>
+            </div>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.6rem;line-height:1.55;">
+              <strong>What it shows:</strong> How donor/acceptor doping pushes the Fermi level toward the conduction or valence band edge.<br>
+              <strong>Why it matters:</strong> The Fermi-level position decides whether electrons or holes dominate — the core principle behind every transistor and diode.
+            </p>
+          </section>
+        </div>
+
+        <div class="ds-sub-section" id="sub-carrier" style="display:none;">
+          <section class="macro-panel pg-section">
+            <h3>📈 Carrier Density vs Temperature</h3>
+            <p class="slider-desc" style="font-size:0.85rem; line-height:1.55; margin-bottom:0.8rem;">
+              Freeze-out → extrinsic plateau → intrinsic. Semiconductor devices are engineered to operate in the plateau.
+            </p>
+            <div class="viz-card">
+              <div class="plot-container" id="plot-carrier-temp" style="min-height:260px;"></div>
+            </div>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.6rem;line-height:1.55;">
+              <strong>What it shows:</strong> The three temperature regimes — freeze-out, extrinsic, and intrinsic — where carrier control shifts from dopants to thermal generation.<br>
+              <strong>Why it matters:</strong> Devices are engineered to operate in the flat extrinsic plateau so doping alone sets conductivity.
+            </p>
+          </section>
+        </div>
+
+        <div class="ds-sub-section" id="sub-conductivity" style="display:none;">
+          <section class="macro-panel pg-section">
+            <h3>📈 Doped Conductivity σ(T)</h3>
+            <p class="slider-desc" style="font-size:0.85rem; line-height:1.55; margin-bottom:0.8rem;">
+              Ionized-impurity scattering at low T, phonon scattering at high T. Conductivity reflects both carrier density and mobility.
+            </p>
+            <div class="viz-card">
+              <div class="plot-container" id="plot-conductivity-doped" style="min-height:260px;"></div>
+            </div>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.6rem;line-height:1.55;">
+              <strong>What it shows:</strong> How conductivity scales with doping density and temperature, reflecting the balance between carrier density and mobility.<br>
+              <strong>Why it matters:</strong> Engineers choose doping levels precisely to hit target sheet resistance for interconnects and channel layers.
+            </p>
+          </section>
+        </div>
+
+        <div class="ds-sub-section" id="sub-band" style="display:none;">
+          <section class="macro-panel pg-section">
+            <h3>🌌 Band Diagram (Canvas)</h3>
+            <canvas id="band-canvas-ds" width="800" height="220"></canvas>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.6rem;line-height:1.55;">
+              <strong>What it shows:</strong> A visual band diagram with E<sub>c</sub>, E<sub>v</sub>, E<sub>F</sub> and impurity levels, turning abstract energies into a spatial picture.<br>
+              <strong>Why it matters:</strong> Band diagrams are the universal language of semiconductor device physics — every junction story starts here.
+            </p>
+          </section>
+        </div>
+
+      </div>
+
+      <aside class="game-sidebar">
+        <div class="sidebar-card" id="control-panel-ds">
+          <h4>⚙ Controls</h4>
+          <div class="slider-group">
+            <label>Donor N<sub>d</sub> <span class="unit-tag">cm⁻³</span></label>
+            <span class="slider-value" id="val-Nd">1.0e15</span>
             <input type="range" id="slider-Nd" min="13" max="18" value="15" step="0.1">
-            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Acceptor Na</span><span class="control-value" id="val-Na">1.0e13</span><span class="unit-tag">cm⁻³</span></div>
+            <div class="slider-desc">log₁₀(Nd). Donors push E<sub>F</sub> toward E<sub>c</sub>.</div>
+          </div>
+          <div class="slider-group">
+            <label>Acceptor N<sub>a</sub> <span class="unit-tag">cm⁻³</span></label>
+            <span class="slider-value" id="val-Na">1.0e13</span>
             <input type="range" id="slider-Na" min="13" max="18" value="13" step="0.1">
-            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Temperature T</span><span class="control-value" id="val-T-ds">300</span><span class="unit-tag">K</span></div>
+            <div class="slider-desc">log₁₀(Na). Acceptors push E<sub>F</sub> toward E<sub>v</sub>.</div>
+          </div>
+          <div class="slider-group">
+            <label>Temperature T <span class="unit-tag">K</span></label>
+            <span class="slider-value" id="val-T-ds">300</span>
             <input type="range" id="slider-T-ds" min="50" max="700" value="300" step="10">
-            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Material</span></div>
-            <select id="select-material-ds" style="width:100%;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.4rem;border-radius:6px;font-family:var(--font-mono);">
+            <div class="slider-desc">Higher T → more thermal carriers and mobility changes.</div>
+          </div>
+          <div class="slider-group" style="margin-bottom:0;">
+            <label>Material</label>
+            <select id="select-material-ds" style="background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.4rem;border-radius:6px;font-family:var(--font-mono);">
               <option value="1.12">Si — 1.12 eV</option>
               <option value="0.67">Ge — 0.67 eV</option>
               <option value="1.42">GaAs — 1.42 eV</option>
             </select>
           </div>
-          <div class="challenge-panel">
-            <div class="challenge-header"><span class="challenge-icon" style="background:rgba(192,132,252,0.1);">📊</span><span class="challenge-title">Live Readout</span></div>
-            <table>
-              <tr><th>Quantity</th><th>Value</th></tr>
-              <tr><td>n</td><td class="highlight-num" id="live-n-ds">1.0e15 cm⁻³</td></tr>
-              <tr><td>p</td><td class="highlight-pink" id="live-p-ds">1.0e5 cm⁻³</td></tr>
-              <tr><td>σ</td><td class="highlight-num" id="live-sigma-ds">S/cm</td></tr>
-              <tr><td>Type</td><td id="live-type-ds"><span class="tc-badge">n-type</span></td></tr>
-            </table>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>📊 Live Readout</h4>
+          <div class="dash-row"><span class="dash-label">n electrons</span><span class="dash-val" id="live-n-ds">1.0e15 cm⁻³</span></div>
+          <div class="dash-row"><span class="dash-label">p holes</span><span class="dash-val" id="live-p-ds">1.0e5 cm⁻³</span></div>
+          <div class="dash-row"><span class="dash-label">σ conductivity</span><span class="dash-val" id="live-sigma-ds">S/cm</span></div>
+          <div class="dash-row"><span class="dash-label">Type</span><span class="dash-val" id="live-type-ds"><span class="tc-badge">n-type</span></span></div>
+        </div>
+
+        <div class="sidebar-card" id="nav-panel-ds">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav"></div>
+        </div>
+
+        <div class="sidebar-card" id="badge-panel-ds">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);line-height:1.6;">Complete challenges to earn badges!</div>
+        </div>
+
+        <div class="sidebar-card" id="progress-panel-ds">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
           </div>
         </div>
-      </div>
-    </div>
-    <div class="insight-card" style="margin-top:1rem;">
-      <div class="insight-title">✨ Why does this matter?</div>
-      <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
-        Doping shifts the Fermi level and creates majority carriers without changing temperature. In n-type material, donor atoms provide extra electrons; in p-type, acceptors create holes.
-        The temperature dependence shows three regimes: <strong>freeze-out</strong> (low T, carriers trapped on impurities), <strong>extrinsic</strong> (room T, impurities ionized), and <strong>intrinsic</strong> (high T, thermal generation dominates).
-      </p>
-      <div class="equation-box" style="font-size:0.85rem;">
-        $$n \approx \frac{N_d - N_a}{2} + \sqrt{\left(\frac{N_d - N_a}{2}\right)^2 + n_i^2}, \qquad \sigma = e\left(n\mu_e + p\mu_h\right), \qquad n \cdot p = n_i^2$$
-      </div>
-      <div class="btn-group" style="margin-top:1rem;">
-        <button class="btn" onclick="document.getElementById('theory-deep-ds').style.display='block';this.style.display='none';">📖 Dive Deeper</button>
-      </div>
-      <div id="theory-deep-ds" style="display:none;">
-        <p style="font-size:0.9rem;color:var(--text-main);line-height:1.7;margin-top:1rem;">
-          <strong>Charge neutrality:</strong> In equilibrium, the semiconductor must remain electrically neutral overall. This gives the fundamental equation:
-          $$n + N_a^- = p + N_d^+$$
-          At room temperature, shallow donors/acceptors are fully ionized so $N_d^+ \approx N_d$ and $N_a^- \approx N_a$.
-        </p>
-        <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
-          <strong>Fermi level shifting:</strong> Adding donors raises EF toward Ec; adding acceptors lowers EF toward Ev. The shift magnitude scales as $k_B T \ln(N_d / n_i)$.
-        </p>
-      </div>
+      </aside>
     </div>
   </div>
 
   <!-- CHALLENGES -->
   <div class="mode-section" id="section-challenge" style="display:none;">
-    <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span><span class="challenge-title">Challenge 1: Intrinsic or Extrinsic?</span><span class="challenge-difficulty easy">Easy</span></div>
-      <div class="challenge-desc">Given a material and dopant, classify it as intrinsic, n-type, or p-type.</div>
-      <div class="challenge-reward">🏆 Reward: 50 XP · Combo bonus: +5 XP per streak</div>
-      <div class="timer-bar"><div class="timer-fill" id="type-timer" style="width:100%"></div></div>
-      <div id="type-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-        <button class="btn" onclick="guessDopingType('intrinsic')">Intrinsic</button>
-        <button class="btn" onclick="guessDopingType('n-type')">n-type</button>
-        <button class="btn" onclick="guessDopingType('p-type')">p-type</button>
+    <div class="game-layout">
+      <div class="game-main">
+
+        <section class="macro-panel">
+          <h3>🎮 Challenges</h3>
+          <p class="slider-desc" style="font-size:0.9rem; line-height:1.6; margin-bottom:1rem;">
+            Test your doping intuition. Classify material type, calculate carrier density, and solve compensation.
+          </p>
+
+          <div class="insights">
+            <div class="insight-card">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span>
+                <span class="challenge-title">Intrinsic or Extrinsic?</span>
+                <span class="challenge-difficulty easy">Easy</span>
+              </div>
+              <div class="challenge-desc">Given a material and dopant, classify it as intrinsic, n-type, or p-type.</div>
+              <div class="challenge-reward">🏆 Reward: 50 XP · Combo bonus: +5 XP per streak</div>
+              <div class="timer-bar"><div class="timer-fill" id="type-timer" style="width:100%"></div></div>
+              <div id="type-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <button class="btn" onclick="guessDopingType('intrinsic')">Intrinsic</button>
+                <button class="btn" onclick="guessDopingType('n-type')">n-type</button>
+                <button class="btn" onclick="guessDopingType('p-type')">p-type</button>
+              </div>
+              <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;"><strong>Score:</strong> <span id="type-score">0</span> · <strong>Combo:</strong> <span id="type-combo">0</span></div>
+              <div class="challenge-feedback" id="type-feedback"></div>
+            </div>
+
+            <div class="insight-card">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(74,222,128,0.12);">📐</span>
+                <span class="challenge-title">Doping Calculator</span>
+                <span class="challenge-difficulty medium">Medium</span>
+              </div>
+              <div class="challenge-desc">Calculate the expected electron concentration n given Nd, Na, and ni. Timer-based.</div>
+              <div class="challenge-reward">🏆 Reward: 75 XP</div>
+              <div class="timer-bar"><div class="timer-fill" id="nd-timer-ds" style="width:100%"></div></div>
+              <div id="nd-target-text-ds" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+              <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                <input type="text" id="nd-answer-ds" placeholder="e.g. 1e16" style="width:160px;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
+                <button class="btn" onclick="checkNdAnswerDS()">Submit</button>
+              </div>
+              <div class="challenge-feedback" id="nd-feedback-ds"></div>
+            </div>
+
+            <div class="insight-card">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">⚖</span>
+                <span class="challenge-title">Compensation Puzzle</span>
+                <span class="challenge-difficulty hard">Hard</span>
+              </div>
+              <div class="challenge-desc">If both donors AND acceptors are present, what is the net carrier type?</div>
+              <div class="challenge-reward">🏆 Reward: 100 XP · "Compensation Sage" badge</div>
+              <div id="comp-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <button class="btn" onclick="guessCompensation('n-type')">n-type</button>
+                <button class="btn" onclick="guessCompensation('p-type')">p-type</button>
+                <button class="btn" onclick="guessCompensation('intrinsic')">Intrinsic</button>
+              </div>
+              <div class="challenge-feedback" id="comp-feedback"></div>
+            </div>
+          </div>
+        </section>
+
       </div>
-      <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;"><strong>Score:</strong> <span id="type-score">0</span> · <strong>Combo:</strong> <span id="type-combo">0</span></div>
-      <div class="challenge-feedback" id="type-feedback"></div>
-    </div>
-    <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(74,222,128,0.12);">📐</span><span class="challenge-title">Challenge 2: Doping Calculator</span><span class="challenge-difficulty medium">Medium</span></div>
-      <div class="challenge-desc">Calculate the expected electron concentration n given Nd, Na, and ni. Timer-based.</div>
-      <div class="challenge-reward">🏆 Reward: 75 XP</div>
-      <div class="timer-bar"><div class="timer-fill" id="nd-timer-ds" style="width:100%"></div></div>
-      <div id="nd-target-text-ds" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-        <input type="text" id="nd-answer-ds" placeholder="e.g. 1e16" style="width:160px;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
-        <button class="btn" onclick="checkNdAnswerDS()">Submit</button>
-      </div>
-      <div class="challenge-feedback" id="nd-feedback-ds"></div>
-    </div>
-    <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(255,78,205,0.12);">⚖</span><span class="challenge-title">Challenge 3: Compensation Puzzle</span><span class="challenge-difficulty hard">Hard</span></div>
-      <div class="challenge-desc">If both donors AND acceptors are present, what is the net carrier type?</div>
-      <div class="challenge-reward">🏆 Reward: 100 XP · "Compensation Sage" badge</div>
-      <div id="comp-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-        <button class="btn" onclick="guessCompensation('n-type')">n-type</button>
-        <button class="btn" onclick="guessCompensation('p-type')">p-type</button>
-        <button class="btn" onclick="guessCompensation('intrinsic')">Intrinsic</button>
-      </div>
-      <div class="challenge-feedback" id="comp-feedback"></div>
+
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-ch"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-ch" style="font-size:0.8rem;color:var(--text-dim);line-height:1.6;">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
     </div>
   </div>
 
   <!-- PUZZLES -->
   <div class="mode-section" id="section-puzzle" style="display:none;">
-    <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🔧</span><span class="challenge-title">Puzzle 1: Fermi Level Slider</span><span class="challenge-difficulty medium">Medium</span></div>
-      <div class="challenge-desc">Drag the Fermi level slider to match the doping condition described.</div>
-      <div class="challenge-reward">🏆 Reward: 120 XP · "Fermi Navigator" badge</div>
-      <div id="fermi-slider-wrap" style="margin:0.5rem 0;"></div>
-      <button class="btn" onclick="checkFermiSliderPuzzle()">✓ Check Placement</button>
-      <div class="challenge-feedback" id="fermi-slider-feedback"></div>
-    </div>
-    <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.12);">📐</span><span class="challenge-title">Puzzle 2: Charge Neutrality Builder</span><span class="challenge-difficulty master">Master</span></div>
-      <div class="challenge-desc">Drop terms into the charge neutrality equation: n + Na⁻ = p + Nd⁺.</div>
-      <div class="challenge-reward">🏆 Reward: 120 XP · "Charge Neutrality Expert" badge</div>
-      <div style="margin:0.5rem 0;"><p style="font-size:0.85rem;color:var(--text-muted);">Drag components into the empty slots:</p></div>
-      <div id="neutrality-pool" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0.5rem 0;"></div>
-      <div id="neutrality-zones" style="display:flex;gap:0.3rem;flex-wrap:wrap;margin:0.5rem 0;"></div>
-      <button class="btn" onclick="checkNeutralityBuilder()">✓ Verify Equation</button>
-      <div class="challenge-feedback" id="neutrality-feedback"></div>
-    </div>
-    <div class="challenge-panel">
-      <div class="challenge-header"><span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🔎</span><span class="challenge-title">Puzzle 3: Donor vs Acceptor Detective</span><span class="challenge-difficulty master">Master</span></div>
-      <div class="challenge-desc">Match each material/impurity pair to n-type or p-type.</div>
-      <div class="challenge-reward">🏆 Reward: 120 XP · "Doping Detective" badge</div>
-      <div id="detective-list" style="margin-top:0.5rem;"></div>
-      <button class="btn" onclick="checkDopeDetective()">✓ Check Matches</button>
-      <div class="challenge-feedback" id="detective-feedback"></div>
-    </div>
-  </div>
+    <div class="game-layout">
+      <div class="game-main">
 
-  <!-- SIDEBAR -->
-  <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; margin-top:2rem;">
-    <div></div>
-    <div>
-      <div class="challenge-panel" style="position:sticky; top:5rem;">
-        <div class="challenge-header"><span class="challenge-icon" style="background:rgba(0,240,255,0.08);">🗺</span><span class="challenge-title">Lab Navigator</span></div>
-        <div id="module-nav"></div>
-        <div class="section-divider" style="margin:1rem 0;"></div>
-        <div class="challenge-header"><span class="challenge-icon" style="background:rgba(74,222,128,0.08);">🏆</span><span class="challenge-title">Your Badges</span></div>
-        <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        <div class="section-divider" style="margin:1rem 0;"></div>
-        <div class="scoreboard">
-          <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
-        </div>
+        <section class="macro-panel">
+          <h3>🧩 Puzzles</h3>
+          <p class="slider-desc" style="font-size:0.9rem; line-height:1.6; margin-bottom:1rem;">
+            Place the Fermi level, build the charge-neutrality equation, and classify doping pairs.
+          </p>
+
+          <div class="insights">
+            <div class="insight-card">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🔧</span>
+                <span class="challenge-title">Fermi Level Slider</span>
+                <span class="challenge-difficulty medium">Medium</span>
+              </div>
+              <div class="challenge-desc">Drag the Fermi level slider to match the doping condition described.</div>
+              <div class="challenge-reward">🏆 Reward: 120 XP · "Fermi Navigator" badge</div>
+              <div id="fermi-slider-wrap" style="margin:0.5rem 0;"></div>
+              <button class="btn" onclick="checkFermiSliderPuzzle()">✓ Check Placement</button>
+              <div class="challenge-feedback" id="fermi-slider-feedback"></div>
+            </div>
+
+            <div class="insight-card">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">📐</span>
+                <span class="challenge-title">Charge Neutrality Builder</span>
+                <span class="challenge-difficulty master">Master</span>
+              </div>
+              <div class="challenge-desc">Drop terms into the charge neutrality equation: n + Na⁻ = p + Nd⁺.</div>
+              <div class="challenge-reward">🏆 Reward: 120 XP · "Charge Neutrality Expert" badge</div>
+              <div style="margin:0.5rem 0;"><p style="font-size:0.85rem;color:var(--text-muted);">Drag components into the empty slots:</p></div>
+              <div id="neutrality-pool" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0.5rem 0;"></div>
+              <div id="neutrality-zones" style="display:flex;gap:0.3rem;flex-wrap:wrap;margin:0.5rem 0;"></div>
+              <button class="btn" onclick="checkNeutralityBuilder()">✓ Verify Equation</button>
+              <div class="challenge-feedback" id="neutrality-feedback"></div>
+            </div>
+
+            <div class="insight-card">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🔎</span>
+                <span class="challenge-title">Donor vs Acceptor Detective</span>
+                <span class="challenge-difficulty master">Master</span>
+              </div>
+              <div class="challenge-desc">Match each material/impurity pair to n-type or p-type.</div>
+              <div class="challenge-reward">🏆 Reward: 120 XP · "Doping Detective" badge</div>
+              <div id="detective-list" style="margin-top:0.5rem;"></div>
+              <button class="btn" onclick="checkDopeDetective()">✓ Check Matches</button>
+              <div class="challenge-feedback" id="detective-feedback"></div>
+            </div>
+          </div>
+        </section>
+
       </div>
+
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-pz"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-pz" style="font-size:0.8rem;color:var(--text-dim);line-height:1.6;">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
     </div>
   </div>
-</div>
 
+</div>
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
@@ -255,5 +644,47 @@
 <script src="ds_apps.js?v=2"></script>
 <script src="ds_apps_games.js?v=2"></script>
 <script src="../../shared_effects.js"></script>
+<script>
+/* === Deferred Playground init (hidden on load; inits on first switch) === */
+var __DS_inited = false;
+function bootDSPlayground() {
+  if (__DS_inited) return;
+  var container = document.getElementById('plot-fermi-shift');
+  if (!container || container.clientWidth === 0) return;
+  __DS_inited = true;
+  if (typeof initDoped === 'function') initDoped();
+}
+
+/* === Wrapper for local setGameMode (defined in ds_apps_games.js) === */
+(function() {
+  var origSetGameMode = window.setGameMode;
+  window.setGameMode = function(mode) {
+    if (mode === 'play' && !__DS_inited) {
+      origSetGameMode(mode);
+      setTimeout(function() { bootDSPlayground(); }, 50);
+      return;
+    }
+    if (typeof origSetGameMode === 'function') origSetGameMode(mode);
+  };
+})();
+
+/* === Sub-tab navigation inside Playground === */
+function dsSubTab(tab) {
+  document.querySelectorAll('.ds-sub-btn').forEach(function(b) { b.classList.remove('active'); });
+  var btn = document.querySelector('.ds-sub-btn[data-sub="' + tab + '"]');
+  if (btn) btn.classList.add('active');
+  document.querySelectorAll('.ds-sub-section').forEach(function(s) { s.style.display = 'none'; });
+  var sec = document.getElementById('sub-' + tab);
+  if (sec) sec.style.display = 'block';
+  // Resize Plotly plots every time (slider changes while hidden shrink dimensions)
+  var plots = sec.querySelectorAll('.plot-container');
+  plots.forEach(function(p) {
+    if (p.id && typeof Plotly !== 'undefined' && Plotly.Plots) {
+      Plotly.Plots.resize(p.id);
+    }
+  });
+}
+window.dsSubTab = dsSubTab;
+</script>
 </body>
 </html>

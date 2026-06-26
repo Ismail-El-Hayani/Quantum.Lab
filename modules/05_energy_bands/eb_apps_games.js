@@ -353,15 +353,37 @@ document.addEventListener('DOMContentLoaded', function() {
       { num: '14', name: 'Magnetism', url: '../14_magnetism/index.html' },
       { num: '15', name: 'Thermal', url: '../15_thermal_properties/index.html' }
     ];
-    modules.forEach(function(m) {
-      var el = document.createElement(m.current ? 'div' : 'a');
-      if (!m.current) { el.href = m.url; el.style.textDecoration = 'none'; }
-      el.style.cssText = 'display:block;padding:0.5rem 0.7rem;border-radius:8px;margin-bottom:0.3rem;font-size:0.85rem;';
-      if (m.current) { el.style.background = 'rgba(255,64,129,0.08)'; el.style.border = '1px solid rgba(255,64,129,0.3)'; el.style.color = '#ff4ecd'; el.textContent = m.num + '. ' + m.name + ' (here)'; }
-      else { el.style.background = 'var(--bg-elevated)'; el.style.border = '1px solid var(--border-subtle)'; el.style.color = 'var(--text-dim)'; el.textContent = m.num + '. ' + m.name; }
-      nav.appendChild(el);
+    // Build nav for all sidebar instances (playground + story + theory)
+    ['module-nav', 'module-nav-story', 'module-nav-theory'].forEach(function(navId) {
+      var navEl = document.getElementById(navId);
+      if (!navEl) return;
+      navEl.textContent = '';
+      modules.forEach(function(m) {
+        var el = document.createElement(m.current ? 'div' : 'a');
+        if (!m.current) { el.href = m.url; el.style.textDecoration = 'none'; }
+        el.style.cssText = 'display:block;padding:0.5rem 0.7rem;border-radius:8px;margin-bottom:0.3rem;font-size:0.85rem;';
+        if (m.current) { el.style.background = 'rgba(255,64,129,0.08)'; el.style.border = '1px solid rgba(255,64,129,0.3)'; el.style.color = '#ff4ecd'; el.textContent = m.num + '. ' + m.name + ' (here)'; }
+        else { el.style.background = 'var(--bg-elevated)'; el.style.border = '1px solid var(--border-subtle)'; el.style.color = 'var(--text-dim)'; el.textContent = m.num + '. ' + m.name; }
+        navEl.appendChild(el);
+      });
     });
   }
-  var xpEl = document.getElementById('stat-xp'); if (xpEl) xpEl.textContent = __GameState.xp();
-  var navXp = document.getElementById('nav-xp'); if (navXp) navXp.textContent = __GameState.xp() + ' XP';
+  var xpVal = (typeof __GameState !== 'undefined') ? __GameState.xp() : 0;
+  var chVal = (typeof __GameState !== 'undefined') ? (__GameState.get('challengesCompleted') || 0) : 0;
+  var pzVal = (typeof __GameState !== 'undefined') ? (__GameState.get('puzzlesCompleted') || 0) : 0;
+  var bdVal = (typeof __GameState !== 'undefined') ? (__GameState.get('achievements') || []).length : 0;
+  // Mirror stats into all sidebar variants
+  ['stat-xp', 'stat-xp-story', 'stat-xp-theory'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.textContent = xpVal;
+  });
+  ['stat-challenges', 'stat-challenges-story', 'stat-challenges-theory'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.textContent = chVal;
+  });
+  ['stat-puzzles', 'stat-puzzles-story', 'stat-puzzles-theory'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.textContent = pzVal;
+  });
+  ['stat-badges', 'stat-badges-story', 'stat-badges-theory'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.textContent = bdVal;
+  });
+  var navXp = document.getElementById('nav-xp'); if (navXp) navXp.textContent = xpVal + ' XP';
 });

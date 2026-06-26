@@ -7,10 +7,23 @@
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"
         integrity="sha384-Hl48Kq2HifOWdXEjMsKo6qxqvRLTYqIGbvlENBmkHAxZKIGCXv43H6W1jA671RzC"
         crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"
-        integrity="sha384-qOkzR5Ke/XkQxuGVJ9hpFEpDlcoLtWwVYhnJf06cLIZa2vaIptSqaubivErzmD5O"
-        crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+// ESM namespace is frozen — copy to a plain object before assigning
+var ThreeGlobal = Object.assign({}, THREE);
+ThreeGlobal.OrbitControls = OrbitControls;
+window.THREE = ThreeGlobal;
+window.dispatchEvent(new Event('three-ready'));
+</script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <link rel="stylesheet" href="../../shared_styles.css">
 <style>
@@ -66,6 +79,11 @@
   .toggle-pill.on::after { transform: translateX(16px); }
 
   /* === Equation / Puzzle === */
+  .theory-content { font-size:0.95rem; line-height:1.7; color:var(--text-main); }
+  .theory-content p { margin-bottom:1rem; }
+  .theory-content strong { color:var(--accent-cyan); font-weight:500; }
+  .insight-callout { background:linear-gradient(90deg, rgba(0,240,255,0.08), transparent); border-left:3px solid var(--accent-cyan); padding:1rem 1.2rem; border-radius:0 8px 8px 0; margin:1rem 0; font-size:0.92rem; color:var(--text-main); }
+
   .equation-drop-zone { border: 2px dashed var(--glass-border); border-radius: var(--radius-sm); min-height: 48px; display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-size: 0.85rem; transition: all 0.2s; margin: 0.25rem; padding: 0.5rem; }
   .equation-drop-zone.correct { border-color: var(--accent-green); background: rgba(74,222,128,0.06); color: var(--accent-green); }
   .equation-drop-zone.wrong { border-color: var(--accent-red); background: rgba(255,68,68,0.06); color: var(--accent-red); }
@@ -78,8 +96,29 @@
   /* === Animations === */
   @keyframes pulse-glow { 0%,100%{box-shadow:0 0 0 rgba(0,240,255,0);} 50%{box-shadow:0 0 12px rgba(0,240,255,0.15);} }
   .glow-pulse { animation: pulse-glow 2s infinite; }
+
+
+  /* === Module 06/07 Layout Utilities === */
+  .game-layout { max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg); align-items:start; }
+  @media (max-width:1000px) { .game-layout { grid-template-columns:1fr; } }
+  .game-main { min-width:0; }
+  .game-sidebar { min-width:0; position:sticky; top:5rem; }
+  .game-sidebar.static { position:static; }
+  .macro-panel { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-top:1rem; }
+  .macro-panel:first-of-type { margin-top:0; }
+  .macro-panel h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
+  .sidebar-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-bottom:1rem; }
+  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
+  .slider-group { margin-bottom:1rem; }
+  .slider-group label { display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:0.3rem; }
+  .slider-group input[type=range] { width:100%; }
+  .slider-value { font-family:var(--font-mono); color:var(--accent-cyan); font-weight:700; }
+  .slider-desc { font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; }
+  .insights { display:grid; grid-template-columns:1fr; gap:1rem; margin-top:1rem; }
+  @media (min-width:900px) { .insights { grid-template-columns:1fr 1fr; } }
+  .insight-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; }
+  .insight-card .insight-title { margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright); }
 </style>
-</head>
 <body>
 
 <div class="orb orb-cyan"></div><div class="orb orb-purple"></div><div class="orb orb-pink"></div>
@@ -101,7 +140,13 @@
 <div class="game-container">
 
   <div class="game-mode-bar">
-    <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">
+    <button class="game-mode-btn active" id="mode-story" onclick="setGameMode('story')">
+      <span class="mode-icon">📖</span> Story
+    </button>
+    <button class="game-mode-btn" id="mode-theory" onclick="setGameMode('theory')">
+      <span class="mode-icon">🎓</span> Theory
+    </button>
+    <button class="game-mode-btn" id="mode-play" onclick="setGameMode('play')">
       <span class="mode-icon">🔬</span> Playground
     </button>
     <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">
@@ -112,56 +157,265 @@
     </button>
   </div>
 
-  <!-- ===== PLAYGROUND ===== -->
-  <div class="mode-section" id="section-play">
-    <div class="playground-area">
-      <div class="playground-header">
-        <div class="playground-title">🔬 3D Semiconductor Band Explorer</div>
-        <div class="playground-level">Select a material, tune temperature, doping, and electric field.</div>
+  <!-- ═══════════════ STORY ═══════════════ -->
+  <div class="mode-section" id="section-story" style="display:block;">
+    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>📖 The Story — From Sand to Silicon: The Rise of Semiconductors</h3>
+          <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.6;margin-bottom:1rem;">
+            In 1833, Michael Faraday noticed something peculiar: silver sulfide's conductivity <em>increased</em>
+            with temperature — the opposite of metals. For a century this remained a curiosity. Then came
+            the 1947 discovery of the transistor at Bell Labs (Bardeen, Brattain, Shockley), and the
+            semiconductor revolution began. The key insight: in an <strong style="color:var(--accent-cyan);">intrinsic</strong>
+            (undoped) semiconductor, every electron excited to the conduction band leaves behind a
+            <strong style="color:var(--accent-pink);">hole</strong> in the valence band — a quasiparticle
+            that behaves like a positively charged carrier. The product <i>np = n<sub>i</sub>²</i> is fixed
+            at a given temperature, determined by the bandgap and the effective masses.
+          </p>
+          <div class="insights">
+            <div class="insight-card">
+              <div class="insight-title">🧩 Intrinsic vs Extrinsic</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                An <strong style="color:var(--accent-cyan);">intrinsic</strong> semiconductor has no impurities —
+                electrons and holes are created in pairs by thermal excitation. The Fermi level sits near
+                mid-gap. Adding donor atoms (P, As) or acceptors (B, Al) <strong style="color:var(--accent-purple);">dopes</strong>
+                the material n-type or p-type, shifting the Fermi level and creating a majority carrier.
+                In the Playground you can toggle doping and watch the Fermi level move.
+              </p>
+            </div>
+            <div class="insight-card">
+              <div class="insight-title">🔬 Bandgap: The Gatekeeper</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                The bandgap <i>E<sub>g</sub></i> determines everything. Si (1.12 eV, indirect) needs more
+                thermal energy to excite carriers than Ge (0.67 eV). GaAs (1.42 eV, direct) emits light
+                efficiently — hence LEDs and lasers. The <strong style="color:var(--accent-yellow);">Varshni
+                model</strong> captures how <i>E<sub>g</sub></i> shrinks with temperature as lattice
+                vibrations blur the periodic potential: <i>E<sub>g</sub>(T) = E<sub>g0</sub> − αT²/(T+β)</i>.
+              </p>
+            </div>
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">🎮 How the Playground Lets You Explore</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Tune <strong style="color:var(--accent-cyan);">temperature</strong> from 10–800 K and watch
+                carriers appear as the bandgap shrinks. Add <strong style="color:var(--accent-purple);">donor
+                </strong> or <strong style="color:var(--accent-pink);">acceptor</strong> doping to shift the
+                Fermi level and create n-type or p-type material. Apply an <strong style="color:var(--accent-green);">
+                electric field</strong> to bend the bands and drive carrier drift. The 3D band diagram
+                rotates and responds in real time. Three materials — Si, GaAs, Ge — each with unique
+                bandgaps, effective masses, and Varshni coefficients.
+              </p>
+            </div>
+          </div>
+        </section>
       </div>
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-story"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-story" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges-story">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles-story">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp-story">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges-story">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
 
-      <div style="display:grid; grid-template-columns: 1fr 360px; gap: 1.5rem;">
-        <div>
-          <!-- 3D Band Diagram -->
-          <div class="viz-panel" style="padding:0.5rem 0.6rem 0.6rem;">
-            <div class="viz-header">
-              <span class="viz-title">3D Band Diagram · E(k) Dispersion</span>
-              <span class="viz-info" id="info-3d" title="Cyan = conduction band (electrons). Purple = valence band (holes). Yellow = Fermi level. Green = Intrinsic level. Drag to rotate, scroll to zoom.">ⓘ</span>
+  <!-- ═══════════════ THEORY ═══════════════ -->
+  <div class="mode-section" id="section-theory" style="display:none;">
+    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>🎓 Theory — Carrier Statistics, Band Structure, and Transport</h3>
+          <div class="theory-content">
+            <p>
+              In an intrinsic semiconductor the carrier concentrations are governed by Fermi-Dirac
+              statistics. The density of electrons in the conduction band and holes in the valence
+              band are:
+            </p>
+            <div class="equation-box">
+              $$n = \int_{E_c}^{\infty} D_c(E)\,f(E)\,dE,\qquad
+              p = \int_{-\infty}^{E_v} D_v(E)\,[1 - f(E)]\,dE$$
             </div>
-            <details class="physics-note">
-              <summary>How to read this</summary>
-              <div class="note-body">
-                <strong style="color:#00f0ff">Cyan surface</strong> = conduction band minimum. <strong style="color:#c084fc">Purple surface</strong> = valence band maximum.<br>
-                🟡 <strong>Fermi level EF</strong> marks 50% electron occupancy. 🟢 <strong>Intrinsic level Ei</strong> is EF in undoped material.<br>
-                🔵 Electrons drift right under field; 🔴 holes drift left.
-              </div>
-            </details>
-            <div class="band-diagram-3d" id="band-diagram-3d">
-              <canvas class="particle-overlay" id="particle-canvas"></canvas>
+            <p>
+              where \(D_c(E)\) and \(D_v(E)\) are the density of states in each band, and
+              \(f(E) = 1/[1 + e^{(E-E_F)/k_BT}]\) is the Fermi-Dirac distribution. For
+              non-degenerate semiconductors (\(E_F\) more than \(3k_BT\) from either band edge),
+              the Maxwell-Boltzmann approximation holds and we get closed forms:
+            </p>
+            <div class="equation-box">
+              $$n = N_c\,e^{-(E_c - E_F)/k_BT}, \qquad
+              p = N_v\,e^{-(E_F - E_v)/k_BT}$$
             </div>
-            <p style="text-align:center;font-size:0.72rem;color:var(--text-dim);margin-top:0.3rem;">
-              Drag = rotate · Scroll = zoom · Right-click = pan · Idle 3s = auto-rotate
+            <p>
+              The effective densities of states are
+              \(N_c = 2(2\pi m_e^* k_BT / h^2)^{3/2}\) and
+              \(N_v = 2(2\pi m_h^* k_BT / h^2)^{3/2}\).
             </p>
           </div>
 
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top:1rem;">
-            <!-- Carrier Density Plot -->
-            <div class="viz-panel">
+          <div class="insights">
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">1. Intrinsic Carrier Concentration</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Multiplying the expressions for <i>n</i> and <i>p</i> gives the mass-action law:
+              </p>
+              <div class="equation-box">
+                $$n_i^2 = np = N_c N_v\,e^{-E_g/k_BT}, \qquad
+                n_i = \sqrt{N_c N_v}\,e^{-E_g/2k_BT}$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                The intrinsic Fermi level sits near mid-gap:
+                \(E_i = \frac{E_c + E_v}{2} + \frac{k_BT}{2}\ln\frac{N_v}{N_c}\).
+                In the intrinsic case, <i>n = p = n<sub>i</sub></i>.
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">2. Doping and the Fermi Level</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                With donor concentration \(N_D\) and acceptor concentration \(N_A\), charge neutrality
+                requires \(n + N_A^- = p + N_D^+\). For non-degenerate doping at moderate temperatures:
+              </p>
+              <div class="equation-box">
+                $$n \approx N_D - N_A \;\;(\text{n-type}), \qquad
+                p \approx N_A - N_D \;\;(\text{p-type})$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                The Fermi level shifts accordingly:
+                \(E_F = E_i + k_BT\ln(n/n_i)\) for n-type,
+                \(E_F = E_i - k_BT\ln(p/n_i)\) for p-type.
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">3. Temperature Regimes</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                <strong style="color:var(--accent-cyan);">Freeze-out</strong> (low T): carriers are bound
+                to dopant atoms; conductivity is minimal.<br>
+                <strong style="color:var(--accent-green);">Extrinsic</strong> (mid T): dopants are fully
+                ionised, carrier concentration is constant; mobility peaks then falls via phonon
+                scattering.<br>
+                <strong style="color:var(--accent-yellow);">Intrinsic</strong> (high T): thermal generation
+                dominates and <i>n<sub>i</sub>² = np</i>; conductivity rises exponentially.
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">4. Conductivity and Mobility</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                The total conductivity combines electron and hole contributions:
+              </p>
+              <div class="equation-box">
+                $$\sigma = e(n\mu_e + p\mu_h), \qquad
+                \mu_e = \frac{e\tau_e}{m_e^*}, \qquad
+                \mu_h = \frac{e\tau_h}{m_h^*}$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Mobility degrades with temperature via phonon scattering (\(\mu \propto T^{-3/2}\) for
+                acoustic phonons) and with doping via ionised impurity scattering
+                (\(\mu \propto T^{3/2}/N_i\)).
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">5. Electric Field and Band Bending</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                An applied electric field tilts the band edges linearly with position:
+                <i>E<sub>c</sub>(x) = E<sub>c0</sub> − eEx</i>. This drives electrons downhill in
+                the conduction band and holes uphill in the valence band. The drift velocities are:
+              </p>
+              <div class="equation-box">
+                $$v_{d,e} = -\mu_e E, \qquad v_{d,h} = \mu_h E$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                The 3D band diagram in the Playground visualises this tilt in real time.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-theory"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-theory" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges-theory">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles-theory">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp-theory">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges-theory">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ===== PLAYGROUND ===== -->
+  <div class="mode-section" id="section-play" style="display:none;">
+    <div class="game-layout">
+      <div class="game-main">
+
+        <section class="macro-panel">
+          <h3>🔬 3D Semiconductor Band Explorer</h3>
+          <p class="slider-desc" style="font-size:0.9rem; line-height:1.6;">
+            Select a material, tune temperature, doping, and electric field.
+            Cyan = conduction band (electrons). Purple = valence band (holes). Yellow = Fermi level. Green = intrinsic level.
+          </p>
+        </section>
+
+        <section class="macro-panel pg-section">
+          <h3>🌌 3D Band Diagram · E(k) Dispersion</h3>
+          <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
+            The cyan surface is the conduction-band minimum, the purple surface the valence-band maximum. Drag to rotate, scroll to zoom.
+          </p>
+          <div class="band-diagram-3d" id="band-diagram-3d">
+            <canvas class="particle-overlay" id="particle-canvas"></canvas>
+          </div>
+          <p style="text-align:center;font-size:0.72rem;color:var(--text-dim);margin-top:0.3rem;">
+            Drag = rotate · Scroll = zoom · Right-click = pan · Idle 3s = auto-rotate
+          </p>
+        </section>
+
+        <section class="macro-panel pg-section">
+          <h3>📈 Material Properties</h3>
+          <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
+            Carrier density, bandgap, and conductivity as a function of temperature.
+          </p>
+
+          <div class="insights">
+            <div class="insight-card">
               <div class="viz-header">
                 <span class="viz-title">Carrier Density vs Temperature</span>
                 <span class="viz-info" title="Shows n (electrons) and p (holes). Low T = freeze-out (doping dominates). High T = intrinsic dominates (ni² = np).">ⓘ</span>
               </div>
               <details class="physics-note">
-                <summary>Physics behind this curve</summary>
+                <summary>How to read this</summary>
                 <div class="note-body">
-                  At low T, carriers are frozen out — only dopants contribute. At high T, thermal generation dominates and ni² = np. The dashed yellow line marks your current T.
+                  At low T carriers are frozen out — only dopants contribute. At high T thermal generation dominates and n_i² = np.
                 </div>
               </details>
               <div class="plot-container" id="plot-carrier-density"></div>
             </div>
 
-            <!-- Bandgap Plot -->
-            <div class="viz-panel">
+            <div class="insight-card">
               <div class="viz-header">
                 <span class="viz-title" style="color:var(--accent-yellow)">Bandgap vs Temperature</span>
                 <span class="viz-info" title="Eg shrinks as phonons increase. Varshni model: Eg(T) = Eg0 − αT²/(T+β).">ⓘ</span>
@@ -169,7 +423,7 @@
               <details class="physics-note">
                 <summary>Varshni model</summary>
                 <div class="note-body">
-                  Lattice vibrations (phonons) reduce the effective periodic potential, shrinking the bandgap. Different materials have unique α and β coefficients.
+                  Lattice vibrations reduce the effective periodic potential, shrinking the bandgap. Different materials have unique α and β coefficients.
                 </div>
               </details>
               <div class="plot-container" id="plot-bandgap"></div>
@@ -180,11 +434,10 @@
             </div>
           </div>
 
-          <!-- Conductivity Plot -->
           <div class="viz-panel" style="margin-top:1rem;">
             <div class="viz-header">
               <span class="viz-title" style="color:var(--accent-green)">Conductivity vs Temperature</span>
-              <span class="viz-info" title="σ = e(nμe + pμh). Low T: freeze-out → σ drops. Mid T: doping + phonon scattering → peak then fall. High T: intrinsic dominates but μ degrades as T^-2.3.">ⓘ</span>
+              <span class="viz-info" title="σ = e(nμe + pμh). Low T: freeze-out → σ drops. Mid T: doping + phonon scattering → peak then fall. High T: intrinsic dominates but μ degrades.">ⓘ</span>
             </div>
             <details class="physics-note">
               <summary>Three conductivity regimes</summary>
@@ -196,289 +449,307 @@
             </details>
             <div class="plot-container" id="plot-conductivity"></div>
           </div>
+        </section>
+
+        <section class="macro-panel pg-section">
+          <h3>💡 Physics Insight: Temperature, Doping, and Fields</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-bottom:0.8rem;">
+            <strong style="color:var(--accent-cyan)">Temperature</strong> controls thermal carrier generation via the Varshni bandgap and the Boltzmann factor exp(−Eg/2kT).<br>
+            <strong style="color:var(--accent-purple)">Doping</strong> shifts the Fermi level: donors (N<sub>D</sub>) pull E<sub>F</sub> toward E<sub>c</sub>; acceptors (N<sub>A</sub>) push it toward E<sub>v</sub>.<br>
+            <strong style="color:var(--accent-green)">Electric fields</strong> tilt the bands, causing electrons to drift in the conduction band and holes in the valence band.
+          </p>
+          <div class="equation-box" style="font-size:0.85rem;">
+            $$E_g(T) = E_{g0} - \frac{\alpha T^2}{T + \beta} \quad \text{(Varshni)}$$
+            $$n_i = \sqrt{N_c N_v}\,e^{-E_g/2k_BT} \qquad E_F = E_i + k_BT\ln\frac{n}{n_i} \qquad \sigma = e(n\mu_e + p\mu_h)$$
+          </div>
+        </section>
+
+      </div>
+
+      <aside class="game-sidebar">
+        <div class="sidebar-card">
+          <h4>⚗ Material</h4>
+          <div style="display:flex; gap:0.5rem; margin-bottom:0.8rem;">
+            <button class="mat-btn active" id="btn-mat-si" onclick="setMaterialIS('Si')">Si</button>
+            <button class="mat-btn" id="btn-mat-gaas" onclick="setMaterialIS('GaAs')">GaAs</button>
+            <button class="mat-btn" id="btn-mat-ge" onclick="setMaterialIS('Ge')">Ge</button>
+          </div>
+          <div style="font-size:0.78rem;color:var(--text-dim);line-height:1.5;">
+            <span style="color:var(--accent-cyan);">●</span> Si: Eg≈1.12 eV, indirect<br>
+            <span style="color:var(--accent-pink);">●</span> GaAs: Eg≈1.42 eV, direct<br>
+            <span style="color:var(--accent-yellow);">●</span> Ge: Eg≈0.67 eV, indirect
+          </div>
         </div>
 
-        <div>
-          <!-- Material Selector -->
-          <div class="challenge-panel" style="margin-bottom:1rem;">
-            <div class="challenge-header">
-              <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚗</span>
-              <span class="challenge-title">Material</span>
-            </div>
-            <div style="display:flex; gap:0.5rem; margin-bottom:0.8rem;">
-              <button class="mat-btn active" id="btn-mat-si" onclick="setMaterialIS('Si')">Si</button>
-              <button class="mat-btn" id="btn-mat-gaas" onclick="setMaterialIS('GaAs')">GaAs</button>
-              <button class="mat-btn" id="btn-mat-ge" onclick="setMaterialIS('Ge')">Ge</button>
-            </div>
-            <div style="font-size:0.78rem;color:var(--text-dim);line-height:1.5;">
-              <span style="color:var(--accent-cyan);">●</span> Si: Eg≈1.12 eV, indirect<br>
-              <span style="color:var(--accent-pink);">●</span> GaAs: Eg≈1.42 eV, direct<br>
-              <span style="color:var(--accent-yellow);">●</span> Ge: Eg≈0.67 eV, indirect
-            </div>
+        <div class="sidebar-card">
+          <h4>⚙ Controls</h4>
+
+          <div class="slider-group">
+            <label>Temperature T <span class="unit-tag">K</span></label>
+            <span class="slider-value" id="val-T-is">300</span>
+            <input type="range" id="slider-T-is" min="10" max="800" value="300" step="10">
+            <div class="slider-desc">Higher T → more thermal carriers, bandgap shrinks.</div>
           </div>
 
-          <!-- Controls -->
-          <div class="challenge-panel" style="margin-bottom:1rem;">
-            <div class="challenge-header">
-              <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">⚙</span>
-              <span class="challenge-title">Controls</span>
-            </div>
-
-            <div style="margin-bottom:1rem;">
-              <div class="control-row">
-                <span class="control-label">Temperature T</span>
-                <span class="control-value" id="val-T-is">300</span>
-                <span class="unit-tag">K</span>
-              </div>
-              <input type="range" id="slider-T-is" min="10" max="800" value="300" step="10">
-              <p style="font-size:0.72rem;color:var(--text-dim);margin-top:0.3rem;">Higher T → more thermal carriers, bandgap shrinks.</p>
-            </div>
-
-            <div style="margin-bottom:1rem;">
-              <div class="control-row">
-                <span class="control-label">Donor doping N<sub>D</sub></span>
-                <span class="control-value" id="val-nd">0</span>
-                <span class="unit-tag">cm⁻³</span>
-              </div>
-              <input type="range" id="slider-nd" min="0" max="20" value="0" step="0.5">
-              <p style="font-size:0.72rem;color:var(--text-dim);margin-top:0.3rem;">log₁₀(Nd). Shifts EF toward Ec (n-type).</p>
-            </div>
-
-            <div style="margin-bottom:1rem;">
-              <div class="control-row">
-                <span class="control-label">Acceptor doping N<sub>A</sub></span>
-                <span class="control-value" id="val-na">0</span>
-                <span class="unit-tag">cm⁻³</span>
-              </div>
-              <input type="range" id="slider-na" min="0" max="20" value="0" step="0.5">
-              <p style="font-size:0.72rem;color:var(--text-dim);margin-top:0.3rem;">log₁₀(Na). Shifts EF toward Ev (p-type).</p>
-            </div>
-
-            <div style="margin-bottom:0.5rem;">
-              <div class="control-row">
-                <span class="control-label">Electric Field E</span>
-                <span class="control-value" id="val-efield">0</span>
-                <span class="unit-tag">V/cm</span>
-              </div>
-              <input type="range" id="slider-efield" min="0" max="1000" value="0" step="50">
-              <p style="font-size:0.72rem;color:var(--text-dim);margin-top:0.3rem;">Bends bands in 3D. Drives carrier drift.</p>
-            </div>
-
-            <!-- Snapshots -->
-            <div style="border-top:1px solid var(--glass-border); margin-top:0.8rem; padding-top:0.6rem;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
-                <span style="font-size:0.78rem; color:var(--text-dim);">Snapshots</span>
-                <button class="btn" style="padding:0.25rem 0.6rem; font-size:0.7rem;" onclick="saveSnapshot()">+ Save current</button>
-              </div>
-              <div class="snapshot-bar" id="snapshot-bar"></div>
-              <p style="font-size:0.7rem; color:var(--text-muted); margin-top:0.4rem;">Click a snapshot to restore. Active snapshot highlighted.</p>
-            </div>
+          <div class="slider-group">
+            <label>Donor doping N<sub>D</sub> <span class="unit-tag">cm⁻³</span></label>
+            <span class="slider-value" id="val-nd">0</span>
+            <input type="range" id="slider-nd" min="0" max="20" value="0" step="0.5">
+            <div class="slider-desc">log₁₀(Nd). Shifts E<sub>F</sub> toward E<sub>c</sub> (n-type).</div>
           </div>
 
-          <!-- Live Dashboard -->
-          <div class="challenge-panel">
-            <div class="challenge-header">
-              <span class="challenge-icon" style="background:rgba(74,222,128,0.1);">📊</span>
-              <span class="challenge-title">Live Dashboard</span>
+          <div class="slider-group">
+            <label>Acceptor doping N<sub>A</sub> <span class="unit-tag">cm⁻³</span></label>
+            <span class="slider-value" id="val-na">0</span>
+            <input type="range" id="slider-na" min="0" max="20" value="0" step="0.5">
+            <div class="slider-desc">log₁₀(Na). Shifts E<sub>F</sub> toward E<sub>v</sub> (p-type).</div>
+          </div>
+
+          <div class="slider-group">
+            <label>Electric Field E <span class="unit-tag">V/cm</span></label>
+            <span class="slider-value" id="val-efield">0</span>
+            <input type="range" id="slider-efield" min="0" max="1000" value="0" step="50">
+            <div class="slider-desc">Bends bands in 3D. Drives carrier drift.</div>
+          </div>
+
+          <div style="border-top:1px solid var(--glass-border); margin-top:0.8rem; padding-top:0.6rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+              <span style="font-size:0.78rem; color:var(--text-dim);">Snapshots</span>
+              <button class="btn" style="padding:0.25rem 0.6rem; font-size:0.7rem;" onclick="saveSnapshot()">+ Save current</button>
             </div>
-            <div class="live-dashboard" id="live-dashboard">
-              <div class="dash-row">
-                <span class="dash-label">Eg (Varshni)</span>
-                <span class="dash-val" id="live-eg">—</span>
+            <div class="snapshot-bar" id="snapshot-bar"></div>
+            <p style="font-size:0.7rem; color:var(--text-muted); margin-top:0.4rem;">Click a snapshot to restore. Active snapshot highlighted.</p>
+          </div>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>📊 Live Dashboard</h4>
+          <div class="live-dashboard" id="live-dashboard">
+            <div class="dash-row"><span class="dash-label">Eg (Varshni)</span><span class="dash-val" id="live-eg">—</span></div>
+            <div class="dash-row">
+              <span class="dash-label">n (electrons)</span>
+              <div style="display:flex; align-items:center; flex:1; justify-content:flex-end;">
+                <div class="mini-bar-bg"><div class="mini-bar-fill" id="bar-n" style="width:0%; background:var(--accent-cyan);"></div></div>
+                <span class="dash-val" id="live-n">—</span>
               </div>
-              <div class="dash-row">
-                <span class="dash-label">n (electrons)</span>
-                <div style="display:flex; align-items:center; flex:1; justify-content:flex-end;">
-                  <div class="mini-bar-bg"><div class="mini-bar-fill" id="bar-n" style="width:0%; background:var(--accent-cyan);"></div></div>
-                  <span class="dash-val" id="live-n">—</span>
-                </div>
+            </div>
+            <div class="dash-row">
+              <span class="dash-label">p (holes)</span>
+              <div style="display:flex; align-items:center; flex:1; justify-content:flex-end;">
+                <div class="mini-bar-bg"><div class="mini-bar-fill" id="bar-p" style="width:0%; background:var(--accent-pink);"></div></div>
+                <span class="dash-val" id="live-p">—</span>
               </div>
-              <div class="dash-row">
-                <span class="dash-label">p (holes)</span>
-                <div style="display:flex; align-items:center; flex:1; justify-content:flex-end;">
-                  <div class="mini-bar-bg"><div class="mini-bar-fill" id="bar-p" style="width:0%; background:var(--accent-pink);"></div></div>
-                  <span class="dash-val" id="live-p">—</span>
-                </div>
-              </div>
-              <div class="dash-row">
-                <span class="dash-label">nᵢ intrinsic</span>
-                <span class="dash-val" id="live-ni">—</span>
-              </div>
-              <div class="dash-row">
-                <span class="dash-label">E<sub>F</sub> − E<sub>v</sub></span>
-                <span class="dash-val highlight-pink" id="live-ef">—</span>
-              </div>
-              <div class="dash-row">
-                <span class="dash-label">E<sub>i</sub> − E<sub>v</sub></span>
-                <span class="dash-val highlight-pink" id="live-ei">—</span>
-              </div>
-              <div class="dash-row">
-                <span class="dash-label">σ conductivity</span>
-                <span class="dash-val" id="live-sigma">—</span>
-              </div>
-              <div class="dash-row">
-                <span class="dash-label">v<sub>d,e</sub></span>
-                <span class="dash-val" id="live-vde">—</span>
-              </div>
-              <div class="dash-row">
-                <span class="dash-label">v<sub>d,h</sub></span>
-                <span class="dash-val" id="live-vdh">—</span>
-              </div>
-              <div class="dash-row" style="border-bottom:none;">
-                <span class="dash-label">Regime</span>
-                <span class="dash-val" id="live-regime" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">—</span>
-              </div>
+            </div>
+            <div class="dash-row"><span class="dash-label">n<sub>i</sub> intrinsic</span><span class="dash-val" id="live-ni">—</span></div>
+            <div class="dash-row"><span class="dash-label">E<sub>F</sub> − E<sub>v</sub></span><span class="dash-val highlight-pink" id="live-ef">—</span></div>
+            <div class="dash-row"><span class="dash-label">E<sub>i</sub> − E<sub>v</sub></span><span class="dash-val highlight-pink" id="live-ei">—</span></div>
+            <div class="dash-row"><span class="dash-label">σ conductivity</span><span class="dash-val" id="live-sigma">—</span></div>
+            <div class="dash-row"><span class="dash-label">v<sub>d,e</sub></span><span class="dash-val" id="live-vde">—</span></div>
+            <div class="dash-row"><span class="dash-label">v<sub>d,h</sub></span><span class="dash-val" id="live-vdh">—</span></div>
+            <div class="dash-row" style="border-bottom:none;">
+              <span class="dash-label">Regime</span>
+              <span class="dash-val" id="live-regime" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">—</span>
             </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="insight-card" style="margin-top:1rem;">
-      <div class="insight-title">✨ Physics Insight: Temperature, Doping, and Fields</div>
-      <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
-        <strong style="color:var(--accent-cyan)">Temperature</strong> controls thermal carrier generation via the Varshni bandgap and the Boltzmann factor exp(−Eg/2kT).<br>
-        <strong style="color:var(--accent-purple)">Doping</strong> shifts the Fermi level: donors (N<sub>D</sub>) pull E<sub>F</sub> toward E<sub>c</sub>; acceptors (N<sub>A</sub>) push it toward E<sub>v</sub>.<br>
-        <strong style="color:var(--accent-green)">Electric fields</strong> tilt the bands, causing electrons to drift in the conduction band and holes in the valence band.
-      </p>
-      <div class="equation-box" style="font-size:0.85rem;">
-        $$E_g(T) = E_{g0} - \frac{\alpha T^2}{T + \beta} \quad \text{(Varshni)}$$
-        $$n_i = \sqrt{N_c N_v}\,e^{-E_g/2k_BT} \qquad E_F = E_i + k_BT\ln\frac{n}{n_i} \qquad \sigma = e(n\mu_e + p\mu_h)$$
-      </div>
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav"></div>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list" style="font-size:0.8rem; color:var(--text-dim); line-height:1.6;">Complete challenges to earn badges!</div>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
     </div>
   </div>
 
   <!-- ===== CHALLENGES ===== -->
   <div class="mode-section" id="section-challenge" style="display:none;">
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span>
-        <span class="challenge-title">Challenge 1: Material Matcher</span>
-        <span class="challenge-difficulty easy">Easy</span>
-      </div>
-      <div class="challenge-desc">Given a target bandgap and conductivity at 300 K, identify which of Si, GaAs, or Ge matches.</div>
-      <div class="challenge-reward">🏆 Reward: 50 XP</div>
-      <div id="mm-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <div style="display:flex; gap:0.5rem;">
-        <button class="btn mat-btn" onclick="guessMaterial('Si')">Si</button>
-        <button class="btn mat-btn" onclick="guessMaterial('GaAs')">GaAs</button>
-        <button class="btn mat-btn" onclick="guessMaterial('Ge')">Ge</button>
-      </div>
-      <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;">
-        <strong>Score:</strong> <span id="mm-score">0</span> · <strong>Combo:</strong> <span id="mm-combo">0</span>
-      </div>
-      <div class="challenge-feedback" id="mm-feedback"></div>
-    </div>
+    <div class="game-layout">
+      <div class="game-main">
 
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(74,222,128,0.12);">📐</span>
-        <span class="challenge-title">Challenge 2: Doping Detective</span>
-        <span class="challenge-difficulty medium">Medium</span>
-      </div>
-      <div class="challenge-desc">Given n and p at 300 K, determine if the material is intrinsic, n-type, or p-type — and estimate the dopant concentration.</div>
-      <div class="challenge-reward">🏆 Reward: 75 XP</div>
-      <div id="dd-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-        <select id="dd-regime" style="background:var(--bg-elevated);border:1px solid var(--glass-border);color:var(--text-main);padding:0.4rem;border-radius:6px;">
-          <option value="">Select regime...</option>
-          <option value="intrinsic">Intrinsic</option>
-          <option value="n-type">n-type</option>
-          <option value="p-type">p-type</option>
-        </select>
-        <input type="text" id="dd-conc" placeholder="e.g. 1e15" style="width:120px;background:var(--bg-elevated);border:1px solid var(--glass-border);color:var(--text-main);padding:0.4rem;border-radius:6px;font-family:var(--font-mono);">
-        <button class="btn" onclick="checkDopingDetective()">Submit</button>
-      </div>
-      <div class="challenge-feedback" id="dd-feedback"></div>
-    </div>
+        <section class="macro-panel">
+          <h3>🎮 Challenges</h3>
+          <p class="slider-desc" style="font-size:0.9rem; line-height:1.6; margin-bottom:1rem;">
+            Test your semiconductor intuition. Identify materials, diagnose doping, and predict temperature trends.
+          </p>
 
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🌡</span>
-        <span class="challenge-title">Challenge 3: Temperature Trend Predictor</span>
-        <span class="challenge-difficulty hard">Hard</span>
+          <div class="insights">
+            <div class="insight-card">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span>
+                <span class="challenge-title">Material Matcher</span>
+                <span class="challenge-difficulty easy">Easy</span>
+              </div>
+              <div class="challenge-desc">Given a target bandgap and conductivity at 300 K, identify Si, GaAs, or Ge.</div>
+              <div class="challenge-reward">🏆 Reward: 50 XP</div>
+              <div id="mm-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <button class="btn mat-btn" onclick="guessMaterial('Si')">Si</button>
+                <button class="btn mat-btn" onclick="guessMaterial('GaAs')">GaAs</button>
+                <button class="btn mat-btn" onclick="guessMaterial('Ge')">Ge</button>
+              </div>
+              <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;">
+                <strong>Score:</strong> <span id="mm-score">0</span> · <strong>Combo:</strong> <span id="mm-combo">0</span>
+              </div>
+              <div class="challenge-feedback" id="mm-feedback"></div>
+            </div>
+
+            <div class="insight-card">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(74,222,128,0.12);">📐</span>
+                <span class="challenge-title">Doping Detective</span>
+                <span class="challenge-difficulty medium">Medium</span>
+              </div>
+              <div class="challenge-desc">Given n and p at 300 K, determine if the material is intrinsic, n-type, or p-type — and estimate the dopant concentration.</div>
+              <div class="challenge-reward">🏆 Reward: 75 XP</div>
+              <div id="dd-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+              <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                <select id="dd-regime" style="background:var(--bg-elevated);border:1px solid var(--glass-border);color:var(--text-main);padding:0.4rem;border-radius:6px;">
+                  <option value="">Select regime...</option>
+                  <option value="intrinsic">Intrinsic</option>
+                  <option value="n-type">n-type</option>
+                  <option value="p-type">p-type</option>
+                </select>
+                <input type="text" id="dd-conc" placeholder="e.g. 1e15" style="width:120px;background:var(--bg-elevated);border:1px solid var(--glass-border);color:var(--text-main);padding:0.4rem;border-radius:6px;font-family:var(--font-mono);">
+                <button class="btn" onclick="checkDopingDetective()">Submit</button>
+              </div>
+              <div class="challenge-feedback" id="dd-feedback"></div>
+            </div>
+
+            <div class="insight-card">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🌡</span>
+                <span class="challenge-title">Temperature Trend Predictor</span>
+                <span class="challenge-difficulty hard">Hard</span>
+              </div>
+              <div class="challenge-desc">Predict whether conductivity rises or falls when T increases. Consider carrier generation AND mobility degradation.</div>
+              <div class="challenge-reward">🏆 Reward: 100 XP · "Thermal Engineer" badge</div>
+              <div id="tt-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+              <div style="display:flex; gap:0.5rem;">
+                <button class="btn" onclick="guessTrend('rise')">Rises</button>
+                <button class="btn" onclick="guessTrend('fall')">Falls</button>
+              </div>
+              <div class="challenge-feedback" id="tt-feedback"></div>
+            </div>
+          </div>
+        </section>
+
       </div>
-      <div class="challenge-desc">Predict whether conductivity of a given doped semiconductor rises or falls when T increases. Hint: consider both carrier generation AND mobility degradation.</div>
-      <div class="challenge-reward">🏆 Reward: 100 XP · "Thermal Engineer" badge</div>
-      <div id="tt-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <div style="display:flex; gap:0.5rem;">
-        <button class="btn" onclick="guessTrend('rise')">Rises</button>
-        <button class="btn" onclick="guessTrend('fall')">Falls</button>
-      </div>
-      <div class="challenge-feedback" id="tt-feedback"></div>
+
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-ch"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-ch" style="font-size:0.8rem; color:var(--text-dim); line-height:1.6;">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
     </div>
   </div>
 
   <!-- ===== PUZZLES ===== -->
   <div class="mode-section" id="section-puzzle" style="display:none;">
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🔧</span>
-        <span class="challenge-title">Puzzle 1: Build the Conductivity Formula</span>
-        <span class="challenge-difficulty medium">Medium</span>
-      </div>
-      <div class="challenge-desc">Assemble the conductivity formula by placing each term in the correct position.</div>
-      <div class="challenge-reward">🏆 Reward: 60 XP</div>
-      <div style="margin:1rem 0;">
-        <p style="font-size:0.85rem;color:var(--text-muted);">Drag components into σ = ...</p>
-        <div id="cond-pool" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0.5rem 0;"></div>
-      </div>
-      <div id="cond-zones" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin:0.5rem 0;"></div>
-      <button class="btn" onclick="checkCondBuilder()">✓ Verify Formula</button>
-      <div class="challenge-feedback" id="cond-feedback"></div>
-    </div>
+    <div class="game-layout">
+      <div class="game-main">
 
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">📐</span>
-        <span class="challenge-title">Puzzle 2: Fermi Level Placement</span>
-        <span class="challenge-difficulty medium">Medium</span>
-      </div>
-      <div class="challenge-desc">For each scenario, state where the Fermi level lies relative to the band edges.</div>
-      <div class="challenge-reward">🏆 Reward: 70 XP</div>
-      <div id="fermi-list" style="margin-top:0.5rem;"></div>
-      <button class="btn" onclick="checkFermiPuzzle()">✓ Check Placement</button>
-      <div class="challenge-feedback" id="fermi-feedback"></div>
-    </div>
+        <section class="macro-panel">
+          <h3>🧩 Puzzles</h3>
+          <p class="slider-desc" style="font-size:0.9rem; line-height:1.6; margin-bottom:1rem;">
+            Build formulas, place Fermi levels, and match optical excitation wavelengths.
+          </p>
 
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">💡</span>
-        <span class="challenge-title">Puzzle 3: Optical Excitation Match</span>
-        <span class="challenge-difficulty master">Master</span>
-      </div>
-      <div class="challenge-desc">Match each material to the wavelength of light that can excite an electron across its band gap.</div>
-      <div class="challenge-reward">🏆 Reward: 120 XP</div>
-      <div id="optical-list" style="margin-top:0.5rem;"></div>
-      <button class="btn" onclick="checkOpticalPuzzle()">✓ Check Matches</button>
-      <div class="challenge-feedback" id="optical-feedback"></div>
-    </div>
-  </div>
+          <div class="insights">
+            <div class="insight-card">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🔧</span>
+                <span class="challenge-title">Build the Conductivity Formula</span>
+                <span class="challenge-difficulty medium">Medium</span>
+              </div>
+              <div class="challenge-desc">Assemble the conductivity formula by placing each term in the correct position.</div>
+              <div class="challenge-reward">🏆 Reward: 60 XP</div>
+              <div style="margin:1rem 0;">
+                <p style="font-size:0.85rem;color:var(--text-muted);">Drag components into σ = ...</p>
+                <div id="cond-pool" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0.5rem 0;"></div>
+              </div>
+              <div id="cond-zones" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin:0.5rem 0;"></div>
+              <button class="btn" onclick="checkCondBuilder()">✓ Verify Formula</button>
+              <div class="challenge-feedback" id="cond-feedback"></div>
+            </div>
 
-  <!-- Sidebar -->
-  <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; margin-top:2rem;">
-    <div></div>
-    <div>
-      <div class="challenge-panel" style="position:sticky; top:5rem;">
-        <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(0,240,255,0.08);">🗺</span>
-          <span class="challenge-title">Lab Navigator</span>
-        </div>
-        <div id="module-nav"></div>
-        <div class="section-divider" style="margin:1rem 0;"></div>
-        <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(74,222,128,0.08);">🏆</span>
-          <span class="challenge-title">Your Badges</span>
-        </div>
-        <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        <div class="section-divider" style="margin:1rem 0;"></div>
-        <div class="scoreboard">
-          <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
-        </div>
+            <div class="insight-card">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">📐</span>
+                <span class="challenge-title">Fermi Level Placement</span>
+                <span class="challenge-difficulty medium">Medium</span>
+              </div>
+              <div class="challenge-desc">For each scenario, state where the Fermi level lies relative to the band edges.</div>
+              <div class="challenge-reward">🏆 Reward: 70 XP</div>
+              <div id="fermi-list" style="margin-top:0.5rem;"></div>
+              <button class="btn" onclick="checkFermiPuzzle()">✓ Check Placement</button>
+              <div class="challenge-feedback" id="fermi-feedback"></div>
+            </div>
+
+            <div class="insight-card">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">💡</span>
+                <span class="challenge-title">Optical Excitation Match</span>
+                <span class="challenge-difficulty master">Master</span>
+              </div>
+              <div class="challenge-desc">Match each material to the wavelength of light that can excite an electron across its band gap.</div>
+              <div class="challenge-reward">🏆 Reward: 120 XP</div>
+              <div id="optical-list" style="margin-top:0.5rem;"></div>
+              <button class="btn" onclick="checkOpticalPuzzle()">✓ Check Matches</button>
+              <div class="challenge-feedback" id="optical-feedback"></div>
+            </div>
+          </div>
+        </section>
+
       </div>
+
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-pz"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-pz" style="font-size:0.8rem; color:var(--text-dim); line-height:1.6;">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
     </div>
   </div>
 
@@ -495,6 +766,38 @@
 <script src="../../shared_effects.js"></script>
 
 <script>
+/* === Deferred Playground init (hidden on load; inits on first tab switch to 'play') === */
+var IS_initialized = false;
+function bootISPlayground() {
+  if (IS_initialized) return;
+  var container = document.getElementById('band-diagram-3d');
+  if (!container || container.clientWidth === 0) return;
+  IS_initialized = true;
+  if (typeof initIntrinsicSemi === 'function') initIntrinsicSemi();
+}
+
+/* === setGameMode override: init Playground on first switch + resize Three.js on return === */
+(function() {
+  var origSetGameMode = window.setGameMode;
+  window.setGameMode = function(mode) {
+    if (mode === 'play') {
+      if (!IS_initialized) {
+        origSetGameMode(mode);
+        setTimeout(function() { bootISPlayground(); }, 50);
+      } else {
+        origSetGameMode(mode);
+        // Resize Three.js renderer when switching back (container may have changed)
+        if (window.IS3D && IS3D.renderer) {
+          var c = document.getElementById('band-diagram-3d');
+          if (c) IS3D.renderer.setSize(c.clientWidth, c.clientHeight);
+        }
+      }
+      return;
+    }
+    if (typeof origSetGameMode === 'function') origSetGameMode(mode);
+  };
+})();
+
 /* === Tooltip Engine === */
 const tooltip = document.getElementById('global-tooltip');
 document.querySelectorAll('.viz-info').forEach(el => {
@@ -529,32 +832,24 @@ function restoreSnapshot(idx) {
   if(idx < 0 || idx >= snapshots.length) return;
   activeSnapshot = idx;
   const s = snapshots[idx];
-
-  // Update sliders
   document.getElementById('slider-T-is').value = s.T;
   document.getElementById('slider-nd').value = s.Nd;
   document.getElementById('slider-na').value = s.Na;
   document.getElementById('slider-efield').value = s.Ef;
-
-  // Update state + displays manually (mimicking slider input handlers)
   isState.T = s.T;
   let el = document.getElementById('val-T-is');
   if(el) el.textContent = s.T.toFixed(0);
-
   const ndVal = Math.pow(10, s.Nd);
   isState.Nd = ndVal;
   el = document.getElementById('val-nd');
   if(el) el.textContent = ndVal.toExponential(1);
-
   const naVal = Math.pow(10, s.Na);
   isState.Na = naVal;
   el = document.getElementById('val-na');
   if(el) el.textContent = naVal.toExponential(1);
-
   isState.E_field = s.Ef;
   el = document.getElementById('val-efield');
   if(el) el.textContent = s.Ef.toFixed(1);
-
   setMaterialIS(s.mat);
   updateLiveReadouts();
   if(typeof plotCarrierDensity === 'function') plotCarrierDensity();
@@ -639,17 +934,16 @@ if(origLiveReadouts) {
   if(!canvas) return;
   const ctx = canvas.getContext('2d');
   let W, H, particles = [];
-  function resize(){ 
-    const r = canvas.parentElement.getBoundingClientRect(); 
-    W = canvas.width = r.width; 
-    H = canvas.height = r.height; 
+  function resize(){
+    const r = canvas.parentElement.getBoundingClientRect();
+    W = canvas.width = r.width;
+    H = canvas.height = r.height;
   }
   resize();
   window.addEventListener('resize', resize);
-
   class Particle {
     constructor(type){
-      this.type = type; // 'e' or 'h'
+      this.type = type;
       this.reset();
     }
     reset(){
@@ -679,21 +973,22 @@ if(origLiveReadouts) {
       ctx.globalAlpha = 1;
     }
   }
-
-  // Init pool
   for(let i=0;i<40;i++) particles.push(new Particle(i%2===0?'e':'h'));
-
   function loop(){
-    ctx.clearRect(0,0,W,H);
-    const T = parseFloat(document.getElementById('slider-T-is').value) || 300;
-    const E = parseFloat(document.getElementById('slider-efield').value) || 0;
-    const tempFactor = Math.sqrt(T / 300);
-    const count = Math.floor(10 + (T / 800) * 50);
-    particles.forEach((p,i)=>{
-      if(i > count) return;
-      p.update(E, tempFactor);
-      p.draw(ctx);
-    });
+    // Only draw when the Playground section is visible
+    var pg = document.getElementById('section-play');
+    if (pg && pg.style.display !== 'none') {
+      ctx.clearRect(0,0,W,H);
+      const T = parseFloat(document.getElementById('slider-T-is').value) || 300;
+      const E = parseFloat(document.getElementById('slider-efield').value) || 0;
+      const tempFactor = Math.sqrt(T / 300);
+      const count = Math.floor(10 + (T / 800) * 50);
+      particles.forEach((p,i)=>{
+        if(i > count) return;
+        p.update(E, tempFactor);
+        p.draw(ctx);
+      });
+    }
     requestAnimationFrame(loop);
   }
   loop();

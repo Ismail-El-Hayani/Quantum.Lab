@@ -3,10 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Module 12 — Optics &amp; Dispersion</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Module 12 — Optics & Dispersion</title>
 <link rel="stylesheet" href="../../shared_styles.css">
 <style>
-.mode-bar { display:flex; gap:0.5rem; justify-content:center; padding:0.6rem 1rem; position:sticky; top:52px; z-index:10; background:rgba(0,0,0,0.35); backdrop-filter:blur(8px); }
+  .mode-bar { display:flex; gap:0.5rem; justify-content:center; padding:0.6rem 1rem; position:sticky; top:52px; z-index:10; background:rgba(0,0,0,0.35); backdrop-filter:blur(8px); }
   .macro-panel { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-top:1rem; }
   body { zoom: 1.25; }
   .macro-panel h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
@@ -61,17 +64,45 @@
   .beam-legend { position:absolute; bottom:12px; right:12px; z-index:2; background:rgba(10,12,24,0.72); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:8px 12px; font-size:0.72rem; color:var(--text-dim); display:flex; flex-direction:column; gap:4px; pointer-events:none; }
   .beam-legend span { display:flex; align-items:center; gap:6px; }
   .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
-  /* Zoom all 4 equation canvases to 90% for tighter refraction frames */
-  #eq-canvas-snell, #eq-canvas-damping, #eq-canvas-fresnel, #eq-canvas-thinfilm {
-    transform: scale(0.90);
-    transform-origin: center;
-  }
   @media (max-width:720px) { .preset-grid { grid-template-columns: repeat(2,1fr); } #macro-canvas-container { height:320px !important; } .insights { grid-template-columns:1fr; } }
+
+  /* ─── NEW: Ambient Bar & Section Styling ─── */
+  .ambient-bar { display:flex; flex-wrap:wrap; gap:1rem; align-items:center; justify-content:space-between;
+    background:var(--bg-deep); border:1px solid var(--glass-border); border-radius:var(--radius-md);
+    padding:0.6rem 1rem; margin-bottom:0.5rem; font-size:0.85rem; color:var(--text-dim); }
+  .ambient-bar .ambient-stat { display:flex; align-items:center; gap:0.4rem; }
+  .ambient-bar .ambient-stat b { color:var(--accent-cyan); font-family:var(--font-mono); }
+  .ambient-bar label { display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-size:0.8rem; }
+  .pg-section { scroll-margin-top:70px; }
+  .pg-empty { background:rgba(0,240,255,0.04); border:2px dashed var(--glass-border); border-radius:8px;
+    padding:2rem; text-align:center; color:var(--text-muted); font-style:italic; }
+
+  /* Sub-tab bar inside Playground — centered */
+  .jd-sub-bar { display:flex; justify-content:center; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.8rem; }
+  .jd-sub-btn { appearance:none; border:1px solid var(--glass-border); background:var(--bg-elevated); color:var(--text-dim); font-family:inherit; font-size:0.78rem; padding:0.35rem 0.8rem; border-radius:999px; cursor:pointer; transition:all 0.2s; }
+  .jd-sub-btn:hover { border-color:var(--accent-cyan); color:var(--accent-cyan); }
+  .jd-sub-btn.active { background:rgba(0,240,255,0.12); border-color:var(--accent-cyan); color:var(--accent-cyan); }
+  .jd-sub-section { margin-top:0; }
 </style>
-<script src="https://cdn.plot.ly/plotly-2.27.0.min.js" crossorigin></script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.min.js" async crossorigin></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" crossorigin></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js" crossorigin></script>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.min.js" async></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+// ESM namespace is frozen — copy to a plain object before assigning
+var ThreeGlobal = Object.assign({}, THREE);
+ThreeGlobal.OrbitControls = OrbitControls;
+window.THREE = ThreeGlobal;
+window.dispatchEvent(new Event('three-ready'));
+</script>
 </head>
 <body>
 
@@ -87,489 +118,809 @@
   <div class="level-badge">LEVEL 12</div>
   <h1 style="font-size:2.4rem;"><span style="background:var(--grad-hero);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Optics, Dispersion &amp; Material Response</span></h1>
   <p class="hero-desc">
-    Explore how light interacts with matter across the optical spectrum. From Drude metals to
-    semiconductors and insulators, observe how photon energy governs reflection, absorption,
-    and transmission — and dive into the lattice to see why.
+    Explore how light interacts with matter across the optical spectrum.
+    From Snell's law to thin-film interference, from Fresnel reflection to dispersion —
+    build your understanding step by step.
   </p>
 </div>
 
+<!-- ═══════════════ MODE BAR ═══════════════ -->
 <div class="mode-bar">
-  <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">&#128300; Playground</button>
+  <button class="game-mode-btn active" id="mode-story" onclick="setGameMode('story')">&#128214; Story</button>
+  <button class="game-mode-btn" id="mode-theory" onclick="setGameMode('theory')">&#128300; Theory</button>
+  <button class="game-mode-btn" id="mode-play" onclick="setGameMode('play')">&#127918; Playground</button>
   <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">&#127919; Challenges</button>
   <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">&#129513; Puzzle</button>
 </div>
 
-<div class="game-layout" style="max-width:1400px;margin:0 auto;padding:0 2rem 3rem;">
-
+<div class="game-layout" style="max-width:1600px;margin:0 auto;padding:0 2rem 3rem;display:grid;grid-template-columns:1fr 200px;gap:var(--space-lg);">
 <div class="game-main">
 
+<!-- ════════════════════ STORY ════════════════════ -->
+<div class="mode-section" id="section-story" style="display:block;">
 
-<!-- ═════════════════════ PLAYGROUND ═════════════════════ -->
-<div class="mode-section" id="section-play">
+  <section class="macro-panel">
+    <h3>&#128214; Optics, Dispersion &amp; Material Response — Story</h3>
+    <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.7;">
+      When light meets matter, the material's electronic structure determines what happens:
+      reflection, refraction, absorption, or transmission. This module builds the story
+      from the simplest interface to full spectral response.
+    </p>
+  </section>
 
-  <section class="material-presets">
-    <h3>🧪 Material Preset</h3>
-    <div class="preset-grid">
-      <button class="preset-btn active" onclick="odSetMaterial('Cu')">Copper</button>
-      <button class="preset-btn" onclick="odSetMaterial('Ag')">Silver</button>
-      <button class="preset-btn" onclick="odSetMaterial('Al')">Aluminium</button>
-      <button class="preset-btn" onclick="odSetMaterial('Si')">Silicon</button>
-      <button class="preset-btn" onclick="odSetMaterial('GaAs')">GaAs</button>
-      <button class="preset-btn" onclick="odSetMaterial('NaCl')">NaCl</button>
+  <section class="macro-panel">
+    <h3>1. Refraction — Snell&#39;s Law</h3>
+    <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.6;">
+      Light bends at an interface because its speed changes. The frequency stays constant
+      (the E-field must match at the boundary), so the wavelength adjusts: &#955;<sub>med</sub> = &#955;<sub>vac</sub>/n.
+    </p>
+    <div style="font-size:0.88rem;color:var(--text-muted);line-height:1.8;">
+      \(n_1 \sin\theta_1 = n_2 \sin\theta_2\) &nbsp;&middot;&nbsp;
+      \(\theta_c = \arcsin(n_2/n_1)\) for \(n_2 &lt; n_1\) &nbsp;&middot;&nbsp;
+      \(v = c/n\)
     </div>
   </section>
 
-  <!-- ═════════════════════ EQUATION-DRIVEN PLAYGROUND ═════════════════════ -->
   <section class="macro-panel">
-    <h3>📐 Equation Playground — Interact with the Physics</h3>
-
-    <!-- Equation Ribbon -->
-    <div class="eq-ribbon" id="eq-ribbon" style="background:linear-gradient(135deg,#0a0e1f,#080c18);border:1px solid var(--glass-border);border-radius:12px;padding:1rem 1.2rem;margin-bottom:1rem;">
-      <div style="color:var(--text-dim);font-size:0.78rem;margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.06em;">Active Equation</div>
-      <div id="eq-active-text" style="font-family:var(--font-mono);font-size:1.05rem;color:var(--text-bright);line-height:1.8;"></div>
-      <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem;">
-        <span class="material-badge" style="color:#ffdd44;border-color:#ffdd44;">n₁ = <span class="eq-param" data-symbol="n1">1.00</span></span>
-        <span class="material-badge" style="color:#4ade80;border-color:#4ade80;">n₂ = <span class="eq-param" data-symbol="n2">3.50</span></span>
-        <span class="material-badge" style="color:#00f0ff;border-color:#00f0ff;">θ₁ = <span class="eq-param" data-symbol="theta1">30</span>°</span>
-        <span class="material-badge" style="color:#ff4ecd;border-color:#ff4ecd;">κ = <span class="eq-param" data-symbol="kappa">0.000</span></span>
-        <span class="material-badge" style="color:#ff6b35;border-color:#ff6b35;">E = <span class="eq-param" data-symbol="E">2.00</span> eV</span>
-      </div>
-    </div>
-
-    <!-- Mode tabs for equation screens -->
-    <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">
-      <button class="preset-btn active" id="eq-tab-snell" onclick="eqSetScreen('snell')">Refraction (Snell)</button>
-      <button class="preset-btn" id="eq-tab-damping" onclick="eqSetScreen('damping')">Damped Wave</button>
-      <button class="preset-btn" id="eq-tab-fresnel" onclick="eqSetScreen('fresnel')">Fresnel R(θ)</button>
-      <button class="preset-btn" id="eq-tab-thinfilm" onclick="eqSetScreen('thinfilm')">Thin Film Airy</button>
-    </div>
-
-    <div class="plots" style="display:grid;grid-template-columns:1fr;gap:14px;">
-      <!-- Snell Canvas -->
-      <div class="viz-card" id="eq-wrap-snell" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;">
-        <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Wave Refraction</h4>
-        <p class="slider-desc">
-          Snell's law governs refraction:
-          \(\displaystyle n_1\sin\theta_1 = n_2\sin\theta_2 \).
-          The wave slows down in the denser medium:
-          \(v_2 = c/n_2\) and the wavelength shortens to
-          \(\lambda_2 = \lambda_1\,n_1/n_2\).
-        </p>
-        <canvas id="eq-canvas-snell" style="display:block;width:100%;border-radius:8px;background:#060810;"></canvas>
-        <div style="display:flex;flex-wrap:wrap;gap:1rem;margin-top:0.6rem;">
-          <div class="slider-group" style="flex:1 1 200px;">
-            <label>Incident angle θ₁</label>
-            <input type="range" min="0" max="89" step="1" value="30" oninput="eqSliderTheta(this.value)">
-          </div>
-          <div class="slider-group" style="flex:1 1 200px;">
-            <label>Material index n₂</label>
-            <input type="range" min="0.5" max="5.0" step="0.05" value="3.5" oninput="eqSliderN2(this.value)">
-          </div>
-        </div>
-      </div>
-
-      <!-- Damped Wave Canvas -->
-      <div class="viz-card" id="eq-wrap-damping" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;display:none;">
-        <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Damped Electromagnetic Wave</h4>
-        <p class="slider-desc">
-          In an absorbing medium the refractive index is complex: \(\tilde{n} = n + i\kappa\).
-          The electric field is
-          \(\displaystyle E(z,t) = E_0\,e^{-\kappa k_0 z}\cos(\omega t - n k_0 z) \)
-          where \(k_0 = 2\pi/\lambda\).
-          The intensity decays as \(I(z) = I_0\,e^{-z/W}\) with penetration depth
-          \(\displaystyle W = \frac{\lambda}{4\pi\kappa}\)
-          and absorption coefficient
-          \(\displaystyle \alpha = \frac{4\pi\kappa}{\lambda}\).
-        </p>
-        <canvas id="eq-canvas-damping" style="display:block;width:100%;border-radius:8px;background:#060810;"></canvas>
-        <div style="display:flex;flex-wrap:wrap;gap:1rem;margin-top:0.6rem;">
-          <div class="slider-group" style="flex:1 1 200px;">
-            <label>Extinction κ</label>
-            <input type="range" min="0" max="4.0" step="0.05" value="0.0" oninput="eqSliderKappa(this.value)">
-          </div>
-          <div class="slider-group" style="flex:1 1 200px;">
-            <label>Photon energy E (eV)</label>
-            <input type="range" min="0.1" max="10" step="0.1" value="2.0" oninput="eqSliderE(this.value)">
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
-          <div style="flex:1 1 140px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">Penetration W (nm)</div>
-            <div class="eq-computed" data-computed="W" style="font-family:var(--font-mono);color:var(--accent-cyan);font-size:1rem;font-weight:700;">—</div>
-          </div>
-          <div style="flex:1 1 140px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">Absorbance α (nm⁻¹)</div>
-            <div class="eq-computed" data-computed="alpha" style="font-family:var(--font-mono);color:var(--accent-pink);font-size:1rem;font-weight:700;">—</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Fresnel Canvas -->
-      <div class="viz-card" id="eq-wrap-fresnel" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;display:none;">
-        <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Fresnel Reflectivity vs Angle</h4>
-        <p class="slider-desc">
-          Fresnel coefficients for reflection at an interface (s and p polarisation):
-          \(\displaystyle r_s = \frac{n_1\cos\theta_1 - n_2\cos\theta_2}{n_1\cos\theta_1 + n_2\cos\theta_2} \);
-          \(\displaystyle r_p = \frac{n_2\cos\theta_1 - n_1\cos\theta_2}{n_2\cos\theta_1 + n_1\cos\theta_2} \).
-          Reflectance \(\mathcal{R}_{s,p} = |r_{s,p}|^2\).  Brewster's angle
-          \(\theta_B = \arctan(n_2/n_1)\) where \(\mathcal{R}_p = 0\).
-        </p>
-        <canvas id="eq-canvas-fresnel" style="display:block;width:100%;border-radius:8px;background:#060810;"></canvas>
-        <div style="display:flex;flex-wrap:wrap;gap:1rem;margin-top:0.6rem;">
-          <div class="slider-group" style="flex:1 1 200px;">
-            <label>Incident angle θ₁</label>
-            <input type="range" min="0" max="89" step="1" value="30" oninput="eqSliderTheta(this.value)">
-          </div>
-          <div class="slider-group" style="flex:1 1 200px;">
-            <label>Material index n₂</label>
-            <input type="range" min="0.5" max="5.0" step="0.05" value="3.5" oninput="eqSliderN2(this.value)">
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
-          <div style="flex:1 1 140px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">R_normal (%)</div>
-            <div class="eq-computed" data-computed="Rnorm" style="font-family:var(--font-mono);color:var(--accent-green);font-size:1rem;font-weight:700;">—</div>
-          </div>
-          <div style="flex:1 1 140px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">R_s @ this θ (%)</div>
-            <div class="eq-computed" data-computed="Rangle" style="font-family:var(--font-mono);color:var(--accent-cyan);font-size:1rem;font-weight:700;">—</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Thin Film Canvas -->
-      <div class="viz-card" id="eq-wrap-thinfilm" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;display:none;">
-        <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Thin Film Reflection & Transmission (Airy)</h4>
-        <p class="slider-desc">
-          A plane wave hits a thin film \(n_2\) of thickness \(d\) on substrate \(n_3\).
-          Internal reflections interfere, giving oscillating \(R(\lambda)\) and \(T(\lambda)\).
-          <br>
-          \(\displaystyle \beta = \frac{2\pi}{\lambda}\,n_2 d\cos\theta_2 \)
-          &nbsp;·&nbsp;
-          \(\displaystyle \mathcal{R}=\frac{|r_{12}+r_{23}\,e^{2i\beta}|^{2}}{|1+r_{12}r_{23}\,e^{2i\beta}|^{2}} \)
-        </p>
-        <canvas id="eq-canvas-thinfilm" style="display:block;width:100%;border-radius:8px;background:#060810;"></canvas>
-        <div style="display:flex;flex-wrap:wrap;gap:1rem;margin-top:0.6rem;">
-          <div class="slider-group" style="flex:1 1 160px;">
-            <label>n₁ (incident)</label>
-            <input type="range" min="1.0" max="2.5" step="0.05" value="1.0" id="slider-tf-n1" oninput="eqSliderTFN1(this.value)">
-            <span class="slider-value" id="val-tf-n1">1.00</span>
-          </div>
-          <div class="slider-group" style="flex:1 1 160px;">
-            <label>n₂ (film)</label>
-            <input type="range" min="1.2" max="3.0" step="0.05" value="1.50" id="slider-tf-n2" oninput="eqSliderTFN2(this.value)">
-            <span class="slider-value" id="val-tf-n2">1.50</span>
-          </div>
-          <div class="slider-group" style="flex:1 1 160px;">
-            <label>n₃ (substrate)</label>
-            <input type="range" min="1.0" max="5.0" step="0.05" value="3.5" id="slider-tf-n3" oninput="eqSliderTFN3(this.value)">
-            <span class="slider-value" id="val-tf-n3">3.50</span>
-          </div>
-          <div class="slider-group" style="flex:1 1 160px;">
-            <label>Film thickness d (nm)</label>
-            <input type="range" min="10" max="1000" step="5" value="200" id="slider-tf-d" oninput="eqSliderTFD(this.value)">
-            <span class="slider-value" id="val-tf-d">200</span> nm
-          </div>
-          <div class="slider-group" style="flex:1 1 160px;">
-            <label>Incident angle θ₁ (°)</label>
-            <input type="range" min="0" max="89" step="1" value="30" id="slider-tf-theta" oninput="eqSliderTFTheta(this.value)">
-            <span class="slider-value" id="val-tf-theta">30</span>°
-          </div>
-          <div class="slider-group" style="flex:1 1 160px;">
-            <label>Wavelength λ (nm)</label>
-            <input type="range" min="300" max="1200" step="5" value="620" id="slider-tf-lam" oninput="eqSliderTFLam(this.value)">
-            <span class="slider-value" id="val-tf-lam">620</span> nm
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
-          <div style="flex:1 1 130px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">r₁₂ (s)</div>
-            <div class="eq-computed" data-computed="tf-r12" style="font-family:var(--font-mono);color:var(--accent-green);font-size:0.95rem;font-weight:700;">—</div>
-          </div>
-          <div style="flex:1 1 130px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">r₂₃ (s)</div>
-            <div class="eq-computed" data-computed="tf-r23" style="font-family:var(--font-mono);color:var(--accent-cyan);font-size:0.95rem;font-weight:700;">—</div>
-          </div>
-          <div style="flex:1 1 130px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">Phase β (rad)</div>
-            <div class="eq-computed" data-computed="tf-beta" style="font-family:var(--font-mono);color:var(--accent-pink);font-size:0.95rem;font-weight:700;">—</div>
-          </div>
-          <div style="flex:1 1 130px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">ℛ  (total refl. %)</div>
-            <div class="eq-computed" data-computed="tf-R" style="font-family:var(--font-mono);color:var(--accent-green);font-size:0.95rem;font-weight:700;">—</div>
-          </div>
-          <div style="flex:1 1 130px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">𝒯  (total trans. %)</div>
-            <div class="eq-computed" data-computed="tf-T" style="font-family:var(--font-mono);color:var(--accent-cyan);font-size:0.95rem;font-weight:700;">—</div>
-          </div>
-          <div style="flex:1 1 130px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">θ₂ (°)</div>
-            <div class="eq-computed" data-computed="tf-theta2" style="font-family:var(--font-mono);color:var(--text-bright);font-size:0.95rem;font-weight:700;">—</div>
-          </div>
-        </div>
-        <div id="plot-thinfilm" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;margin-top:10px;min-height:260px;"></div>
-      </div>
-    </div>
-
-    <div style="display:flex;justify-content:center;margin-top:0.8rem;gap:0.5rem;">
-      <button class="preset-btn" id="eq-anim-toggle" onclick="eqToggleAnimation()">▶ Play Animation</button>
+    <h3>2. Fresnel Reflection</h3>
+    <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.6;">
+      How much light reflects depends on polarization. The Fresnel coefficients \(r_s\) and \(r_p\)
+      give the amplitude of the reflected wave. At the Brewster angle, \(r_p = 0\) — only s-polarised
+      light reflects.
+    </p>
+    <div style="font-size:0.88rem;color:var(--text-muted);line-height:1.8;">
+      \(r_s = \dfrac{n_1\cos\theta_1 - n_2\cos\theta_2}{n_1\cos\theta_1 + n_2\cos\theta_2}\) &nbsp;&middot;&nbsp;
+      \(r_p = \dfrac{n_2\cos\theta_1 - n_1\cos\theta_2}{n_2\cos\theta_1 + n_1\cos\theta_2}\)
     </div>
   </section>
 
-  <!-- Macroscopic Panel — 3D photon stream -->
   <section class="macro-panel">
-    <h3>🔭 Macroscopic View — Photon Beam Interacting with Material</h3>
+    <h3>3. Thin Film Interference</h3>
+    <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.6;">
+      In a thin dielectric layer, light bounces back and forth. The round-trip phase
+      \(2\beta = 4\pi n_2 d\cos\theta_2/\lambda\) determines whether the reflections add
+      constructively (high R) or cancel (low R). This is the physics of AR coatings,
+      etalons, and VCSEL cavities.
+    </p>
+  </section>
+
+  <section class="macro-panel">
+    <h3>4. Field Attenuation &amp; Skin Depth</h3>
+    <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.6;">
+      In absorbing media, the field decays exponentially: \(E(z) = E_0 e^{-\alpha z}\).
+      The skin depth \(\delta = 1/\alpha = \lambda/(4\pi\kappa)\) tells how far light penetrates.
+      Metals have &#948; ~10 nm; dielectrics can be effectively transparent.
+    </p>
+  </section>
+
+  <section class="macro-panel">
+    <h3>5. Dispersion — Why n and &#954; depend on &#955;</h3>
+    <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.6;">
+      The complex dielectric function &#949;(&#969;) = &#949;&#8321; + i&#949;&#8322; encodes the full optical response.
+      From &#949; we get the refractive index n and extinction coefficient &#954;.
+      Metals reflect below the plasma edge (&#949;&#8321; &lt; 0); semiconductors absorb above the bandgap;
+      insulators are transparent until UV.
+    </p>
+  </section>
+
+  <section class="macro-panel">
+    <h3>6. Double-Slit Coherence</h3>
+    <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.6;">
+      A finite-bandwidth wave packet passing two slits produces interference only when
+      the path difference is within the coherence length \(L_c = \lambda^2/\Delta\lambda\).
+      As bandwidth grows, fringes wash out — the classical transition from coherent to incoherent light.
+    </p>
+  </section>
+
+</div>
+
+<!-- ════════════════════ THEORY ════════════════════ -->
+<div class="mode-section" id="section-theory" style="display:none;">
+
+  <section class="macro-panel">
+    <h3>&#128300; Theoretical Foundations</h3>
+    <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.7;">
+      Full derivations, boundary conditions, and the electromagnetic theory behind
+      reflection, refraction, absorption, and dispersion.
+    </p>
+  </section>
+
+  <section class="macro-panel">
+    <h3>Snell's Law &amp; Boundary Conditions</h3>
+    <div class="note-body" style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+      <p>At a dielectric interface, the tangential E-field must be continuous. This forces the
+      incident, reflected, and transmitted waves to share the same phase at the boundary,
+      which gives \(k_{1x} = k_{2x}\) and therefore Snell's law.</p>
+      <p>Frequency is conserved across the interface because the boundary condition must hold
+      for all time. What changes are the wavelength (\(\lambda_{med} = \lambda_{vac}/n\)),
+      phase velocity (\(v = c/n\)), and wave vector (\(k = n k_0\)).</p>
+      <p>Photon energy \(E = hf = hc/\lambda_{vac}\) is conserved — no absorption at a
+      perfect dielectric interface.</p>
+    </div>
+    <div style="font-size:0.88rem;color:var(--text-muted);line-height:1.8;margin-top:0.5rem;">
+      \(n_1 \sin\theta_1 = n_2 \sin\theta_2\) &nbsp;&middot;&nbsp;
+      \(\theta_c = \arcsin(n_2/n_1)\) &nbsp;&middot;&nbsp;
+      \(v = c/n\) &nbsp;&middot;&nbsp;
+      \(\lambda_{med} = \lambda_{vac}/n\)
+    </div>
+  </section>
+
+  <section class="macro-panel">
+    <h3>Fresnel Equations — Full Derivation</h3>
+    <div class="note-body" style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+      <p>From the continuity of tangential E and H at the interface, we obtain the
+      amplitude reflection and transmission coefficients for s and p polarisation:</p>
+      \(r_s = \dfrac{n_1\cos\theta_1 - n_2\cos\theta_2}{n_1\cos\theta_1 + n_2\cos\theta_2}\)
+      &nbsp;&middot;&nbsp;
+      \(t_s = \dfrac{2n_1\cos\theta_1}{n_1\cos\theta_1 + n_2\cos\theta_2}\)<br>
+      \(r_p = \dfrac{n_2\cos\theta_1 - n_1\cos\theta_2}{n_2\cos\theta_1 + n_1\cos\theta_2}\)
+      &nbsp;&middot;&nbsp;
+      \(t_p = \dfrac{2n_1\cos\theta_1}{n_2\cos\theta_1 + n_1\cos\theta_2}\)
+      <p>Reflectance: \(R = |r|^2\). Transmittance: \(T = 1 - R\) (no absorption).
+      At the Brewster angle \(\theta_B = \arctan(n_2/n_1)\), \(r_p = 0\).</p>
+    </div>
+  </section>
+
+  <section class="macro-panel">
+    <h3>Thin Film — Airy Summation</h3>
+    <div class="note-body" style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+      <p>The total reflected amplitude from a three-layer system is the infinite sum of
+      partial waves undergoing multiple internal reflections:</p>
+      \(r = \dfrac{r_{12} + r_{23}e^{2i\beta}}{1 + r_{12}r_{23}e^{2i\beta}}\)
+      &nbsp;&middot;&nbsp;
+      \(t = \dfrac{t_{12}t_{23}e^{i\beta}}{1 + r_{12}r_{23}e^{2i\beta}}\)
+      <p>where \(\beta = \dfrac{2\pi}{\lambda}\,n_2 d\cos\theta_2\) is the single-trip phase.
+      When \(2\beta = 2m\pi\) the denominator is minimum → Fabry-Pérot resonance (high T).
+      When \(d = \lambda/(4n_2)\) and \(n_2 = \sqrt{n_1 n_3}\) → perfect AR coating (R = 0).</p>
+    </div>
+  </section>
+
+  <section class="macro-panel">
+    <h3>Attenuation &amp; Complex Refractive Index</h3>
+    <div class="note-body" style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+      <p>In an absorbing medium, the refractive index becomes complex: \(\tilde{n} = n + i\kappa\).
+      A plane wave \(E(z,t) = E_0 e^{i(kz - \omega t)}\) with \(k = \tilde{n}\omega/c\) gives:</p>
+      \(E(z,t) = E_0 e^{-\alpha z} \cos[\omega(t - zn/c)]\) &nbsp;where&nbsp;
+      \(\alpha = \dfrac{4\pi\kappa}{\lambda} = \dfrac{1}{\delta}\)
+      <p>Intensity: \(I(z) = I_0 e^{-2\alpha z}\). At one skin depth: \(I(\delta)/I_0 = e^{-2} \approx 13.5\%\).</p>
+    </div>
+  </section>
+
+  <section class="macro-panel">
+    <h3>Dispersion — Dielectric Function Models</h3>
+    <div class="note-body" style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+      <p><strong>Drude model (metals):</strong> Free electrons give
+      \(\varepsilon_1(\omega) = 1 - \dfrac{\omega_p^2}{\omega^2 + \gamma^2}\) and
+      \(\varepsilon_2(\omega) = \dfrac{\omega_p^2 \gamma}{\omega(\omega^2 + \gamma^2)}\).
+      Below \(\omega_p\), \(\varepsilon_1 < 0\) → total reflection.</p>
+      <p><strong>Lorentz model (insulators):</strong> Bound oscillators give resonance
+      peaks in \(\varepsilon_2\) near \(\omega_{TO}\).</p>
+      <p><strong>Kramers-Kronig:</strong> \(\varepsilon_1\) and \(\varepsilon_2\) are
+      Hilbert-transform pairs — causality forces a relationship between the real and
+      imaginary parts. A strong absorption peak in \(\varepsilon_2\) creates a rise in
+      n(ω) (normal dispersion).</p>
+      <p><strong>Colour rendering:</strong> Perceived colour is computed from
+      \(R(\lambda) \times I_{D65}(\lambda) \times \bar{x}(\lambda)\) etc. (CIE 1931 XYZ → sRGB).</p>
+    </div>
+  </section>
+
+  <section class="macro-panel">
+    <h3>Double-Slit Coherence</h3>
+    <div class="note-body" style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+      <p>A finite wave packet has spectral width \(\Delta\lambda\). The coherence length
+      \(L_c = \lambda^2/\Delta\lambda\) sets the path difference at which the two slit
+      paths decorrelate. When \(L_c\) is smaller than the slit separation times the
+      fringe order, visibility drops and the two-photon correlation \(g^{(2)}\) decays.</p>
+    </div>
+  </section>
+
+</div>
+
+<!-- ════════════════════ PLAYGROUND ════════════════════ -->
+<div class="mode-section" id="section-play" style="display:none;">
+
+<div class="jd-sub-bar">
+  <button class="jd-sub-btn active" data-odsub="snell" onclick="odSubTab('snell')">&#127774; Snell's Law</button>
+  <button class="jd-sub-btn" data-odsub="fresnel" onclick="odSubTab('fresnel')">&#128300; Fresnel</button>
+  <button class="jd-sub-btn" data-odsub="thinfilm" onclick="odSubTab('thinfilm')">&#129514; Thin Film</button>
+  <button class="jd-sub-btn" data-odsub="attenuation" onclick="odSubTab('attenuation')">&#128302; Attenuation</button>
+  <button class="jd-sub-btn" data-odsub="dispersion" onclick="odSubTab('dispersion')">&#128300; Dispersion</button>
+  <button class="jd-sub-btn" data-odsub="coherence" onclick="odSubTab('coherence')">&#127939; Coherence</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     DOUBLE-SLIT COHERENCE — Partial Coherence Simulation
+     ═══════════════════════════════════════════════════════════════ -->
+
+<div class="jd-sub-section" id="odsub-coherence" style="display:none;">
+
+  <section class="macro-panel">
+    <h3>&#127939; Double-Slit Interference — Partial Coherence</h3>
+    <p class="slider-desc" style="font-size:0.9rem; margin-bottom:1rem;">
+      Launch a finite wave packet at a wall with two slits. The spectral width Δλ controls temporal coherence —
+      when Δλ &gt; 0 the two paths become decorrelated once their path difference exceeds the coherence length
+      <code>Lc = λ² / Δλ</code>.
+      Watch fringes wash out and the two-photon correlation <code>g⁽²⁾</code> decay as you increase bandwidth.
+    </p>
+    <iframe
+      src="coherence_double_slit.html"
+      style="width:100%; height:1750px; border:none; border-radius:10px; background:transparent;"
+      title="Partial Coherence Double-Slit Simulation"
+      id="coherence-iframe"
+    ></iframe>
+  </section>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     DISPERSION — ε(ω) + Color Rendering
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="jd-sub-section" id="odsub-snell" style="display:block;">
+
+  <!-- ─── 1. SNELL'S LAW ─── -->
+  <section class="macro-panel pg-section" id="pg-snell">
+    <h3>1. Refraction — Snell's Law</h3>
     <div class="physics-note">
       <details>
-        <summary>What you are seeing</summary>
+        <summary>Why does light bend at an interface?</summary>
         <div class="note-body">
-          A <strong>crystal lattice</strong> (structure &amp; lattice parameter set by material) sits at the centre of the viewport.
-          A laser on the left fires a <strong>photon packet</strong> (additive-glowing sphere) whose colour tracks photon energy:
-          red (IR, ~1 eV) → yellow-green (visible, ~2.5 eV) → violet (UV, &gt;3 eV).
+          When light passes from one medium to another, its speed changes.
+          The wavefronts compress or stretch, causing the ray to bend.
           <br><br>
-          • <strong style="color:#ffdd44">Incident</strong> — photon travels from source toward the lattice left face.
+          <strong>Snell's law:</strong> \(n_1 \sin\theta_1 = n_2 \sin\theta_2\)
           <br>
-          • <strong style="color:#00f0ff">Reflected</strong> — electrons screen the field (metals) or atoms elastically scatter (semiconductors); the packet bounces back.
-          <br>
-          • <strong style="color:#4ade80">Refracted</strong> — below the bandgap / above the plasma edge the packet bends through via Snell’s law.
-          <br>
-          • <strong style="color:#ff4ecd">Absorption glow</strong> — above-gap photons excite e–h pairs (semiconductors), excite the electron sea (metals), or launch phonon waves (insulators).
-          <br>
-          • <strong style="color:#ff6b35">Phonon wave</strong> — high-energy absorption deposits energy into quantized lattice vibrations (orange ring expanding).
+          <strong>Critical angle (TIR):</strong> \(\theta_c = \arcsin(n_2/n_1)\) when \(n_2 &lt; n_1\)
           <br><br>
-          <strong>Snell’s law:</strong> n₁ sin θ₁ = n(E) sin θ₂.  <strong>Fresnel:</strong> reflectivity grows with angle and with k(E).  <strong>Phonons:</strong> repeated absorption heats the lattice; atoms vibrate harder and bonds stretch until energy decays back to 300 K.
+          <strong>What stays constant across the interface?</strong>
+          The <em>frequency</em> \(f\) and <em>photon energy</em> \(E = hf\) are conserved
+          because the electromagnetic boundary conditions force the same time-dependence
+          on both sides of the interface.  What changes are the <em>phase velocity</em>
+          \(v = c/n\), the <em>wave vector</em> \(k = n k_0 = 2\pi/\lambda = \omega/v\),
+          and the <em>wavelength</em> in the medium, \(\lambda_{medium} = \lambda_{vac}/n\).
+          Also note the <em>boundary condition</em>: the electric-field amplitude must be
+          continuous right at the interface point, so the incident, reflected, and
+          transmitted waves all share the same phase at \(z = 0\).
+          <br><br>
+          Drag the sliders to see all of these effects — especially how changing the
+          wavelength slider visibly tightens or loosens the wave period in each medium.
         </div>
       </details>
     </div>
-    <div id="macro-canvas-container" style="width:100%;height:420px;border-radius:12px;overflow:hidden;background:linear-gradient(135deg,#060e1f,#0a0e1a);position:relative;"></div>
-    <div style="display:flex;align-items:center;gap:1rem;margin-top:0.8rem;flex-wrap:wrap;">
-      <button class="preset-btn" onclick="odStartPhotonAnimation()" style="font-size:1.05rem;padding:8px 22px;">🔥 Fire Laser</button>
-      <span style="color:#8899aa;font-size:0.9rem;">Photon color = energy (red→green→violet)</span>
-    </div>
-  </section>
 
-  <!-- Microscopic View — Crystal lattice &amp; mechanism -->
-  <section class="macro-panel">
-    <h3>🔬 Microscopic View — What Happens at the Atomic Scale?</h3>
-    <div class="physics-note">
-      <details>
-        <summary>Expand mechanism by material type</summary>
-        <div class="note-body">
-          <strong>Metal lattice (Cu, Ag, Al):</strong> Ion cores sit in a <strong>free-electron sea</strong> (cyan dots).
-          Below the plasma edge, surface electrons screen the incoming E-field almost perfectly → total reflection.
-          The reflected packet carries the incident colour because no energy is absorbed.
-          Above the plasma edge, electrons can no longer follow the field → partial transmission.
-          Absorption in metals heats the electron gas; electrons then thermalize via phonon scattering, raising lattice temperature.
-          <br><br>
-          <strong>Semiconductor lattice (Si, GaAs):</strong> Covalent bonds (grey cylinders) hold shared valence electrons (grey dots).
-          Below the bandgap <code>E &lt; E_g</code> there are no empty states to accept an electron → the lattice is transparent.
-          Above the bandgap a photon breaks a bond: a valence electron jumps to the conduction band (cyan <code>e⁻</code>), leaving a hole behind (magenta <code>h⁺</code>).
-          The e–h pair drifts apart; recombination later releases light (electroluminescence) or heat (phonons).
-          <br><br>
-          <strong>Insulator lattice (NaCl):</strong> Ionic crystal with alternating Na⁺ (orange) and Cl⁻ (blue) sites.
-          The bandgap is enormous (&gt;8 eV) so visible photons cannot excite electrons across it.
-          At far-IR energies phonon modes resonate: the lattice absorbs photons as <strong>quantized vibrations</strong>.
-          You see an expanding orange phonon wave ring. Energy is stored as lattice heat and gradually dissipates.
-          <br><br>
-          <em>Damping γ</em> = electron–phonon + impurity scattering rate.  
-          <em>Interband transitions</em> (Cu d-band → Fermi) add extra absorption in the red, giving copper its colour.
-        </div>
-      </details>
-    </div>
-  </section>
-
-  <!-- Controls -->
-  <section class="controls">
-    <h3>⚙️ Controls</h3>
     <div class="control-row">
-      <div class="slider-group">
-        <label for="slider-E">Laser Energy E (eV)</label>
-        <input id="slider-E" type="range" min="0.01" max="20" step="0.01" value="2.0"
-               oninput="odChangeSliderE(this.value)">
-        <span id="val-E" class="slider-value">2.00</span> eV · <span id="val-lam" class="slider-value">620</span> nm
-        <p class="slider-desc">Photon energy determines whether you sit below or above the plasma edge (metals) or bandgap (semiconductors). Try NaCl below 0.1 eV to see phonon absorption.</p>
-      </div>
-      <div class="slider-group">
-        <label for="slider-angle">Incident Angle θ (°)</label>
-        <input id="slider-angle" type="range" min="0" max="89" step="1" value="0"
-               oninput="odChangeSliderAngle(this.value)">
-        <span id="val-angle" class="slider-value">0</span>°
-        <p class="slider-desc">Angle affects Fresnel reflectivity and total external reflection when n < 1.</p>
-      </div>
-  </div>
-</section>
+      <div class="slider-group"><label>n&#8321; (incident)</label><input type="range" min="1.0" max="2.5" step="0.01" value="1.00" id="snell-n1" oninput="pgSnellN1(this.value)"><span class="slider-value" id="snell-val-n1">1.00</span></div>
+      <div class="slider-group"><label>n&#8322; (material)</label><input type="range" min="1.0" max="4.0" step="0.01" value="1.00" id="snell-n2" oninput="pgSnellN2(this.value)"><span class="slider-value" id="snell-val-n2">1.00</span></div>
+      <div class="slider-group"><label>&#952;&#8321; incident (°)</label><input type="range" min="0" max="89" step="1" value="30" id="snell-theta" oninput="pgSnellTheta(this.value)"><span class="slider-value" id="snell-val-theta">30°</span></div>
+      <div class="slider-group"><label>&#955; (nm) — photon energy</label><input type="range" min="380" max="750" step="5" value="620" id="snell-lambda" oninput="pgSnellLambda(this.value)"><span class="slider-value" id="snell-val-lambda">620 nm</span></div>
+    </div>
 
-  <!-- ═══════════════════ SPECTRAL RESPONSE ═══════════════════ -->
-  <section class="macro-panel">
-    <h3>📈 Spectral Response — ε(ω), n, κ, R, T, A</h3>
+    
+    <canvas id="snell-canvas" width="740" height="300" style="background:#080815;border-radius:8px;border:1px solid var(--glass-border);display:block;margin:0 auto;"></canvas>
+
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;">
+      <div style="flex:1 1 100px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
+        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">&#952;&#8322;</div>
+        <div id="snell-readout-theta2" style="font-family:var(--font-mono);color:var(--accent-cyan);font-size:1.05rem;font-weight:700;">&#8212;</div>
+      </div>
+      <div style="flex:1 1 100px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
+        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">&#952;&#8345;</div>
+        <div id="snell-readout-thetac" style="font-family:var(--font-mono);color:var(--accent-pink);font-size:1.05rem;font-weight:700;">&#8212;</div>
+      </div>
+      <div style="flex:1 1 100px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
+        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">&#955; vacuum</div>
+        <div id="snell-readout-lamvac" style="font-family:var(--font-mono);color:#ffdd44;font-size:1.05rem;font-weight:700;">620 nm</div>
+      </div>
+      <div style="flex:1 1 100px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
+        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">&#955; in n&#8321;</div>
+        <div id="snell-readout-lam1" style="font-family:var(--font-mono);color:#ffdd44;font-size:1.05rem;font-weight:700;">620 nm</div>
+      </div>
+      <div style="flex:1 1 100px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
+        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">&#955; in n&#8322;</div>
+        <div id="snell-readout-lam2" style="font-family:var(--font-mono);color:#4ade80;font-size:1.05rem;font-weight:700;">413 nm</div>
+      </div>
+      <div style="flex:1 1 100px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
+        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">Reflectance R</div>
+        <div id="snell-readout-R" style="font-family:var(--font-mono);color:#00f0ff;font-size:1.05rem;font-weight:700;">4.0%</div>
+      </div>
+      <div style="flex:1 1 100px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
+        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">Transmittance T</div>
+        <div id="snell-readout-T" style="font-family:var(--font-mono);color:#ffffff;font-size:1.05rem;font-weight:700;">96.0%</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ════════════════════ FRESNEL REFLECTION ════════════════════ -->
+<div class="jd-sub-section" id="odsub-fresnel" style="display:none;">
+
+  <!-- ─── 2. FRESNEL REFLECTION ─── -->
+  <section class="macro-panel pg-section" id="pg-fresnel">
+    <h3>2. Fresnel Reflection</h3>
+    <div class="physics-note">
+      <details>
+        <summary>How much reflects? How much transmits?</summary>
+        <div class="note-body">
+          At every interface, some light reflects and some transmits.
+          The Fresnel amplitude coefficients depend on polarization:
+          <br><br>
+          \(r_s = \dfrac{n_1\cos\theta_1 - n_2\cos\theta_2}{n_1\cos\theta_1 + n_2\cos\theta_2}\)
+          <br>
+          \(r_p = \dfrac{n_2\cos\theta_1 - n_1\cos\theta_2}{n_2\cos\theta_1 + n_1\cos\theta_2}\)
+          <br><br>
+          Reflectance \(R = |r|^2\), Transmittance \(T = 1 - R\) (no absorption).
+        </div>
+      </details>
+    </div>
+
+    <div class="control-row">
+      <div class="slider-group"><label>n&#8321;</label><input type="range" min="1.0" max="2.5" step="0.01" value="1.00" id="fresnel-n1" oninput="pgFresnelN1(this.value)"><span class="slider-value" id="fresnel-val-n1">1.00</span></div>
+      <div class="slider-group"><label>n&#8322;</label><input type="range" min="1.0" max="4.0" step="0.01" value="1.50" id="fresnel-n2" oninput="pgFresnelN2(this.value)"><span class="slider-value" id="fresnel-val-n2">1.50</span></div>
+      <div class="slider-group"><label>&#952;&#8321;</label><input type="range" min="0" max="89" step="1" value="30" id="fresnel-theta" oninput="pgFresnelTheta(this.value)"><span class="slider-value" id="fresnel-val-theta">30°</span></div>
+    </div>
+
+    <div style="text-align:center;margin-bottom:1rem;">
+      <canvas id="fresnel-canvas" width="700" height="260" style="background:#080815;border-radius:8px;border:1px solid var(--glass-border);display:block;margin:0 auto;"></canvas>
+      <div class="msg" id="fresnel-hint" style="margin-top:6px;">Yellow = incident, Cyan = reflected (√R amplitude), Green = transmitted (√T). Bars right: R_s (pink), R_p (green), T (cyan).</div>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;">
+      <div style="flex:1 1 120px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
+        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">R_s</div>
+        <div id="fresnel-readout-Rs" style="font-family:var(--font-mono);color:var(--accent-pink);font-size:1.05rem;font-weight:700;">—</div>
+      </div>
+      <div style="flex:1 1 120px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
+        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">R_p</div>
+        <div id="fresnel-readout-Rp" style="font-family:var(--font-mono);color:var(--accent-green);font-size:1.05rem;font-weight:700;">—</div>
+      </div>
+      <div style="flex:1 1 120px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
+        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">T = 1 − R</div>
+        <div id="fresnel-readout-T" style="font-family:var(--font-mono);color:var(--accent-cyan);font-size:1.05rem;font-weight:700;">—</div>
+      </div>
+      <div style="flex:1 1 120px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
+        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">Phase shift Δφ</div>
+        <div id="fresnel-readout-phase" style="font-family:var(--font-mono);color:var(--text-bright);font-size:1.05rem;font-weight:700;">—</div>
+      </div>
+    </div>
+
+    <!-- Plot: Fresnel coefficients vs angle -->
+    <div class="plots" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;">
+      <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;">
+        <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Fresnel Amplitude Coefficients</h4>
+        <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">
+          Signed amplitude r_s (pink) and r_p (green) vs θ₁. Can be negative → phase flip of π.
+          Vertical cursor = current θ₁ from slider.</p>
+        <div id="fresnel-plot-amp" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;min-height:260px;"></div>
+      </div>
+      <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;">
+        <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Reflectance &amp; Transmittance</h4>
+        <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">
+          Intensity reflectance R_s = |r_s|², R_p = |r_p|² and transmittance T = 1 − R_avg.
+          Vertical cursor = current θ₁ from slider.</p>
+        <div id="fresnel-plot-int" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;min-height:260px;"></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ════════════════════ THIN FILM INTERFERENCE ════════════════════ -->
+<div class="jd-sub-section" id="odsub-thinfilm" style="display:none;">
+
+  <!-- ─── 3. THIN FILM INTERFERENCE ─── -->
+  <section class="macro-panel pg-section" id="pg-thinfilm">
+    <h3>3. Thin Film Interference</h3>
+    <div class="physics-note">
+      <details>
+      <summary>Physical Motivation — Why does R oscillate?</summary>
+        <div class="note-body">
+          <p>Each time the wave reflects inside the film it picks up a round-trip phase
+            \(2\beta = \dfrac{4\pi}{\lambda}\,n_2 d \cos\theta_2\).</p>
+          <p>Whether R rises or falls at \(2\beta = 2m\pi\) depends on the sign of the Fresnel coefficients at the two interfaces:
+            both with same sign (e.g. air–SiO₂–Si) → reflection is <em>constructive</em> and R is <strong>maximum</strong> (Fabry–Pérot);
+            opposite sign (anti-reflection, \(n_2 = \sqrt{n_1 n_3}\)) → reflection is <em>destructive</em> and R is <strong>minimum</strong>.
+            The classic quarter-wave AR coating uses \(d = \lambda/(4n_2)\) so \(\beta = \pi/2\) and the reflected waves cancel.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="material-presets">
+      <h3>&#129514; Layer Presets</h3>
+      <div class="preset-grid">
+        <button class="preset-btn active" onclick="tfSetPreset('air-SiO2-Si')">Air / SiO&#8322; / Si</button>
+        <button class="preset-btn" onclick="tfSetPreset('air-MgF2-glass')">Air / MgF&#8322; / Glass</button>
+        <button class="preset-btn" onclick="tfSetPreset('glass-water-glass')">Glass / Water / Glass</button>
+        <button class="preset-btn" onclick="tfSetPreset('water-oil-air')">Water / Oil / Air</button>
+      </div>
+    </div>
+
+    <div class="control-row">
+      <div class="slider-group"><label>n&#8321; (incident)</label><input type="range" min="1.0" max="2.5" step="0.01" value="1.00" id="slider-n1" oninput="tfSliderN1(this.value)"><span class="slider-value" id="val-n1">1.00</span></div>
+      <div class="slider-group"><label>n&#8322; (film)</label><input type="range" min="1.0" max="4.5" step="0.01" value="1.46" id="slider-n2" oninput="tfSliderN2(this.value)"><span class="slider-value" id="val-n2">1.46</span></div>
+      <div class="slider-group"><label>n&#8323; (substrate)</label><input type="range" min="1.0" max="5.0" step="0.01" value="3.50" id="slider-n3" oninput="tfSliderN3(this.value)"><span class="slider-value" id="val-n3">3.50</span></div>
+      <div class="slider-group"><label>Thickness d (nm)</label><input type="range" min="10" max="800" step="5" value="195" id="slider-d" oninput="tfSliderD(this.value)"><span class="slider-value" id="val-d">195 nm</span></div>
+      <div class="slider-group"><label>Incident angle &#952;&#8321; (&#176;)</label><input type="range" min="0" max="89" step="1" value="30" id="slider-theta1" oninput="tfSliderTheta1(this.value)"><span class="slider-value" id="val-theta1">30&#176;</span></div>
+      <div class="slider-group"><label>Wavelength &#955; (nm)</label><input type="range" min="300" max="1200" step="10" value="620" id="slider-lam" oninput="tfSliderLam(this.value)"><span class="slider-value" id="val-tf-lam">620 nm</span></div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.6rem;flex-wrap:wrap;">
+      <button class="preset-btn" onclick="tfResetPulse()" style="font-size:1.05rem;padding:8px 22px;">&#9654; Start Wave</button>
+      <div class="slider-group" style="flex:1 1 200px;">
+        <label>Wave Energy (x)</label>
+        <input type="range" min="1.0" max="5.0" step="0.5" value="1.0" id="slider-energy" oninput="tfSliderEnergy(this.value)">
+        <span class="slider-value" id="val-energy">1.0x</span>
+      </div>
+    </div>
+
+    <canvas id="tf-canvas" style="display:block;width:100%;border-radius:8px;background:#060810;"></canvas>
+    <div class="live-bar" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;">
+      <div style="flex:1 1 100px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;"><div style="font-size:0.65rem;color:var(--text-dim);">Reflectance R</div><div class="val" id="tf-live-R" style="font-family:var(--font-mono);color:var(--accent-cyan);font-weight:700;">&#8212;</div></div>
+      <div style="flex:1 1 100px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;"><div style="font-size:0.65rem;color:var(--text-dim);">Transmittance T</div><div class="val" id="tf-live-T" style="font-family:var(--font-mono);color:var(--accent-green);font-weight:700;">&#8212;</div></div>
+      <div style="flex:1 1 100px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;"><div style="font-size:0.65rem;color:var(--text-dim);">Phase &#946; (rad)</div><div class="val" id="tf-live-beta" style="font-family:var(--font-mono);color:var(--accent-pink);font-weight:700;">&#8212;</div></div>
+      <div style="flex:1 1 100px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;"><div style="font-size:0.65rem;color:var(--text-dim);">&#952;&#8322;</div><div class="val" id="tf-live-theta2" style="font-family:var(--font-mono);color:var(--text-bright);font-weight:700;">&#8212;</div></div>
+      <div style="flex:1 1 100px;background:var(--bg-deep);padding:6px 10px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;"><div style="font-size:0.65rem;color:var(--text-dim);">&#952;&#8323;</div><div class="val" id="tf-live-theta3" style="font-family:var(--font-mono);color:var(--text-bright);font-weight:700;">&#8212;</div></div>
+    </div>
+
+    <div class="plots" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;">
+      <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;">
+        <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Reflectance &amp; Transmittance</h4>
+        <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;">Airy fringes vs wavelength. Vertical cursor marks current &#955;.</p>
+        <div id="tf-plot-RT" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;min-height:300px;"></div>
+      </div>
+      <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;">
+        <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Standing Wave |E(z)|&#178; inside Film</h4>
+        <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;">Interference of forward + backward waves in n&#8322;.</p>
+        <div id="tf-plot-standing" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;min-height:300px;"></div>
+      </div>
+    </div>
+
+    <div class="equations-block" id="eq-summary" style="margin-top:1rem; font-size:0.88rem; color:var(--text-muted); line-height:1.8;">
+      <strong>Equations:</strong><div style="margin-top:0.6rem; font-size:0.88rem; color:var(--text-muted); line-height:1.8;">
+      \(r_{12} = \dfrac{n_1\cos\theta_1 - n_2\cos\theta_2}{n_1\cos\theta_1 + n_2\cos\theta_2}\)<br>
+      \(t_{12} = \dfrac{2n_1\cos\theta_1}{n_1\cos\theta_1 + n_2\cos\theta_2}\)<br>
+      \(r_{23} = \dfrac{n_2\cos\theta_2 - n_3\cos\theta_3}{n_2\cos\theta_2 + n_3\cos\theta_3}\)<br>
+      \(t_{23} = \dfrac{2n_2\cos\theta_2}{n_2\cos\theta_2 + n_3\cos\theta_3}\)<br>
+      \(\beta = \dfrac{2\pi}{\lambda}\,n_2 d \cos\theta_2\)<br>
+      \(r = \dfrac{r_{12} + r_{23}e^{2i\beta}}{1 + r_{12}r_{23}e^{2i\beta}}\)<br>
+      \(t = \dfrac{t_{12}t_{23}e^{i\beta}}{1 + r_{12}r_{23}e^{2i\beta}}\)<br>
+      \(R = |r|^2\)<br>
+      \(T = \dfrac{n_3\cos\theta_3}{n_1\cos\theta_1} \cdot |t|^2\)
+      </div>
+    </div>
+
+    <div class="insights" style="margin-top:1rem;">
+      <div class="insight-card">
+        <h4>&#128300; Fabry&#8211;P&#233;rot Resonance</h4>
+        <p>When \(r_{23}\) is large (e.g. SiO&#8322; on Si) and \(2\beta = 2m\pi\),
+          the denominator approaches its minimum, giving sharp transmission peaks.
+          This is the principle of optical filters, VCSEL cavities, and spectroscopic etalons.</p>
+      </div>
+    </div>
+
+    <div class="readout-section" style="margin-top:1rem;">
+      <h3>&#128202; Thin Film Live Readout</h3>
+      <table class="readout-table">
+        <thead><tr>
+          <th>n&#8321;</th><th>n&#8322;</th><th>n&#8323;</th><th>d (nm)</th><th>&#955; (nm)</th><th>&#952;&#8321;</th>
+          <th>&#952;&#8322;</th><th>&#952;&#8323;</th><th>r&#8321;&#8322;</th><th>r&#8322;&#8323;</th>
+          <th>&#946; (rad)</th><th>R (%)</th><th>T (%)</th>
+        </tr></thead>
+        <tbody><tr>
+          <td id="live-n1">&#8212;</td><td id="live-n2">&#8212;</td><td id="live-n3">&#8212;</td>
+          <td id="live-d">&#8212;</td><td id="tf-live-lam">&#8212;</td><td id="live-th1">&#8212;</td>
+          <td id="live-th2">&#8212;</td><td id="live-th3">&#8212;</td>
+          <td id="live-r12">&#8212;</td><td id="live-r23">&#8212;</td>
+          <td id="live-beta-t">&#8212;</td><td id="live-R-t">&#8212;</td><td id="live-T-t">&#8212;</td>
+        </tr></tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<!-- ════════════════════ FIELD ATTENUATION & SKIN DEPTH ════════════════════ -->
+<div class="jd-sub-section" id="odsub-attenuation" style="display:none;">
+
+  <!-- ─── 4. ATTENUATION & SKIN DEPTH ─── -->
+  <section class="macro-panel pg-section" id="pg-attenuation">
+    <h3>4. Field Attenuation &amp; Skin Depth — How Far Does Light Penetrate?</h3>
+    <div class="physics-note">
+      <details>
+        <summary>Equations and Physics</summary>
+        <div class="note-body">
+          <p>When a plane wave enters a material, its amplitude decreases exponentially with depth z (<em>Beer–Lambert law</em>). From Hummel Ch 10.4:</p>
+          <pre style="background:rgba(0,0,0,0.3);padding:8px;border-radius:6px;font-size:0.85rem;margin:0.4rem 0;overflow-x:auto;">
+E(z,t) = E&#8320; · exp(&minus;&#945;z) · cos[&#969;(t &minus; zn/c)]
+&#945; = 4&#960;&#954; / &#955; = &#963;/(nc&#949;&#8320;)    <!-- absorbance [Hummel Eq 10.22] -->
+&#948; = 1/&#945; = &#955;/(4&#960;&#954;)          <!-- skin depth [Hummel Eq 10.21] -->
+I(z) = I&#8320; · exp(&minus;2&#945;z)       <!-- intensity falls as |E|&#178; [Hummel Eq 10.19] --></pre>
+          <p><strong>Usage:</strong> Controls set E (eV) and angle &#952;&#8321;. The canvas animates the damped field inside the material.
+            Large &#954; &rarr; small &#948; (light cannot enter).</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="control-row">
+      <div class="slider-group"><label>Laser Energy E (eV)</label><input type="range" min="0.01" max="20" step="0.01" value="2.0" id="atten-slider-E" oninput="pgAttenuationE(this.value)"><span class="slider-value" id="atten-val-E">2.00</span> eV</div>
+      <div class="slider-group"><label>Refractive Index n (fixed)</label><input type="range" min="0.5" max="5" step="0.01" value="1.5" id="atten-slider-n" oninput="pgAttenuationN(this.value)"><span class="slider-value" id="atten-val-n">1.50</span></div>
+    </div>
+
+    <div style="text-align:center;margin-bottom:1rem;">
+      <canvas id="skin-canvas" width="760" height="260" style="background:#080815;border-radius:8px;border:1px solid var(--glass-border);display:block;margin:0 auto;"></canvas>
+      <div class="msg" id="skin-hint" style="margin-top:6px;">Amplitude |E(z)| and intensity I(z) vs depth z. Wave freezes after 2 s; use slider to re-fire.</div>
+      <p style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;line-height:1.4;">
+        <strong style="color:var(--accent-cyan);">Figure A.</strong> 
+        Animated damping inside the material. Cyan: electric-field amplitude <em>E(z,t)</em>; green: intensity <em>I ∝ |E|²</em>.
+        Left white trace shows the incident wave before the surface (z = 0).
+        The window width adapts: <em>5·δ</em> for metals (tight envelope) or <em>20·λ<sub>air</sub></em> for dielectrics (many waves visible).
+      </p>
+    </div>
+
+    <!-- ── Figure B: live readout cards ── -->
+    <div style="background:var(--bg-deep);border:1px solid var(--glass-border);border-radius:8px;padding:12px;margin-top:10px;">
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px;">
+        <div style="flex:1 1 120px;background:rgba(10,10,30,0.6);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
+          <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">Absorbance α</div>
+          <div id="skin-alpha" style="font-family:var(--font-mono);color:var(--accent-cyan);font-size:1.05rem;font-weight:700;">&#8212;</div>
+          <div style="font-size:0.65rem;color:var(--text-muted);">nm⁻¹</div>
+        </div>
+        <div style="flex:1 1 120px;background:rgba(10,10,30,0.6);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
+          <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">Skin depth δ = λ/(4πκ)</div>
+          <div id="skin-delta" style="font-family:var(--font-mono);color:var(--accent-pink);font-size:1.05rem;font-weight:700;">&#8212;</div>
+          <div style="font-size:0.65rem;color:var(--text-muted);">nm</div>
+        </div>
+        <div style="flex:1 1 120px;background:rgba(10,10,30,0.6);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
+          <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">λ_mat = λ_vac/n</div>
+          <div id="skin-lam-mat" style="font-family:var(--font-mono);color:#f59e0b;font-size:1.05rem;font-weight:700;">&#8212;</div>
+          <div style="font-size:0.65rem;color:var(--text-muted);">nm</div>
+        </div>
+        <div style="flex:1 1 120px;background:rgba(10,10,30,0.6);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
+          <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">I(δ)/I₀</div>
+          <div id="skin-ratio" style="font-family:var(--font-mono);color:var(--accent-green);font-size:1.05rem;font-weight:700;">&#8212;</div>
+          <div style="font-size:0.65rem;color:var(--text-muted);">1/e² ≈ 13.5%</div>
+        </div>
+      </div>
+      <p style="font-size:0.78rem;color:var(--text-muted);margin:0;line-height:1.4;">
+        <strong style="color:var(--accent-pink);">Figure B.</strong> 
+        Live computed values at selected <em>E</em> and <em>n</em>. 
+        Absorbance <em>α = 1/δ</em> defines how fast the wave dies. <em>λ<sub>mat</sub> = λ<sub>vac</sub>/n</em> is the wavelength inside the material (phase velocity effect only; does not affect absorbance κ or skin depth δ).
+        <em>I(δ)/I₀ = e⁻² ≈ 13.5%</em> — this is why a metal film only a few <em>δ</em> thick is effectively opaque.
+      </p>
+    </div>
+
+    <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1.5rem;margin-top:1.5rem;">
+      <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Comparison: δ for All Materials at this Energy</h4>
+      <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">
+        Horizontal bars: each row is one material at current E. <strong>Bright = selected material (the one animated above).</strong>
+        X-axis is logarithmic (1 nm … 10⁷ nm). The orange arrow marks λ_air(E) as a physical reference length.</p>
+      <div id="plot-skin" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:8px;height:460px;"></div>
+      <p style="font-size:0.78rem;color:var(--text-muted);margin-top:14px;line-height:1.4;">
+        <strong style="color:#d97706;white-space:nowrap;">Figure C.</strong> 
+        Log-scale comparison of skin depth <em>δ(E)</em> across materials at the chosen photon energy. 
+        <strong>Bright bar = selected material</strong> (the one shown in Figure A); dim bars are the others. 
+        The orange dashed line marks <em>λ<sub>air</sub>(E)</em>: when <em>δ ≪ λ<sub>air</sub></em> the material is a mirror (metals); 
+        when <em>δ ≫ λ<sub>air</sub></em> the material is transparent (dielectrics). 
+        At visible/UV energies most semiconductors sit in between — this is exactly why GaAs photovoltaics absorb sunlight only in a thin top layer while the rest of the cell can stay cold.
+      </p>
+    </div>
+  </section>
+
+</div>
+
+<div class="jd-sub-section" id="odsub-dispersion" style="display:none;">
+
+  <!-- ─── 5. DISPERSION ε(ω) ─── -->
+  <section class="macro-panel pg-section" id="pg-dispersion">
+    <h3>5. Dispersion — Why n and &#954; depend on &#955;</h3>
     <div class="physics-note">
       <details>
         <summary>What these curves show</summary>
         <div class="note-body">
           The optical response of any material is governed by the <strong>complex dielectric function</strong>
-          ε(ω) = ε₁(ω) + iε₂(ω), or equivalently the <strong>complex refractive index</strong> ñ = n + iκ where ε = ñ².
-          <strong>n</strong> is the refractive index (bending / slowing of light); <strong>κ</strong> is the extinction coefficient (absorption / attenuation).
+          &#949;(&#969;) = &#949;&#8321;(&#969;) + i&#949;&#8322;(&#969;), or equivalently the <strong>complex refractive index</strong> &#241; = n + i&#954; where &#949; = &#241;&#178;.
+          <strong>n</strong> is the refractive index; <strong>&#954;</strong> is the extinction coefficient.
           <br><br>
-          <strong>Drude metals:</strong> ε₁ < 0 below the plasma edge → imaginary refractive index → total reflection.
-          Above Ep the metal becomes UV-transparent; damping γ broadens the step.
-          Cu additionally has an interband Gaussian (d-band → Fermi) that steals blue/green light, producing its reddish hue.
-          <br><br>
-          <strong>NaCl:</strong> Lorentz phonon oscillator gives a sharp ε₂ peak near ωTO ≈ 0.02 eV.
-          In the Reststrahlen band (ωTO < E < ωLO) ε₁ < 0 → high reflectivity and strong lattice absorption.
-          This is the IR thermal-radiation behaviour of ionic crystals.
-          <br><br>
-          <strong>Semiconductors:</strong> Below Eg the material is transparent; above Eg interband excitations create strong absorption.
+          <strong>Drude metals:</strong> &#949;&#8321; &lt; 0 below the plasma edge &rarr; total reflection.
+          <strong>NaCl:</strong> Lorentz phonon oscillator gives a sharp &#949;&#8322; peak near &#969;TO.
+          <strong>Semiconductors:</strong> Below E_g the material is transparent; above E_g strong absorption.
         </div>
       </details>
     </div>
 
-    <!-- Canvas ray diagram (2D top-down) -->
-    <div style="text-align:center;">
-      <canvas id="spec-canvas" width="720" height="220" style="background:#080815;border-radius:8px;border:1px solid var(--glass-border);display:block;margin:0 auto;"></canvas>
-      <div class="msg" id="spec-scene-hint" style="margin-top:6px;">Incident ray (left) → sample → reflected / transmitted / absorbed (glow)</div>
-    </div>
-
-    <!-- Live readout bar -->
-    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;">
-      <div style="flex:1 1 140px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">Reflectivity R</div>
-        <div id="spec-R" style="font-family:var(--font-mono);color:var(--accent-green);font-size:1.05rem;font-weight:700;">—</div>
-      </div>
-      <div style="flex:1 1 140px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">Transmission T</div>
-        <div id="spec-T" style="font-family:var(--font-mono);color:var(--accent-cyan);font-size:1.05rem;font-weight:700;">—</div>
-      </div>
-      <div style="flex:1 1 140px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">Absorption A</div>
-        <div id="spec-A" style="font-family:var(--font-mono);color:var(--accent-pink);font-size:1.05rem;font-weight:700;">—</div>
-      </div>
-      <div style="flex:1 1 140px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">Refractive index n · Extinction κ</div>
-        <div id="spec-nk" style="font-family:var(--font-mono);color:var(--text-bright);font-size:1.05rem;font-weight:700;">—</div>
-      </div>
-      <div style="flex:1 1 140px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;">
-        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">Real ε₁ · Imag ε₂</div>
-        <div id="spec-eps" style="font-family:var(--font-mono);color:var(--text-bright);font-size:1.05rem;font-weight:700;">—</div>
+    <div class="material-presets">
+      <h3>&#129514; Material Preset</h3>
+      <div class="preset-grid">
+        <button class="preset-btn active" onclick="odSetMaterial('Cu')">Copper</button>
+        <button class="preset-btn" onclick="odSetMaterial('Ag')">Silver</button>
+        <button class="preset-btn" onclick="odSetMaterial('Al')">Aluminium</button>
+        <button class="preset-btn" onclick="odSetMaterial('Si')">Silicon</button>
+        <button class="preset-btn" onclick="odSetMaterial('GaAs')">GaAs</button>
+        <button class="preset-btn" onclick="odSetMaterial('NaCl')">NaCl</button>
       </div>
     </div>
 
-    <!-- Twin Plotly charts -->
-    <div class="plots" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;">
-      <!-- plot-eps viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Dielectric Function ε(E)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Real ε₁ = n²-κ² and imaginary ε₂ = 2nκ. Drude + Lorentz oscillators.</p>
-  <div id="plot-eps" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;min-height:300px;"></div>
-</div>
-
-      <!-- plot-rt viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Reflectivity & Transmittance</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">R(E), T(E), A(E). Below E_g → transparent. Above → absorbing.</p>
-  <div id="plot-rt" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;min-height:300px;"></div>
-</div>
-
+    <div class="macro-panel" style="margin-top:0.8rem;">
+      <h3>&#128300; Macroscopic View — Photon Beam Interacting with Material</h3>
+      <div class="physics-note">
+        <details>
+          <summary>What you are seeing</summary>
+          <div class="note-body">
+            A <strong>crystal lattice</strong> sits at the centre of the viewport.
+            A laser on the left fires a <strong>photon packet</strong> whose colour tracks photon energy:
+            red (IR, ~1 eV) &rarr; yellow-green (visible, ~2.5 eV) &rarr; violet (UV, &gt;3 eV).
+            <br><br>
+            &bull; <strong style="color:#ffdd44">Incident</strong> &mdash; photon travels from source toward the lattice.
+            <br>
+            &bull; <strong style="color:#00f0ff">Reflected</strong> &mdash; electrons screen the field; the packet bounces back.
+            <br>
+            &bull; <strong style="color:#4ade80">Refracted</strong> &mdash; below the bandgap / above the plasma edge the packet bends through.
+            <br>
+            &bull; <strong style="color:#ff4ecd">Absorption glow</strong> &mdash; above-gap photons excite e&ndash;h pairs.
+            <br>
+            &bull; <strong style="color:#ff6b35">Phonon wave</strong> &mdash; energy deposited into quantized lattice vibrations.
+          </div>
+        </details>
+      </div>
+      <div id="macro-canvas-container" style="width:100%;height:420px;border-radius:12px;overflow:hidden;background:linear-gradient(135deg,#060e1f,#0a0e1a);position:relative;"></div>
+      <div style="display:flex;align-items:center;gap:1rem;margin-top:0.8rem;flex-wrap:wrap;">
+        <button class="preset-btn" onclick="odStartPhotonAnimation()" style="font-size:1.05rem;padding:8px 22px;">🔥 Fire Laser</button>
+        <span style="color:#8899aa;font-size:0.9rem;">Photon color = energy (red&rarr;green&rarr;violet)</span>
+      </div>
     </div>
-  </section>
 
-  <!-- Phonon Insight Card -->
-  <section class="insights" style="margin-top:1rem;">
-    <div class="insight-card" style="grid-column:1 / -1;">
-      <h4>🔊 Phonon Excitation &amp; Lattice Heating</h4>
-      <p>
-        Every absorbed photon dumps a fraction of its energy into <strong>phonons</strong> (quantized lattice vibrations).
-        The phonon bath temperature rises following the Einstein model: <code>T_lat = 300 K + c·E_phonon</code>.
-      </p>
-      <p>
-        As <code>T_lat</code> grows, atoms oscillate with larger amplitude (Debye–Waller factor), and free electrons in metals
-        scatter more strongly off the distorted lattice → <strong>resistivity rises</strong>.
-        Phonons anharmonically decay over ~1 s in this toy model.
-        Repeated high-energy shots heat the lattice; phonon energy dissipates gradually back to 300 K.
-      </p>
+    <div class="macro-panel" style="margin-top:0.8rem;">
+      <h3>&#128300; Microscopic View — What Happens at the Atomic Scale?</h3>
+      <div class="physics-note">
+        <details>
+          <summary>Expand mechanism by material type</summary>
+          <div class="note-body">
+            <strong>Metal lattice (Cu, Ag, Al):</strong> Ion cores sit in a <strong>free-electron sea</strong>.
+            Below the plasma edge, surface electrons screen the incoming E-field almost perfectly &rarr; total reflection.
+            Above the plasma edge, electrons can no longer follow the field &rarr; partial transmission.
+            <br><br>
+            <strong>Semiconductor lattice (Si, GaAs):</strong> Covalent bonds hold shared valence electrons.
+            Below the bandgap E &lt; E_g there are no empty states &rarr; the lattice is transparent.
+            Above the bandgap a photon breaks a bond: a valence electron jumps to the conduction band, leaving a hole behind.
+            <br><br>
+            <strong>Insulator lattice (NaCl):</strong> Ionic crystal with alternating Na&#8314; and Cl&#8315; sites.
+            The bandgap is enormous (&gt;8 eV) so visible photons cannot excite electrons across it.
+            At far-IR energies phonon modes resonate: the lattice absorbs photons as <strong>quantized vibrations</strong>.
+          </div>
+        </details>
+      </div>
     </div>
-  </section>
 
-  <!-- Live Readout Table -->
-  <section class="readout-section">
-    <h3>📊 Live Readout</h3>
-    <table class="readout-table">
-      <thead>
-        <tr>
-          <th>Material</th><th>E (eV)</th><th>λ (nm)</th><th>θ₁</th>
-<th>R (%)</th><th>T (%)</th><th>A (%)</th>
-          <th>Refr.index n</th><th>Extinct. κ</th><th>Real ε₁</th><th>Imag ε₂</th>
-          <th>θ₂</th><th>T_lat (K)</th><th>Outcome</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td id="live-material">Cu</td>
-          <td id="live-E">2.00</td>
-          <td id="live-lam">620</td>
-          <td id="live-theta">0°</td>
-          <td id="live-R">—</td>
-          <td id="live-T">—</td>
-          <td id="live-A">—</td>
-          <td id="live-n">—</td>
-          <td id="live-k">—</td>
-          <td id="live-eps1">—</td>
-          <td id="live-eps2">—</td>
-          <td id="live-theta2">—</td>
-          <td id="live-phonon">300</td>
+    <div class="macro-panel" style="margin-top:0.8rem;">
+      <h3>&#128300; Controls</h3>
+      <div class="control-row">
+        <div class="slider-group"><label>Laser Energy E (eV)</label><input type="range" min="0.01" max="20" step="0.01" value="2.0" id="slider-E" oninput="odChangeSliderE(this.value)"><span id="val-E" class="slider-value">2.00</span> eV &middot; <span id="val-lam" class="slider-value">620</span> nm</div>
+        <div class="slider-group"><label>Incident Angle &#952; (°)</label><input type="range" min="0" max="89" step="1" value="0" id="slider-angle" oninput="odChangeSliderAngle(this.value)"><span id="val-angle" class="slider-value">0</span>°</div>
+      </div>
+    </div>
+
+    <div class="macro-panel" style="margin-top:0.8rem;">
+      <h3>&#128300; Spectral Response &mdash; &#949;(&#969;), n, &#954;, R, T, A</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+        <div style="flex:1 1 140px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;"><div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">Reflectivity R</div><div id="spec-R" style="font-family:var(--font-mono);color:var(--accent-green);font-size:1.05rem;font-weight:700;">—</div></div>
+        <div style="flex:1 1 140px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;"><div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">Transmission T</div><div id="spec-T" style="font-family:var(--font-mono);color:var(--accent-cyan);font-size:1.05rem;font-weight:700;">—</div></div>
+        <div style="flex:1 1 140px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;"><div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">Absorption A</div><div id="spec-A" style="font-family:var(--font-mono);color:var(--accent-pink);font-size:1.05rem;font-weight:700;">—</div></div>
+        <div style="flex:1 1 140px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;"><div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">n &middot; &#954;</div><div id="spec-nk" style="font-family:var(--font-mono);color:var(--text-bright);font-size:1.05rem;font-weight:700;">—</div></div>
+        <div style="flex:1 1 140px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;"><div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">&#949;&#8321; &middot; &#949;&#8322;</div><div id="spec-eps" style="font-family:var(--font-mono);color:var(--text-bright);font-size:1.05rem;font-weight:700;">—</div></div>
+        <div style="flex:1 1 100px;background:var(--bg-deep);padding:8px 12px;border-radius:6px;border:1px solid var(--glass-border);text-align:center;"><div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;">Reflected Color</div><div id="spec-color-swatch" style="width:100%;height:22px;border-radius:4px;margin-top:4px;background:#444;border:1px solid rgba(255,255,255,0.2);"></div></div>
+      </div>
+
+      <div class="plots" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;">
+          <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Dielectric Function &#949;(E)</h4>
+          <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;">Real &#949;&#8321; = n&#178;&minus;&#954;&#178; and imaginary &#949;&#8322; = 2n&#954;.</p>
+          <div id="plot-eps" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;min-height:300px;"></div>
+        </div>
+        <div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;">
+          <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Reflectivity &amp; Transmittance</h4>
+          <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;">R(E), T(E), A(E). Below E_g &rarr; transparent. Above &rarr; absorbing.</p>
+          <div id="plot-rt" style="background:var(--bg-deep);border-radius:8px;border:1px solid var(--glass-border);padding:6px;min-height:300px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="insights" style="margin-top:1rem;">
+      <div class="insight-card" style="grid-column:1 / -1;">
+        <h4>&#128300; Phonon Excitation &amp; Lattice Heating</h4>
+        <p>Every absorbed photon dumps energy into <strong>phonons</strong> (quantized lattice vibrations).
+          The phonon bath temperature rises: <code>T_lat = 300 K + c·E_phonon</code>.
+          &rarr; <strong>resistivity rises</strong>. Phonons anharmonically decay over ~1 s in this toy model.</p>
+      </div>
+    </div>
+
+    <div class="readout-section" style="margin-top:1rem;">
+      <h3>&#128300; Live Readout</h3>
+      <table class="readout-table">
+        <thead><tr>
+          <th>Material</th><th>E (eV)</th><th>&#955; (nm)</th><th>&#952;&#8321;</th>
+          <th>R (%)</th><th>T (%)</th><th>A (%)</th>
+          <th>n</th><th>&#954;</th><th>&#949;&#8321;</th><th>&#949;&#8322;</th>
+          <th>&#952;&#8322;</th><th>T_lat (K)</th><th>Outcome</th>
+        </tr></thead>
+        <tbody><tr>
+          <td id="live-material">Cu</td><td id="live-E">2.00</td><td id="live-lam">620</td>
+          <td id="live-theta">0°</td><td id="live-R">—</td><td id="live-T">—</td><td id="live-A">—</td>
+          <td id="live-n">—</td><td id="live-k">—</td><td id="live-eps1">—</td><td id="live-eps2">—</td>
+          <td id="live-theta2">—</td><td id="live-phonon">300</td>
           <td><span id="live-outcome" class="material-badge reflect">Reflect</span></td>
-        </tr>
-      </tbody>
-    </table>
+        </tr></tbody>
+      </table>
+    </div>
+
+    <div class="insights" style="margin-top:1rem;">
+      <div class="insight-card">
+        <h4>&#128300; Physical Motivation &mdash; Why does n depend on E?</h4>
+        <p>The dielectric function &#949;(&#969;) = &#949;&#8321;(&#969;) + i&#949;&#8322;(&#969;) encodes how the material polarizes under
+          an oscillating electric field. For a free-electron metal:</p>
+        <p style="margin:0.5rem 0;font-family:monospace;font-size:0.95rem;">
+          &#949;&#8321;(&#969;) = 1 &minus; &#969;p&#178; / (&#969;&#178; + &#947;&#178;)
+          <br>
+          &#949;&#8322;(&#969;) = &#969;p&#178; &#947; / (&#969; (&#969;&#178; + &#947;&#178;))
+        </p>
+        <p>The plasma frequency &#969;p marks the boundary between metallic reflection and UV transparency.
+          Damping &#947; = &#8467;/&#964; (scattering rate) broadens this edge.</p>
+      </div>
+      <div class="insight-card">
+        <h4>&#128300; Kramers&ndash;Kronig Causality</h4>
+        <p>Because the response must be causal, &#949;&#8321; and &#949;&#8322; are Hilbert-transform pairs.
+          The UV absorption peak in &#949;&#8322; creates the rise in n(&#969;) (normal dispersion).
+          Any region of strong absorption must be accompanied by anomalous dispersion nearby.</p>
+      </div>
+    </div>
   </section>
 
-  <!-- Insight Cards -->
-  <section class="insights">
-    <div class="insight-card">
-      <h4>📐 Physical Motivation — Why does n depend on E?</h4>
-      <p>
-        The dielectric function ε(ω) = ε₁(ω) + iε₂(ω) encodes how the material polarizes under
-        an oscillating electric field. For a free-electron metal:
-      </p>
-      <p style="margin:0.5rem 0;font-family:monospace;font-size:0.95rem;">
-        ε₁(ω) = 1 − ωp² / (ω² + γ²)
-        <br>
-        ε₂(ω) = ωp² γ / (ω (ω² + γ²))
-      </p>
-      <p>
-        The plasma frequency ωp marks the boundary between metallic reflection and UV transparency.
-        Damping γ = ħ/τ (scattering rate) broadens this edge. Real noble metals have low γ and stay
-        brilliantly reflective; Al has higher damping and a softer edge.
-      </p>
-      <p>
-        For semiconductors and insulators, ε₂ ≠ 0 only when photons have enough energy to excite
-        electrons across the bandgap Eg. Below Eg the material is transparent — the foundation of
-        optical fibers and infrared windows.
-      </p>
+  <!-- ─── 6. COLOR RENDERING ─── -->
+  <section class="macro-panel pg-section" id="pg-color">
+    <h3>6. Color Rendering — What Colour Do You Actually See?</h3>
+    <div class="physics-note">
+      <details>
+        <summary>Equations and Physics</summary>
+        <div class="note-body">
+          <p>A material's apparent colour comes from which wavelengths are reflected (not absorbed). Following standard colourimetry:</p>
+          <pre style="background:rgba(0,0,0,0.3);padding:8px;border-radius:6px;font-size:0.85rem;margin:0.4rem 0;overflow-x:auto;">
+L = &#931;&#8345;  R(&#955;) &middot; I_D65(&#955;) &middot; x&#773;(&#955;)
+M = &#931;&#8345;  R(&#955;) &middot; I_D65(&#955;) &middot; y&#773;(&#955;)    <!-- luminance [CIE 1931] -->
+N = &#931;&#8345;  R(&#955;) &middot; I_D65(&#955;) &middot; z&#773;(&#955;)
+R_rgb = 3.2406&middot;X &minus; 1.5372&middot;Y &minus; 0.4986&middot;Z   <!-- sRGB linear matrix -->
+G_rgb = &minus;0.9689&middot;X + 1.8758&middot;Y + 0.0415&middot;Z
+B_rgb =  0.0557&middot;X &minus; 0.2040&middot;Y + 1.0570&middot;Z</pre>
+          <p><strong>Usage:</strong> The swatch shows the perceived reflected colour under standard daylight (D65).
+            Changing E &rarr; changes &#955; &rarr; changes n,&#954; &rarr; changes R(&#955;) &rarr; colour shifts.</p>
+        </div>
+      </details>
     </div>
-    <div class="insight-card">
-      <h4>🔗 Kramers–Kronig Causality</h4>
-      <p>
-        Because the response must be causal (effect never precedes cause), ε₁ and ε₂ are
-        Hilbert-transform pairs. The UV absorption peak in ε₂ creates the rise in n(ω) (normal dispersion).
-        Any region of strong absorption must be accompanied by anomalous dispersion nearby.
-      </p>
-    </div>
-    <div class="insight-card">
-      <h4>🔬 Try This</h4>
-      <ul>
-        <li>Set Al and sweep E from 10 eV to 20 eV — watch the reflected photon fade and the transmitted ray appear above the plasma edge.</li>
-        <li>Set NaCl and drop E below 0.1 eV — the IR phonon peak in ε₂ creates strong absorption bands responsible for thermal radiation behavior.</li>
-        <li>Compare Cu and Ag at 1 eV — both metals reflect, but Cu's interband absorption (d-band → Fermi) steals some red light, giving it a reddish hue.</li>
-      </ul>
+
+    <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;padding:1rem;background:var(--bg-deep);border-radius:10px;border:1px solid var(--glass-border);">
+      <div style="text-align:center;">
+        <div style="font-size:0.7rem;color:var(--text-dim);margin-bottom:0.4rem;">Reflected Colour (D65)</div>
+        <div id="color-big-swatch" style="width:120px;height:80px;border-radius:8px;background:#444;border:2px solid rgba(255,255,255,0.3);margin:0 auto;box-shadow:0 0 20px rgba(0,240,255,0.15);"></div>
+      </div>
+      <div style="flex:1;min-width:240px;">
+        <div id="color-rgb-text" style="font-family:var(--font-mono);color:var(--accent-cyan);font-size:1rem;font-weight:600;">RGB(128, 128, 128)</div>
+        <div style="font-size:0.82rem;color:var(--text-muted);margin-top:0.4rem;line-height:1.5;">
+          Colour computed via CIE 1931 XYZ &rarr; sRGB under D65 illuminant.
+          <br>
+          <strong>Dominant absorbed &#955;</strong>: <span id="color-absorb-peak" style="color:var(--accent-pink);">—</span> nm
+        </div>
+      </div>
     </div>
   </section>
 
 </div>
 
-<!-- ═════════════════════ CHALLENGES ═════════════════════ -->
+<!-- ════════════════════ SNELL&#39;S LAW ════════════════════ -->
+
+
+
+</div><!-- /section-play -->
+
 <div class="mode-section" id="section-challenge" style="display:none;">
   <section class="challenge-interface">
-    <h3>🎯 Predict the Outcome</h3>
+    <h3>&#127919; Predict the Outcome</h3>
     <div class="timer-bar"><div class="timer-fill" id="ch-timer"></div></div>
     <div id="ch-question" class="ch-question"></div>
     <div id="ch-options" class="ch-options"></div>
@@ -581,7 +932,7 @@
 <!-- ═════════════════════ PUZZLE ═════════════════════ -->
 <div class="mode-section" id="section-puzzle" style="display:none;">
   <section class="puzzle-interface">
-    <h3>🧩 Match Material + Energy to Outcome</h3>
+    <h3>&#129513; Match Material + Energy to Outcome</h3>
     <p>For each case below, choose the dominant macroscopic outcome based on the physics you've explored.</p>
     <div id="puz-list" class="puz-list"></div>
     <button class="submit-btn" onclick="checkODPuzzle()">Check Answers</button>
@@ -589,16 +940,17 @@
   </section>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════ -->
 
 </div>
 
 <aside class="game-sidebar">
   <div class="sidebar-card">
-    <h4>🏆 Badges</h4>
+    <h4>&#127942; Badges</h4>
     <div id="badge-list" class="badge-grid"></div>
   </div>
   <div class="sidebar-card">
-    <h4>📈 Scoreboard</h4>
+    <h4>&#128200; Scoreboard</h4>
     <ul class="stats">
       <li>Challenges: <span id="stat-challenges">0</span></li>
       <li>Puzzles:    <span id="stat-puzzles">0</span></li>
@@ -607,7 +959,7 @@
     </ul>
   </div>
   <div class="sidebar-card">
-    <h4>🧭 Lab Navigator</h4>
+    <h4>&#129517; Lab Navigator</h4>
     <div id="module-nav"></div>
   </div>
 </aside>
@@ -617,20 +969,135 @@
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
-<script src="od_sim.js"></script>
 <script src="od_equations.js"></script>
+<script src="od_playground_sections.js"></script>
+<script src="od_sim.js"></script>
 <script src="od_apps_games.js"></script>
+<script src="tf_sim.js"></script>
+<script src="tf_apps_games.js"></script>
 <script src="../../shared_effects.js"></script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function(){
-  if(typeof initOD==='function') initOD();
-  if(typeof initODGames==='function') initODGames();
-  if(typeof eqInitAll==='function') setTimeout(eqInitAll, 300);
-});
+/* diagnostic: verify key globals exist */
+window.__odDiagnostics = {
+  renderSnellPg: typeof window.renderSnellPg,
+  renderFresnel: typeof window.renderFresnel,
+  eqDrawActive:  typeof window.eqDrawActive,
+  initPlaygroundSections: typeof window.initPlaygroundSections,
+  setGameMode: typeof window.setGameMode,
+  initOD: typeof window.initOD,
+  initTF: typeof window.initTF
+};
 </script>
 
+<script>
+/* ─── Deferred init guard ─── */
+var __OD_ready = false;
+var __OD_inited = { snell:false, fresnel:false, thinfilm:false, attenuation:false, dispersion:false, coherence:false };
 
+function initODPlayground(){
+  if(__OD_ready) return;
+  __OD_ready = true;
+
+  /* Init 2D Snell/Fresnel sections */
+  if(typeof initPlaygroundSections==='function'){
+    try{ initPlaygroundSections(); }catch(e){ console.error('initPlaygroundSections error:', e); }
+  }
+
+  /* Init spectral engine + thin film (3D deferred to Dispersion sub-tab) */
+  if(typeof initTF==='function'){
+    try{ initTF(); }catch(e){ console.error('initTF error:', e); }
+  }
+  if(typeof _odInitNewSections==='function'){
+    try{ _odInitNewSections(); }catch(e){ console.error('_odInitNewSections error:', e); }
+  }
+
+  /* Force re-render */
+  setTimeout(function(){
+    if(typeof renderSnellPg==='function'){ try{ renderSnellPg(); }catch(e){} }
+    if(typeof renderFresnel==='function'){ try{ renderFresnel(); }catch(e){} }
+    if(typeof eqDrawActive==='function'){ try{ eqDrawActive(); }catch(e){} }
+  }, 250);
+
+  /* Mark first sub-tab as inited */
+  __OD_inited.snell = true;
+}
+
+var __OD_lastSub = '';
+function odSubTab(name){
+  /* Stop previous sub-tab's animations */
+  if(__OD_lastSub==='attenuation' && typeof _odStopSkinAnim==='function') _odStopSkinAnim();
+  __OD_lastSub = name;
+
+  /* Hide all sub-sections */
+  var subs = document.querySelectorAll('#section-play .jd-sub-section');
+  for(var si=0;si<subs.length;si++) subs[si].style.display='none';
+  /* Show selected */
+  var el = document.getElementById('odsub-'+name);
+  if(el) el.style.display='block';
+  /* Update sub-tab buttons */
+  var btns = document.querySelectorAll('#section-play .jd-sub-btn');
+  for(var bi=0;bi<btns.length;bi++) btns[bi].classList.remove('active');
+  var activeBtn = document.querySelector('#section-play .jd-sub-btn[data-odsub="'+name+'"]');
+  if(activeBtn) activeBtn.classList.add('active');
+
+  /* Lazy init for this sub-tab */
+  if(!__OD_inited[name]){
+    __OD_inited[name]=true;
+    if(name==='fresnel' && typeof eqSetScreen==='function') eqSetScreen('fresnel');
+    if(name==='attenuation' && typeof eqSetScreen==='function') eqSetScreen('damping');
+    if(name==='thinfilm' && typeof tfRefreshSpectral==='function'){ tfRefreshSpectral(); tfRefreshStanding(); }
+    if(name==='dispersion' && typeof initOD==='function'){ try{ initOD(); }catch(e){} }
+  }
+
+  /* Re-render canvases on every switch */
+  setTimeout(function(){
+    if(name==='snell' && typeof renderSnellPg==='function') renderSnellPg();
+    if(name==='fresnel' && typeof renderFresnel==='function') renderFresnel();
+    if(name==='thinfilm' && typeof tfDrawFrame==='function'){ /* animation loop handles redraw */ }
+    if(name==='attenuation' && typeof _odStartSkinAnim==='function') _odStartSkinAnim();
+    if(name==='dispersion' && typeof odOnResize==='function') odOnResize();
+    if(name==='coherence'){
+      var iframe = document.getElementById('coherence-iframe');
+      if(iframe && iframe.contentWindow) iframe.contentWindow.postMessage({ action:'resize' }, '*');
+    }
+  }, 80);
+
+  /* Resize Plotly plots */
+  if(typeof Plotly !== 'undefined' && Plotly.Plots){
+    var plotDivs = el ? el.querySelectorAll('[id^="plot-"], [id^="fresnel-plot-"], [id^="tf-plot-"]') : [];
+    for(var pi=0;pi<plotDivs.length;pi++){
+      if(plotDivs[pi].layout) Plotly.Plots.resize(plotDivs[pi]);
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  /* Default: show Story tab */
+  if(typeof setGameMode === 'function'){
+    try{ setGameMode('story'); }catch(e){ console.error('setGameMode error:', e); }
+  }
+
+  /* Init games/challenges on load (they are separate tabs) */
+  if(typeof initODGames==='function'){
+    try{ initODGames(); }catch(e){ console.error('initODGames error:', e); }
+  }
+
+  /* MathJax observer for thin film equations */
+  var tfEqBlock = document.getElementById('eq-summary');
+  if (tfEqBlock && window.MathJax && window.MathJax.typesetPromise) {
+    var eqObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          window.MathJax.typesetPromise([tfEqBlock]).catch(function(err){ console.log('MJ typeset err:', err); });
+          eqObserver.disconnect();
+        }
+      });
+    }, { threshold: 0.1 });
+    eqObserver.observe(tfEqBlock);
+  }
+});
+</script>
 
 </body>
 </html>

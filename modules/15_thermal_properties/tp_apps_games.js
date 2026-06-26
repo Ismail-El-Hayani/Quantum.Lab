@@ -21,9 +21,13 @@ var TP_MODULE_NAV = [
   { name: 'Thermal', path: './index.html', current: true }
 ];
 function buildModuleNavTP() {
-  var el = document.getElementById('module-nav'); if (!el) return;
-  el.innerHTML = '';
-  TP_MODULE_NAV.forEach(function(m) { var a = document.createElement('a'); a.href = m.path; a.textContent = m.name; a.className = 'nav-link' + (m.current ? ' current' : ''); if (m.current) a.style.fontWeight = '700'; el.appendChild(a); });
+  var html = '';
+  TP_MODULE_NAV.forEach(function(m) {
+    html += '<a href="' + m.path + '" class="nav-link' + (m.current ? ' current' : '') + '"' + (m.current ? ' style="font-weight:700;"' : '') + '>' + m.name + '</a>';
+  });
+  ['module-nav','module-nav-story','module-nav-theory','module-nav-challenge','module-nav-puzzle'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.innerHTML = html;
+  });
 }
 var TP_BADGES = [
   { id: 'tp-explorer', name: 'Thermal Explorer', desc: 'First playground exploration', icon: '🔥' },
@@ -34,23 +38,34 @@ var TP_BADGES = [
   { id: 'expansion-sage', name: 'Expansion Sage', desc: 'Thermal expansion puzzle solved', icon: '📏' }
 ];
 function renderBadgesTP() {
-  var el = document.getElementById('badge-list'); if (!el || !window._GameState) return;
-  var s = _GameState.earnedBadges;
+  if (!window.__GameState) return;
+  var s = __GameState.earnedBadges;
   var earned = TP_BADGES.filter(function(b){ return s.has(b.id); });
   var pending = TP_BADGES.filter(function(b){ return !s.has(b.id); });
   var html = '';
   if (earned.length) { html += '<div style="margin-bottom:0.5rem;color:var(--accent-green);">✨ Earned:</div>'; earned.forEach(function(b){ html += '<span style="display:inline-block;margin:0.25rem;padding:0.35rem 0.7rem;border-radius:6px;background:rgba(0,240,255,0.08);border:1px solid var(--accent-cyan);font-size:0.8rem;">' + b.icon + ' ' + b.name + '</span>'; }); }
   if (pending.length) { html += '<div style="margin:0.5rem 0;color:var(--text-dim);">🔒 Pending:</div>'; pending.forEach(function(b){ html += '<span style="display:inline-block;margin:0.25rem;padding:0.35rem 0.7rem;border-radius:6px;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-dim);font-size:0.8rem;">' + b.icon + ' ' + b.name + '</span>'; }); }
-  el.innerHTML = html || 'Complete challenges to earn badges!';
+  ['badge-list','badge-list-story','badge-list-theory','badge-list-challenge','badge-list-puzzle'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.innerHTML = html || 'Complete challenges to earn badges!';
+  });
 }
 function updateScoreboardTP() {
-  if (!window._GameState) return;
-  var elCh = document.getElementById('stat-challenges'), elPuz = document.getElementById('stat-puzzles'), elXP = document.getElementById('stat-xp'), elBad = document.getElementById('stat-badges');
-  if (elCh) elCh.textContent = _GameState.moduleScores['tp_challenges'] || 0;
-  if (elPuz) elPuz.textContent = _GameState.moduleScores['tp_puzzles'] || 0;
-  if (elXP) elXP.textContent = _GameState.xp;
-  if (elBad) elBad.textContent = _GameState.earnedBadges.size;
-  var elNav = document.getElementById('nav-xp'); if (elNav) elNav.textContent = _GameState.xp + ' XP';
+  if (!window.__GameState) return;
+  var ch = __GameState.moduleScores['tp_challenges'] || 0;
+  var puz = __GameState.moduleScores['tp_puzzles'] || 0;
+  var xp = __GameState.xp();
+  var badges = __GameState.earnedBadges.size;
+  [['stat-challenges','stat-challenges-story','stat-challenges-theory','stat-chal-ch'],
+   ['stat-puzzles','stat-puzzles-story','stat-puzzles-theory','stat-puz-ch'],
+   ['stat-xp','stat-xp-story','stat-xp-theory','stat-xp-ch'],
+   ['stat-badges','stat-badges-story','stat-badges-theory','stat-badges-ch']].forEach(function(group, idx) {
+    var v = [ch, puz, xp, badges][idx];
+    group.forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = v; });
+  });
+  ['stat-chal-puz','stat-puz-puz','stat-xp-puz','stat-badges-puz'].forEach(function(id, idx) {
+    var el = document.getElementById(id); if (el) el.textContent = [ch, puz, xp, badges][idx];
+  });
+  var elNav = document.getElementById('nav-xp'); if (elNav) elNav.textContent = xp + ' XP';
   renderBadgesTP();
 }
 
@@ -78,8 +93,8 @@ function guessTP(g) {
   else { tpCh.combo = 0; showTPFB(false, 'Incorrect.'); }
   document.getElementById('tp-score').textContent = tpCh.score;
   document.getElementById('tp-combo').textContent = tpCh.combo;
-  if (tpCh.score >= 150 && window._GameState) _GameState.earnedBadges.add('metal-insulator');
-  if (window._GameState) { _GameState.addXP(ok ? 50 : 10, 'tp_challenges'); _GameState.moduleScores['tp_challenges'] = tpCh.score; _GameState.save(); }
+  if (tpCh.score >= 150 && window.__GameState) __GameState.earnedBadges.add('metal-insulator');
+  if (window.__GameState) { __GameState.addXP(ok ? 50 : 10, 'tp_challenges'); __GameState.moduleScores['tp_challenges'] = tpCh.score; __GameState.save(); }
   updateScoreboardTP(); setTimeout(nextTP, 1200);
 }
 function showTPFB(ok, msg) { var el = document.getElementById('tp-feedback'); if (!el) return; el.textContent = msg; el.className = 'challenge-feedback ' + (ok ? 'success' : 'error'); }
@@ -100,7 +115,7 @@ function checkDebye() {
   var ok = Math.abs(guess - debyeCh.theta) < 25;
   fb.textContent = ok ? 'Correct! θD ≈ ' + debyeCh.theta + ' K' : 'Hint: compare your T³ slope to the Debye formula.';
   fb.className = 'challenge-feedback ' + (ok ? 'success' : 'hint');
-  if (ok && window._GameState) { _GameState.addXP(75, 'tp_challenges'); _GameState.earnedBadges.add('debye-sage'); _GameState.save(); updateScoreboardTP(); }
+  if (ok && window.__GameState) { __GameState.addXP(75, 'tp_challenges'); __GameState.earnedBadges.add('debye-sage'); __GameState.save(); updateScoreboardTP(); }
 }
 
 /* ---- Challenge 3: Wiedemann-Franz ---- */
@@ -118,7 +133,7 @@ function checkWF() {
   var ok = Math.abs(guess - wfCh.kappa) / wfCh.kappa < 0.2;
   fb.textContent = ok ? 'Correct! κ ≈ ' + wfCh.kappa.toFixed(1) + ' W/m·K' : 'Hint: κ = L₀·σ·T with L₀≈2.44×10⁻⁸ W·Ω/K².';
   fb.className = 'challenge-feedback ' + (ok ? 'success' : 'hint');
-  if (ok && window._GameState) { _GameState.addXP(100, 'tp_challenges'); _GameState.earnedBadges.add('wf-master'); _GameState.save(); updateScoreboardTP(); }
+  if (ok && window.__GameState) { __GameState.addXP(100, 'tp_challenges'); __GameState.earnedBadges.add('wf-master'); __GameState.save(); updateScoreboardTP(); }
 }
 
 /* ---- Puzzle 1: Build Cv(T) formula ---- */
@@ -136,7 +151,7 @@ function checkTPBuilder() {
   var ok = true; zones.forEach(function(z, i) { if ((z.textContent || '').trim() !== ans[i]) ok = false; });
   var fb = document.getElementById('tp-builder-feedback');
   fb.textContent = ok ? 'Perfect! Cv = βT³ + γT.' : 'Some terms misplaced.'; fb.className = 'challenge-feedback ' + (ok ? 'success' : 'error');
-  if (ok && window._GameState) { _GameState.addXP(60, 'tp_puzzles'); _GameState.earnedBadges.add('cv-builder'); _GameState.save(); updateScoreboardTP(); }
+  if (ok && window.__GameState) { __GameState.addXP(60, 'tp_puzzles'); __GameState.earnedBadges.add('cv-builder'); __GameState.save(); updateScoreboardTP(); }
 }
 
 /* ---- Puzzle 2: Debye vs Einstein ---- */
@@ -162,7 +177,7 @@ function checkModelPuzzle() {
   var list = document.getElementById('model-list'); var items = JSON.parse(list.dataset.items || '[]'); var ok = true;
   items.forEach(function(it, i) { var sel = document.getElementById('model-sel-' + i); if (!sel || sel.value !== it.answer) ok = false; });
   var fb = document.getElementById('model-feedback'); fb.textContent = ok ? 'All correct!' : 'Review the Debye and Einstein assumptions.'; fb.className = 'challenge-feedback ' + (ok ? 'success' : 'error');
-  if (ok && window._GameState) { _GameState.addXP(70, 'tp_puzzles'); _GameState.save(); updateScoreboardTP(); }
+  if (ok && window.__GameState) { __GameState.addXP(70, 'tp_puzzles'); __GameState.save(); updateScoreboardTP(); }
 }
 
 /* ---- Puzzle 3: thermal expansion ---- */
@@ -187,11 +202,25 @@ function checkExpPuzzle() {
   var list = document.getElementById('exp-list'); var items = JSON.parse(list.dataset.items || '[]'); var ok = true;
   items.forEach(function(it, i) { var sel = document.getElementById('exp-sel-' + i); if (!sel || sel.value !== it.answer) ok = false; });
   var fb = document.getElementById('exp-feedback'); fb.textContent = ok ? 'All correct! Anharmonicity is the key.' : 'Review the origin of thermal expansion.'; fb.className = 'challenge-feedback ' + (ok ? 'success' : 'error');
-  if (ok && window._GameState) { _GameState.addXP(120, 'tp_puzzles'); _GameState.earnedBadges.add('expansion-sage'); _GameState.save(); updateScoreboardTP(); }
+  if (ok && window.__GameState) { __GameState.addXP(120, 'tp_puzzles'); __GameState.earnedBadges.add('expansion-sage'); __GameState.save(); updateScoreboardTP(); }
 }
 
 function initTPGames() {
   buildModuleNavTP(); startTPChallenge(); startDebyeChallenge(); startWFChallenge(); updateScoreboardTP();
   initTPBuilder(); initModelPuzzle(); initExpPuzzle();
 }
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initTPGames); else initTPGames();
+
+window.guessTP = guessTP;
+window.checkDebye = checkDebye;
+window.checkWF = checkWF;
+window.checkTPBuilder = checkTPBuilder;
+window.checkModelPuzzle = checkModelPuzzle;
+window.checkExpPuzzle = checkExpPuzzle;
+window.initTPGames = initTPGames;
+window.updateScoreboardTP = updateScoreboardTP;
+
+window.startTPChallenge = startTPChallenge;
+window.nextTP = nextTP;
+window.updateScoreboardTP = updateScoreboardTP;
+window.renderBadgesTP = renderBadgesTP;
+window.buildModuleNavTP = buildModuleNavTP;

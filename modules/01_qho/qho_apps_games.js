@@ -60,10 +60,7 @@ var __QHO = {
   animating: false,
   animFrame: null,
   animT: 0,
-  n: 0,
-  alpha: 0,
-  showClassical: false,
-  sliders: null,
+  // Challenge/puzzle state only; Playground is driven by qho_sim_new.js
   // Challenge state
   challenge: {
     active: false,
@@ -84,107 +81,11 @@ var __QHO = {
   selectedTransitions: {}
 };
 
-// ===== PLAYGROUND =====
-function plotPlayground(n, alpha, showClassical) {
-  var x = linspace(-5, 5, 300);
-  var psi = x.map(function(xi) { return qhoPsi(n, xi); });
-  var prob = x.map(function(xi) { return qhoProb(n, xi); });
-  var V = x.map(function(xi) { return 0.5 * xi * xi; });
 
-  var traces = [
-    { x: x, y: psi, mode: 'lines', name: 'Ψ(x)', line: { color: '#00f0ff', width: 2 } },
-    { x: x, y: prob, mode: 'lines', name: '|Ψ|²', line: { color: '#c084fc', width: 2, dash: 'dash' } },
-    { x: x, y: V, mode: 'lines', name: 'V(x)', line: { color: '#facc15', width: 2, dash: 'dot' } }
-  ];
 
-  // Classical turning point
-  if (showClassical) {
-    var E_n = (n + 0.5);
-    var xTP = Math.sqrt(2 * E_n);
-    traces.push(
-      { x: [xTP, xTP], y: [-2, 2], mode: 'lines', line: { color: '#4ade80', width: 2, dash: 'solid' }, name: 'Turning point' },
-      { x: [-xTP, -xTP], y: [-2, 2], mode: 'lines', line: { color: '#4ade80', width: 2, dash: 'solid' }, name: '-Turning point' }
-    );
-  }
 
-  if (_qhoPlotCheck()) Plotly.react('plot-playground', traces, _extend(_darkLayout, {
-    title: { text: 'QHO Wavefunction n=' + n, font: { size: 13 } },
-    xaxis: { title: 'x (natural units)' },
-    yaxis: { title: 'Amplitude' },
-    legend: { x: 1.02, y: 1, bgcolor: 'rgba(10,10,15,0.8)' }
-  }), { responsive: true, displayModeBar: false });
 
-  // Animate superposition
-  if (alpha > 0 && !__QHO.animating) {
-    animateSuperposition(n, alpha);
-  }
-}
 
-function animateSuperposition(n, alpha) {
-  __QHO.animating = true;
-  __QHO.animT = 0;
-  var x = linspace(-5, 5, 200);
-
-  function frame() {
-    if (!__QHO.animating) return;
-    __QHO.animT += 0.03;
-    var t = __QHO.animT;
-
-    var psi1 = alpha === 0 ? qhoPsi(n, x[0]) : qhoPsi(n, x[0]);
-    var psi2 = alpha === 0 ? 0 : qhoPsi(n + 1, x[0]);
-    var combined = x.map(function(xi, i) {
-      var p1 = qhoPsi(n, xi);
-      var p2 = qhoPsi(n + 1, xi);
-      return (1 - alpha) * p1 + alpha * p2 * Math.cos(t);
-    });
-    var prob = combined.map(function(p) { return p * p; });
-
-    if (_qhoPlotCheck()) Plotly.animate('plot-playground', {
-      data: [{ y: combined }, { y: prob }]
-    }, { transition: { duration: 0 }, frame: { duration: 0 } });
-    __QHO.animFrame = requestAnimationFrame(frame);
-  }
-  frame();
-}
-
-function stopQHOGameAnim() {
-  __QHO.animating = false;
-  if (__QHO.animFrame) cancelAnimationFrame(__QHO.animFrame);
-}
-
-function toggleAnimation() {
-  var btn = document.getElementById('btn-animate-play');
-  if (__QHO.animating) {
-    stopQHOGameAnim();
-    btn.textContent = '⏵ Animate time evolution';
-    btn.classList.remove('active');
-  } else {
-    animateSuperposition(__QHO.n, __QHO.alpha);
-    btn.textContent = '⏸ Stop animation';
-    btn.classList.add('active');
-    __GameState.addXP(5, 'Animation started');
-  }
-}
-
-function toggleClassical() {
-  __QHO.showClassical = !__QHO.showClassical;
-  var btn = document.getElementById('btn-classical');
-  var val = document.getElementById('val-classical');
-  if (__QHO.showClassical) {
-    btn.classList.add('active');
-    val.textContent = 'ON';
-  } else {
-    btn.classList.remove('active');
-    val.textContent = 'OFF';
-  }
-  plotPlayground(__QHO.n, __QHO.alpha, __QHO.showClassical);
-}
-
-function updateLiveReadout(n, alpha) {
-  document.getElementById('live-E').textContent = (n + 0.5).toFixed(1) + 'ℏω';
-  document.getElementById('live-nodes').textContent = n;
-  document.getElementById('live-x2').textContent = (n + 0.5).toFixed(1) + 'a₀²';
-}
 
 // ===== CHALLENGE 1: MATCH WAVEFUNCTION =====
 function startWaveMatch() {
@@ -386,9 +287,10 @@ function checkZeroPointAnswer(ans) {
     __GameState.unlock({ id: 'uncertainty_crusher', title: 'Uncertainty Crusher', desc: 'Correctly resolved the zero-point energy paradox', icon: '❄', xp: 25 });
     particleBurst(window.innerWidth/2, 400, '#00f0ff');
 
-    // Animate the particle bouncing
-    anim.innerHTML = '<div id="zpe-bounce" style="width:20px;height:20px;border-radius:50%;background:var(--accent-cyan);position:relative;box-shadow:0 0 20px rgba(0,212,255,0.5);"></div>';
-    var el = document.getElementById('zpe-bounce');
+    // Animate the particle bouncing (no persistent ID needed)
+    anim.innerHTML = '<div id="qho-bounce-particle" style="width:20px;height:20px;border-radius:50%;background:var(--accent-cyan);position:relative;box-shadow:0 0 20px rgba(0,212,255,0.5);"></div>';
+    var el = document.getElementById('qho-bounce-particle');
+    if (!el) return;
     var pos = 0, vel = 3;
     function bounce() {
       pos += vel; vel += 0.2;
@@ -674,31 +576,6 @@ function buildModuleNav() {
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', function() {
-  // If plot-playground exists (legacy standalone page), init playground
-  var hasPlayground = !!document.getElementById('plot-playground');
-  if (hasPlayground) {
-    var nSlider = document.getElementById('slider-n');
-    var aSlider = document.getElementById('slider-alpha');
-
-    if (nSlider) {
-      nSlider.addEventListener('input', function(e) {
-        __QHO.n = Number.parseInt(e.target.value);
-        document.getElementById('val-n').textContent = __QHO.n;
-        updateLiveReadout(__QHO.n, __QHO.alpha);
-        plotPlayground(__QHO.n, __QHO.alpha, __QHO.showClassical);
-      });
-    }
-
-    if (aSlider) {
-      aSlider.addEventListener('input', function(e) {
-        __QHO.alpha = parseFloat(e.target.value);
-        document.getElementById('val-alpha').textContent = __QHO.alpha.toFixed(2);
-      });
-    }
-
-    plotPlayground(0, 0, false);
-    updateLiveReadout(0, 0);
-  }
 
   // Init challenges when mode switches (only if challenge elements exist)
   var hasChallenge = !!document.getElementById('challenge-target-plot');

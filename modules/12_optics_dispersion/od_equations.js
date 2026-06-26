@@ -1255,6 +1255,9 @@ function eqDrawActive() {
   else if (eqState.screen === 'thinfilm') eqDrawThinFilm();
 }
 
+/* expose to global for re-render hooks */
+window.eqDrawActive = eqDrawActive;
+
 /* ─── PULSE RESET ─── */
 function eqResetSnellPulse() {
   if (eqState.snellPulse) { eqState.snellPulse.phase = 'idle'; }

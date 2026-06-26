@@ -181,6 +181,7 @@ function condResizeCanvas() {
 /* === Physics step === */
 function condPhysicsStep() {
   var geo = COND_CANVAS;
+  if (!geo.ctx || geo.width === 0 || geo.height === 0) return;
   var st = COND_STATE;
   var w = geo.width, h = geo.height;
 
@@ -482,6 +483,7 @@ function drawLiveReadout(ctx, w, h, st) {
 function condDrawFrame() {
   var geo = COND_CANVAS;
   var ctx = geo.ctx;
+  if (!ctx) return;
   var w = geo.width, h = geo.height;
   var st = COND_STATE;
   var t = geo.frame * 0.03;
@@ -509,6 +511,7 @@ function condDrawFrame() {
 /* === Animation loop === */
 function condAnimate() {
   if (!COND_CANVAS.running || COND_STATE.paused) return;
+  if (!COND_CANVAS.ctx) { COND_CANVAS.raf = requestAnimationFrame(condAnimate); return; }
   condPhysicsStep();
   condDrawFrame();
   COND_CANVAS.raf = requestAnimationFrame(condAnimate);
@@ -760,10 +763,10 @@ function condUpdateReadout() {
 /* ===== Slider wiring ===== */
 function condWireSliders() {
   var ids = {
-    'slider-Efield': function(v) { COND_STATE.Efield = v; document.getElementById('val-Efield').textContent = v.toFixed(3); },
-    'slider-tau': function(v) { COND_STATE.tau = v; document.getElementById('val-tau').textContent = v.toFixed(0); condInitLattice(); condInitElectrons(); },
-    'slider-T-cond': function(v) { COND_STATE.T = v; document.getElementById('val-T-cond').textContent = v; },
-    'slider-n-cond': function(v) { COND_STATE.n = v; document.getElementById('val-n-cond').textContent = v.toExponential(1); }
+    'slider-Efield': function(v) { COND_STATE.Efield = v; document.getElementById('val-Efield').textContent = v.toFixed(3); if (typeof __COND !== 'undefined') __COND.Efield = v; },
+    'slider-tau': function(v) { COND_STATE.tau = v; document.getElementById('val-tau').textContent = v.toFixed(0); condInitLattice(); condInitElectrons(); if (typeof __COND !== 'undefined') __COND.tau = v; },
+    'slider-T-cond': function(v) { COND_STATE.T = v; document.getElementById('val-T-cond').textContent = v; if (typeof __COND !== 'undefined') __COND.T = v; },
+    'slider-n-cond': function(v) { COND_STATE.n = v; document.getElementById('val-n-cond').textContent = v.toExponential(1); if (typeof __COND !== 'undefined') __COND.n = v; }
   };
   for (var id in ids) {
     var el = document.getElementById(id);

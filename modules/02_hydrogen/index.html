@@ -7,7 +7,17 @@
   <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"
         integrity="sha384-Hl48Kq2HifOWdXEjMsKo6qxqvRLTYqIGbvlENBmkHAxZKIGCXv43H6W1jA671RzC"
         crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js" crossorigin="anonymous"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+    }
+  }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    window.THREE = THREE;
+  </script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <link rel="stylesheet" href="../../shared_styles.css">
 <style>
@@ -33,23 +43,6 @@
   .level-name { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-dim); width: 50px; text-align: right; }
   .level-energy { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-yellow); width: 70px; }
   
-  /* NEW ORGANIZED LAYOUT */
-  .lab-container { 
-    display: grid; 
-    grid-template-columns: 1fr 350px; 
-    gap: 2rem; 
-    align-items: start; 
-  }
-  .viz-area { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 1.5rem; 
-  }
-  .viz-grid { 
-    display: grid; 
-    grid-template-columns: 1fr 1fr; 
-    gap: 1.5rem; 
-  }
   .sim-card { 
     background: rgba(0,0,0,0.4); 
     border: 1px solid var(--glass-border); 
@@ -73,14 +66,16 @@
     letter-spacing: 1px;
     z-index: 10; 
   }
-  .sim-content { 
-    height: 400px; 
-    width: 100%; 
+  .sim-content {
+    width: 100%;
+    height: 100%;
     display: block;
+    position: relative;
   }
-  .full-width-sim { 
-    height: 300px; 
-    width: 100%; 
+  .full-width-sim {
+    width: 100%;
+    height: 100%;
+    position: relative;
   }
   .viz-meta { padding: 0.55rem 0.9rem; border-top: 1px solid var(--glass-border); background: rgba(0,0,0,0.15); }
   .viz-meta h4 { margin: 0 0 0.25rem; font-size: 0.82rem; color: var(--text-main); }
@@ -95,6 +90,12 @@
   .dot-green  { background: #4ade80; box-shadow: 0 0 4px #4ade80; }
   .dot-cyan2  { background: #00f0ff; }
   .dot-red    { background: #ff4ecd; }
+
+  .spectrum-line.correct { background: var(--accent-green) !important; box-shadow: 0 0 8px var(--accent-green); }
+  .spectrum-line.wrong   { background: var(--accent-red) !important; box-shadow: 0 0 8px var(--accent-red); }
+  .energy-particle.correct { border: 2px solid var(--accent-green); }
+  .energy-particle.wrong { border: 2px solid var(--accent-red); }
+
   .plot-desc {
     margin: 0.6rem 0 1.2rem;
     padding: 0.8rem 1rem;
@@ -105,8 +106,247 @@
     color: var(--text-muted);
     line-height: 1.6;
   }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   CLEANUP ADDED: canonical module layout helpers
+   ═══════════════════════════════════════════════════════════════ */
+.mode-section { display: none; }
+.mode-section.active { display: block; }
+
+.game-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 1.25rem;
+  align-items: start;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+@media (max-width: 1000px) { .game-layout { grid-template-columns: 1fr; } }
+
+.game-sidebar.static { position: static; }
+
+.sidebar-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.sidebar-card h4 { margin: 0 0 0.6rem; font-size: 0.95rem; color: var(--text-bright); }
+
+.macro-panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 1.2rem;
+  margin-bottom: 1rem;
+}
+.macro-panel h3 { margin: 0 0 0.8rem; font-size: 1.1rem; color: var(--text-bright); }
+
+.insights {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 960px) { .insights { grid-template-columns: 1fr; } }
+
+.mode-icon { margin-right: 0.35rem; }
+
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 0.2rem;
+  vertical-align: middle;
+}
+
+.challenge-difficulty {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-left: auto;
+}
+.easy, .challenge-difficulty.easy { background: rgba(74,222,128,0.12); color: #4ade80; }
+.medium, .challenge-difficulty.medium { background: rgba(250,204,21,0.12); color: #facc15; }
+.hard, .challenge-difficulty.hard { background: rgba(255,85,85,0.12); color: #ff5555; }
+.master, .challenge-difficulty.master { background: rgba(192,132,252,0.12); color: #c084fc; }
+
+.section-divider { height: 1px; background: var(--glass-border); margin: 1rem 0; }
+
+.insight-card {
+  background: var(--bg-panel); border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg); padding: 1rem; margin-top: 1rem;
+}
+.insight-title { font-size: 1rem; font-weight: 700; color: var(--text-bright); margin-bottom: 0.5rem; }
+.insight-card p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.7; }
+
+.equation-box {
+  background: rgba(0,0,0,0.25); border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md); padding: 0.8rem 1rem; margin-top: 0.8rem;
+  font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted); overflow-x: auto;
+}
+
+.challenge-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+.challenge-reward { font-size: 0.8rem; color: var(--accent-yellow); margin-bottom: 0.8rem; }
+.challenge-feedback { font-size: 0.85rem; margin-top: 0.5rem; min-height: 1.2em; padding: 0.4rem 0.6rem; border-radius: 6px; }
+.challenge-feedback.success { background: rgba(74,222,128,0.1); color: var(--accent-green); }
+.challenge-feedback.error { background: rgba(255,85,85,0.1); color: var(--accent-red); }
+.challenge-feedback.hint { background: rgba(250,204,21,0.1); color: var(--accent-yellow); }
+
+.viz-card {
+  background: var(--bg-panel); border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg); padding: 1rem; margin-bottom: 1rem;
+}
+.viz-card h4 { font-size: 0.95rem; color: var(--text-bright); margin: 0 0 0.3rem; }
+.viz-card p { font-size: 0.8rem; color: var(--text-dim); margin: 0 0 0.6rem; line-height: 1.5; }
+.plot-container { min-height: 260px; }
+.plot-container canvas, .plot-container > div { width: 100% !important; }
+
+/* ═══════════════════════════════════════════════════════════════
+   PLAYGROUND TABS: Module 15-style underline tabs + controls
+   ═══════════════════════════════════════════════════════════════ */
+.challenge-panel {
+  background: var(--bg-panel); border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg); padding: 1rem; margin-bottom: 1rem;
+}
+.challenge-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; }
+.challenge-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; background: rgba(0,240,255,0.08); }
+.challenge-title { font-weight: 700; color: var(--text-bright); font-size: 0.95rem; }
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.4rem;
+  border-bottom: 1px solid var(--glass-border);
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 52px;
+  z-index: 20;
+  background: rgba(5,5,10,0.75);
+  backdrop-filter: blur(10px);
+  padding-top: 0.4rem;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+.tab-btn {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.tab-btn:hover { color: var(--text-main); }
+.tab-btn.active { color: var(--accent-cyan); border-bottom-color: var(--accent-cyan); }
+
+.tab-content { display: none; visibility: hidden; }
+.tab-content.active {
+  display: block;
+  visibility: visible;
+}
+
+.side-panel { position: sticky; top: 80px; }
+
+/* control rows matching module 15 */
+.control-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem; }
+.control-label { font-size: 0.82rem; color: var(--text-dim); }
+.control-value { font-family: var(--font-mono); color: var(--accent-cyan); font-weight: 700; font-size: 0.9rem; }
+.unit-tag { font-size: 0.75rem; color: var(--text-dim); margin-left: 0.3rem; }
+input[type="range"] { width: 100%; margin-bottom: 0.4rem; accent-color: var(--accent-cyan); }
+
+.physics-note { margin-bottom: 0.6rem; }
+.physics-note summary { font-size: 0.9rem; color: var(--accent-cyan); cursor: pointer; font-weight: 600; }
+.physics-note .note-body { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-top: 0.4rem; }
+
+.readout-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 0.5rem; margin-top: 0.8rem; }
+.readout-cell { background: var(--bg-deep); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--glass-border); text-align: center; }
+.readout-label { font-size: 0.68rem; color: var(--text-dim); text-transform: uppercase; }
+.readout-value { font-family: var(--font-mono); color: var(--accent-cyan); font-size: 1.05rem; font-weight: 700; }
+
+.figure-wrap {
+  background: var(--bg-panel);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: 0.8rem;
+  display: flex;
+  flex-direction: column;
+}
+.figure-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.9rem;
+  background: rgba(0,0,0,0.25);
+  border-bottom: 1px solid var(--glass-border);
+  flex-shrink: 0;
+}
+.figure-title { font-family: var(--font-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent-cyan); }
+.figure-badge { font-size: 0.7rem; color: var(--text-dim); font-family: var(--font-mono); }
+.figure-body {
+  padding: 0.8rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 360px;
+}
+.figure-stage {
+  width: 560px;
+  height: 360px;
+  max-width: 100%;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--bg-deep);
+  border: 1px solid var(--glass-border);
+  margin: 0 auto;
+}
+.figure-stage .sim-content,
+.figure-stage .sim-content.full-width-sim {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  max-height: 100% !important;
+  position: relative !important;
+}
+.figure-stage .js-plotly-plot,
+.figure-stage .plotly,
+.figure-stage .svg-container,
+.figure-stage .main-svg {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  min-height: 100% !important;
+}
+.figure-stage canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 0;
+}
+.figure-meta {
+  padding: 0.55rem 0.9rem;
+  border-top: 1px solid var(--glass-border);
+  background: rgba(0,0,0,0.15);
+  flex-shrink: 0;
+}
+
+@media (max-width: 720px) {
+  .tabs { gap: 0.2rem; }
+  .tab-btn { padding: 0.45rem 0.7rem; font-size: 0.78rem; }
+  .side-panel { position: static; }
+}
 </style>
 </head>
+
 <body>
 
 <!-- AMBIENT ORBS -->
@@ -128,11 +368,18 @@
   <p class="hero-desc">The simplest atom reveals the deepest truths: orbitals, spectra, and the quantum leap.</p>
 </div>
 
+
 <div class="game-container">
 
   <!-- MODE SELECTOR -->
   <div class="game-mode-bar">
-    <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">
+    <button class="game-mode-btn active" id="mode-story" onclick="setGameMode('story')">
+      <span class="mode-icon">📖</span> Story
+    </button>
+    <button class="game-mode-btn" id="mode-theory" onclick="setGameMode('theory')">
+      <span class="mode-icon">🎓</span> Theory
+    </button>
+    <button class="game-mode-btn" id="mode-play" onclick="setGameMode('play')">
       <span class="mode-icon">🔬</span> Playground
     </button>
     <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">
@@ -143,37 +390,270 @@
     </button>
   </div>
 
-  <!-- ===== PLAYGROUND MODE ===== -->
-  <div class="mode-section" id="section-play">
-    <div class="playground-area">
-      <div class="playground-header">
-        <div class="playground-title">🔬 Orbital Sandbox</div>
-        <div class="playground-level">Interact with quantum numbers to observe the shift from classical orbits to probability density.</div>
-      </div>
 
-      <div class="lab-container">
-        <!-- MAIN VISUALS -->
-        <div class="viz-area">
-          <div class="viz-grid">
-            <div class="sim-card">
-              <div class="sim-card-label">Radial Wavefunction</div>
-              <div class="sim-content" id="plot-orbitals"></div>
-              <div class="viz-meta">
-                <h4>Radial Wavefunction R<sub>nl</sub>(r) and Probability Density</h4>
-                <p>The solid cyan trace shows the radial part of the hydrogen wavefunction <em>R<sub>nl</sub>(r)</em>, while the dashed purple fill shows <em>r²|R|<sup>2</sup></em> — the probability of finding the electron between <em>r</em> and <em>r + dr</em>. The yellow dotted line marks ⟨<em>r</em>⟩, the expectation radius of the chosen orbital.</p>
+  <!-- ============================================================ -->
+  <!--  STORY / THEORY / PLAYGROUND                               -->
+  <!-- ============================================================ -->
+  <!-- ═══════════════════════════════════════════════════════════════
+   STORY MODE
+   ═══════════════════════════════════════════════════════════════ -->
+  <div class="mode-section active" id="section-story">
+    <div class="game-layout">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>📖 The Story — The Hydrogen Atom</h3>
+          <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;margin-bottom:1rem;">
+            For centuries, sunlight was simply light. Then, in 1814, Fraunhofer noticed dark lines cutting across the solar
+            spectrum — signatures that the Sun itself was absorbing light at precise wavelengths. Decades later, Balmer found
+            a simple formula for hydrogen's visible lines, but no one knew why it worked. Hydrogen, the simplest atom, became
+            the Rosetta Stone of quantum mechanics.
+          </p>
+          <div class="insights">
+            <div class="insight-card">
+              <div class="insight-title">🧪 Why It Matters</div>
+              <p>
+                Hydrogen fuels stars, fills interstellar space, and gives us the 21 cm line that maps galaxies. Its spectrum
+                calibrates telescopes, tests fundamental constants, and provides the energy-level template used to understand
+                every other atom. Every semiconductor band diagram, every laser transition, every quantum dot begins with lessons
+                learned from hydrogen.
+              </p>
+            </div>
+            <div class="insight-card">
+              <div class="insight-title">🤯 What Surprprised Physicists</div>
+              <p>
+                Classical electrons orbiting a nucleus should spiral inward and radiate within nanoseconds. Instead, hydrogen
+                emits only specific colours — and its ground state is stable. Bohr patched the classical picture with ad-hoc
+                quantization, but the real explanation came from Schrödinger's wave equation: electrons are not orbiting
+                particles; they are stationary probability clouds described by quantum numbers \(n\), \(l\), and \(m\).
+              </p>
+            </div>
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">🎮 How the Playground Lets You Feel It</div>
+              <p>
+                Switch between the Bohr-style orbit and the quantum probability cloud to feel the classical-to-quantum leap.
+                Drag \(n\) and \(l\) to see orbitals grow and acquire nodes. Fire virtual photons in the spectrum tab and watch the
+                Rydberg formula predict every line. Turn on a magnetic field and witness the Zeeman splitting that revealed the
+                electron's magnetic moment.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Module Navigator</h4>
+          <div id="module-nav"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);line-height:1.6;">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+   THEORY MODE
+   ═══════════════════════════════════════════════════════════════ -->
+  <div class="mode-section" id="section-theory" style="display:none;">
+    <div class="game-layout">
+      <div class="game-main">
+    <section class="macro-panel">
+      <h3>🎓 Theory — From the Bohr Model to the Schrödinger Atom</h3>
+      <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;margin-bottom:1rem;">
+        Hydrogen is special because its single electron moves in the exact \(1/r\) Coulomb potential of the proton. The
+        Schrödinger equation separates into radial and angular parts, giving a complete set of orbitals labelled by three
+        quantum numbers.
+      </p>
+      <div class="insights">
+        <div class="insight-card" style="grid-column:1/-1;">
+          <div class="insight-title">1. The Wavefunction</div>
+          <p>
+            The full orbital is a product of a radial function \(R_{nl}(r)\) and a spherical harmonic
+            \(Y_{lm}(\theta,\phi)\). The probability density of finding the electron at a point is the squared modulus of
+            this product:
+          </p>
+          <div class="equation-box">
+            $$\psi_{{nlm}}(r, \theta, \phi) = R_{{nl}}(r)\, Y_{{lm}}(\theta, \phi), \qquad P(r,\theta,\phi) \propto |\psi_{{nlm}}|^2$$
+          </div>
+        </div>
+        <div class="insight-card" style="grid-column:1/-1;">
+          <div class="insight-title">2. Energy Levels</div>
+          <p>The Coulomb potential gives the famous Rydberg spectrum:</p>
+          <div class="equation-box">
+            $$E_n = -\frac{{13.6\ \text{{eV}}}}{{n^2}}$$
+          </div>
+        </div>
+        <div class="insight-card" style="grid-column:1/-1;">
+          <div class="insight-title">3. Quantum Numbers</div>
+          <p>The integer labels emerge from boundary conditions on the wavefunction:</p>
+          <div class="equation-box">
+            $$n = 1,2,3,... \quad l = 0,1,...,n-1 \quad m = -l,...,+l$$
+          </div>
+          <p>\(n\) sets the energy and average size, \(l\) sets the orbital shape and number of radial nodes, and \(m\) sets the orientation in an external field.</p>
+        </div>
+        <div class="insight-card" style="grid-column:1/-1;">
+          <div class="insight-title">4. The Rydberg Formula</div>
+          <p>Photons are emitted or absorbed when the electron jumps between shells:</p>
+          <div class="equation-box">
+            $$\frac{{1}}{{\lambda}} = R_\infty \left(\frac{{1}}{{n_f^2}} - \frac{{1}}{{n_i^2}}\right)$$
+          </div>
+        </div>
+        <div class="insight-card" style="grid-column:1/-1;">
+          <div class="insight-title">5. Zeeman Splitting</div>
+          <p>In a weak magnetic field, each orbital level with angular momentum \(l\) splits into \(2l+1\) sub-levels:</p>
+          <div class="equation-box">
+            $$\Delta E = \mu_B B, \qquad \mu_B = \frac{{e\hbar}}{{2m_e}} \approx 5.788 \times 10^{{-5}}\ \text{{eV/T}}$$
+          </div>
+        </div>
+      </div>
+        </section>
+      </div>
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Module Navigator</h4>
+          <div id="module-nav-theory"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-theory" style="font-size:0.8rem;color:var(--text-dim);line-height:1.6;">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges-theory">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles-theory">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp-theory">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges-theory">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+   PLAYGROUND MODE
+   ═══════════════════════════════════════════════════════════════ -->
+  <div class="mode-section" id="section-play" style="display:none;">
+
+    <!-- Playground tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-sub="radial" onclick="setPlaySubMode('radial')">📈 Radial Wavefunction</button>
+      <button class="tab-btn" data-sub="orbital" onclick="setPlaySubMode('orbital')">🌌 3D Orbital</button>
+      <button class="tab-btn" data-sub="spectrum" onclick="setPlaySubMode('spectrum')">📡 Emission Spectrum</button>
+      <button class="tab-btn" data-sub="zeeman" onclick="setPlaySubMode('zeeman')">🧲 Zeeman Splitting</button>
+    </div>
+
+    <!-- ═══ RADIAL WAVEFUNCTION TAB ═══ -->
+    <div class="tab-content active" id="tab-radial">
+      <div class="game-layout">
+        <div class="game-main">
+          <div class="macro-panel">
+            <h3>📈 Radial Wavefunction R<sub>nl</sub>(r)</h3>
+            <div class="physics-note">
+              <details>
+                <summary>What does this plot show?</summary>
+                <div class="note-body">
+                  The radial wavefunction <strong>R<sub>nl</sub>(r)</strong> is the part of the hydrogen orbital that depends only on distance from the nucleus. Its square gives the probability density of finding the electron at radius <em>r</em>. The number of radial nodes is <em>n − l − 1</em>, and the expectation radius grows roughly as <em>n²</em>.
+                </div>
+              </details>
+            </div>
+            <div class="figure-wrap">
+              <div class="figure-header">
+                <span class="figure-title">Radial Wavefunction</span>
+                <span class="figure-badge">R<sub>nl</sub>(r) + r²|R|² + ⟨r⟩</span>
+              </div>
+              <div class="figure-body">
+                <div class="figure-stage">
+                  <div class="sim-content" id="plot-orbitals" style="width:100%;height:100%;"></div>
+                </div>
+              </div>
+              <div class="figure-meta">
+                <h4>What is plotted?</h4>
+                <p>Solid cyan: <em>R<sub>nl</sub>(r)</em>. Dashed purple: probability density <em>r²|R|<sup>2</sup></em>. Yellow dotted line: expectation radius ⟨<em>r</em>⟩.</p>
                 <div class="viz-legend">
                   <span><span class="dot dot-cyan"></span> R<sub>nl</sub>(r)</span>
                   <span><span class="dot dot-purple"></span> r²|R|<sup>2</sup></span>
-                  <span><span class="dot dot-yellow"></span> ⟨r⟩ expectation</span>
+                  <span><span class="dot dot-yellow"></span> ⟨r⟩</span>
                 </div>
               </div>
             </div>
-            <div class="sim-card">
-              <div class="sim-card-label">3D Orbital state</div>
-              <div class="sim-content" id="canvas-3d" style="cursor:move;"></div>
-              <div class="viz-meta">
-                <h4>3D Atomic Visualisation</h4>
-                <p>Left: Bohr-model electron on a circular orbit (classical analogy). Right: quantum probability cloud <em>|ψ|²</em> built from the same quantum numbers — no definite trajectory, only an amplitude.</p>
+            <div class="readout-grid">
+              <div class="readout-cell">
+                <div class="readout-label">Energy E<sub>n</sub></div>
+                <div class="readout-value" id="live-radial-E">-1.51 eV</div>
+              </div>
+              <div class="readout-cell">
+                <div class="readout-label">⟨r⟩</div>
+                <div class="readout-value" id="live-radial-r" style="color:var(--accent-pink)">6.0 a₀</div>
+              </div>
+              <div class="readout-cell">
+                <div class="readout-label">Radial Nodes</div>
+                <div class="readout-value" id="live-radial-nodes">1</div>
+              </div>
+            </div>
+          </div>
+          <div class="insight-card">
+            <div class="insight-title">✨ Why does the radial shape matter?</div>
+            <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
+              The radial nodes are the spherical shells where the electron is never found. As <em>n</em> grows, the wavefunction spreads outward, making Rydberg atoms enormous and fragile. The angular momentum <em>l</em> pushes the electron away from the nucleus through the centrifugal barrier, creating the characteristic orbital shapes.
+            </p>
+            <div class="equation-box" style="margin-top:0.8rem;">
+              R<sub>nl</sub>(r) = N<sub>nl</sub> (2r/na₀)<sup>l</sup> e<sup>−r/na₀</sup> L<sub>n−l−1</sub><sup>2l+1</sup>(2r/na₀)
+            </div>
+          </div>
+        </div>
+        <div class="side-panel">
+          <div class="challenge-panel">
+            <div class="challenge-header">
+              <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">⚙</span>
+              <span class="challenge-title">Controls</span>
+            </div>
+            <div class="control-row"><span class="control-label">Principal n</span><span class="control-value" id="val-radial-n">3</span></div>
+            <input type="range" id="slider-radial-n" min="1" max="6" value="3" step="1">
+            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Angular l</span><span class="control-value" id="val-radial-l">1</span></div>
+            <input type="range" id="slider-radial-l" min="0" max="5" value="1" step="1">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 3D ORBITAL TAB ═══ -->
+    <div class="tab-content" id="tab-orbital">
+      <div class="game-layout">
+        <div class="game-main">
+          <div class="macro-panel">
+            <h3>🌌 3D Atomic Visualisation</h3>
+            <div class="physics-note">
+              <details>
+                <summary>Bohr orbit or quantum cloud?</summary>
+                <div class="note-body">
+                  The left view shows a classical Bohr electron on a circular orbit — a useful but wrong picture. The right view shows the quantum probability cloud |ψ<sub>nlm</sub>|<sup>2</sup>, which has no definite trajectory. Both are built from the same quantum numbers <em>n</em>, <em>l</em>, and <em>m</em>.
+                </div>
+              </details>
+            </div>
+            <div class="figure-wrap">
+              <div class="figure-header">
+                <span class="figure-title">3D Atomic Visualisation</span>
+                <span class="figure-badge">Bohr orbit ↔ probability cloud</span>
+              </div>
+              <div class="figure-body">
+                <div class="figure-stage">
+                  <div class="sim-content" id="canvas-3d" style="cursor:move;width:100%;height:100%;"></div>
+                </div>
+              </div>
+              <div class="figure-meta">
+                <h4>What is shown?</h4>
+                <p>Left: Bohr electron on a circular orbit (classical analogy). Right: quantum probability cloud <em>|ψ|²</em> — no trajectory, only amplitude.</p>
                 <div class="viz-legend">
                   <span><span class="dot dot-pink"></span> Proton nucleus</span>
                   <span><span class="dot dot-cyan"></span> Electron / cloud</span>
@@ -181,129 +661,230 @@
                 </div>
               </div>
             </div>
-          </div>
-          
-          <div class="sim-card">
-            <div class="sim-card-label">Emission Spectrum</div>
-            <div class="sim-content full-width-sim" id="plot-spectrum"></div>
-            <div class="viz-meta">
-              <h4>Emission Spectrum and Series Identification</h4>
-              <p>Each coloured dot is a possible hydrogen transition. The dashed vertical line marks the photon energy for the currently selected <em>n<sub>i</sub> → n<sub>f</sub></em> transition. Match colour to spectral series: pink Lyman (UV), yellow Balmer (visible), green Paschen (IR), cyan Brackett (far-IR).</p>
-                <div class="viz-legend">
-                  <span><span class="dot dot-pink"></span> Lyman series (UV)</span>
-                  <span><span class="dot dot-yellow"></span> Balmer series (Vis)</span>
-                  <span><span class="dot dot-green"></span> Paschen series (IR)</span>
-                  <span><span class="dot dot-cyan"></span> Brackett series (IR)</span>
-                  <span><span class="dot dot-purple"></span> Your transition (dashed)</span>
-                </div>
-                <div style="display:flex;gap:1.2rem;margin-top:0.5rem;align-items:center;flex-wrap:wrap;">
-                  <div style="display:flex;align-items:center;gap:0.3rem;font-size:0.75rem;color:var(--text-muted);">
-                    <span>n<sub>i</sub>:</span>
-                    <span id="val-ni-meta" style="font-family:var(--font-mono);color:var(--accent-cyan);min-width:16px;">3</span>
-                  </div>
-                  <div style="display:flex;align-items:center;gap:0.3rem;font-size:0.75rem;color:var(--text-muted);">
-                    <span>n<sub>f</sub>:</span>
-                    <button class="btn" style="padding:1px 6px;font-size:0.6rem;" onclick="setNf(__H.nf-1)">-</button>
-                    <span id="val-nf-meta" style="font-family:var(--font-mono);color:var(--accent-cyan);min-width:16px;">2</span>
-                    <button class="btn" style="padding:1px 6px;font-size:0.6rem;" onclick="setNf(__H.nf+1)">+</button>
-                  </div>
-                  <button class="btn" style="padding:2px 10px;font-size:0.65rem;" onclick="plotSpectrum(__H.n, __H.nf)">📡 Plot Spectrum</button>
-                </div>
+            <div class="readout-grid">
+              <div class="readout-cell"><div class="readout-label">Energy E<sub>n</sub></div><div class="readout-value" id="live-E">-1.51 eV</div></div>
+              <div class="readout-cell"><div class="readout-label">⟨r⟩</div><div class="readout-value" id="live-r" style="color:var(--accent-pink)">6.0 a₀</div></div>
+              <div class="readout-cell"><div class="readout-label">Radial Nodes</div><div class="readout-value" id="live-nodes">1</div></div>
+              <div class="readout-cell"><div class="readout-label">Magnetic m</div><div class="readout-value" id="live-m">0</div></div>
             </div>
           </div>
-
-          <div class="sim-card">
-            <div class="sim-card-label">Zeeman Splitting</div>
-            <div class="sim-content full-width-sim" id="plot-zeeman"></div>
-            <div class="viz-meta">
-              <h4>Zeeman Energy Splitting in a Magnetic Field</h4>
-              <p>In an external magnetic field <em>B</em>, each orbital level <em>l</em> splits into <em>2l + 1</em> sub-levels labelled by magnetic quantum number <em>m</em>. The spacing <em>ΔE = μ<sub>B</sub>B</em> is the same for every adjacent pair — the normal Zeeman effect. This is the origin of the anomalous Zeeman effect when spin is included.</p>
-              <div class="viz-legend">
-                <span><span class="dot dot-pink"></span> m = +l</span>
-                <span><span class="dot dot-purple"></span> m intermediate</span>
-                <span><span class="dot dot-cyan"></span> m = −l</span>
-                <span><span class="dot dot-yellow"></span> μ<sub>B</sub>B splitting</span>
-              </div>
+          <div class="insight-card">
+            <div class="insight-title">✨ Theory: From Bohr to Schrödinger</div>
+            <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
+              The transition observed by clicking <b style="color:var(--accent-purple)">"Orbit Cloud"</b> represents the shift from the Bohr model (classical particles in fixed rings) to the Quantum Mechanical model. In the latter, we describe electrons via the <b style="color:var(--accent-cyan)">Wavefunction</b> \(\psi\).
+            </p>
+            <div class="equation-box" style="margin: 1rem 0; text-align:center;">
+              $$\psi_{nlm}(r, \theta, \phi) = R_{nl}(r) Y_{lm}(\theta, \phi)$$
+            </div>
+            <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
+              The 3D view visualizes \(|\psi|²\), the probability density of finding the electron at a specific point in space.
+            </p>
+          </div>
+        </div>
+        <div class="side-panel">
+          <div class="challenge-panel">
+            <div class="challenge-header">
+              <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">⚙</span>
+              <span class="challenge-title">Controls</span>
+            </div>
+            <div class="control-row"><span class="control-label">Principal n</span><span class="control-value" id="val-orbital-n">3</span></div>
+            <input type="range" id="slider-orbital-n" min="1" max="6" value="3" step="1">
+            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Angular l</span><span class="control-value" id="val-orbital-l">1</span></div>
+            <input type="range" id="slider-orbital-l" min="0" max="5" value="1" step="1">
+            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Magnetic m</span><span class="control-value" id="val-orbital-m">0</span></div>
+            <input type="range" id="slider-orbital-m" min="0" max="5" value="0" step="1">
+            <div class="btn-group" style="display:grid;grid-template-columns:1fr;gap:0.7rem;margin-top:0.6rem;">
+              <button class="btn" id="btn-orbital-cloud" style="background:var(--accent-purple);" onclick="toggleWavefunctionView()">🌌 Reveal Wavefunction</button>
             </div>
           </div>
         </div>
-
-        <!-- SIDEBAR CONTROLS -->
-        <div style="display:flex; flex-direction:column; gap: 1.5rem;">
-          <div class="challenge-panel">
-            <div class="challenge-header">
-              <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙</span>
-              <span class="challenge-title">Quantum State Setup</span>
-            </div>
-            
-            <div style="margin: 1rem 0; padding: 0.8rem; background:rgba(0,0,0,0.2); border-radius:var(--radius-sm); border-left:3px solid var(--accent-cyan);">
-              <p style="font-size:0.75rem; color:var(--text-main); line-height:1.4; margin-bottom:0.8rem;">
-                  Configure the <strong style="color:var(--accent-cyan)">quantum numbers</strong> to transition between the Planetary Model and Quantum Clouds.
-              </p>
-            </div>
-
-            <div style="margin-bottom:1.5rem;">
-              <div class="control-row" style="justify-content: space-between; align-items: center;">
-                <span class="control-label" style="font-weight:bold;">Principal n</span>
-                <span class="control-value" id="val-h2-n" style="background:var(--bg-elevated); padding:2px 8px; border-radius:4px; border:1px solid var(--glass-border);">3</span>
-              </div>
-              <input type="range" id="slider-h2-n" min="1" max="6" value="3" step="1" style="width:100%; margin: 8px 0;">
-              <p style="font-size:0.7rem;color:var(--text-dim);margin-top:0.3rem;">Shell energy and average radius.</p>
-            </div>
-
-            <div style="margin-bottom:1.5rem;">
-              <div class="control-row" style="justify-content: space-between; align-items: center;">
-                <span class="control-label" style="font-weight:bold;">Angular l</span>
-                <span class="control-value" id="val-h2-l" style="background:var(--bg-elevated); padding:2px 8px; border-radius:4px; border:1px solid var(--glass-border);">1</span>
-              </div>
-              <input type="range" id="slider-h2-l" min="0" max="5" value="1" step="1" style="width:100%; margin: 8px 0;">
-              <p style="font-size:0.7rem;color:var(--text-dim);margin-top:0.3rem;">Orbital shape (s, p, d, f).</p>
-            </div>
-
-            <div class="btn-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:0.7rem;">
-              <button class="btn" id="btn-reveal-wf" style="width:100%; background:var(--accent-purple); cursor:pointer;" onclick="toggleWavefunctionView()">🌌 Orbit Cloud</button>
-            </div>
-          </div>
-
-          <div class="challenge-panel">
-            <div class="challenge-header">
-              <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">📊</span>
-              <span class="challenge-title">Live Readout</span>
-            </div>
-            <table style="margin-top:0.5rem; width:100%; border-collapse: collapse;">
-              <tr style="color:var(--text-dim); font-size:0.7rem;"><th align="left">Quantity</th><th align="right">Value</th></tr>
-              <tr style="font-size:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05);">
-                <td align="left" style="padding:4px 0;">Energy E<sub>n</sub></td><td class="highlight-num" id="live-E" align="right">-1.51 eV</td>
-              </tr>
-              <tr style="font-size:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05);">
-                <td align="left" style="padding:4px 0;">Bohr radius ⟨r⟩</td><td class="highlight-pink" id="live-r" align="right">6.0 a₀</td>
-              </tr>
-              <tr style="font-size:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05);">
-                <td align="left" style="padding:4px 0;">Radial Nodes</td><td class="highlight-num" id="live-nodes" align="right">1</td>
-              </tr>
-              <tr style="font-size:0.8rem;">
-                <td align="left" style="padding:4px 0;">Ionization</td><td align="right">13.6 eV</td>
-              </tr>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <div class="insight-card" style="margin-top:2rem;">
-        <div class="insight-title">✨ Theory: From Bohr to Schrödinger</div>
-        <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
-          The transition observed by clicking <b style="color:var(--accent-purple)">"Orbit Cloud"</b> represents the shift from the Bohr model (classical particles in fixed rings) to the Quantum Mechanical model. In the latter, we describe electrons via the <b style="color:var(--accent-cyan)">Wavefunction</i> \(\psi\).
-          <div class="equation-box" style="margin: 1rem 0; text-align:center;">
-            $$\psi_{nlm}(r, \theta, \phi) = R_{nl}(r) Y_{lm}(\theta, \phi)$$
-          </div>
-          The 3D view visualizes \(|\psi|^2\), the probability density of finding the electron at a specific point in space.
-        </p>
       </div>
     </div>
+
+    <!-- ═══ EMISSION SPECTRUM TAB ═══ -->
+    <div class="tab-content" id="tab-spectrum">
+      <div class="game-layout">
+        <div class="game-main">
+          <div class="macro-panel">
+            <h3>📡 Emission Spectrum</h3>
+            <div class="physics-note">
+              <details>
+                <summary>Why are hydrogen lines discrete?</summary>
+                <div class="note-body">
+                  Bound electron energies are quantized as <em>E<sub>n</sub> = −13.6 eV / n²</em>. A photon emitted in a transition <em>n<sub>i</sub> → n<sub>f</sub></em> carries exactly the energy difference, so only specific wavelengths appear. The series are named by the final level: Lyman (<em>n<sub>f</sub>=1</em>, UV), Balmer (<em>n<sub>f</sub>=2</em>, visible), Paschen (<em>n<sub>f</sub>=3</em>, IR), and Brackett (<em>n<sub>f</sub>=4</em>, IR).
+                </div>
+              </details>
+            </div>
+            <div class="figure-wrap">
+              <div class="figure-header">
+                <span class="figure-title">Emission Spectrum</span>
+                <span class="figure-badge">Photon energy vs. transition series</span>
+              </div>
+              <div class="figure-body">
+                <div class="figure-stage">
+                  <div class="sim-content full-width-sim" id="plot-spectrum" style="width:100%;height:100%;"></div>
+                </div>
+              </div>
+              <div class="figure-meta">
+                <h4>What is plotted?</h4>
+                <p>Each dot is a possible hydrogen transition. The dashed line marks your selected <em>n<sub>i</sub> → n<sub>f</sub></em> photon energy.</p>
+                <div class="viz-legend">
+                  <span><span class="dot dot-pink"></span> Lyman (UV)</span>
+                  <span><span class="dot dot-yellow"></span> Balmer (Vis)</span>
+                  <span><span class="dot dot-green"></span> Paschen (IR)</span>
+                  <span><span class="dot dot-cyan"></span> Brackett (IR)</span>
+                  <span><span class="dot dot-purple"></span> Your transition</span>
+                </div>
+              </div>
+            </div>
+            <div class="readout-grid">
+              <div class="readout-cell"><div class="readout-label">Photon</div><div class="readout-value" id="live-spectrum-photon">1.89 eV</div></div>
+              <div class="readout-cell"><div class="readout-label">Series</div><div class="readout-value" id="live-spectrum-series" style="color:var(--accent-pink)">Balmer</div></div>
+            </div>
+          </div>
+          <div class="insight-card">
+            <div class="insight-title">✨ Why does this matter?</div>
+            <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
+              Hydrogen's spectrum was the Rosetta Stone of quantum mechanics. Balmer's simple formula inspired Bohr's model, and the exact wavelengths are still used to calibrate telescopes and test fundamental constants. Every coloured line is a fingerprint of a specific quantum jump.
+            </p>
+            <div class="equation-box" style="margin-top:0.8rem;">
+              1/λ = R<sub>∞</sub> (1/n<sub>f</sub>² − 1/n<sub>i</sub>²)
+            </div>
+          </div>
+        </div>
+        <div class="side-panel">
+          <div class="challenge-panel">
+            <div class="challenge-header">
+              <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">⚙</span>
+              <span class="challenge-title">Controls</span>
+            </div>
+            <div class="control-row"><span class="control-label">Initial n<sub>i</sub></span><span class="control-value" id="val-spectrum-ni">3</span></div>
+            <input type="range" id="slider-spectrum-ni" min="2" max="8" value="3" step="1">
+            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Final n<sub>f</sub></span><span class="control-value" id="val-spectrum-nf">2</span></div>
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+              <button class="btn" style="padding:1px 6px;font-size:0.6rem;" onclick="setNf(__H.nf-1)">-</button>
+              <input type="range" id="slider-spectrum-nf" min="1" max="5" value="2" step="1" style="flex:1;">
+              <button class="btn" style="padding:1px 6px;font-size:0.6rem;" onclick="setNf(__H.nf+1)">+</button>
+            </div>
+            <div class="btn-group" style="display:grid;grid-template-columns:1fr;gap:0.7rem;margin-top:0.8rem;">
+              <button class="btn" onclick="plotSpectrum(__H.n, __H.nf)">📡 Plot Spectrum</button>
+            </div>
+
+            <div class="physics-note" style="margin-top:1rem;">
+              <details>
+                <summary>How do I read this plot?</summary>
+                <div class="note-body">
+                  Each <strong>coloured dot</strong> is one possible electron transition in hydrogen. The <strong>x-axis</strong> shows the photon energy released (eV). The <strong>y-axis</strong> groups transitions by their final level — the <em>series</em> they belong to. The <strong>dashed vertical line</strong> marks your chosen <em>n<sub>i</sub> → n<sub>f</sub></em> transition.
+                </div>
+              </details>
+            </div>
+
+            <div class="physics-note" style="margin-top:0.6rem;">
+              <details>
+                <summary>What are the rules?</summary>
+                <div class="note-body">
+                  <ol style="margin:0;padding-left:1.2rem;line-height:1.7;">
+                    <li>Energy is quantized: <em>E<sub>n</sub> = −13.6 / n²</em> eV.</li>
+                    <li>A photon carries exactly the energy gap: <em>E<sub>photon</sub> = E<sub>n<sub>i</sub></sub> − E<sub>n<sub>f</sub></sub></em>.</li>
+                    <li>The series is named by <em>n<sub>f</sub></em>: Lyman (1), Balmer (2), Paschen (3), Brackett (4).</li>
+                    <li>Longer jumps (higher <em>n<sub>i</sub></em>) give higher-energy photons → UV/blue.</li>
+                    <li>Shorter jumps give lower-energy photons → red/IR.</li>
+                  </ol>
+                </div>
+              </details>
+            </div>
+          </div>
+
+          <div class="insight-card" style="margin-top:1rem;">
+            <div class="insight-title">📐 Rule of the Plot</div>
+            <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+              The spectrum plot visualises the <strong>Rydberg formula</strong>. Every dot represents a unique transition. The colour encodes the <em>series</em> (final level), while the x-position encodes the <em>photon energy</em>. The dashed line shows your selected transition. When you change <em>n<sub>i</sub></em> or <em>n<sub>f</sub></em>, the dashed line moves to the new photon energy — if it lands on an existing dot, that transition is physically allowed.
+            </p>
+            <div class="equation-box" style="margin-top:0.6rem;font-size:0.8rem;">
+              E<sub>photon</sub> = 13.6 (1/n<sub>f</sub>² − 1/n<sub>i</sub>²) eV
+            </div>
+            <p style="font-size:0.8rem;color:var(--text-dim);margin-top:0.5rem;">
+              <strong>Tip:</strong> Start with Balmer (n<sub>f</sub>=2). All visible light from hydrogen comes from this series. Lyman lines are UV (invisible), Paschen and Brackett are infrared.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ ZEEMAN SPLITTING TAB ═══ -->
+    <div class="tab-content" id="tab-zeeman">
+      <div class="game-layout">
+        <div class="game-main">
+          <div class="macro-panel">
+            <h3>🧲 Zeeman Splitting</h3>
+            <div class="physics-note">
+              <details>
+                <summary>What is the normal Zeeman effect?</summary>
+                <div class="note-body">
+                  In an external magnetic field <strong>B</strong>, the magnetic quantum number <em>m</em> lifts the degeneracy of a level with angular momentum <em>l</em>. The level splits into <em>2l + 1</em> sub-levels with energies <em>E = E<sub>n</sub> + m μ<sub>B</sub> B</em>. Adjacent levels are separated by the same energy <em>μ<sub>B</sub> B</em>.
+                </div>
+              </details>
+            </div>
+            <div class="figure-wrap">
+              <div class="figure-header">
+                <span class="figure-title">Zeeman Splitting</span>
+                <span class="figure-badge">E = E<sub>n</sub> + m μ<sub>B</sub>B</span>
+              </div>
+              <div class="figure-body">
+                <div class="figure-stage">
+                  <div class="sim-content full-width-sim" id="plot-zeeman" style="width:100%;height:100%;"></div>
+                </div>
+              </div>
+              <div class="figure-meta">
+                <h4>What is plotted?</h4>
+                <p>Energy levels for each magnetic sub-state <em>m = −l, ..., +l</em>. Adjacent levels are separated by <em>μ<sub>B</sub>B</em>.</p>
+                <div class="viz-legend">
+                  <span><span class="dot dot-pink"></span> m = +l</span>
+                  <span><span class="dot dot-purple"></span> m intermediate</span>
+                  <span><span class="dot dot-cyan"></span> m = −l</span>
+                  <span><span class="dot dot-yellow"></span> μ<sub>B</sub>B splitting</span>
+                </div>
+              </div>
+            </div>
+            <div class="readout-grid">
+              <div class="readout-cell"><div class="readout-label">Splitting</div><div class="readout-value" id="live-zeeman-split">0.0 μeV</div></div>
+            </div>
+          </div>
+          <div class="insight-card">
+            <div class="insight-title">✨ Why does this matter?</div>
+            <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
+              Zeeman splitting revealed that the electron carries an intrinsic magnetic moment. It underpins magnetic resonance imaging, atomic clocks, and the fine structure of spectral lines. The splitting is tiny for hydrogen in everyday fields, but it is the foundation of quantum magnetism.
+            </p>
+            <div class="equation-box" style="margin-top:0.8rem;">
+              ΔE = μ<sub>B</sub> B &nbsp;&nbsp; with &nbsp;&nbsp; μ<sub>B</sub> = eℏ / 2m<sub>e</sub> ≈ 5.788 × 10⁻⁵ eV/T
+            </div>
+          </div>
+        </div>
+        <div class="side-panel">
+          <div class="challenge-panel">
+            <div class="challenge-header">
+              <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">⚙</span>
+              <span class="challenge-title">Controls</span>
+            </div>
+            <div class="control-row"><span class="control-label">Principal n</span><span class="control-value" id="val-zeeman-n">3</span></div>
+            <input type="range" id="slider-zeeman-n" min="1" max="6" value="3" step="1">
+            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Angular l</span><span class="control-value" id="val-zeeman-l">1</span></div>
+            <input type="range" id="slider-zeeman-l" min="0" max="5" value="1" step="1">
+            <div class="control-row" style="margin-top:0.8rem;"><span class="control-label">Magnetic B</span><span class="control-value" id="val-zeeman-B">0</span><span class="unit-tag">T</span></div>
+            <input type="range" id="slider-zeeman-B" min="0" max="10" value="0" step="0.1">
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
+
+  <!-- ============================================================ -->
+  <!--  CHALLENGE MODE (full width, outside .game-layout)           -->
+  <!-- ============================================================ -->
   <!-- CHALLENGE MODE -->
-  <div class="mode-section" id="section-challenge" style="display:none;">
+  <div class="mode-section" id="section-challenge">
     <div class="challenge-panel">
       <div class="challenge-header">
         <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span>
@@ -315,6 +896,10 @@
         Each correct match earns 50 XP. Wrong answers break your combo streak.
       </div>
       <div class="challenge-reward">🏆 Reward: 50 XP · Combo bonus: +5 XP per streak</div>
+      <div style="display:flex; align-items:center; gap:1.2rem; margin-bottom:0.8rem; font-size:0.8rem; color:var(--text-muted);">
+        <span>Round: <span id="spec-round" style="font-family:var(--font-mono); color:var(--accent-cyan);">1</span></span>
+        <span id="spectrum-legend" style="display:flex; gap:0.5rem; flex-wrap:wrap;"></span>
+      </div>
       <div class="timer-bar"><div class="timer-fill" id="spec-timer" style="width:100%"></div></div>
       <div id="spec-target-text" style="font-size:1rem;margin-bottom:1rem;color:var(--text-main);">
         🔎 <strong>Target photon:</strong> <span id="spec-energy">?</span> eV · Which transition?
@@ -388,8 +973,12 @@
     </div>
   </div>
 
+
+  <!-- ============================================================ -->
+  <!--  PUZZLE MODE (full width, outside .game-layout)              -->
+  <!-- ============================================================ -->
   <!-- PUZZLE MODE -->
-  <div class="mode-section" id="section-puzzle" style="display:none;">
+  <div class="mode-section" id="section-puzzle">
     <div class="challenge-panel">
       <div class="challenge-header">
         <span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🧩</span>
@@ -454,57 +1043,15 @@
     </div>
   </div>
 
-  <!-- RIGHT SIDEBAR -->
-  <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; margin-top:2rem;">
-    <div></div>
-    <div>
-      <div class="challenge-panel" style="position:sticky; top:5rem;">
-        <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(0,240,255,0.08);">🗺</span>
-          <span class="challenge-title">Lab Navigator</span>
-        </div>
-        <div id="module-nav"></div>
-        <div class="section-divider" style="margin:1rem 0;"></div>
-        <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(74,222,128,0.08);">🏆</span>
-          <span class="challenge-title">Your Badges</span>
-        </div>
-        <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);line-height:1.6;">
-          Complete challenges to earn badges!
-        </div>
-        <div class="section-divider" style="margin:1rem 0;"></div>
-        <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(255,215,64,0.08);">📊</span>
-          <span class="challenge-title">Progress</span>
-        </div>
-        <div class="scoreboard">
-          <div class="score-cell">
-            <div class="score-num" id="stat-challenges">0</div>
-            <div class="score-label">Challenges</div>
-          </div>
-          <div class="score-cell">
-            <div class="score-num" id="stat-puzzles">0</div>
-            <div class="score-label">Puzzles</div>
-          </div>
-          <div class="score-cell">
-            <div class="score-num" id="stat-xp">0</div>
-            <div class="score-label">Total XP</div>
-          </div>
-          <div class="score-cell">
-            <div class="score-num" id="stat-badges">0</div>
-            <div class="score-label">Badges</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-</div>
+</div><!-- /.game-container -->
 
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
 <script src="hydrogen_sim.js?v=2"></script>
-<script src="hydrogen_apps_games.js?v=2"></script><script src="../../shared_effects.js"></script>
+<script src="hydrogen_apps_games.js?v=2"></script>
+<script src="../../shared_effects.js"></script>
 </body>
+
 </html>

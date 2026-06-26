@@ -432,9 +432,6 @@ document.addEventListener('DOMContentLoaded', function() {
   updateScoreboardIS();
 
   // Register init hooks for shared setGameMode
-  window.initPlayground = function() {
-    if (typeof initIntrinsicSemi === 'function') initIntrinsicSemi();
-  };
   window.initChallenges = function() {
     startMaterialMatcher();
     startDopingDetective();
@@ -446,6 +443,5 @@ document.addEventListener('DOMContentLoaded', function() {
     initOpticalPuzzle();
   };
 
-  // Auto-start playground
-  if (typeof initIntrinsicSemi === 'function') initIntrinsicSemi();
+  // Playground initialises on first tab switch — see setGameMode override in index.html
 });

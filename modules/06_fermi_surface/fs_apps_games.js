@@ -36,36 +36,39 @@ var FS_BADGES = [
 ];
 
 function renderFSBadges() {
-  var bl = document.getElementById('badge-list');
-  if (!bl) return;
-  var earned = [];
-  if (window._GameState && _GameState.earnedBadges) { earned = _GameState.earnedBadges; }
-  if (!Array.isArray(earned) && earned && typeof earned.forEach === 'undefined') { earned = Array.from(earned); }
-  if (!Array.isArray(earned)) earned = [];
-  bl.innerHTML = '';
-  FS_BADGES.forEach(function(b) {
-    var earnedBadge = false;
-    for (var i = 0; i < earned.length; i++) { if (earned[i] === b.id) { earnedBadge = true; break; } }
-    var div = document.createElement('div');
-    div.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.35rem 0;font-size:0.78rem;';
-    if (earnedBadge) {
-      var icon = document.createElement('span');
-      icon.textContent = b.icon + ' ';
-      div.appendChild(icon);
-      var name = document.createElement('span');
-      name.style.color = 'var(--accent-green)';
-      name.textContent = b.name;
-      div.appendChild(name);
-    } else {
-      var icon2 = document.createElement('span');
-      icon2.textContent = '⬜ ';
-      div.appendChild(icon2);
-      var name2 = document.createElement('span');
-      name2.style.color = 'var(--text-dim)';
-      name2.textContent = b.name;
-      div.appendChild(name2);
-    }
-    bl.appendChild(div);
+  // Mirror into all sidebar instances (playground + story + theory)
+  ['badge-list', 'badge-list-story', 'badge-list-theory'].forEach(function(badgeId) {
+    var bl = document.getElementById(badgeId);
+    if (!bl) return;
+    var earned = [];
+    if (window._GameState && _GameState.earnedBadges) { earned = _GameState.earnedBadges; }
+    if (!Array.isArray(earned) && earned && typeof earned.forEach === 'undefined') { earned = Array.from(earned); }
+    if (!Array.isArray(earned)) earned = [];
+    bl.innerHTML = '';
+    FS_BADGES.forEach(function(b) {
+      var earnedBadge = false;
+      for (var i = 0; i < earned.length; i++) { if (earned[i] === b.id) { earnedBadge = true; break; } }
+      var div = document.createElement('div');
+      div.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.35rem 0;font-size:0.78rem;';
+      if (earnedBadge) {
+        var icon = document.createElement('span');
+        icon.textContent = b.icon + ' ';
+        div.appendChild(icon);
+        var name = document.createElement('span');
+        name.style.color = 'var(--accent-green)';
+        name.textContent = b.name;
+        div.appendChild(name);
+      } else {
+        var icon2 = document.createElement('span');
+        icon2.textContent = '⬜ ';
+        div.appendChild(icon2);
+        var name2 = document.createElement('span');
+        name2.style.color = 'var(--text-dim)';
+        name2.textContent = b.name;
+        div.appendChild(name2);
+      }
+      bl.appendChild(div);
+    });
   });
 }
 
@@ -77,10 +80,19 @@ function updateFSScoreboard() {
     pz = _GameState.puzzlesDone || 0;
     bd = (_GameState.earnedBadges && Array.isArray(_GameState.earnedBadges)) ? _GameState.earnedBadges.length : 0;
   }
-  var el = document.getElementById('stat-xp');    if (el) el.textContent = xp;
-  var el2 = document.getElementById('stat-challenges'); if (el2) el2.textContent = ch;
-  var el3 = document.getElementById('stat-puzzles');     if (el3) el3.textContent = pz;
-  var el4 = document.getElementById('stat-badges');      if (el4) el4.textContent = bd;
+  // Mirror stats into all sidebar variants (playground + story + theory)
+  ['stat-xp', 'stat-xp-story', 'stat-xp-theory'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.textContent = xp;
+  });
+  ['stat-challenges', 'stat-challenges-story', 'stat-challenges-theory'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.textContent = ch;
+  });
+  ['stat-puzzles', 'stat-puzzles-story', 'stat-puzzles-theory'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.textContent = pz;
+  });
+  ['stat-badges', 'stat-badges-story', 'stat-badges-theory'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.textContent = bd;
+  });
   var navXp = document.getElementById('nav-xp');
   if (navXp) navXp.textContent = xp + ' XP';
 }
@@ -331,9 +343,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Module NAV
-  var nav = document.getElementById('module-nav');
-  if (nav) {
+  // Module NAV — mirror into all sidebar instances (playground + story + theory)
+  ['module-nav', 'module-nav-story', 'module-nav-theory'].forEach(function(navId) {
+    var navEl = document.getElementById(navId);
+    if (!navEl) return;
+    navEl.textContent = '';
     FS_MODULE_NAV.forEach(function(m) {
       var el = document.createElement(m.current ? 'div' : 'a');
       if (!m.current) {
@@ -348,9 +362,9 @@ document.addEventListener('DOMContentLoaded', function() {
         el.style.background = 'var(--bg-elevated)'; el.style.border = '1px solid var(--border-subtle)';
         el.style.color = 'var(--text-dim)'; el.textContent = m.name;
       }
-      nav.appendChild(el);
+      navEl.appendChild(el);
     });
-  }
+  });
 
   // GameState wrapper for mode switching
   if (typeof setGameMode === 'function') {

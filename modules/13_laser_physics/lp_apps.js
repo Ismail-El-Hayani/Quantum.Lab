@@ -1,24 +1,27 @@
 /**
- * Laser Physics — Apps wiring (lp_apps.js v4)
- * XP hooks, playground interaction wiring, mode switching.
+ * Laser Physics — Apps wiring (lp_apps.js v5)
+ * Playground interaction, XP hooks, mode-switching animation control.
+ *
+ * NOTE: setGameMode lives in ../../shared_games.js.  We do NOT redefine it here
+ * — instead we wrap the shared version so animation start/stop still fires.
  */
 'use strict';
 
-function setGameMode(mode) {
-  ['play','challenge','puzzle'].forEach(function(m) {
-    var sec = document.getElementById('section-' + m);
-    var btn = document.getElementById('mode-' + m);
-    if (sec) sec.style.display = (m === mode) ? 'block' : 'none';
-    if (btn) {
-      if (m === mode) btn.classList.add('active');
-      else btn.classList.remove('active');
-    }
-  });
-  if (window.lpStartAnim && window.lpStopAnim) {
-    if (mode === 'play') lpStartAnim();
-    else lpStopAnim();
+(function() {
+  // Wrap the shared setGameMode so lp_sim.js doesn't have to fight
+  // for the same window.global.  This keeps shared_challenge/puzzle
+  // hooks intact while adding our animation pause/resume.
+  var _orig = window.setGameMode;
+  if (_orig && typeof _orig === 'function') {
+    window.setGameMode = function(mode) {
+      _orig(mode);
+      if (window.lpStartAnim && window.lpStopAnim) {
+        if (mode === 'play') { lpStartAnim(); }
+        else { lpStopAnim(); }
+      }
+    };
   }
-}
+})();
 
 function setupLPPlayground() {
   // XP on any slider movement (pumping included)

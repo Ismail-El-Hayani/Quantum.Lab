@@ -22,16 +22,17 @@ function setupTPPlayground() {
   var sliders = ['slider-T-tp','slider-thetaD','slider-gamma'];
   sliders.forEach(function(k) {
     var el = document.getElementById(k); if (!el) return;
-    el.addEventListener('input', function() {
+    el.addEventListener('input', function once() {
       try { animateTPPlots(); } catch(e){}
       if (window.__GameState) __GameState.addXP(1, 'tp_playground');
+      el.removeEventListener('input', once);
     });
   });
   var sel = document.getElementById('select-type-tp');
   if (sel) {
-    sel.addEventListener('change', function() {
-      try { animateTPPlots(); } catch(e){}
+    sel.addEventListener('change', function once() {
       if (window.__GameState) __GameState.addXP(2, 'tp_playground');
+      sel.removeEventListener('change', once);
     });
   }
 
@@ -54,3 +55,10 @@ if (document.readyState === 'loading') {
 } else {
   setupTPPlayground();
 }
+
+function initTP() {
+  if (typeof initThermal === 'function' && !window.__TP_thermalInited) { initThermal(); window.__TP_thermalInited = true; }
+  if (typeof updateVisibleTPPlot === 'function') updateVisibleTPPlot(getActiveTPSubTab());
+  if (typeof updateLiveTP === 'function') updateLiveTP();
+}
+window.initTP = initTP;

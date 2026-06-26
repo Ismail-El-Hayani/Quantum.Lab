@@ -8,16 +8,53 @@
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <link rel="stylesheet" href="../../shared_styles.css">
 <style>
-  .fs-canvas-wrap { width:100%; min-height:420px; background:var(--bg-deep); border-radius:12px; border:1px solid var(--glass-border); position:relative; overflow:hidden; margin-bottom:1.5rem; }
+  .fs-canvas-wrap { width:100%; min-height:420px; background:var(--bg-deep); border-radius:12px; border:1px solid var(--glass-border); position:relative; overflow:hidden; margin-bottom:1rem; }
   #fs-canvas { display:block; width:100%; height:420px; }
   .fs-overlay { position:absolute; top:8px; left:12px; font-size:0.75rem; color:var(--text-dim); pointer-events:none; }
-  .fs-legend-bar { position:absolute; bottom:8px; left:12px; display:flex; gap:0.8rem; pointer-events:none; }
+  .fs-legend-bar { position:absolute; bottom:8px; left:12px; display:flex; gap:0.8rem; pointer-events:none; flex-wrap:wrap; }
   .fs-legend-item { display:flex; align-items:center; gap:0.3rem; font-size:0.7rem; color:var(--text-dim); }
   .fs-legend-dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
-  .preset-grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0.4rem; margin-bottom:0.8rem; }
-  .preset-btn { padding:0.3rem 0.5rem; font-size:0.75rem; }
-  .preset-btn.active { border-color:var(--accent-cyan); color:var(--accent-cyan); background:rgba(0,240,255,0.08); }
+  .material-card { padding: 0.8rem; background: var(--bg-elevated); border-radius: var(--radius-sm); border: 1px solid var(--glass-border); text-align: center; cursor: pointer; transition: all 0.2s; }
+  .material-card:hover { border-color: var(--accent-cyan); }
+  .material-card.selected { border-color: var(--accent-purple); background: rgba(192,132,252,0.08); }
   .app-plot { min-height:260px; margin-top:1.5rem; }
+
+  /* ─── Module 05-style layout utilities ─── */
+  .game-mode-bar { display:flex; justify-content:center; gap:0.5rem; padding:0.6rem; background:rgba(0,0,0,0.35); backdrop-filter:blur(8px); border-bottom:1px solid var(--glass-border); margin-bottom:1.5rem; flex-wrap:wrap; }
+  .game-layout { max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg); align-items:start; }
+  @media (max-width:1000px) { .game-layout { grid-template-columns:1fr; } }
+  .game-main { min-width:0; }
+  .game-sidebar { min-width:0; position:sticky; top:5rem; }
+  .macro-panel { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-top:1rem; }
+  .macro-panel:first-of-type { margin-top:0; }
+  .macro-panel h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
+  .sidebar-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-bottom:1rem; }
+  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
+  .slider-group { margin-bottom:1rem; }
+  .slider-group label { display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:0.3rem; }
+  .slider-group input[type=range] { width:100%; }
+  .slider-value { font-family:var(--font-mono); color:var(--accent-cyan); font-weight:700; }
+  .slider-desc { font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; }
+  .readout-row { display:flex; flex-wrap:wrap; gap:0.5rem; }
+  .readout-tile { flex:1 1 90px; background:var(--bg-deep); padding:8px 10px; border-radius:6px; border:1px solid var(--glass-border); text-align:center; }
+  .readout-tile .readout-label { font-size:0.65rem; color:var(--text-dim); text-transform:uppercase; }
+  .readout-tile .readout-value { font-family:var(--font-mono); font-size:1.05rem; font-weight:700; }
+  .readout-tile .readout-unit { font-size:0.65rem; color:var(--text-muted); }
+  .unit-tag { display:inline-block; background:rgba(0,240,255,0.08); color:var(--accent-cyan); font-family:var(--font-mono); font-size:0.7rem; padding:0.15rem 0.4rem; border-radius:4px; margin-left:0.3rem; }
+
+  /* Story / Theory helpers (mirroring modules 01/03/04/05) */
+  .theory-content { font-size:0.95rem; line-height:1.7; color:var(--text-main); }
+  .theory-content p { margin-bottom:1rem; }
+  .theory-content strong { color:var(--accent-cyan); font-weight:500; }
+  .equation-box { background:var(--bg-deep); border:1px solid var(--glass-border); border-radius:10px; padding:1rem 1.2rem; margin:1rem 0; font-size:0.85rem; overflow-x:auto; color:var(--text-main); }
+  .equation-box .mjx-chtml { font-size:1.1em !important; }
+  .insight-callout { background:linear-gradient(90deg, rgba(0,240,255,0.08), transparent); border-left:3px solid var(--accent-cyan); padding:1rem 1.2rem; border-radius:0 8px 8px 0; margin:1rem 0; font-size:0.92rem; color:var(--text-main); }
+  .insight-callout .label { font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent-cyan); font-weight:600; margin-bottom:0.4rem; }
+  .insights { display:grid; grid-template-columns:1fr; gap:1rem; margin-top:1rem; }
+  @media (min-width:900px) { .insights { grid-template-columns:1fr 1fr; } }
+  .insight-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; }
+  .insight-card .insight-title { margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright); }
+
   .challenge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   .draggable-target { cursor: grab; border: 2px dashed var(--glass-border); border-radius: var(--radius-sm); padding: 0.8rem; transition: all 0.2s; text-align: center; background: var(--bg-elevated); }
   .draggable-target:hover { border-color: var(--accent-cyan); background: rgba(0,240,255,0.04); }
@@ -53,199 +90,500 @@
 <div class="game-container">
 
   <div class="game-mode-bar">
-    <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
+    <button class="game-mode-btn active" id="mode-story" onclick="setGameMode('story')">📖 Story</button>
+    <button class="game-mode-btn" id="mode-theory" onclick="setGameMode('theory')">🎓 Theory</button>
+    <button class="game-mode-btn" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
     <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">🎯 Challenges</button>
     <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">🧩 Puzzles</button>
   </div>
 
-  <!-- PLAYGROUND -->
-  <div class="mode-section" id="section-play">
-    <div class="playground-area">
-      <div class="playground-header">
-        <div class="playground-title">🔬 k-Space Occupation & Fermi Surface</div>
-        <div class="playground-level">The Canvas shows a 2D slice of k-space. Each dot is a momentum state, colored by Fermi-Dirac occupation. Below: the f(E) curve, density of thermally active states, and material applications.</div>
+  <!-- ═══════════════ STORY ═══════════════ -->
+  <div class="mode-section" id="section-story" style="display:block;">
+    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>📖 The Story — The Fermi Surface and Why It Matters</h3>
+          <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.6;margin-bottom:1rem;">
+            In a metal, electrons fill up energy states from the bottom, two per state (spin up and down),
+            until they reach the <strong style="color:var(--accent-cyan);">Fermi energy</strong> <i>E<sub>F</sub></i>.
+            The boundary in momentum space between filled and empty states is the
+            <strong style="color:var(--accent-cyan);">Fermi surface</strong> — a sharp sphere at absolute zero,
+            blurred by temperature into a thermal shell of width ~<i>k<sub>B</sub>T</i>. This surface is
+            everything: only electrons near it can respond to electric fields, carry heat, or absorb light.
+            The shape of the Fermi surface determines whether a material is a good metal, a superconductor,
+            or a strange metal with non-Fermi-liquid behaviour.
+          </p>
+          <div class="insights">
+            <div class="insight-card">
+              <div class="insight-title">🧩 The Pauli Principle in Action</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                The Pauli exclusion principle forbids two electrons from occupying the same quantum state.
+                This forces electrons to stack up in energy until the last one sits at <i>E<sub>F</sub></i>.
+                In copper, <i>E<sub>F</sub></i> ≈ 7 eV, corresponding to a Fermi temperature of 81,000 K —
+                far above room temperature. This is why metals feel "cold" to the touch: most electrons
+                are frozen in place by Pauli blocking and cannot absorb thermal energy.
+              </p>
+            </div>
+            <div class="insight-card">
+              <div class="insight-title">🔬 Why Only k_BT Matters</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                At room temperature, <i>k<sub>B</sub>T</i> ≈ 25 meV — a tiny fraction of <i>E<sub>F</sub></i>.
+                Only electrons within this energy window of the Fermi surface can be thermally excited.
+                This explains why the electronic specific heat is <i>C<sub>v</sub> = γT</i> (linear in T)
+                instead of the classical <i>3Nk<sub>B</sub></i>: 99% of electrons are Pauli-blocked and
+                contribute nothing. The playground lets you sweep T and watch the Fermi edge blur in real time.
+              </p>
+            </div>
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">🎮 How the Playground Lets You Feel It</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Use the <strong style="color:var(--accent-cyan);">Playground</strong> to select materials (Na, Cu, Ag, Al, Nb)
+                and sweep the temperature slider. The k-space canvas shows the Fermi surface as a sharp circle
+                at T=0 that blurs into a pink thermal shell as T rises. The Fermi-Dirac distribution plot
+                shows <i>f(E)</i> transitioning from a perfect step to a smoothed edge. The derivative
+                <i>−∂f/∂E</i> reveals the thermal broadening kernel — the "active" electrons that carry all
+                the transport. Explore Pauli paramagnetism, thermionic emission, and degeneracy pressure
+                in the Applications section.
+              </p>
+            </div>
+          </div>
+        </section>
       </div>
-
-      <!-- CANVAS PRIMARY VISUAL -->
-      <div class="fs-canvas-wrap">
-        <canvas id="fs-canvas"></canvas>
-        <div class="fs-overlay">
-          <span id="fs-overlay-mat" style="color:var(--text-main);">Free electron</span>
-          · <span id="fs-overlay-struct" style="color:var(--text-dim);">Free-electron</span>
-          · k<sub>F</sub> = <span id="fs-overlay-kf" style="color:var(--accent-cyan);">3.16</span> nm<sup>-1</sup>
-          · T/T<sub>F</sub> = <span id="fs-overlay-deg" style="color:var(--accent-pink);">0.005</span>
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-story"></div>
         </div>
-        <div class="fs-legend-bar">
-          <span class="fs-legend-item"><span class="fs-legend-dot" style="background:rgba(0,240,255,0.9);"></span> Occupied</span>
-          <span class="fs-legend-item"><span class="fs-legend-dot" style="background:rgba(255,78,205,0.7);"></span> Thermal shell</span>
-          <span class="fs-legend-item"><span class="fs-legend-dot" style="background:rgba(255,255,255,0.12);"></span> Empty</span>
-          <span class="fs-legend-item"><span class="fs-legend-dot" style="background:rgba(0,240,255,0.25);border:1px solid rgba(0,240,255,0.5);"></span> k<sub>F</sub> circle</span>
-          <span class="fs-legend-item"><span style="display:inline-block;width:10px;height:3px;background:rgba(255,255,255,0.15);"></span> BZ boundary</span>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-story" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
         </div>
-      </div>
-
-      <div class="challenge-panel" style="margin:1rem 0;">
-        <div style="font-size:0.8rem;color:var(--text-dim);line-height:1.6;"
-        >
-          <strong style="color:var(--text-main);">Canvas &middot; k-space occupation snapshot.</strong>
-          Each dot is a momentum state (kx, ky). Its colour encodes Fermi-Dirac occupation f(E).
-          At <em>T = 0</em>, the circle is razor-sharp: every state inside k<sub>F</sub> is filled, every state outside is empty.
-          At finite <em>T</em>, only electrons within ~k<sub>B</sub>T of the Fermi surface can be thermally excited
-          into empty states, so the edge blurs into a pink thermal shell. The Brillouin-zone boundary (dashed square)
-          shows the crystal limit where free-electron sphere might distort.
-        </div>
-      </div>
-
-      <div style="display:grid; grid-template-columns: 1fr 320px; gap: 1.5rem;">
-        <div>
-          <!-- plot-fd viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Fermi-Dirac f(E)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Occupation probability: f(E) = [1 + e^((E-E_F)/k_BT)]⁻¹.</p>
-  <div class="plot-container" id="plot-fd" style="min-height:380px;"></div>
-</div>
-
-          <div id="plot-desc-fd" style="font-size:0.78rem;color:var(--text-dim);margin-top:0.4rem;">
-            Fermi-Dirac distribution f(E) = [exp((E−μ)/k<sub>B</sub>T)+1]<sup>−1</sup>. Yellow dashed = T=0 step. Dotted magenta = Maxwell-Boltzmann (classical limit at high T).
-          </div>
-
-          <!-- plot-dfdE viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Derivative ∂f/∂E</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Thermal broadening kernel. Width ≈ 3.5 k_B T around E_F.</p>
-  <div class="plot-container" id="plot-dfdE" style="min-height:260px;margin-top:1.5rem;"></div>
-</div>
-
-          <div id="plot-desc-dfdE" style="font-size:0.78rem;color:var(--text-dim);margin-top:0.4rem;">
-            −∂f/∂E is a thermal-broadened delta function centred on μ. Its width ~k<sub>B</sub>T. Only electrons within this window respond to external perturbations — the ``thermometer'' of the Fermi sea.
-          </div>
-
-          <!-- plot-occ viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Occupation Number n(E)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Electron occupancy near E_F. Smears out as temperature rises.</p>
-  <div class="plot-container" id="plot-occ" style="min-height:320px;margin-top:1.5rem;"></div>
-</div>
-
-          <div id="plot-desc-occ" style="font-size:0.78rem;color:var(--text-dim);margin-top:0.4rem;">
-            2D k-space occupation map. Colour = f(E). At T=0: sharp disk. At finite T: fuzzy edge because states just above k<sub>F</sub> become partially occupied.
-          </div>
-
-          <!-- Applications section -->
-          <div style="margin-top:2rem;">
-            <div class="playground-header">
-              <div class="playground-title">⚙ Applications & Extensions</div>
-              <div class="playground-level">Real consequences of Fermi-Dirac statistics in materials.</div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-              <div>
-                <!-- plot-pauli viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Pauli Exclusion Principle</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">No two electrons share all four quantum numbers.</p>
-  <div class="plot-container app-plot" id="plot-pauli"></div>
-</div>
-
-                <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Pauli paramagnetic susceptibility χ<sub>P</sub>(T) ~ μ(E<sub>F</sub>) in a Fermi liquid. Constant at low T; drops when k<sub>B</sub>T ~ E<sub>F</sub>.</div>
-              </div>
-              <div>
-                <!-- plot-thermionic viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Thermionic Emission J(T)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Richardson-Dushman: J = AT² e^(-φ/k_BT).</p>
-  <div class="plot-container app-plot" id="plot-thermionic"></div>
-</div>
-
-                <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Thermionic emission current J = AT<sup>2</sup>exp(−φ/k<sub>B</sub>T). Only electrons in the high-energy tail escape the work-function barrier φ.</div>
-              </div>
-            </div>
-            <!-- plot-wd viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Work Function Distribution</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Energy to lift an electron from E_F to vacuum.</p>
-  <div class="plot-container app-plot" id="plot-wd"></div>
-</div>
-
-            <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">White-dwarf degeneracy pressure P ∝ n<sup>5/3</sup>: the same Pauli pressure that keeps the star from collapsing is what prevents metals from collapsing under their own electronic charge.</div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges-story">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles-story">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp-story">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges-story">0</div><div class="score-label">Badges</div></div>
           </div>
         </div>
+      </aside>
+    </div>
+  </div>
 
-        <div>
-          <div class="challenge-panel" style="margin-bottom:1rem;">
-            <div class="challenge-header">
-              <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙</span>
-              <span class="challenge-title">Controls</span>
+  <!-- ═══════════════ THEORY ═══════════════ -->
+  <div class="mode-section" id="section-theory" style="display:none;">
+    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>🎓 Theory — Fermi-Dirac Statistics and the Fermi Surface</h3>
+          <div class="theory-content">
+            <p>
+              Electrons are fermions: they obey the Pauli exclusion principle and fill energy states
+              according to the <strong>Fermi-Dirac distribution</strong>:
+            </p>
+            <div class="equation-box">
+              $$f(E) = \frac{1}{e^{(E - \mu)/(k_B T)} + 1}$$
             </div>
-            <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.4rem;">Material preset</div>
-            <div class="preset-grid">
-              <button class="btn preset-btn" id="preset-Free" onclick="setFSMaterial('Free')">Free e⁻</button>
-              <button class="btn preset-btn" id="preset-Na" onclick="setFSMaterial('Na')">Na</button>
-              <button class="btn preset-btn" id="preset-Cu" onclick="setFSMaterial('Cu')">Cu</button>
-              <button class="btn preset-btn" id="preset-Ag" onclick="setFSMaterial('Ag')">Ag</button>
-              <button class="btn preset-btn" id="preset-Al" onclick="setFSMaterial('Al')">Al</button>
-              <button class="btn preset-btn" id="preset-Nb" onclick="setFSMaterial('Nb')">Nb</button>
-            </div>
-
-            <div class="control-row">
-              <span class="control-label">Fermi energy E<sub>F</sub></span>
-              <span class="control-value" id="val-EF">5.0</span><span class="unit-tag">eV</span>
-            </div>
-            <input type="range" id="slider-EF" min="1" max="15" value="5.0" step="0.1">
-
-            <div class="control-row">
-              <span class="control-label">Temperature T</span>
-              <span class="control-value" id="val-T">300</span><span class="unit-tag">K</span>
-            </div>
-            <input type="range" id="slider-T" min="1" max="5000" value="300" step="10">
-
-            <button class="btn" id="btn-classical" onclick="toggleClassical()" style="margin-top:0.6rem;width:100%;font-size:0.82rem;">
-              Show Maxwell-Boltzmann
-            </button>
-
-            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.6rem;line-height:1.5;">
-              At T=0, f(E) is a sharp step at E<sub>F</sub>. Only states below E<sub>F</sub> are occupied. As T rises, electrons within ~k<sub>B</sub>T of E<sub>F</sub> are thermally excited into empty states above. The Canvas visualises this directly: cyan dots = occupied, pink glow = thermal shell, white dashed = k<sub>F</sub> circle.
+            <p>
+              where \(\mu\) is the chemical potential (equal to \(E_F\) at \(T = 0\)) and \(k_B T\) is the
+              thermal energy. At \(T = 0\), \(f(E)\) is a perfect step: 1 for \(E < E_F\), 0 for \(E > E_F\).
+              At finite \(T\), the step is smoothed over an energy window \(\sim k_B T\).
             </p>
           </div>
 
-          <div class="challenge-panel">
-            <div class="challenge-header">
-              <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">📊</span>
-              <span class="challenge-title">Live Readout</span>
+          <div class="insights">
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">1. Fermi Wavevector and Energy</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                For a free-electron gas in 3D, the Fermi wavevector and energy are:
+              </p>
+              <div class="equation-box">
+                $$k_F = (3\pi^2 n)^{1/3}, \qquad E_F = \frac{\hbar^2 k_F^2}{2m}$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                where \(n\) is the electron density. The Fermi temperature \(T_F = E_F / k_B\) is typically
+                10⁴–10⁵ K for metals, meaning room temperature is deeply degenerate.
+              </p>
             </div>
 
-            <!-- Canvas legend mirror in control panel -->
-            <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:0.6rem;">
-              <div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;">
-                <span style="width:8px;height:8px;border-radius:50%;background:rgba(0,240,255,0.9);display:inline-block;"></span> Occupied state (f ≈ 1)
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">2. Chemical Potential at Finite Temperature</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                The Sommerfeld expansion gives the temperature-dependent chemical potential in 3D:
+              </p>
+              <div class="equation-box">
+                $$\mu(T) \approx E_F \left[1 - \frac{\pi^2}{12}\left(\frac{k_B T}{E_F}\right)^2\right]$$
               </div>
-              <div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;">
-                <span style="width:8px;height:8px;border-radius:50%;background:rgba(255,78,205,0.7);display:inline-block;"></span> Thermal shell (0.15 < f < 0.85)
-              </div>
-              <div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;">
-                <span style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.12);display:inline-block;"></span> Empty state (f ≈ 0)
-              </div>
-              <div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;">
-                <span style="width:10px;height:1.5px;border-bottom:1.5px dashed rgba(0,240,255,0.4);display:inline-block;"></span> k<sub>F</sub> (Fermi wavevector)
-              </div>
-              <div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;">
-                <span style="width:10px;height:3px;background:rgba(255,255,255,0.15);display:inline-block;"></span> Brillouin-zone boundary
-              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                valid when \(T \ll T_F\). The correction is tiny at room temperature (\(\sim 0.01\%\)) but
+                becomes significant near \(T_F\).
+              </p>
             </div>
 
-            <table>
-              <tr><th>Quantity</th><th>Value</th></tr>
-              <tr><td>Temperature</td><td class="highlight-num" id="live-T">300 K</td></tr>
-              <tr><td>Fermi energy E<sub>F</sub></td><td class="highlight-num" id="live-EF">5.00 eV</td></tr>
-              <tr><td>Chemical potential μ</td><td class="highlight-num" id="live-mu">4.95 eV</td></tr>
-              <tr><td>k<sub>F</sub></td><td class="highlight-num" id="live-kF">3.16 nm⁻¹</td></tr>
-              <tr><td>Fermi temp T<sub>F</sub></td><td class="highlight-num" id="live-TF">5.8×10⁴ K</td></tr>
-              <tr><td>de Broglie λ</td><td class="highlight-num" id="live-debroglie">6.2 nm</td></tr>
-              <tr><td>Thermal smearing k<sub>B</sub>T</td><td class="highlight-pink" id="live-smear">25.9 meV</td></tr>
-              <tr><td>Degeneracy T/T<sub>F</sub></td><td class="highlight-num" id="live-degen">0.005</td></tr>
-            </table>
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">3. Electronic Specific Heat</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Only electrons within \(k_B T\) of \(E_F\) can absorb thermal energy. This gives a
+                linear-in-\(T\) specific heat instead of the classical Dulong-Petit value:
+              </p>
+              <div class="equation-box">
+                $$C_v = \gamma T, \qquad \gamma = \frac{\pi^2}{3} k_B^2 g(E_F) = \frac{\pi^2}{2} \frac{N k_B^2}{E_F}$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                The coefficient \(\gamma\) is proportional to the density of states at \(E_F\). Heavy-fermion
+                materials have enormous \(g(E_F)\) and thus enormous \(\gamma\) — up to 1000× larger than copper.
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">4. Wiedemann-Franz Law</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Because both charge and heat are carried by the same quasiparticles near \(E_F\), the ratio of
+                thermal to electrical conductivity is universal:
+              </p>
+              <div class="equation-box">
+                $$\frac{\kappa}{\sigma T} = L = \frac{\pi^2}{3}\left(\frac{k_B}{e}\right)^2 \approx 2.44 \times 10^{-8}\;\text{W}\Omega/\text{K}^2$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                This holds for Fermi liquids (metals) but breaks down in semiconductors (phonons carry heat)
+                and in non-Fermi-liquids (strange metals, superconductors).
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">5. Degeneracy Pressure</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                The Pauli principle creates a pressure even at \(T = 0\): electrons cannot all collapse into the
+                lowest state. The degeneracy pressure for non-relativistic fermions is:
+              </p>
+              <div class="equation-box">
+                $$P \propto n^{5/3}, \qquad P_{\text{deg}} = \frac{2}{5} n E_F$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                This pressure supports white dwarfs against gravitational collapse and prevents metals from
+                imploding under their own electronic charge. The exponent 5/3 reflects the 3D density of states.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-theory"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-theory" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges-theory">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles-theory">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp-theory">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges-theory">0</div><div class="score-label">Badges</div></div>
           </div>
         </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- PLAYGROUND -->
+  <div class="mode-section" id="section-play" style="display:none;">
+    <div class="game-layout">
+      <div class="game-main">
+
+        <section class="macro-panel">
+          <h3>🔬 Fermi-Dirac Spectrometer</h3>
+          <p class="slider-desc" style="font-size:0.9rem; line-height:1.6;">
+            Explore how <b>Fermi-Dirac statistics</b> govern electron occupation in k-space.
+            The canvas shows a 2D slice of momentum space: each dot is a state, coloured by
+            occupation probability <i>f(E)</i>. Only electrons within ~<i>k<sub>B</sub>T</i> of the
+            Fermi surface can be thermally excited.
+          </p>
+        </section>
+
+        <section class="macro-panel">
+          <h3>💎 Material Presets</h3>
+          <p class="slider-desc" style="font-size:0.85rem; margin-bottom:0.8rem; line-height:1.55;">
+            Pick a metal preset to load its Fermi energy and crystal structure.
+            The slider and live readout update automatically.
+          </p>
+          <div class="challenge-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));">
+            <div class="material-card" id="preset-Free" data-mat="Free" onclick="setFSMaterial('Free')">
+              <div style="font-size:0.95rem;">Free e⁻</div>
+              <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">Free-electron</div>
+            </div>
+            <div class="material-card" id="preset-Na" data-mat="Na" onclick="setFSMaterial('Na')">
+              <div style="font-size:0.95rem;">Na</div>
+              <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">BCC · 3.2 eV</div>
+            </div>
+            <div class="material-card" id="preset-Cu" data-mat="Cu" onclick="setFSMaterial('Cu')">
+              <div style="font-size:0.95rem;">Cu</div>
+              <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">FCC · 7.0 eV</div>
+            </div>
+            <div class="material-card" id="preset-Ag" data-mat="Ag" onclick="setFSMaterial('Ag')">
+              <div style="font-size:0.95rem;">Ag</div>
+              <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">FCC · 5.5 eV</div>
+            </div>
+            <div class="material-card" id="preset-Al" data-mat="Al" onclick="setFSMaterial('Al')">
+              <div style="font-size:0.95rem;">Al</div>
+              <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">FCC · 11.7 eV</div>
+            </div>
+            <div class="material-card" id="preset-Nb" data-mat="Nb" onclick="setFSMaterial('Nb')">
+              <div style="font-size:0.95rem;">Nb</div>
+              <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">BCC · 5.3 eV</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- CANVAS PRIMARY VISUAL -->
+        <section class="macro-panel pg-section">
+          <h3>🌌 k-Space Occupation & Fermi Surface</h3>
+          <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
+            Each dot is a momentum state <i>(k<sub>x</sub>, k<sub>y</sub>)</i>. Colour encodes Fermi-Dirac occupation
+            <i>f(E)</i>. At <i>T = 0</i> the circle is razor-sharp: every state inside <i>k<sub>F</sub></i> is filled,
+            every state outside is empty. At finite <i>T</i>, only electrons within ~<i>k<sub>B</sub>T</i> of the
+            Fermi surface can be thermally excited, so the edge blurs into a pink thermal shell.
+          </p>
+          <div class="fs-canvas-wrap">
+            <canvas id="fs-canvas"></canvas>
+            <div class="fs-overlay">
+              <span id="fs-overlay-mat" style="color:var(--text-main);">Free electron</span>
+              · <span id="fs-overlay-struct" style="color:var(--text-dim);">Free-electron</span>
+              · k<sub>F</sub> = <span id="fs-overlay-kf" style="color:var(--accent-cyan);">3.16</span> nm<sup>-1</sup>
+              · T/T<sub>F</sub> = <span id="fs-overlay-deg" style="color:var(--accent-pink);">0.005</span>
+            </div>
+            <div class="fs-legend-bar">
+              <span class="fs-legend-item"><span class="fs-legend-dot" style="background:rgba(0,240,255,0.9);"></span> Occupied</span>
+              <span class="fs-legend-item"><span class="fs-legend-dot" style="background:rgba(255,78,205,0.7);"></span> Thermal shell</span>
+              <span class="fs-legend-item"><span class="fs-legend-dot" style="background:rgba(255,255,255,0.12);"></span> Empty</span>
+              <span class="fs-legend-item"><span class="fs-legend-dot" style="background:rgba(0,240,255,0.25);border:1px solid rgba(0,240,255,0.5);"></span> k<sub>F</sub> circle</span>
+              <span class="fs-legend-item"><span style="display:inline-block;width:10px;height:3px;background:rgba(255,255,255,0.15);"></span> BZ boundary</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- FERMI-DIRAC PLOTS -->
+        <section class="macro-panel pg-section">
+          <h3>📈 Fermi-Dirac Statistics</h3>
+          <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
+            The distribution <i>f(E)</i> controls which states are occupied. The derivative
+            <i>−∂f/∂E</i> is a thermal broadening kernel that picks out the active states near <i>E<sub>F</sub></i>.
+          </p>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+            <div class="viz-card">
+              <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Fermi-Dirac f(E)</h4>
+              <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Occupation probability: f(E) = [1 + exp((E − E<sub>F</sub>)/(k<sub>B</sub>T))]<sup>−1</sup>.</p>
+              <div class="plot-container" id="plot-fd" style="min-height:360px;"></div>
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;line-height:1.5;">
+                At T = 0, f(E) is a perfect step: every state below E<sub>F</sub> is filled, every state above is empty. At finite T the edge is smoothed over an energy window ~k<sub>B</sub>T. Yellow dashed = T = 0 step; dotted magenta = Maxwell-Boltzmann classical limit.
+              </p>
+            </div>
+            <div class="viz-card">
+              <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Derivative ∂f/∂E</h4>
+              <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Thermal broadening kernel. Width ≈ 3.5 k<sub>B</sub>T around E<sub>F</sub>.</p>
+              <div class="plot-container" id="plot-dfdE" style="min-height:260px;"></div>
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;line-height:1.5;">
+                −∂f/∂E is a thermal-broadened delta function centred on μ. Its total area is conserved (equals 1), but its width grows with T because more states become thermally accessible. Only electrons inside this window respond to external perturbations.
+              </p>
+            </div>
+          </div>
+
+          <div class="viz-card" style="margin-top:1rem;">
+            <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Occupation Number n(E)</h4>
+            <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Electron occupancy near E<sub>F</sub>. Smears out as temperature rises.</p>
+            <div class="plot-container" id="plot-occ" style="min-height:320px;"></div>
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;line-height:1.5;">
+                2D k-space occupation map. Colour = f(E). At T = 0 the boundary between occupied (cyan) and empty (dark) states is the Fermi surface. At finite T the edge becomes fuzzy because states just above k<sub>F</sub> acquire partial occupation.
+              </p>
+          </div>
+        </section>
+
+        <!-- APPLICATIONS -->
+        <section class="macro-panel pg-section">
+          <h3>⚙ Applications & Extensions</h3>
+          <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
+            Real consequences of Fermi-Dirac statistics in materials.
+          </p>
+          <div class="insights">
+            <div class="insight-card">
+              <div class="insight-title">🧲 Pauli Exclusion Principle</div>
+              <div class="viz-card">
+                <h4 style="font-size:0.9rem;color:var(--text-bright);margin:0 0 0.3rem;">Pauli Paramagnetic Susceptibility</h4>
+                <p style="font-size:0.78rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">No two electrons share all four quantum numbers.</p>
+                <div class="plot-container app-plot" id="plot-pauli"></div>
+              </div>
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;line-height:1.5;">
+                Pauli paramagnetic susceptibility χ<sub>P</sub>(T) is proportional to the density of states at the Fermi level, χ<sub>P</sub> ∼ μ<sub>B</sub>² μ(E<sub>F</sub>). It is nearly constant at low T and drops once k<sub>B</sub>T becomes comparable to E<sub>F</sub>.
+              </p>
+            </div>
+            <div class="insight-card">
+              <div class="insight-title">🔥 Thermionic Emission</div>
+              <div class="viz-card">
+                <h4 style="font-size:0.9rem;color:var(--text-bright);margin:0 0 0.3rem;">Thermionic Emission J(T)</h4>
+                <p style="font-size:0.78rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Richardson-Dushman: J = A T² exp(−φ/(k<sub>B</sub>T)).</p>
+                <div class="plot-container app-plot" id="plot-thermionic"></div>
+              </div>
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;line-height:1.5;">
+                Only electrons in the high-energy tail of the Fermi-Dirac distribution escape the work-function barrier φ. Materials with larger φ need higher temperatures for significant emission.
+              </p>
+            </div>
+            <div class="insight-card">
+              <div class="insight-title">⭐ White-Dwarf Degeneracy Pressure</div>
+              <div class="viz-card">
+                <h4 style="font-size:0.9rem;color:var(--text-bright);margin:0 0 0.3rem;">Work Function Distribution</h4>
+                <p style="font-size:0.78rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Energy to lift an electron from E<sub>F</sub> to vacuum.</p>
+                <div class="plot-container app-plot" id="plot-wd"></div>
+              </div>
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;line-height:1.5;">
+                White-dwarf degeneracy pressure P ∝ n<sup>5/3</sup> for non-relativistic fermions: the same Pauli pressure that keeps the star from collapsing prevents metals from collapsing under their own electronic charge. The exponent 5/3 arises because the Fermi energy grows with density while the pressure is the energy density.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- PHYSICAL INSIGHTS -->
+        <section class="macro-panel pg-section">
+          <h3>💡 Physical Insights</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-bottom:0.8rem;">
+            The Fermi-Dirac distribution <strong>f(E) = [exp((E−μ)/k<sub>B</sub>T) + 1]<sup>−1</sup></strong> is the cornerstone of electron behaviour in solids. At absolute zero it is a perfect step function: all states below E<sub>F</sub> are filled, all above are empty. This Pauli blocking is why metals have Pauli paramagnetism, a specific heat proportional to T, and thermal conductivities carried almost entirely by electrons.
+          </p>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-bottom:0.8rem;">
+            The finite-temperature correction to the chemical potential in 3D is <strong>μ(T) ≈ E<sub>F</sub> [1 − (π<sup>2</sup>/12)(k<sub>B</sub>T/E<sub>F</sub>)<sup>2</sup>]</strong>, valid when T ≪ T<sub>F</sub> = E<sub>F</sub>/k<sub>B</sub>. Even at room temperature, typical metals have T/T<sub>F</sub> ~ 10<sup>−2</sup>, so only a tiny fraction of electrons within k<sub>B</sub>T of E<sub>F</sub> can participate in transport or thermal excitation. This explains why the electronic specific heat C<sub>v</sub> = γT is so small compared with the classical value 3Nk<sub>B</sub>.
+          </p>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+            The Wiedemann-Franz law <strong>κ/(σT) = L = (π<sup>2</sup>/3)(k<sub>B</sub>/e)<sup>2</sup></strong> = 2.44×10<sup>−8</sup> WΩ/K<sup>2</sup> holds because both charge and heat are carried by the same quasiparticles near E<sub>F</sub>. A Lorenz number close to this universal value is a fingerprint of Fermi-liquid behaviour. In semiconductors phonons carry heat while electrons carry charge, so L is violated.
+          </p>
+        </section>
+
       </div>
+
+      <!-- Right sidebar -->
+      <aside class="game-sidebar">
+        <div class="sidebar-card">
+          <h4>⚙ Quantum Controls</h4>
+
+          <div class="slider-group">
+            <label>Fermi energy E<sub>F</sub> <span class="unit-tag">eV</span></label>
+            <span class="slider-value" id="val-EF">5.0</span>
+            <input type="range" id="slider-EF" min="1" max="15" value="5.0" step="0.1">
+            <div class="slider-desc">Sets the radius of the filled Fermi sphere in k-space.</div>
+          </div>
+
+          <div class="slider-group">
+            <label>Temperature T <span class="unit-tag">K</span></label>
+            <span class="slider-value" id="val-T">300</span>
+            <input type="range" id="slider-T" min="1" max="5000" value="300" step="10">
+            <div class="slider-desc">Controls thermal smearing of the Fermi edge.</div>
+          </div>
+
+          <button class="btn" id="btn-classical" onclick="toggleClassical()" style="margin-top:0.2rem;width:100%;font-size:0.82rem;">
+            Show Maxwell-Boltzmann
+          </button>
+
+          <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.8rem;line-height:1.5;">
+            At T = 0, f(E) is a sharp step at E<sub>F</sub>. Only states below E<sub>F</sub> are occupied. As T rises, electrons within ~k<sub>B</sub>T of E<sub>F</sub> are thermally excited into empty states above. The Canvas visualises this directly: cyan dots = occupied, pink glow = thermal shell, white dashed = k<sub>F</sub> circle.
+          </p>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>📊 Live Readout</h4>
+
+          <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:0.6rem;">
+            <div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;">
+              <span style="width:8px;height:8px;border-radius:50%;background:rgba(0,240,255,0.9);display:inline-block;"></span> Occupied state (f ≈ 1)
+            </div>
+            <div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;">
+              <span style="width:8px;height:8px;border-radius:50%;background:rgba(255,78,205,0.7);display:inline-block;"></span> Thermal shell (0.15 < f < 0.85)
+            </div>
+            <div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;">
+              <span style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.12);display:inline-block;"></span> Empty state (f ≈ 0)
+            </div>
+            <div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;">
+              <span style="width:10px;height:1.5px;border-bottom:1.5px dashed rgba(0,240,255,0.4);display:inline-block;"></span> k<sub>F</sub> (Fermi wavevector)
+            </div>
+            <div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;">
+              <span style="width:10px;height:3px;background:rgba(255,255,255,0.15);display:inline-block;"></span> Brillouin-zone boundary
+            </div>
+          </div>
+
+          <div class="readout-row">
+            <div class="readout-tile">
+              <div class="readout-label">Material</div>
+              <div class="readout-value" id="live-material" style="color:var(--accent-cyan);font-size:0.95rem;">Free electron</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">Temperature</div>
+              <div class="readout-value" id="live-T" style="color:var(--text-bright);">300 K</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">E<sub>F</sub></div>
+              <div class="readout-value" id="live-EF" style="color:var(--accent-purple);">5.00 eV</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">μ</div>
+              <div class="readout-value" id="live-mu" style="color:var(--text-bright);">4.95 eV</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">k<sub>F</sub></div>
+              <div class="readout-value" id="live-kF" style="color:var(--accent-cyan);">3.16 nm⁻¹</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">T<sub>F</sub></div>
+              <div class="readout-value" id="live-TF" style="color:var(--text-bright);">5.8×10⁴ K</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">λ</div>
+              <div class="readout-value" id="live-debroglie" style="color:var(--text-bright);">6.2 nm</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">k<sub>B</sub>T</div>
+              <div class="readout-value" id="live-smear" style="color:var(--accent-pink);">25.9 meV</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">T/T<sub>F</sub></div>
+              <div class="readout-value" id="live-degen" style="color:var(--text-bright);">0.005</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav"></div>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list" style="font-size:0.8rem; color:var(--text-dim); line-height:1.6;">Complete challenges to earn badges!</div>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell">
+              <div class="score-num" id="stat-challenges">0</div>
+              <div class="score-label">Challenges</div>
+            </div>
+            <div class="score-cell">
+              <div class="score-num" id="stat-puzzles">0</div>
+              <div class="score-label">Puzzles</div>
+            </div>
+            <div class="score-cell">
+              <div class="score-num" id="stat-xp">0</div>
+              <div class="score-label">Total XP</div>
+            </div>
+            <div class="score-cell">
+              <div class="score-num" id="stat-badges">0</div>
+              <div class="score-label">Badges</div>
+            </div>
+          </div>
+        </div>
+      </aside>
     </div>
   </div>
 
@@ -296,7 +634,7 @@
       <div class="challenge-reward">🏆 Reward: 100 XP + "Heavy Fermion" badge</div>
       <div class="btn-group" style="margin-top:1rem;">
         <button class="btn" onclick="checkHeavyFermion('linear')">C ∝ T with large coefficient</button>
-        <button class="btn" onclick="checkHeavyFermion('exp')">C ∝ e^(-Δ/kT)</button>
+        <button class="btn" onclick="checkHeavyFermion('exp')">C ∝ e<sup>−Δ/kT</sup></button>
         <button class="btn" onclick="checkHeavyFermion('const')">C = constant</button>
       </div>
       <div class="challenge-feedback" id="heavy-feedback"></div>
@@ -360,53 +698,13 @@
     </div>
   </div>
 
-  <!-- INSIGHTS -->
-  <div style="margin-top:2rem;background:var(--bg-deep);border:1px solid var(--glass-border);border-radius:12px;padding:1.5rem;">
-    <h3 style="font-size:1.1rem;color:var(--text-main);margin-bottom:0.8rem;">💡 Physical Insights</h3>
-    <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-bottom:0.8rem;">
-      The Fermi-Dirac distribution <strong>f(E) = [exp((E−μ)/k<sub>B</sub>T) + 1]<sup>−1</sup></strong> is the cornerstone of electron behaviour in solids. At absolute zero it is a perfect step function: all states below E<sub>F</sub> are filled, all above are empty. This Pauli blocking is why metals have Pauli paramagnetism, a specific heat proportional to T, and thermal conductivities carried almost entirely by electrons.
-    </p>
-    <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-bottom:0.8rem;">
-      The finite-temperature correction to the chemical potential in 3D is <strong>μ(T) ≈ E<sub>F</sub> [1 − (π<sup>2</sup>/12)(k<sub>B</sub>T/E<sub>F</sub>)<sup>2</sup>]</strong>, valid when T ≪ T<sub>F</sub> = E<sub>F</sub>/k<sub>B</sub>. Even at room temperature, typical metals have T/T<sub>F</sub> ~ 10<sup>−2</sup>, so only a tiny fraction of electrons within k<sub>B</sub>T of E<sub>F</sub> can participate in transport or thermal excitation. This explains why the electronic specific heat C<sub>v</sub> = γT is so small compared with the classical value 3Nk<sub>B</sub>.
-    </p>
-    <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
-      The Wiedemann-Franz law <strong>κ/(σT) = L = (π<sup>2</sup>/3)(k<sub>B</sub>/e)<sup>2</sup></strong> = 2.44×10<sup>−8</sup> WΩ/K<sup>2</sup> holds because both charge and heat are carried by the same quasiparticles near E<sub>F</sub>. A Lorenz number close to this universal value is a fingerprint of Fermi-liquid behaviour. In semiconductors phonons carry heat while electrons carry charge, so L is violated.
-    </p>
-  </div>
-
-  <div style="display:grid; grid-template-columns: 1fr 320px; gap: 1.5rem; margin-top:2rem;">
-    <div></div>
-    <div>
-      <div class="challenge-panel" style="position:sticky; top:5rem;">
-        <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(0,240,255,0.08);">🗺</span>
-          <span class="challenge-title">Lab Navigator</span>
-        </div>
-        <div id="module-nav"></div>
-        <div class="section-divider" style="margin:1rem 0;"></div>
-        <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(74,222,128,0.08);">🏆</span>
-          <span class="challenge-title">Your Badges</span>
-        </div>
-        <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        <div class="section-divider" style="margin:1rem 0;"></div>
-        <div class="scoreboard">
-          <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
 <script src="fs_sim.js?v=2"></script>
-<script src="fs_apps_games.js?v=2"></script>
+<script src="fs_apps_games.js?v=3"></script>
 <script src="../../shared_effects.js"></script>
 </body>
 </html>

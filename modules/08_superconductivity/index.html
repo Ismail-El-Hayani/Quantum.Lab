@@ -10,6 +10,7 @@
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <link rel="stylesheet" href="../../shared_styles.css">
 <style>
+  /* ── Existing Module 08 component styles ── */
   .challenge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   .draggable-target { cursor: grab; border: 2px dashed var(--glass-border); border-radius: var(--radius-sm); padding: 0.8rem; transition: all 0.2s; text-align: center; background: var(--bg-elevated); }
   .draggable-target:hover { border-color: var(--accent-cyan); background: rgba(0,240,255,0.04); }
@@ -26,6 +27,66 @@
   .temp-readout { font-family: var(--font-mono); font-size: 1.2rem; color: var(--accent-cyan); }
   .tc-badge { display: inline-block; padding: 0.3rem 0.6rem; border-radius: 6px; background: rgba(74,222,128,0.1); border: 1px solid var(--accent-green); color: var(--accent-green); font-family: var(--font-mono); font-size: 0.85rem; }
   .normal-badge { display: inline-block; padding: 0.3rem 0.6rem; border-radius: 6px; background: rgba(255,68,68,0.1); border: 1px solid var(--accent-red); color: var(--accent-red); font-family: var(--font-mono); font-size: 0.85rem; }
+
+  /* ── Viz grid / cards (moved from inline playground style) ── */
+  .viz-grid { display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:1rem; }
+  .viz-card { background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); overflow:hidden; }
+  .viz-canvas { width:100%; height:180px; display:block; background:var(--bg-elevated); }
+  .viz-meta { padding:0.55rem 0.75rem; border-top:1px solid var(--border-subtle); }
+  .viz-meta h4 { margin:0 0 0.25rem; font-size:0.82rem; color:var(--text-main); }
+  .viz-meta p { margin:0 0 0.35rem; font-size:0.71rem; color:var(--text-dim); line-height:1.35; }
+  .viz-legend { display:flex; flex-wrap:wrap; gap:0.4rem 0.9rem; font-size:0.66rem; color:var(--text-muted); }
+  .viz-legend span { display:inline-flex; align-items:center; gap:0.3rem; }
+  .viz-legend .dot { width:7px; height:7px; border-radius:50%; display:inline-block; flex-shrink:0; }
+  .dot-cyan { background:#00f0ff; box-shadow:0 0 4px #00f0ff; }
+  .dot-silver { background:#a09080; }
+  .dot-amber { background:#ffd54f; box-shadow:0 0 4px #ffd54f; }
+  .dot-purple { background:#c084fc; box-shadow:0 0 4px #c084fc; }
+  .dot-cyan2 { background:#00f0ff; }
+  .dot-red { background:#ff5555; }
+  .dot-green { background:#00ff88; }
+
+  /* ── Layout helpers (mirroring modules 04/05/06/07) ── */
+  .game-mode-bar { display:flex; justify-content:center; gap:0.5rem; padding:0.6rem; background:rgba(0,0,0,0.35); backdrop-filter:blur(8px); border-bottom:1px solid var(--glass-border); margin-bottom:1.5rem; flex-wrap:wrap; }
+  .game-layout { max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg); align-items:start; }
+  @media (max-width:1000px) { .game-layout { grid-template-columns:1fr; } }
+  .game-main { min-width:0; }
+  .game-sidebar { min-width:0; position:sticky; top:5rem; }
+  .macro-panel { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-top:1rem; }
+  .macro-panel:first-of-type { margin-top:0; }
+  .macro-panel h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
+  .sidebar-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-bottom:1rem; }
+  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
+  .slider-group { margin-bottom:1rem; }
+  .slider-group label { display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:0.3rem; }
+  .slider-group input[type=range] { width:100%; }
+  .slider-value { font-family:var(--font-mono); color:var(--accent-cyan); font-weight:700; }
+  .slider-desc { font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; }
+  .readout-row { display:flex; flex-wrap:wrap; gap:0.5rem; }
+  .readout-tile { flex:1 1 90px; background:var(--bg-deep); padding:8px 10px; border-radius:6px; border:1px solid var(--glass-border); text-align:center; }
+  .readout-tile .readout-label { font-size:0.65rem; color:var(--text-dim); text-transform:uppercase; }
+  .readout-tile .readout-value { font-family:var(--font-mono); font-size:1.05rem; font-weight:700; }
+  .readout-tile .readout-unit { font-size:0.65rem; color:var(--text-muted); }
+  .unit-tag { display:inline-block; background:rgba(0,240,255,0.08); color:var(--accent-cyan); font-family:var(--font-mono); font-size:0.7rem; padding:0.15rem 0.4rem; border-radius:4px; margin-left:0.3rem; }
+
+  /* ── Story / Theory helpers ── */
+  .theory-content { font-size:0.95rem; line-height:1.7; color:var(--text-main); }
+  .theory-content p { margin-bottom:1rem; }
+  .theory-content strong { color:var(--accent-cyan); font-weight:500; }
+  .equation-box { background:var(--bg-deep); border:1px solid var(--glass-border); border-radius:10px; padding:1rem 1.2rem; margin:1rem 0; font-size:0.85rem; overflow-x:auto; color:var(--text-main); }
+  .equation-box .mjx-chtml { font-size:1.1em !important; }
+  .insight-callout { background:linear-gradient(90deg, rgba(0,240,255,0.08), transparent); border-left:3px solid var(--accent-cyan); padding:1rem 1.2rem; border-radius:0 8px 8px 0; margin:1rem 0; font-size:0.92rem; color:var(--text-main); }
+  .insight-callout .label { font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent-cyan); font-weight:600; margin-bottom:0.4rem; }
+  .insights { display:grid; grid-template-columns:1fr; gap:1rem; margin-top:1rem; }
+  @media (min-width:900px) { .insights { grid-template-columns:1fr 1fr; } }
+  .insight-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; }
+  .insight-card .insight-title { margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright); }
+
+  /* ── Playground sub-tab / selective control helpers ── */
+  .pg-control-scope { margin-bottom:0.8rem; }
+  .pg-section { margin-top:1rem; }
+  .mode-bar { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1rem; justify-content:center; }
+  .mode-bar .game-mode-btn { padding:0.4rem 0.9rem; font-size:0.82rem; }
 </style>
 </head>
 <body>
@@ -52,72 +113,329 @@
 <div class="game-container">
 
   <div class="game-mode-bar">
-    <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
+    <button class="game-mode-btn active" id="mode-story" onclick="setGameMode('story')">📖 Story</button>
+    <button class="game-mode-btn" id="mode-theory" onclick="setGameMode('theory')">🎓 Theory</button>
+    <button class="game-mode-btn" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
     <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">🎯 Challenges</button>
     <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">🧩 Puzzles</button>
   </div>
 
-  <!-- PLAYGROUND -->
-  <div class="mode-section" id="section-play">
-    <div class="playground-area">
-      <div class="playground-header">
-        <div class="playground-title">🔬 BCS Energy Gap & Meissner Effect</div>
-        <div class="playground-level">Tune temperature and magnetic field. Watch the superconducting state emerge or collapse.</div>
+  <!-- ═══════════════ STORY ═══════════════ -->
+  <div class="mode-section" id="section-story" style="display:block;">
+    <div class="game-layout">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>📖 The Story — When Resistance Vanishes and Fields Are Expelled</h3>
+          <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.6;margin-bottom:1rem;">
+            In 1911, <strong style="color:var(--accent-cyan);">Heike Kamerlingh Onnes</strong> cooled mercury to 4.2 K and
+            watched its electrical resistance drop to exactly zero — the first superconductor. For 46 years the
+            phenomenon defied explanation: a metal with no scattering, no Joule heating, no Ohm's law. Then in 1957,
+            <strong style="color:var(--accent-cyan);">Bardeen, Cooper, and Schrieffer (BCS)</strong> showed that below a
+            critical temperature <i>T<sub>c</sub></i>, electrons pair up via phonon exchange into
+            <strong style="color:var(--accent-cyan);">Cooper pairs</strong> that condense into a single macroscopic
+            quantum state. A forbidden <strong style="color:var(--accent-cyan);">energy gap 2Δ</strong> opens around the
+            Fermi level, blocking the scattering that causes resistance. BCS predicted
+            <i>Δ(0) ≈ 1.76 k<sub>B</sub>T<sub>c</sub></i> — verified to stunning precision.
+          </p>
+          <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.6;margin-bottom:1rem;">
+            But superconductivity is more than zero resistance. In 1933, <strong style="color:var(--accent-cyan);">Meissner
+            and Ochsenfeld</strong> found that a superconductor <em>actively expels</em> magnetic flux from its interior
+            (<i>B = 0</i>, susceptibility <i>χ = −1</i>) — a thermodynamic state, not a frozen field configuration. The
+            <strong style="color:var(--accent-cyan);">London brothers</strong> captured this with a penetration depth
+            <i>λ<sub>L</sub> = √(m/μ₀n<sub>s</sub>e²)</i> over which field decays as
+            <i>B(x) = B<sub>0</sub>e<sup>−x/λ<sub>L</sub></sup></i>. Type I superconductors lose this state abruptly at a
+            critical field <i>H<sub>c</sub></i>; Type II allow <strong style="color:var(--accent-cyan);">Abrikosov
+            vortices</strong> to penetrate between <i>H<sub>c1</sub></i> and <i>H<sub>c2</sub></i>, enabling the
+            high-field magnets that power MRI scanners and particle accelerators.
+          </p>
+
+          <div class="insights">
+            <div class="insight-card">
+              <div class="insight-title">🔍 The Discovery</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Kamerlingh Onnes liquefied helium in 1908, opening the temperature range below 4 K. Three years later he
+                measured mercury's resistance vanishing at 4.2 K — a phase transition with no classical analogue. The
+                1957 BCS theory explained it via phonon-mediated pairing and the condensate wavefunction
+                <i>ψ = |ψ|e<sup>iφ</sup></i>. The isotope effect (<i>T<sub>c</sub> ∝ M<sup>−1/2</sup></i>) confirmed the
+                phonon glue. Bednorz and Müller's 1986 cuprate discovery (<i>T<sub>c</sub> > 30 K</i>) opened the
+                high-<i>T<sub>c</sub></i> era.
+              </p>
+            </div>
+            <div class="insight-card">
+              <div class="insight-title">💡 Why It Matters</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Superconductors carry current with no loss, enabling <strong style="color:var(--accent-cyan);">MRI
+                magnets</strong> (up to 15 T), <strong style="color:var(--accent-cyan);">superconducting quantum
+                computers</strong> (transmon qubits), <strong style="color:var(--accent-cyan);">lossless power
+                transmission</strong>, and the <strong style="color:var(--accent-cyan);">Josephson effect</strong> that
+                defines the SI volt. Type II NbTi and Nb₃Sn magnets drive the LHC and fusion tokamaks. Each application
+                exploits a different facet: zero resistance, perfect diamagnetism, flux quantization, or the macroscopic
+                phase coherence of the condensate.
+              </p>
+            </div>
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">🎮 How the Playground Lets You Feel It</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Use the <strong style="color:var(--accent-cyan);">Playground</strong> to tune temperature <i>T</i> and
+                applied field <i>H</i>, pick a material (Nb, Hg, Al, YBCO, Nb₃Sn), and watch the energy gap
+                <i>2Δ</i> open and close across <i>T<sub>c</sub></i>. The Cooper-pair animation shows two electrons
+                exchanging a phonon wake through a lattice; the Meissner panel shows flux expelled by shielding
+                supercurrents; the gap panel renders the density of states and BCS curves
+                <i>Δ(T)/Δ(0) = tanh(1.74√(T<sub>c</sub>/T − 1))</i>. Switch sub-tabs to focus each visualization and
+                reveal only the controls relevant to it.
+              </p>
+            </div>
+          </div>
+        </section>
       </div>
 
-      <div style="display:grid; grid-template-columns: 1fr 320px; gap: 1.5rem;">
-        <div>
-          <!-- Animation Canvases -->
-          <style>
-            .viz-grid { display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:1rem; }
-            .viz-card { background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); overflow:hidden; }
-            .viz-canvas { width:100%; height:180px; display:block; background:var(--bg-elevated); }
-            .viz-meta { padding:0.55rem 0.75rem; border-top:1px solid var(--border-subtle); }
-            .viz-meta h4 { margin:0 0 0.25rem; font-size:0.82rem; color:var(--text-main); }
-            .viz-meta p { margin:0 0 0.35rem; font-size:0.71rem; color:var(--text-dim); line-height:1.35; }
-            .viz-legend { display:flex; flex-wrap:wrap; gap:0.4rem 0.9rem; font-size:0.66rem; color:var(--text-muted); }
-            .viz-legend span { display:inline-flex; align-items:center; gap:0.3rem; }
-            .viz-legend .dot { width:7px; height:7px; border-radius:50%; display:inline-block; flex-shrink:0; }
-            .dot-cyan { background:#00f0ff; box-shadow:0 0 4px #00f0ff; }
-            .dot-silver { background:#a09080; }
-            .dot-amber { background:#ffd54f; box-shadow:0 0 4px #ffd54f; }
-            .dot-purple { background:#c084fc; box-shadow:0 0 4px #c084fc; }
-            .dot-cyan2 { background:#00f0ff; }
-            .dot-red { background:#ff5555; }
-            .dot-green { background:#00ff88; }
-          </style>
-          <div class="viz-grid">
-            <div class="viz-card">
-              <div id="cooper-wrap" class="viz-canvas" style="position:relative; overflow:hidden;"></div>
-              <div class="viz-meta">
-                <h4>Cooper Pair Formation</h4>
-                <p>Below Tc, two electrons in the lattice exchange a phonon: Electron 1 pulls positive ions inward, creating a wake of positive charge. This wake attracts Electron 2, binding them into a Cooper pair that moves through the lattice without resistance.</p>
-                <div class="viz-legend">
-                  <span><span class="dot dot-cyan"></span> Electron (e⁻)</span>
-                  <span><span class="dot dot-silver"></span> Positive ion</span>
-                  <span><span class="dot dot-amber"></span> Phonon wake</span>
-                  <span><span class="dot dot-purple"></span> Cooper pair</span>
-                </div>
-              </div>
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-story"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-story" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges-story">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles-story">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp-story">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges-story">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ═══════════════ THEORY ═══════════════ -->
+  <div class="mode-section" id="section-theory" style="display:none;">
+    <div class="game-layout">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>🎓 Theory — BCS Theory, Meissner Effect, and London Equations</h3>
+          <div class="theory-content">
+            <p>
+              Below the critical temperature <strong>T<sub>c</sub></strong>, electrons in certain materials form
+              <strong>Cooper pairs</strong> — bosonic bound states of two electrons with opposite spin and momentum,
+              glued together by the exchange of a lattice phonon. These pairs condense into a single macroscopic
+              quantum state described by a wavefunction <i>ψ = |ψ|e<sup>iφ</sup></i>. The condensate opens a forbidden
+              <strong>energy gap 2Δ</strong> at the Fermi level, suppressing single-particle scattering and producing
+              zero electrical resistance. BCS theory predicts the zero-temperature gap as:
+            </p>
+            <div class="equation-box">
+              $$\Delta(0) \approx 1.76\,k_B T_c$$
             </div>
-            <div class="viz-card">
-              <canvas id="canvas-meissner" width="340" height="180" class="viz-canvas"></canvas>
-              <div class="viz-meta">
-                <h4>Meissner Effect</h4>
-                <p>Cooled below Tc in a magnetic field, a superconductor expels all magnetic flux — B = 0 inside the bulk. Shielding supercurrents circulate at the surface within the London penetration depth λ_L.</p>
-                <div class="viz-legend">
-                  <span><span class="dot dot-cyan2"></span> Magnetic field line</span>
-                  <span><span class="dot dot-amber"></span> Expelled flux region</span>
-                  <span><span class="dot dot-cyan"></span> Shielding current</span>
-                </div>
+            <p>
+              The Meissner effect — active expulsion of magnetic flux, <i>B = 0</i> inside the bulk — distinguishes a
+              superconductor from a mere perfect conductor and is captured by the London penetration depth
+              <i>λ<sub>L</sub></i>. Type I and Type II superconductors differ in how they lose this state under applied
+              field.
+            </p>
+          </div>
+
+          <div class="insights">
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">1. BCS Energy Gap</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                The superconducting gap <i>Δ(T)</i> opens below <i>T<sub>c</sub></i> and vanishes continuously at the
+                transition. BCS theory gives the temperature dependence via the gap equation:
+              </p>
+              <div class="equation-box">
+                $$\frac{\Delta(T)}{\Delta(0)} \approx \tanh\!\left(1.74\sqrt{\frac{T_c}{T}-1}\right), \qquad \Delta(0) \approx 1.76\,k_B T_c$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                The full BCS gap equation is <i>1 = V·N(0)·∫<sub>0</sub><sup>ℏω<sub>D</sub></sup> dξ / √(ξ² + Δ²)
+                · tanh(E/2k<sub>B</sub>T)</i> with <i>E = √(ξ² + Δ²)</i>. No single-particle states exist inside
+                <i>±Δ</i>; only Cooper-pair condensate and thermally excited quasiparticles live outside it.
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">2. Cooper Pairing</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                A passing electron attracts positive lattice ions, creating a transient wake of enhanced positive charge
+                that pulls in a second electron. This <strong>phonon-mediated attraction</strong> overcomes Coulomb
+                repulsion for electrons of opposite <i>k</i> and spin. The pair binding energy is tiny — about
+                <i>2Δ ≈ 3.5 k<sub>B</sub>T<sub>c</sub></i> — yet because all pairs share the same quantum state, the
+                condensate is rigid and coherent over macroscopic distances.
+              </p>
+              <div class="equation-box">
+                $$E_{\text{pair}} = 2\Delta, \qquad \xi_0 \approx \frac{\hbar v_F}{\pi \Delta(0)}$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                The coherence length <i>ξ<sub>0</sub></i> sets the spatial size of a pair. The isotope effect
+                (<i>T<sub>c</sub> ∝ M<sup>−1/2</sup></i>) confirmed the phonon glue, since phonon frequencies scale as
+                <i>ω<sub>D</sub> ∝ M<sup>−1/2</sup></i>.
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">3. Meissner Effect</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Cooled below <i>T<sub>c</sub></i> in a magnetic field, a superconductor expels all flux from its interior:
+                <strong>perfect diamagnetism</strong> with susceptibility <i>χ = −1</i> and <i>B = 0</i> inside the bulk.
+                This is an <em>active</em> thermodynamic response — shielding supercurrents circulate at the surface —
+                not merely the freezing of pre-existing flux that a perfect conductor would do.
+              </p>
+              <div class="equation-box">
+                $$\chi = -1, \qquad \vec{B} = \vec{H} + \mu_0 \vec{M} = 0 \;\;\text{inside}$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                The Meissner effect proves superconductivity is a true thermodynamic phase, independent of the field
+                history. The critical field <i>H<sub>c</sub>(T) = H<sub>0</sub>[1 − (T/T<sub>c</sub>)²]</i> marks where
+                the condensation energy <i>μ₀H<sub>c</sub>²/2</i> can no longer sustain flux expulsion.
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">4. London Penetration Depth</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                The London equations describe how field decays over a characteristic length inside the superconductor.
+                Field does not vanish instantly at the surface; it penetrates a thin shell of thickness
+                <i>λ<sub>L</sub></i>:
+              </p>
+              <div class="equation-box">
+                $$\lambda_L = \sqrt{\frac{m}{\mu_0 n_s e^2}}, \qquad B(x) = B_0\, e^{-x/\lambda_L}$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Here <i>n<sub>s</sub></i> is the superfluid (Cooper-pair) density. As <i>T → T<sub>c</sub></i>,
+                <i>n<sub>s</sub> → 0</i> and <i>λ<sub>L</sub> → ∞</i>, restoring full field penetration in the normal
+                state. Typical values are tens to hundreds of nanometres.
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">5. Type I vs Type II Superconductors</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                <strong>Type I</strong> (e.g. Hg, Al, Pb) expel all field below a single
+                <i>H<sub>c</sub></i>, then abruptly revert to normal. <strong>Type II</strong> (e.g. Nb, Nb₃Sn, YBCO)
+                allow partial penetration via quantized <strong>Abrikosov vortices</strong> between a lower critical
+                field <i>H<sub>c1</sub></i> and an upper critical field <i>H<sub>c2</sub></i>:
+              </p>
+              <div class="equation-box">
+                $$H_{c1} < H < H_{c2}: \;\;\text{mixed state, } \Phi_0 = \frac{h}{2e}\;\text{per vortex}$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Each vortex carries one flux quantum <i>Φ<sub>0</sub> = h/2e ≈ 2.07×10⁻¹⁵ Wb</i>. Type II materials with
+                high <i>H<sub>c2</sub></i> (NbTi, Nb₃Sn) are the workhorses of high-field magnets for MRI, the LHC, and
+                fusion reactors.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-theory"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-theory" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges-theory">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles-theory">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp-theory">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges-theory">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PLAYGROUND ═══════════════ -->
+  <div class="mode-section" id="section-play" style="display:none;">
+    <section class="macro-panel">
+      <h3>🔬 Superconductivity Sandbox</h3>
+      <p class="slider-desc" style="font-size:0.9rem;line-height:1.6;margin-bottom:1rem;">
+        Tune temperature and applied field, pick a material, and watch the superconducting state emerge or collapse.
+        Switch sub-tabs to focus on Cooper pairs, the Meissner effect, or the energy gap and transport curves.
+      </p>
+      <div class="mode-bar">
+        <button class="game-mode-btn active" id="pg-mode-cooper" onclick="setPlayMode('cooper')">⚛ Cooper Pairs</button>
+        <button class="game-mode-btn" id="pg-mode-meissner" onclick="setPlayMode('meissner')">🧲 Meissner Effect</button>
+        <button class="game-mode-btn" id="pg-mode-gap" onclick="setPlayMode('gap')">📈 Energy Gap &amp; Plots</button>
+      </div>
+    </section>
+
+    <div class="game-layout">
+      <div class="game-main">
+
+        <!-- ── Sub-tab: Cooper Pairs ── -->
+        <section class="macro-panel pg-section" id="pg-view-cooper">
+          <h3>Cooper Pair Formation</h3>
+          <p class="slider-desc" style="font-size:0.85rem;margin-bottom:1rem;line-height:1.55;">
+            Below <i>T<sub>c</sub></i>, two electrons in the lattice exchange a phonon: Electron 1 pulls positive ions
+            inward, creating a wake of positive charge that attracts Electron 2, binding them into a Cooper pair that
+            moves through the lattice without resistance.
+          </p>
+          <div class="viz-card">
+            <div id="cooper-wrap" class="viz-canvas" style="position:relative; overflow:hidden;"></div>
+            <div class="viz-meta">
+              <h4>Cooper Pair Formation</h4>
+              <p>Phonon-mediated attraction binds two electrons of opposite momentum and spin into a single bosonic pair.</p>
+              <div class="viz-legend">
+                <span><span class="dot dot-cyan"></span> Electron (e⁻)</span>
+                <span><span class="dot dot-silver"></span> Positive ion</span>
+                <span><span class="dot dot-amber"></span> Phonon wake</span>
+                <span><span class="dot dot-purple"></span> Cooper pair</span>
               </div>
             </div>
           </div>
+          <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.5rem;line-height:1.5;">
+            The pairing interaction is weak (~meV) but the condensate of all pairs is rigid and phase-coherent, giving
+            zero resistance and the Josephson effect.
+          </p>
+        </section>
+
+        <!-- ── Sub-tab: Meissner Effect ── -->
+        <section class="macro-panel pg-section" id="pg-view-meissner" style="display:none;">
+          <h3>Meissner Effect</h3>
+          <p class="slider-desc" style="font-size:0.85rem;margin-bottom:1rem;line-height:1.55;">
+            Cooled below <i>T<sub>c</sub></i> in a magnetic field, a superconductor expels all magnetic flux —
+            <i>B = 0</i> inside the bulk. Shielding supercurrents circulate at the surface within the London penetration
+            depth <i>λ<sub>L</sub></i>. Apply a field with the H slider to watch the expulsion.
+          </p>
+          <div class="viz-card">
+            <canvas id="canvas-meissner" class="viz-canvas"></canvas>
+            <div class="viz-meta">
+              <h4>Meissner Effect</h4>
+              <p>Perfect diamagnetism: field lines bend around the superconductor; B = 0 inside.</p>
+              <div class="viz-legend">
+                <span><span class="dot dot-cyan2"></span> Magnetic field line</span>
+                <span><span class="dot dot-amber"></span> Expelled flux region</span>
+                <span><span class="dot dot-cyan"></span> Shielding current</span>
+              </div>
+            </div>
+          </div>
+          <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.5rem;line-height:1.5;">
+            Above <i>H<sub>c</sub></i> (Type I) or <i>H<sub>c2</sub></i> (Type II) the superconducting state is destroyed
+            and flux penetrates fully.
+          </p>
+        </section>
+
+        <!-- ── Sub-tab: Energy Gap & Plots ── -->
+        <section class="macro-panel pg-section" id="pg-view-gap" style="display:none;">
+          <h3>Energy Gap &amp; Transport Plots</h3>
+          <p class="slider-desc" style="font-size:0.85rem;margin-bottom:1rem;line-height:1.55;">
+            Below <i>T<sub>c</sub></i> a forbidden energy gap <i>2Δ</i> opens symmetrically around the Fermi level
+            <i>E<sub>F</sub></i>. No single-particle states exist inside the gap. The BCS, magnetization, and London
+            penetration curves show how the gap, susceptibility, and field profile evolve with temperature.
+          </p>
+
           <div class="viz-card" style="margin-bottom:1rem;">
-            <canvas id="canvas-gap" width="700" height="140" class="viz-canvas" style="height:140px;"></canvas>
+            <canvas id="canvas-gap" class="viz-canvas" style="height:140px;"></canvas>
             <div class="viz-meta">
               <h4>Density of States near the Energy Gap</h4>
-              <p>Below Tc, a forbidden energy gap 2Δ opens symmetrically around the Fermi level E_F. No single-particle states exist inside the gap. Only Cooper-pair condensate and thermally excited quasiparticles live outside it.</p>
+              <p>The superconducting gap 2Δ opens below Tc; quasiparticle excitations live only outside it.</p>
               <div class="viz-legend">
                 <span><span class="dot dot-purple"></span> Superconducting gap 2Δ</span>
                 <span><span class="dot dot-cyan"></span> Quasiparticle excitation</span>
@@ -127,234 +445,254 @@
             </div>
           </div>
 
-          <!-- plot-gap-temp viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Superconducting Gap Δ(T)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">BCS: Δ(T) ≈ 1.74Δ(0)√(1-T/T_c). Collapses to zero at T_c.</p>
-  <div class="plot-container" id="plot-gap-temp" style="min-height:280px;"></div>
-</div>
-
-          <!-- plot-magnetization viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Magnetization M(T,H)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Meissner effect: B = 0 inside below T_c. Type-I abrupt vs Type-II gradual.</p>
-  <div class="plot-container" id="plot-magnetization" style="min-height:260px; margin-top:1.5rem;"></div>
-</div>
-
-          <!-- plot-penetration viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">London Penetration Depth λ_L</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">B(x) = B₀ e^(-x/λ_L). λ_L = √(m/(μ₀n_s e²)).</p>
-  <div class="plot-container" id="plot-penetration" style="min-height:260px; margin-top:1.5rem;"></div>
-</div>
-
-        </div>
-        <div>
-          <div class="challenge-panel" style="margin-bottom:1rem;">
-            <div class="challenge-header">
-              <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙</span>
-              <span class="challenge-title">Controls</span>
+          <div class="viz-grid">
+            <div class="viz-card">
+              <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0.6rem 0 0.3rem;padding:0 0.6rem;">Superconducting Gap Δ(T)</h4>
+              <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;padding:0 0.6rem;line-height:1.5;">BCS: Δ(T) ≈ 1.74Δ(0)√(1 − T/T<sub>c</sub>). Collapses to zero at T<sub>c</sub>.</p>
+              <div class="plot-container" id="plot-gap-temp" style="min-height:280px;"></div>
+              <p style="font-size:0.75rem;color:var(--text-dim);margin:0.4rem 0.6rem 0.6rem;line-height:1.5;">
+                The gap opens continuously at T<sub>c</sub> and saturates at Δ(0) ≈ 1.76 k<sub>B</sub>T<sub>c</sub> as
+                T → 0. The dashed line marks the current temperature slider.
+              </p>
             </div>
-            <div class="control-row">
-              <span class="control-label">Temperature T</span>
-              <span class="control-value" id="val-T-sc">4.0</span><span class="unit-tag">K</span>
-            </div>
-            <input type="range" id="slider-T-sc" min="0.1" max="15" value="4.0" step="0.1">
-            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Below Tc: superconducting gap opens. Above Tc: normal metal.</p>
 
-            <div class="control-row" style="margin-top:0.8rem;">
-              <span class="control-label">Material Tc</span>
-              <span class="control-value" id="val-Tc">9.2</span><span class="unit-tag">K</span>
+            <div class="viz-card">
+              <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0.6rem 0 0.3rem;padding:0 0.6rem;">Magnetization M(T,H)</h4>
+              <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;padding:0 0.6rem;line-height:1.5;">Meissner effect: B = 0 inside below T<sub>c</sub>. Type-I abrupt vs Type-II gradual.</p>
+              <div class="plot-container" id="plot-magnetization" style="min-height:260px;"></div>
+              <p style="font-size:0.75rem;color:var(--text-dim);margin:0.4rem 0.6rem 0.6rem;line-height:1.5;">
+                Below T<sub>c</sub> the susceptibility jumps to χ = −1 (perfect diamagnetism). The critical field
+                H<sub>c</sub>(T) also vanishes at T<sub>c</sub>.
+              </p>
             </div>
-            <select id="select-material-sc" style="width:100%;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.4rem;border-radius:6px;font-family:var(--font-mono);">
-              <option value="9.2">Niobium (Nb) — 9.2 K</option>
-              <option value="4.2">Mercury (Hg) — 4.2 K</option>
-              <option value="1.2">Aluminum (Al) — 1.2 K</option>
-              <option value="93">YBCO — 93 K</option>
-              <option value="23">Nb₃Sn — 23 K</option>
-            </select>
 
-            <div class="control-row" style="margin-top:0.8rem;">
-              <span class="control-label">Applied field H</span>
-              <span class="control-value" id="val-H">0.0</span><span class="unit-tag">T</span>
+            <div class="viz-card">
+              <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0.6rem 0 0.3rem;padding:0 0.6rem;">London Penetration Depth λ<sub>L</sub></h4>
+              <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;padding:0 0.6rem;line-height:1.5;">B(x) = B<sub>0</sub> e<sup>−x/λ<sub>L</sub></sup>. λ<sub>L</sub> = √(m/(μ₀n<sub>s</sub>e²)).</p>
+              <div class="plot-container" id="plot-penetration" style="min-height:260px;"></div>
+              <p style="font-size:0.75rem;color:var(--text-dim);margin:0.4rem 0.6rem 0.6rem;line-height:1.5;">
+                λ<sub>L</sub> diverges as T → T<sub>c</sub> because the superfluid density n<sub>s</sub> → 0, restoring
+                full field penetration in the normal state.
+              </p>
             </div>
-            <input type="range" id="slider-H" min="0" max="0.5" value="0" step="0.01">
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ── Playground sidebar ── -->
+      <aside class="game-sidebar">
+        <div class="sidebar-card">
+          <h4>⚙ Controls</h4>
+
+          <div class="pg-control-scope scope-global">
+            <div class="slider-group">
+              <label>Temperature T <span class="unit-tag">K</span></label>
+              <span class="slider-value" id="val-T-sc">4.0</span>
+              <input type="range" id="slider-T-sc" min="0.1" max="15" value="4.0" step="0.1">
+              <div class="slider-desc">Below T<sub>c</sub>: superconducting gap opens. Above T<sub>c</sub>: normal metal.</div>
+            </div>
+
+            <div class="slider-group">
+              <label>Material T<sub>c</sub></label>
+              <span class="slider-value" id="val-Tc">9.2</span><span class="unit-tag">K</span>
+              <select id="select-material-sc" style="width:100%;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.4rem;border-radius:6px;font-family:var(--font-mono);margin-top:0.3rem;">
+                <option value="9.2">Niobium (Nb) — 9.2 K</option>
+                <option value="4.2">Mercury (Hg) — 4.2 K</option>
+                <option value="1.2">Aluminum (Al) — 1.2 K</option>
+                <option value="93">YBCO — 93 K</option>
+                <option value="23">Nb₃Sn — 23 K</option>
+              </select>
+              <div class="slider-desc">Pick a superconductor to set its critical temperature.</div>
+            </div>
           </div>
 
-          <div class="challenge-panel">
-            <div class="challenge-header">
-              <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">📊</span>
-              <span class="challenge-title">Live Readout</span>
+          <div class="pg-control-scope scope-meissner" style="display:none;">
+            <div class="slider-group">
+              <label>Applied field H <span class="unit-tag">T</span></label>
+              <span class="slider-value" id="val-H">0.0</span>
+              <input type="range" id="slider-H" min="0" max="0.2" value="0" step="0.01">
+              <div class="slider-desc">Raises the external field; above H<sub>c</sub> the Meissner state collapses.</div>
             </div>
-            <table>
-              <tr><th>Quantity</th><th>Value</th></tr>
-              <tr><td>Gap Δ(0)</td><td class="highlight-num" id="live-gap">1.76 meV</td></tr>
-              <tr><td>Δ(T)/Δ(0)</td><td class="highlight-pink" id="live-gap-ratio">1.00</td></tr>
-              <tr><td>State</td><td id="live-state"><span class="tc-badge">Superconducting</span></td></tr>
-              <tr><td>Penetration λ_L</td><td class="highlight-num" id="live-lambda">40 nm</td></tr>
-              <tr><td>χ (susceptibility)</td><td class="highlight-pink" id="live-chi">-1.0</td></tr>
-            </table>
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="insight-card" style="margin-top:1rem;">
-      <div class="insight-title">✨ Why does this matter?</div>
-      <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
-        Superconductivity is a <strong>macroscopic quantum phenomenon</strong>. Below Tc, electrons form Cooper pairs bound by phonon exchange.
-        The energy gap 2Δ prevents pair-breaking by thermal energy. The Meissner effect (χ = -1) is not just zero resistance — it is <em>active</em> field expulsion.
-        BCS theory predicts Δ(0) ≈ 1.76 k_B T_c. London theory gives λ_L = √(m/μ₀ n_s e²) for the magnetic penetration depth.
-      </p>
-      <div class="equation-box" style="font-size:0.85rem;">
-        $$H_c(T) = H_0\left[1 - \frac{T^2}{T_c^2}\right], \quad \lambda_L = \sqrt{\frac{m}{\mu_0 n_s e^2}}, \quad \Delta(0) \approx 1.76\,k_B T_c$$
-      </div>
-      <div class="btn-group" style="margin-top:1rem;">
-        <button class="btn" onclick="document.getElementById('theory-deep-sc').style.display='block';this.style.display='none';">📖 Dive Deeper</button>
-      </div>
-      <div id="theory-deep-sc" style="display:none;">
-        <p style="font-size:0.9rem;color:var(--text-main);line-height:1.7;margin-top:1rem;">
-          <strong>BCS ground state:</strong> All Cooper pairs occupy the same quantum state — a macroscopic wavefunction ψ = |ψ|e^{iφ}.
-          The phase φ is what enables the Josephson effect and flux quantization.
-        </p>
-        <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
-          <strong>Type I vs Type II:</strong> Type I expels all field below H_c. Type II allows partial penetration via Abrikosov vortices between H_{c1} and H_{c2}.
-          NbTi and Nb₃Sn are Type II — essential for MRI magnets (up to 15 T).
-        </p>
-      </div>
+        <div class="sidebar-card">
+          <h4>📊 Live Readout</h4>
+          <div class="readout-row">
+            <div class="readout-tile">
+              <div class="readout-label">Gap Δ(0)</div>
+              <div class="readout-value" id="live-gap" style="color:var(--accent-cyan);">1.76</div>
+              <div class="readout-unit">meV</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">Δ(T)/Δ(0)</div>
+              <div class="readout-value" id="live-gap-ratio" style="color:var(--accent-pink);">1.00</div>
+              <div class="readout-unit">ratio</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">State</div>
+              <div class="readout-value" id="live-state" style="font-size:0.8rem;"><span class="tc-badge">SC</span></div>
+              <div class="readout-unit">phase</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">Penetration λ<sub>L</sub></div>
+              <div class="readout-value" id="live-lambda" style="color:var(--accent-cyan);">40</div>
+              <div class="readout-unit">nm</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">Susceptibility χ</div>
+              <div class="readout-value" id="live-chi" style="color:var(--accent-pink);">-1.0</div>
+              <div class="readout-unit">SI</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav"></div>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
     </div>
   </div>
 
-  <!-- CHALLENGES -->
+  <!-- ═══════════════ CHALLENGES ═══════════════ -->
   <div class="mode-section" id="section-challenge" style="display:none;">
+    <section class="macro-panel">
+      <h3>🎯 Challenges</h3>
+      <p class="slider-desc" style="font-size:0.9rem;line-height:1.6;margin-bottom:1rem;">
+        Test your superconductivity intuition. Solve all three challenges to unlock badges and XP. Beat the timer in the
+        Critical Temperature Matcher for combo bonuses.
+      </p>
 
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span>
-        <span class="challenge-title">Challenge 1: Critical Temperature Matcher</span>
-        <span class="challenge-difficulty easy">Easy</span>
-      </div>
-      <div class="challenge-desc">A superconductor is described. Is it superconducting at the given temperature?</div>
-      <div class="challenge-reward">🏆 Reward: 50 XP · Combo bonus: +5 XP per streak</div>
-      <div class="timer-bar"><div class="timer-fill" id="tc-timer" style="width:100%"></div></div>
-      <div id="tc-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <div style="display:flex; gap:0.5rem;">
-        <button class="btn" onclick="guessSCState(true)">Superconducting</button>
-        <button class="btn" onclick="guessSCState(false)">Normal</button>
-      </div>
-      <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;">
-        <strong>Score:</strong> <span id="tc-score">0</span> · <strong>Combo:</strong> <span id="tc-combo">0</span>
-      </div>
-      <div class="challenge-feedback" id="tc-feedback"></div>
-    </div>
+      <div class="insights">
+        <div class="insight-card">
+          <div class="challenge-header">
+            <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span>
+            <span class="challenge-title">Challenge 1: Critical Temperature Matcher</span>
+            <span class="challenge-difficulty easy">Easy</span>
+          </div>
+          <div class="challenge-desc">A superconductor is described. Is it superconducting at the given temperature?</div>
+          <div class="challenge-reward">🏆 Reward: 50 XP · Combo bonus: +5 XP per streak</div>
+          <div class="timer-bar"><div class="timer-fill" id="tc-timer" style="width:100%"></div></div>
+          <div id="tc-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn" onclick="guessSCState(true)">Superconducting</button>
+            <button class="btn" onclick="guessSCState(false)">Normal</button>
+          </div>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;">
+            <strong>Score:</strong> <span id="tc-score">0</span> · <strong>Combo:</strong> <span id="tc-combo">0</span>
+          </div>
+          <div class="challenge-feedback" id="tc-feedback"></div>
+        </div>
 
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🧲</span>
-        <span class="challenge-title">Challenge 2: Type I or Type II?</span>
-        <span class="challenge-difficulty medium">Medium</span>
-      </div>
-      <div class="challenge-desc">Identify whether the described behavior matches Type I or Type II superconductivity.</div>
-      <div class="challenge-reward">🏆 Reward: 60 XP · "Phase Detective" badge</div>
-      <div id="type-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <div style="display:flex; gap:0.5rem;">
-        <button class="btn" onclick="guessType('I')">Type I</button>
-        <button class="btn" onclick="guessType('II')">Type II</button>
-      </div>
-      <div class="challenge-feedback" id="type-feedback"></div>
-    </div>
+        <div class="insight-card">
+          <div class="challenge-header">
+            <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🧲</span>
+            <span class="challenge-title">Challenge 2: Type I or Type II?</span>
+            <span class="challenge-difficulty medium">Medium</span>
+          </div>
+          <div class="challenge-desc">Identify whether the described behavior matches Type I or Type II superconductivity.</div>
+          <div class="challenge-reward">🏆 Reward: 60 XP · "Phase Detective" badge</div>
+          <div id="type-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn" onclick="guessType('I')">Type I</button>
+            <button class="btn" onclick="guessType('II')">Type II</button>
+          </div>
+          <div class="challenge-feedback" id="type-feedback"></div>
+        </div>
 
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(74,222,128,0.12);">⚖</span>
-        <span class="challenge-title">Challenge 3: Isotope Effect Calculator</span>
-        <span class="challenge-difficulty hard">Hard</span>
+        <div class="insight-card">
+          <div class="challenge-header">
+            <span class="challenge-icon" style="background:rgba(74,222,128,0.12);">⚖</span>
+            <span class="challenge-title">Challenge 3: Isotope Effect Calculator</span>
+            <span class="challenge-difficulty hard">Hard</span>
+          </div>
+          <div class="challenge-desc">Given isotopic mass ratio M₁/M₂, predict the ratio of critical temperatures Tc₁/Tc₂.</div>
+          <div class="challenge-reward">🏆 Reward: 80 XP + "Isotope Hunter" badge</div>
+          <div id="iso-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+          <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+            <input type="number" id="iso-answer" placeholder="Tc₁/Tc₂" step="0.01" style="width:120px;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
+            <button class="btn" onclick="checkIsotopeAnswer()">Submit</button>
+          </div>
+          <div class="challenge-feedback" id="iso-feedback"></div>
+        </div>
       </div>
-      <div class="challenge-desc">Given isotopic mass ratio M₁/M₂, predict the ratio of critical temperatures Tc₁/Tc₂.</div>
-      <div class="challenge-reward">🏆 Reward: 80 XP + "Isotope Hunter" badge</div>
-      <div id="iso-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-        <input type="number" id="iso-answer" placeholder="Tc₁/Tc₂" step="0.01" style="width:120px;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
-        <button class="btn" onclick="checkIsotopeAnswer()">Submit</button>
-      </div>
-      <div class="challenge-feedback" id="iso-feedback"></div>
-    </div>
+    </section>
   </div>
 
-  <!-- PUZZLES -->
+  <!-- ═══════════════ PUZZLES ═══════════════ -->
   <div class="mode-section" id="section-puzzle" style="display:none;">
+    <section class="macro-panel">
+      <h3>🧩 Puzzles</h3>
+      <p class="slider-desc" style="font-size:0.9rem;line-height:1.6;margin-bottom:1rem;">
+        Build the BCS interaction, predict the critical field, and distinguish true Meissner expulsion from mere zero
+        resistance. Drag-and-drop and classification puzzles test the core physics of superconductivity.
+      </p>
 
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🔧</span>
-        <span class="challenge-title">Puzzle 1: Cooper Pair Builder</span>
-        <span class="challenge-difficulty medium">Medium</span>
-      </div>
-      <div class="challenge-desc">Assemble the BCS interaction: two electrons exchange a phonon to form a bound Cooper pair.</div>
-      <div class="challenge-reward">🏆 Reward: 60 XP</div>
-      <div style="margin:1rem 0;">
-        <p style="font-size:0.85rem;color:var(--text-muted);">Drag components into the interaction sequence:</p>
-        <div id="cooper-pool" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0.5rem 0;"></div>
-      </div>
-      <div id="cooper-zones" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin:0.5rem 0;"></div>
-      <button class="btn" onclick="checkCooperBuilder()">✓ Verify Pair</button>
-      <div class="challenge-feedback" id="cooper-feedback"></div>
-    </div>
-
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">📐</span>
-        <span class="challenge-title">Puzzle 2: Critical Field Predictor</span>
-        <span class="challenge-difficulty hard">Hard</span>
-      </div>
-      <div class="challenge-desc">Calculate Hc(T) using the given H₀ and Tc at a target temperature.</div>
-      <div class="challenge-reward">🏆 Reward: 80 XP</div>
-      <div id="hc-puzzle-text" style="font-size:1rem;margin:1rem 0;font-family:var(--font-mono);"></div>
-      <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-        <input type="number" id="hc-answer" placeholder="Hc(T) in T" step="0.001" style="width:160px;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
-        <button class="btn" onclick="checkHCPuzzle()">Submit</button>
-      </div>
-      <div class="challenge-feedback" id="hc-feedback"></div>
-    </div>
-
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🛡</span>
-        <span class="challenge-title">Puzzle 3: Meissner vs Perfect Conductor</span>
-        <span class="challenge-difficulty master">Master</span>
-      </div>
-      <div class="challenge-desc">Classify each scenario: true superconductor (Meissner) or merely zero-resistance perfect conductor?</div>
-      <div class="challenge-reward">🏆 Reward: 120 XP</div>
-      <div id="meissner-list" style="margin-top:0.5rem;"></div>
-      <button class="btn" onclick="checkMeissnerPuzzle()">✓ Check Classification</button>
-      <div class="challenge-feedback" id="meissner-feedback"></div>
-    </div>
-  </div>
-
-  <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; margin-top:2rem;">
-    <div></div>
-    <div>
-      <div class="challenge-panel" style="position:sticky; top:5rem;">
-        <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(0,240,255,0.08);">🗺</span>
-          <span class="challenge-title">Lab Navigator</span>
+      <div class="insights">
+        <div class="insight-card">
+          <div class="challenge-header">
+            <span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🔧</span>
+            <span class="challenge-title">Puzzle 1: Cooper Pair Builder</span>
+            <span class="challenge-difficulty medium">Medium</span>
+          </div>
+          <div class="challenge-desc">Assemble the BCS interaction: two electrons exchange a phonon to form a bound Cooper pair.</div>
+          <div class="challenge-reward">🏆 Reward: 60 XP</div>
+          <div style="margin:1rem 0;">
+            <p style="font-size:0.85rem;color:var(--text-muted);">Drag components into the interaction sequence:</p>
+            <div id="cooper-pool" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0.5rem 0;"></div>
+          </div>
+          <div id="cooper-zones" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin:0.5rem 0;"></div>
+          <button class="btn" onclick="checkCooperBuilder()">✓ Verify Pair</button>
+          <div class="challenge-feedback" id="cooper-feedback"></div>
         </div>
-        <div id="module-nav"></div>
-        <div class="section-divider" style="margin:1rem 0;"></div>
-        <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(74,222,128,0.08);">🏆</span>
-          <span class="challenge-title">Your Badges</span>
+
+        <div class="insight-card">
+          <div class="challenge-header">
+            <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">📐</span>
+            <span class="challenge-title">Puzzle 2: Critical Field Predictor</span>
+            <span class="challenge-difficulty hard">Hard</span>
+          </div>
+          <div class="challenge-desc">Calculate Hc(T) using the given H₀ and Tc at a target temperature.</div>
+          <div class="challenge-reward">🏆 Reward: 80 XP</div>
+          <div id="hc-puzzle-text" style="font-size:1rem;margin:1rem 0;font-family:var(--font-mono);"></div>
+          <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+            <input type="number" id="hc-answer" placeholder="Hc(T) in T" step="0.001" style="width:160px;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
+            <button class="btn" onclick="checkHCPuzzle()">Submit</button>
+          </div>
+          <div class="challenge-feedback" id="hc-feedback"></div>
         </div>
-        <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        <div class="section-divider" style="margin:1rem 0;"></div>
-        <div class="scoreboard">
-          <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
+
+        <div class="insight-card">
+          <div class="challenge-header">
+            <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🛡</span>
+            <span class="challenge-title">Puzzle 3: Meissner vs Perfect Conductor</span>
+            <span class="challenge-difficulty master">Master</span>
+          </div>
+          <div class="challenge-desc">Classify each scenario: true superconductor (Meissner) or merely zero-resistance perfect conductor?</div>
+          <div class="challenge-reward">🏆 Reward: 120 XP</div>
+          <div id="meissner-list" style="margin-top:0.5rem;"></div>
+          <button class="btn" onclick="checkMeissnerPuzzle()">✓ Check Classification</button>
+          <div class="challenge-feedback" id="meissner-feedback"></div>
         </div>
       </div>
-    </div>
+    </section>
   </div>
 
 </div>
@@ -362,9 +700,25 @@
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="sc_sim.js?v=4"></script>
-  <script src="sc_apps_games.js?v=4"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+// ESM namespace is frozen — copy to a plain object before assigning
+var ThreeGlobal = Object.assign({}, THREE);
+ThreeGlobal.OrbitControls = OrbitControls;
+window.THREE = ThreeGlobal;
+window.dispatchEvent(new Event('three-ready'));
+</script>
+<script src="sc_sim.js?v=6"></script>
+<script src="sc_apps_games.js?v=5"></script>
 <script src="../../shared_effects.js"></script>
 </body>
 </html>

@@ -21,11 +21,24 @@
 
   /* UI overlay */
   .cq-overlay {
-    position: fixed; z-index: 10; pointer-events: none;
-    inset: 0; display: flex; flex-direction: column; justify-content: space-between;
-    padding: var(--space-md);
+    position: fixed; inset: 0; z-index: 10; pointer-events: none;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: var(--space-md); padding-right: 0;
   }
   .cq-overlay > * { pointer-events: auto; }
+  .cq-hud { display: flex; flex-direction: column; gap: var(--space-sm); pointer-events: auto; }
+  .cq-sidebar {
+    width: 400px; max-height: calc(100vh - var(--space-md) * 2); overflow-y: auto;
+    display: flex; flex-direction: column; gap: var(--space-md); pointer-events: auto;
+  }
+  .cq-panel, .cq-scale-info {
+    background: var(--bg-panel); border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg); padding: var(--space-md) var(--space-lg);
+    backdrop-filter: blur(16px); box-shadow: var(--shadow-lg);
+    animation: fadeInUp 0.6s var(--ease-out) both;
+  }
+  /* override bottom-bar grid so panels stack naturally in sidebar */
+  .cq-bottom { display: contents; }
 
   /* Top bar: nav + scale label */
   .cq-top {
@@ -263,15 +276,23 @@
 <!-- UI Overlay -->
 <div class="cq-overlay">
 
-  <!-- Top: nav + info -->
-  <div class="cq-top">
-    <div style="display:flex;align-items:center;gap:0.5rem;">
+  <!-- Top-left HUD -->
+  <div class="cq-hud">
+    <nav style="display:flex;align-items:center;gap:0.5rem;">
       <a href="../../index.html" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:0.5rem;">
         <span class="nav-logo" style="width:32px;height:32px;font-size:1.1rem;">⚛</span>
         <span style="font-family:var(--font-display);font-weight:600;font-size:0.95rem;">Physics Playground</span>
       </a>
+    </nav>
+    <div style="font-family:var(--font-mono);font-size:0.72rem;font-weight:600;color:var(--accent-cyan);text-transform:uppercase;letter-spacing:0.08em;background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-pill);padding:0.35rem 0.8rem;backdrop-filter:blur(12px);max-width:fit-content;">
+      Macro crystal
     </div>
+  </div>
 
+  <!-- Right Sidebar -->
+  <div class="cq-sidebar">
+
+    <!-- Panel 1: Scale Info + Bandgap -->
     <div class="cq-scale-info">
       <div class="cq-scale-label" id="scale-label">Macro — 1 cm crystal</div>
       <div class="cq-scale-title">From Crystal to Quantum</div>
@@ -322,12 +343,8 @@
         </svg>
       </div>
     </div>
-  </div>
 
-  <!-- Bottom: controls -->
-  <div class="cq-bottom">
-
-    <!-- Zoom panel -->
+    <!-- Panel 2: Zoom Journey -->
     <div class="cq-panel">
       <div class="cq-panel-title">🔍 Zoom Level</div>
       <div class="scale-steps">
@@ -345,7 +362,7 @@
       <div class="cq-msg" id="zoom-msg">Drag the slider to zoom through scales</div>
     </div>
 
-    <!-- Photon / Wave panel -->
+    <!-- Panel 3: Photon / Wave -->
     <div class="cq-panel">
       <div class="cq-panel-title">⚡ Photon / Wave Beam</div>
 
@@ -377,8 +394,8 @@
       <div class="mat-props-panel" id="mat-props"><b>Si optical constants @ 1.5 eV</b><br>λ = 827 nm · n = 3.42 · κ = 0.057 · R ≈ 30%</div>
     </div>
 
-  </div>
-</div>
+  </div><!-- /cq-sidebar -->
+</div><!-- /cq-overlay -->
 
 <!-- SCRIPTS -->
 <script src="../../shared_ui.js"></script>

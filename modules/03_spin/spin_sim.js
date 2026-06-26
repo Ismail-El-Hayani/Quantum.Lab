@@ -15,27 +15,14 @@ const h = 4.135667696e-15;  // Planck constant in eV·s
 // ============ STATE ============
 let state = {
   theta: Math.PI / 3,    // polar angle 0..π
-  phi: Math.PI / 4,      // azimuthal angle 0..2π
-  B: 1.0,                // magnetic field (T)
-  gFactor: 2.0023,       // g-factor
+  phi: Math.PI / 4,       // azimuthal angle 0..2π
+  phi0: Math.PI / 4,      // snapshot for reset
+  speedFactor: 1.0,       // animation speed multiplier
   animating: false,
-  animFrame: null,
-  time: 0,
-  sgStage: 0,            // 0 = initial, 1 = after first SG, 2 = after second
-  sgAxis1: 'z',          // first SG axis
-  sgAxis2: 'x',          // second SG axis
-  sgResult1: null,       // +1 or -1
-  sgResult2: null
+  animFrame: null
 };
 
 // ============ SPIN MATH ============
-function stateVector(theta, phi) {
-  return {
-    up: Math.cos(theta / 2),
-    down: Math.sin(theta / 2) * Math.exp(1 * i * phi)  // complex — use separate re/im
-  };
-}
-
 // Use real representation: [up_re, up_im, down_re, down_im]
 // For pure states up_re = cos(θ/2), up_im = 0, down_re = sin(θ/2)cos(φ), down_im = sin(θ/2)sin(φ)
 function getAmplitudes(th, ph) {
@@ -60,19 +47,6 @@ function expectationSigmaY(a) {
 function expectationSigmaZ(a) {
   // ⟨ψ|σz|ψ⟩ = |up|² − |down|²
   return (a.up_re*a.up_re + a.up_im*a.up_im) - (a.down_re*a.down_re + a.down_im*a.down_im);
-}
-
-function evolveLarmor(a, dt, omega) {
-  // Rotation around z: |ψ(t)⟩ = exp(−iωt σz/2)|ψ(0)⟩
-  const cos_w = Math.cos(omega * dt / 2);
-  const sin_w = Math.sin(omega * dt / 2);
-
-  const up_re_new = cos_w * a.up_re + sin_w * a.up_im;
-  const up_im_new = cos_w * a.up_im - sin_w * a.up_re;
-  const down_re_new = cos_w * a.down_re - sin_w * a.down_im;
-  const down_im_new = cos_w * a.down_im + sin_w * a.down_re;
-
-  return { up_re: up_re_new, up_im: up_im_new, down_re: down_re_new, down_im: down_im_new };
 }
 
 function measureProbZ(a) {
@@ -177,52 +151,53 @@ function plotBlochSphere() {
   sphereTraces.push({
     x: [0, sx], y: [0, sy], z: [0, sz],
     mode: 'lines+markers',
-    line: { color: '#00f0ff', width: 4 },
-    marker: { size: [0, 8], color: ['#00f0ff', '#00f0ff'] },
+    line: { color: '#ff3864', width: 4 },
+    marker: { size: [0, 8], color: ['#ff3864', '#ff3864'] },
     type: 'scatter3d',
     name: '|ψ⟩',
     showlegend: true
   });
 
-  // Axes
+  // Axes with Sx / Sy / Sz labels at positive ends
   sphereTraces.push({
-    x: [-1.3, 1.3], y: [0, 0], z: [0, 0], mode: 'lines+text',
+    x: [-1.1, 1.1], y: [0, 0], z: [0, 0], mode: 'lines+text',
     line: { color: '#ff4ecd', width: 2 },
     text: ['', 'Sx'],
-    textposition: 'top center',
-    textfont: { color: '#ff4ecd', size: 10 },
+    textposition: 'top right',
+    textfont: { color: '#ff4ecd', size: 12 },
     type: 'scatter3d', showlegend: false, hoverinfo: 'skip'
   });
   sphereTraces.push({
-    x: [0, 0], y: [-1.3, 1.3], z: [0, 0], mode: 'lines+text',
+    x: [0, 0], y: [-1.1, 1.1], z: [0, 0], mode: 'lines+text',
     line: { color: '#4ade80', width: 2 },
     text: ['', 'Sy'],
-    textposition: 'top center',
-    textfont: { color: '#4ade80', size: 10 },
+    textposition: 'top right',
+    textfont: { color: '#4ade80', size: 12 },
     type: 'scatter3d', showlegend: false, hoverinfo: 'skip'
   });
   sphereTraces.push({
-    x: [0, 0], y: [0, 0], z: [-1.3, 1.3], mode: 'lines+text',
+    x: [0, 0], y: [0, 0], z: [-1.1, 1.1], mode: 'lines+text',
     line: { color: '#c084fc', width: 2 },
     text: ['', 'Sz'],
-    textposition: 'top center',
-    textfont: { color: '#c084fc', size: 10 },
+    textposition: 'top right',
+    textfont: { color: '#c084fc', size: 12 },
     type: 'scatter3d', showlegend: false, hoverinfo: 'skip'
   });
 
   _plot('plot-bloch', sphereTraces, {
-    margin: { t: 20, r: 10, b: 20, l: 10 },
+    autosize: true,
+    margin: { t: 0, r: 0, b: 0, l: 0 },
     paper_bgcolor: 'rgba(0,0,0,0)',
     font: { family: 'JetBrains Mono, monospace', color: '#8080a0', size: 11 },
     scene: {
-      xaxis: { visible: false, range: [-1.5, 1.5] },
-      yaxis: { visible: false, range: [-1.5, 1.5] },
-      zaxis: { visible: false, range: [-1.5, 1.5] },
-      camera: { eye: { x: 1.3, y: 1.3, z: 1.0 } },
+      xaxis: { visible: false, range: [-1.15, 1.15] },
+      yaxis: { visible: false, range: [-1.15, 1.15] },
+      zaxis: { visible: false, range: [-1.15, 1.15] },
+      camera: { eye: { x: 1.2, y: 1.2, z: 0.9 } },
+      aspectmode: 'cube',
       bgcolor: 'rgba(0,0,0,0)'
     },
-    showlegend: true,
-    legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(10,10,15,0.8)', bordercolor: '#2a2a3a', borderwidth: 1 }
+    showlegend: false
   }, PLOT_CFG);
 }
 
@@ -241,10 +216,11 @@ function plotSpinComponents() {
       textfont: { color: '#e0e0f0', size: 11 }
     }
   ], {
-    margin: { t: 20, r: 10, b: 50, l: 50 },
+    autosize: true,
+    margin: { t: 20, r: 10, b: 40, l: 50 },
     paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
     font: { family: 'JetBrains Mono, monospace', color: '#8080a0', size: 11 },
-    xaxis: { color: '#505070', gridcolor: '#1a1a28' },
+    xaxis: { color: '#505070', gridcolor: '#1a1a28', tickfont: { size: 10 } },
     yaxis: { title: 'Expectation value (ħ/2)', color: '#505070', gridcolor: '#1a1a28', range: [-1.2, 1.2] },
     bargap: 0.4
   }, PLOT_CFG);
@@ -267,192 +243,76 @@ function updateLiveTable() {
   var elSz = document.getElementById('live-sz');
   if (elSz) elSz.textContent = sz.toFixed(4) + ' ħ/2';
 
-  // Larmor frequency
-  const omega = state.gFactor * muB_eV * state.B / h;  // rad/s... actually in eV: E = g μB B
-  const f_MHz = state.gFactor * 28.024 * state.B;  // ESR frequency in GHz for g≈2
+  // Larmor frequency shown for a fixed 1 T reference field
+  const f_GHz = 2.0023 * 28.024 * 1.0;  // ESR frequency in GHz for g≈2 at B=1 T
   var elOm = document.getElementById('live-omega');
-  if (elOm) elOm.textContent = f_MHz.toFixed(2) + ' GHz';
-}
-
-// ===== STERN-GERLACH SIMULATOR =====
-function updateSG() {
-  const a = getAmplitudes(state.theta, state.phi);
-
-  // Stage 0: show initial probabilities
-  const pz = measureProbZ(a);
-  var elPzUp = document.getElementById('sg-pz-up');
-  if (elPzUp) elPzUp.textContent = (pz.up * 100).toFixed(1) + '%';
-  var elPzDown = document.getElementById('sg-pz-down');
-  if (elPzDown) elPzDown.textContent = (pz.down * 100).toFixed(1) + '%';
-
-  const px = measureProbX(a);
-  var elPxPlus = document.getElementById('sg-px-plus');
-  if (elPxPlus) elPxPlus.textContent = (px.plus * 100).toFixed(1) + '%';
-  var elPxMinus = document.getElementById('sg-px-minus');
-  if (elPxMinus) elPxMinus.textContent = (px.minus * 100).toFixed(1) + '%';
-
-  // Show stage results
-  var elS1 = document.getElementById('sg-stage1-result');
-  if (elS1) {
-    if (state.sgResult1 === null) elS1.textContent = '—';
-    else elS1.textContent = state.sgResult1 === 1 ? '|↑z⟩ (spin up)' : '|↓z⟩ (spin down)';
-  }
-  var elS2 = document.getElementById('sg-stage2-result');
-  if (elS2) {
-    if (state.sgResult2 === null) elS2.textContent = '—';
-    else elS2.textContent = state.sgResult2 === 1 ? '|+x⟩' : '|−x⟩';
-  }
-}
-
-function plotSGHistogram() {
-  // Show measurement statistics for current state
-  const a = getAmplitudes(state.theta, state.phi);
-  const pz = measureProbZ(a);
-  const px = measureProbX(a);
-
-  _plot('plot-sg-hist', [
-    { x: ['|↑z⟩', '|↓z⟩'], y: [pz.up, pz.down],
-      type: 'bar', name: 'SG(z)',
-      marker: { color: ['#c084fc', '#ff4ecd'] },
-      text: [(pz.up*100).toFixed(1)+'%', (pz.down*100).toFixed(1)+'%'],
-      textposition: 'outside'
-    },
-    { x: ['|+x⟩', '|−x⟩'], y: [px.plus, px.minus],
-      type: 'bar', name: 'SG(x)',
-      marker: { color: ['#4ade80', '#ffd740'] },
-      text: [(px.plus*100).toFixed(1)+'%', (px.minus*100).toFixed(1)+'%'],
-      textposition: 'outside',
-      xaxis: 'x2', yaxis: 'y2'
-    }
-  ], {
-    margin: { t: 20, r: 10, b: 40, l: 50 },
-    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
-    font: { family: 'JetBrains Mono, monospace', color: '#8080a0', size: 11 },
-    xaxis: { domain: [0, 0.45], title: 'SG(z) basis', color: '#505070' },
-    xaxis2: { domain: [0.55, 1], title: 'SG(x) basis', color: '#505070' },
-    yaxis: { title: 'Probability', color: '#505070', range: [0, 1.1] },
-    yaxis2: { overlaying: 'y', side: 'right', visible: false },
-    bargap: 0.3,
-    showlegend: false
-  }, PLOT_CFG);
+  if (elOm) elOm.textContent = f_GHz.toFixed(2) + ' GHz';
 }
 
 // ===== ANIMATION =====
-let currentAmplitude = null;
-
 function animateLoop() {
   if (!state.animating) return;
-  state.time += 0.03;
 
-  const omega = state.gFactor * muB_eV * state.B / h;  // rad/s
-  // Simplify: just advance phi
-  state.phi += 0.06;
+  /* Physics-correct precession scaled for comfortable visual speed.
+     f = g·28.024·B  (GHz).  One full rotation every ~1.5 s at B = 1 T. */
+  const f_GHz = 2.0023 * 28.024 * 1.0;
+  const dt = 0.016;                     // ~60 FPS frame time in ns
+  const dPhi = 2 * Math.PI * f_GHz * dt * 0.001 * 0.60 * state.speedFactor;  // 0.60 base, × speedFactor
+  state.phi += dPhi;
   if (state.phi > 2 * Math.PI) state.phi -= 2 * Math.PI;
 
-  plotBlochSphere();
-  plotSpinComponents();
-  updateLiveTable();
+  // Sync the φ slider and readout so the user sees continuous motion.
+  // Keep state.phi0 unchanged — that is the Reset anchor set on Play.
+  const phiDeg = state.phi * 180 / Math.PI;
+  const sliderPhi = document.getElementById('slider-phi');
+  const valPhi = document.getElementById('val-phi');
+  if (sliderPhi) sliderPhi.value = phiDeg.toFixed(0);
+  if (valPhi) valPhi.textContent = phiDeg.toFixed(0) + '°';
+
+  const a = getAmplitudes(state.theta, state.phi);
+  const sx = expectationSigmaX(a);
+  const sy = expectationSigmaY(a);
+  const sz = expectationSigmaZ(a);
+
+  /* Fast path: restyle only the arrow trace (index 2) instead of
+     rebuilding the entire Bloch sphere with Plotly.react(). */
+  if (typeof Plotly !== 'undefined') {
+    Plotly.restyle('plot-bloch', {
+      x: [[0, sx]],
+      y: [[0, sy]],
+      z: [[0, sz]]
+    }, [2]);
+  }
+
+  /* Throttle expensive updates — bar chart + live table every 5th frame. */
+  state.frameCount = (state.frameCount || 0) + 1;
+  if (state.frameCount % 5 === 0) {
+    plotSpinComponents();
+    updateLiveTable();
+  }
 
   state.animFrame = requestAnimationFrame(animateLoop);
 }
 
-// ===== C. APPLICATIONS =====
-function plotLarmorPrecession() {
-  // Time evolution of Sz under B-field
-  const dt = 0.01;
-  const omega = state.gFactor * 2 * Math.PI * 28.024 * state.B;  // rad/ns for g≈2
-  const tmax = 2 * Math.PI / (state.gFactor * 2 * Math.PI * 28.024 * 0.1);  // one period at B=0.1T
-
-  const t = [], sz_t = [];
-  const a0 = getAmplitudes(state.theta, state.phi);
-  for (let i = 0; i <= 200; i++) {
-    const ti = i * tmax / 200;
-    t.push(ti);
-    const a = evolveLarmor(a0, ti, omega);
-    sz_t.push(expectationSigmaZ(a));
-  }
-
-  _plot('plot-larmor', [
-    { x: t, y: sz_t, mode: 'lines',
-      line: { color: '#00f0ff', width: 2.5 },
-      fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.08)',
-      name: '⟨Sz(t)⟩'
-    }
-  ], layout(null, 'Time t (ns)', '⟨Sz⟩ (ħ/2)'), PLOT_CFG);
-}
-
-function plotNMRResonance() {
-  // Nuclear spin resonance: proton g-factor ≈ 5.585, resonance at B vs frequency
-  const g_p = 5.5857;
-  const Bvals = [];
-  const fvals = [];
-  for (let B = 0.1; B <= 10; B += 0.1) {
-    Bvals.push(B);
-    fvals.push(g_p * 42.577 * B);  // MHz/T for proton
-  }
-
-  _plot('plot-nmr', [
-    { x: Bvals, y: fvals, mode: 'lines',
-      line: { color: '#4ade80', width: 2.5 },
-      fill: 'tozeroy', fillcolor: 'rgba(74,222,128,0.08)',
-      name: '¹H resonance'
-    }
-  ], layout(null, 'Magnetic field B (T)', 'Larmor frequency f (MHz)'), PLOT_CFG);
-}
-
-function plotHyperfine() {
-  // Hydrogen 21cm line: F=0 and F=1 hyperfine splitting
-  const traces = [];
-  const E0 = 0;
-  const deltaE = 5.874e-6;  // eV, 1420 MHz
-
-  traces.push({
-    x: [0, 1], y: [E0, E0],
-    mode: 'lines',
-    line: { color: '#00f0ff', width: 3 },
-    name: 'F = 0  (singlet)'
-  });
-  traces.push({
-    x: [0, 1], y: [E0 + deltaE, E0 + deltaE],
-    mode: 'lines',
-    line: { color: '#ff4ecd', width: 3 },
-    name: 'F = 1  (triplet, m_F = −1, 0, +1)'
-  });
-  traces.push({
-    x: [0.5, 0.5], y: [E0, E0 + deltaE],
-    mode: 'lines+markers',
-    line: { color: '#ffd740', width: 2 },
-    marker: { size: 6, color: '#ffd740' },
-    showlegend: false
-  });
-
-  _plot('plot-hyperfine', traces, {
-    margin: { t: 25, r: 10, b: 40, l: 55 },
-    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
-    font: { family: 'JetBrains Mono, monospace', color: '#8080a0', size: 11 },
-    xaxis: { visible: false, range: [-0.2, 1.2] },
-    yaxis: { title: 'E (eV)', color: '#505070', gridcolor: '#1a1a28' },
-    legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(10,10,15,0.8)', bordercolor: '#2a2a3a', borderwidth: 1 }
-  }, PLOT_CFG);
-}
+// ===== C. APPLICATIONS (placeholder — none exposed in current HTML) =====
+function plotLarmorPrecession() {}
+function plotNMRResonance() {}
+function plotHyperfine() {}
 
 // ============ INIT ============
 function initSpin() {
   var sliderTh = document.getElementById('slider-theta');
   var sliderPh = document.getElementById('slider-phi');
-  var sliderB = document.getElementById('slider-B');
-  var btnAnim = document.getElementById('btn-animate');
-  var btnSG1Up = document.getElementById('btn-sg1-up');
-  var btnSG1Down = document.getElementById('btn-sg1-down');
-  var btnSG2Plus = document.getElementById('btn-sg2-plus');
-  var btnSG2Minus = document.getElementById('btn-sg2-minus');
-  var btnReset = document.getElementById('btn-reset-sg');
+  var btnPlay = document.getElementById('btn-play');
+  var btnPause = document.getElementById('btn-pause');
+  var btnResetAnim = document.getElementById('btn-reset');
+  var sliderSpeed = document.getElementById('slider-speed');
 
   if (sliderTh) {
     sliderTh.addEventListener('input', function() {
       state.theta = parseFloat(this.value) * Math.PI / 180;
       document.getElementById('val-theta').textContent = this.value + '°';
-      if (!state.animating) { plotBlochSphere(); plotSpinComponents(); plotLarmorPrecession(); updateLiveTable(); updateSG(); plotSGHistogram(); }
+      if (!state.animating) { plotBlochSphere(); plotSpinComponents(); updateLiveTable(); }
     });
   }
 
@@ -460,96 +320,59 @@ function initSpin() {
     sliderPh.addEventListener('input', function() {
       state.phi = parseFloat(this.value) * Math.PI / 180;
       document.getElementById('val-phi').textContent = this.value + '°';
-      if (!state.animating) { plotBlochSphere(); plotSpinComponents(); plotLarmorPrecession(); updateLiveTable(); updateSG(); plotSGHistogram(); }
+      if (!state.animating) { plotBlochSphere(); plotSpinComponents(); updateLiveTable(); }
     });
   }
 
-  if (sliderB) {
-    sliderB.addEventListener('input', function() {
-      state.B = parseFloat(this.value);
-      document.getElementById('val-B').textContent = state.B.toFixed(2);
-      plotLarmorPrecession();
-      updateLiveTable();
+  if (sliderSpeed) {
+    sliderSpeed.addEventListener('input', function() {
+      state.speedFactor = parseFloat(this.value);
+      var vspeed = document.getElementById('val-speed');
+      if (vspeed) vspeed.textContent = state.speedFactor.toFixed(1) + '×';
     });
   }
 
-  if (btnAnim) {
-    btnAnim.addEventListener('click', function() {
-      state.animating = !state.animating;
-      this.classList.toggle('active', state.animating);
-      if (state.animating) {
-        animateLoop();
-      } else {
-        cancelAnimationFrame(state.animFrame);
-        plotBlochSphere(); plotSpinComponents(); updateLiveTable();
-      }
+  function setAnimUI(playing) {
+    if (btnPlay) btnPlay.disabled = playing;
+    if (btnPause) btnPause.disabled = !playing;
+    if (btnResetAnim) btnResetAnim.disabled = playing;
+  }
+
+  if (btnPlay) {
+    btnPlay.addEventListener('click', function() {
+      if (state.animating) return;
+      state.phi0 = state.phi;   // snapshot start-of-run for Reset
+      state.animating = true;
+      setAnimUI(true);
+      animateLoop();
     });
   }
 
-  // Stern-Gerlach buttons
-  if (btnSG1Up) {
-    btnSG1Up.addEventListener('click', function() {
-      state.sgStage = 1; state.sgResult1 = 1;
-      const a = getAmplitudes(state.theta, state.phi);
-      const collapsed = measureCollapseZ(a, 1);
-      state.theta = 0; state.phi = 0;  // |↑z⟩
-      document.getElementById('slider-theta').value = '0';
-      document.getElementById('val-theta').textContent = '0°';
-      document.getElementById('slider-phi').value = '0';
-      document.getElementById('val-phi').textContent = '0°';
-      updateSG(); plotBlochSphere(); plotSpinComponents(); plotSGHistogram(); updateLiveTable();
-    });
-  }
-  if (btnSG1Down) {
-    btnSG1Down.addEventListener('click', function() {
-      state.sgStage = 1; state.sgResult1 = -1;
-      state.theta = Math.PI; state.phi = 0;  // |↓z⟩
-      document.getElementById('slider-theta').value = '180';
-      document.getElementById('val-theta').textContent = '180°';
-      document.getElementById('slider-phi').value = '0';
-      document.getElementById('val-phi').textContent = '0°';
-      updateSG(); plotBlochSphere(); plotSpinComponents(); plotSGHistogram(); updateLiveTable();
-    });
-  }
-  if (btnSG2Plus) {
-    btnSG2Plus.addEventListener('click', function() {
-      if (state.sgStage < 1) return;
-      state.sgStage = 2; state.sgResult2 = 1;
-      state.theta = Math.PI / 2; state.phi = 0;  // |+x⟩
-      document.getElementById('slider-theta').value = '90';
-      document.getElementById('val-theta').textContent = '90°';
-      document.getElementById('slider-phi').value = '0';
-      document.getElementById('val-phi').textContent = '0°';
-      updateSG(); plotBlochSphere(); plotSpinComponents(); plotSGHistogram(); updateLiveTable();
-    });
-  }
-  if (btnSG2Minus) {
-    btnSG2Minus.addEventListener('click', function() {
-      if (state.sgStage < 1) return;
-      state.sgStage = 2; state.sgResult2 = -1;
-      state.theta = Math.PI / 2; state.phi = Math.PI;  // |−x⟩
-      document.getElementById('slider-theta').value = '90';
-      document.getElementById('val-theta').textContent = '90°';
-      document.getElementById('slider-phi').value = '180';
-      document.getElementById('val-phi').textContent = '180°';
-      updateSG(); plotBlochSphere(); plotSpinComponents(); plotSGHistogram(); updateLiveTable();
-    });
-  }
-  if (btnReset) {
-    btnReset.addEventListener('click', function() {
-      state.sgStage = 0; state.sgResult1 = null; state.sgResult2 = null;
-      state.theta = Math.PI / 3; state.phi = Math.PI / 4;
-      document.getElementById('slider-theta').value = '60';
-      document.getElementById('val-theta').textContent = '60°';
-      document.getElementById('slider-phi').value = '45';
-      document.getElementById('val-phi').textContent = '45°';
-      updateSG(); plotBlochSphere(); plotSpinComponents(); plotSGHistogram(); updateLiveTable();
+  if (btnPause) {
+    btnPause.addEventListener('click', function() {
+      if (!state.animating) return;
+      state.animating = false;
+      cancelAnimationFrame(state.animFrame);
+      setAnimUI(false);
     });
   }
 
-  plotBlochSphere(); plotSpinComponents(); plotLarmorPrecession();
-  plotNMRResonance(); plotHyperfine(); plotSGHistogram();
-  updateLiveTable(); updateSG();
+  if (btnResetAnim) {
+    btnResetAnim.addEventListener('click', function() {
+      state.animating = false;
+      cancelAnimationFrame(state.animFrame);
+      state.phi = state.phi0;
+      setAnimUI(false);
+      var phSlider = document.getElementById('slider-phi');
+      if (phSlider) phSlider.value = Math.round(state.phi * 180 / Math.PI);
+      var vph = document.getElementById('val-phi');
+      if (vph) vph.textContent = Math.round(state.phi * 180 / Math.PI) + '°';
+      plotBlochSphere(); plotSpinComponents(); updateLiveTable();
+    });
+  }
+
+  plotBlochSphere(); plotSpinComponents();
+  updateLiveTable();
 }
 
 initSpin();

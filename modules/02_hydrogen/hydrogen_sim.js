@@ -49,7 +49,64 @@ window.HydrogenLab = (function() {
     return r * r * R * R;
   }
 
+  function Y2_lm(l, m, theta, phi) {
+    /* |Y_l^m(theta,phi)|^2 for real spherical harmonics.
+       m is the magnetic quantum number (signed). Result is phi-independent
+       in magnitude, but the nodal planes depend on m through P_l^m.
+       For visualisation we use the magnitude squared.
+       Returns a normalised probability density on the unit sphere. */
+    const x = Math.cos(theta);
+    const s = Math.sin(theta);
+    const absM = Math.abs(m);
+    if (absM > l) return 0;
+
+    // Associated Legendre P_l^m(x) up to l=5 via explicit formulae (fast and exact)
+    let P = 0;
+    if (l === 0) {
+      P = 1;
+    } else if (l === 1) {
+      if (absM === 0) P = x;
+      else P = -s;
+    } else if (l === 2) {
+      if (absM === 0) P = 0.5 * (3 * x * x - 1);
+      else if (absM === 1) P = -3 * x * s;
+      else P = 3 * (1 - x * x);
+    } else if (l === 3) {
+      if (absM === 0) P = 0.5 * (5 * x * x * x - 3 * x);
+      else if (absM === 1) P = -1.5 * (5 * x * x - 1) * s;
+      else if (absM === 2) P = 15 * x * (1 - x * x);
+      else P = -15 * Math.pow(1 - x * x, 1.5);
+    } else if (l === 4) {
+      const x2 = x * x;
+      if (absM === 0) P = (35 * x2 * x2 - 30 * x2 + 3) / 8;
+      else if (absM === 1) P = -2.5 * (7 * x2 * x - 3 * x) * s;
+      else if (absM === 2) P = 7.5 * (7 * x2 - 1) * (1 - x2);
+      else if (absM === 3) P = -105 * x * Math.pow(1 - x2, 1.5);
+      else P = 105 * (1 - x2) * (1 - x2);
+    } else if (l === 5) {
+      const x2 = x * x;
+      if (absM === 0) P = (63 * x2 * x2 * x - 70 * x2 * x + 15 * x) / 8;
+      else if (absM === 1) P = -1.5 * (21 * x2 * x2 - 14 * x2 + 1) * s;
+      else if (absM === 2) P = 52.5 * x * (3 * x2 - 1) * (1 - x2);
+      else if (absM === 3) P = -52.5 * (9 * x2 - 1) * Math.pow(1 - x2, 1.5);
+      else if (absM === 4) P = 945 * x * (1 - x2) * (1 - x2);
+      else P = -945 * Math.pow(1 - x2, 2.5);
+    }
+
+    // Normalisation factor N_l^m
+    const num = (2 * l + 1) * factorial(l - absM);
+    const den = 4 * Math.PI * factorial(l + absM);
+    const N2 = num / den;
+    return N2 * P * P;
+  }
+
+  function psiProb(n, l, m, r, theta, phi) {
+    const R = R_nl(n, l, r);
+    return R * R * Y2_lm(l, m, theta, phi);
+  }
+
   function Y2_l0(l, theta) {
+    /* Fallback / m-averaged spherical harmonic: used only by older 2D plots. */
     const c = Math.cos(theta);
     if (l === 0) return 1 / (4 * Math.PI);
     if (l === 1) return (3 / (4 * Math.PI)) * c * c;
@@ -76,7 +133,7 @@ window.HydrogenLab = (function() {
     let scene, camera, renderer, atomGroup, electronMesh, energyRingsGroup;
     let animId = null;
     let cloudMode = false;
-    let stateRef = { n: 3, l: 1 };
+    let stateRef = { n: 3, l: 1, m: 0 };
     let containerId = null;
 
     function init(cid) {
@@ -84,12 +141,20 @@ window.HydrogenLab = (function() {
       if (!container || typeof THREE === 'undefined') return false;
       containerId = cid;
 
+      const stage = container.closest('.figure-stage') || container;
+      const rect = stage.getBoundingClientRect();
+      const w = Math.max(240, Math.round(rect.width));
+      const h = Math.max(180, Math.round(rect.height));
+
       scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+      camera = new THREE.PerspectiveCamera(75, w / h, 0.1, 1000);
 
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setSize(container.clientWidth, container.clientHeight);
-      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(w, h, false);
+      renderer.domElement.style.width = '100%';
+      renderer.domElement.style.height = '100%';
+      renderer.domElement.style.display = 'block';
       container.appendChild(renderer.domElement);
 
       scene.add(new THREE.AmbientLight(0x404040, 2));
@@ -120,9 +185,21 @@ window.HydrogenLab = (function() {
     function _onResize() {
       const container = document.getElementById(containerId);
       if (!container || !camera || !renderer) return;
-      camera.aspect = container.clientWidth / container.clientHeight;
+      const stage = container.closest('.figure-stage') || container;
+      const rect = stage.getBoundingClientRect();
+      const w = Math.max(240, Math.round(rect.width));
+      const h = Math.max(180, Math.round(rect.height));
+      if (w === 0 || h === 0) return;
+      camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(w, h, false);
+      renderer.domElement.style.width = '100%';
+      renderer.domElement.style.height = '100%';
+    }
+
+    function resize() {
+      _onResize();
     }
 
     function update(state) {
@@ -133,7 +210,7 @@ window.HydrogenLab = (function() {
 
     function setCloudMode(enabled) {
       cloudMode = !!enabled;
-      _buildScene();
+      if (atomGroup) _buildScene();
     }
 
     function _clearElectron() {
@@ -151,23 +228,26 @@ window.HydrogenLab = (function() {
 
       const n = stateRef.n || 1;
       const l = stateRef.l || 0;
+      const m = (typeof stateRef.m === 'number') ? stateRef.m : 0;
 
       if (cloudMode) {
-        _buildCloud(n, l);
+        _buildQuantumCloud(n, l, m);
       } else {
         _buildRingsAndElectron(n, l);
       }
     }
 
     function _buildRingsAndElectron(n, l) {
+      /* Bohr-orbit rings: legend says yellow, so draw them yellow.
+         Active n is highlighted cyan to match the "Electron" legend. */
       for (let i = 1; i <= 6; i++) {
         const r = r_expectation(i, 0) * 0.5;
         const isActive = (i === n);
-        const geom = new THREE.TorusGeometry(r, 0.02, 16, 100);
+        const geom = new THREE.TorusGeometry(r, isActive ? 0.025 : 0.015, 16, 100);
         const mat = new THREE.MeshBasicMaterial({
-          color: isActive ? 0x00f0ff : 0x222244,
+          color: isActive ? 0x00f0ff : 0xfacc15,
           transparent: true,
-          opacity: isActive ? 0.8 : 0.2
+          opacity: isActive ? 0.9 : 0.45
         });
         const ring = new THREE.Mesh(geom, mat);
         ring.rotation.x = Math.PI / (l + 1);
@@ -188,25 +268,62 @@ window.HydrogenLab = (function() {
       atomGroup.add(electronMesh);
     }
 
-    function _buildCloud(n, l) {
-      const count = 3000;
+    function _buildQuantumCloud(n, l, m) {
+      /* Rejection-sampled point cloud from the real hydrogen probability density
+         |ψ_nlm(r,θ,φ)|² = |R_nl(r)|² · |Y_l^m(θ,φ)|².
+         Points are coloured by radial shell so nodal structure is visible. */
+      const count = 5000;
       const positions = new Float32Array(count * 3);
-      const radius = r_expectation(n, l) * 0.4;
-      const spread = 0.2 + 0.15 * n;
+      const colors = new Float32Array(count * 3);
+      const rMax = Math.max(15, 4 * r_expectation(n, l));
 
-      for (let i = 0; i < count; i++) {
-        const theta = Math.random() * Math.PI * 2;
-        const phi = Math.acos(2 * Math.random() - 1);
-        const rDist = radius * (1 + (Math.random() - 0.5) * spread);
-        positions[i * 3]     = rDist * Math.sin(phi) * Math.cos(theta);
-        positions[i * 3 + 1] = rDist * Math.cos(phi);
-        positions[i * 3 + 2] = rDist * Math.sin(phi) * Math.sin(theta);
+      // Estimate peak probability by scanning a coarse grid.
+      let pMax = 0;
+      for (let i = 0; i <= 80; i++) {
+        const r = (i / 80) * rMax;
+        const R2 = P_radial(n, l, r) / (r * r + 1e-9);
+        for (let j = 0; j <= 20; j++) {
+          const theta = (j / 20) * Math.PI;
+          const p = R2 * Y2_lm(l, m, theta, 0);
+          if (p > pMax) pMax = p;
+        }
+      }
+      if (pMax <= 0) pMax = 1e-6;
+
+      let accepted = 0;
+      let attempts = 0;
+      const maxAttempts = count * 80;
+      while (accepted < count && attempts < maxAttempts) {
+        attempts++;
+        const r = Math.pow(Math.random(), 1.0 / 3.0) * rMax;
+        const theta = Math.acos(2 * Math.random() - 1);
+        const phi = Math.random() * 2 * Math.PI;
+        const p = psiProb(n, l, m, r, theta, phi);
+        if (Math.random() * pMax > p) continue;
+
+        const idx = accepted * 3;
+        positions[idx]     = r * Math.sin(theta) * Math.cos(phi);
+        positions[idx + 1] = r * Math.cos(theta);
+        positions[idx + 2] = r * Math.sin(theta) * Math.sin(phi);
+
+        // Colour by radius: core = purple, mid = cyan, outer = gold
+        const t = r / rMax;
+        if (t < 0.33) {
+          colors[idx] = 0.75 + 0.25 * t; colors[idx + 1] = 0.2; colors[idx + 2] = 1.0;
+        } else if (t < 0.66) {
+          colors[idx] = 0.0; colors[idx + 1] = 0.8 + 0.2 * t; colors[idx + 2] = 1.0;
+        } else {
+          colors[idx] = 1.0; colors[idx + 1] = 0.85 - 0.35 * t; colors[idx + 2] = 0.3;
+        }
+        accepted++;
       }
 
       const geom = new THREE.BufferGeometry();
       geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
       const mat = new THREE.PointsMaterial({
-        color: 0x00f0ff, size: 0.05, transparent: true, opacity: 0.6
+        size: 0.09, transparent: true, opacity: 0.55, vertexColors: true,
+        sizeAttenuation: true, blending: THREE.AdditiveBlending
       });
       electronMesh = new THREE.Points(geom, mat);
       atomGroup.add(electronMesh);
@@ -241,15 +358,18 @@ window.HydrogenLab = (function() {
       if (renderer) renderer.dispose();
     }
 
-    return { init, update, setCloudMode, dispose };
+    return { init, update, setCloudMode, resize, dispose };
   })();
 
-  /* ---------- Public API ---------- */
+  /* ================================================================
+     Re-export safe public helpers so hydrogen_apps_games.js works.
+     ================================================================ */
   return {
-    Ryd_eV, a0_nm, a0_A, hc_eVnm, alpha, muB_eV,
-    factorial, laguerreAssoc,
-    R_nl, P_radial, Y2_l0, rho2_xz,
-    energy_eV, r_expectation,
-    Hydrogen3D
+    R_nl: R_nl,
+    P_radial: P_radial,
+    energy_eV: energy_eV,
+    r_expectation: r_expectation,
+    Hydrogen3D: Hydrogen3D
   };
+
 })();

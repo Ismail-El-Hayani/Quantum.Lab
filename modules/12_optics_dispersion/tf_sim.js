@@ -1,6 +1,6 @@
 
 /* ═══════════════════════════════════════════════════════════════
-   tf_sim.js  —  Thin Film Interference Engine (Module 16)
+   tf_sim.js  —  Thin Film Interference Engine (Module 12)
    Physics: Fresnel coefficients + Airy multiple-reflection formula
    ═══════════════════════════════════════════════════════════════ */
 
@@ -12,6 +12,7 @@ TF.state = {
   d: 195,           /* film thickness in nm */
   theta1: 30,       /* incident angle in degrees */
   lam: 620,         /* wavelength in nm */
+  energyScale: 1.0, /* wave packet energy multiplier (affects freq, amp, speed) */
   animating: false
 };
 
@@ -159,16 +160,24 @@ function tfDrawFrame(now) {
   var ix = w * 0.22;          /* incident x at top interface */
   var L = w * 0.55;           /* max ray length in px */
 
-  /* ── Background fills ── */
-  c.fillStyle = '#0b0f1e'; c.fillRect(0, 0, w, filmTop);           /* n1 */
-  c.fillStyle = '#0a1e14'; c.fillRect(0, filmTop, w, filmBot - filmTop); /* n2 */
-  c.fillStyle = '#080c18'; c.fillRect(0, filmBot, w, h - filmBot);     /* n3 */
+  /* ── Background fills (brighter for visibility) ── */
+  c.fillStyle = '#1a2040'; c.fillRect(0, 0, w, filmTop);           /* n1: brighter blue-grey */
+  c.fillStyle = '#0f3a2a'; c.fillRect(0, filmTop, w, filmBot - filmTop); /* n2: brighter green */
+  c.fillStyle = '#0a1530'; c.fillRect(0, filmBot, w, h - filmBot);     /* n3: brighter dark blue */
 
   /* ── Interface lines ── */
   c.strokeStyle = 'rgba(255,255,255,0.25)';
   c.lineWidth = 1.5;
   c.beginPath(); c.moveTo(0, filmTop); c.lineTo(w, filmTop); c.stroke();
   c.beginPath(); c.moveTo(0, filmBot); c.lineTo(w, filmBot); c.stroke();
+
+  /* ── Layer labels ── */
+  c.fillStyle = 'rgba(255,255,255,0.45)';
+  c.font = '12px monospace';
+  c.textAlign = 'left';
+  c.fillText('n\u2081 = ' + st.n1.toFixed(2), 10, filmTop * 0.5 + 4);
+  c.fillText('n\u2082 = ' + st.n2.toFixed(2) + '  d=' + st.d + 'nm', 10, (filmTop + filmBot) * 0.5 + 4);
+  c.fillText('n\u2083 = ' + st.n3.toFixed(2), 10, filmBot + (h - filmBot) * 0.5 + 4);
 
   /* ── Normal lines at hit points ── */
   c.strokeStyle = 'rgba(255,255,255,0.15)';
@@ -207,26 +216,33 @@ function tfDrawFrame(now) {
   c.strokeStyle = 'rgba(192,132,252,0.35)';
   c.beginPath(); c.arc(exitX, filmBot, arcR, Math.PI/2, Math.PI/2 + th3r); c.stroke();
 
-  /* ── Wave parameters ── */
-  var lam1 = st.lam * 0.15;       /* visual wavelength in px */
+  /* ── Wave parameters (energy-scaled for visible punchiness) ── */
+  /*   e = energyScale  (default 1.0)
+   *   lam1 = lambda * 0.15 / e   (shorter wavelength at higher energy)
+   *   v1   = 180 * e             (faster propagation at higher energy)
+   *   omega = k1 * v1            (frequency rises as ~energy^2)
+   *   amp  = 8 * e * sin(phase)  (larger oscillation at higher energy)
+   */
+  var e   = st.energyScale || 1.0;
+  var lam1 = st.lam * 0.15 / e;       /* visual wavelength in px */
   var lam2 = lam1 * (st.n1 / st.n2);
   var lam3 = lam1 * (st.n1 / st.n3);
   var k1 = 2 * Math.PI / lam1;
   var k2 = 2 * Math.PI / lam2;
   var k3 = 2 * Math.PI / lam3;
-  var v1 = 55;                    /* px/sec visual speed in n1 */
+  var v1 = 180 * e;                   /* px/sec visual speed in n1 */
   var v2 = v1 * (st.n1 / st.n2);
   var v3 = v1 * (st.n1 / st.n3);
   var omega = k1 * v1;
 
-  /* ── Pulse state machine ── */
+  /* ── Pulse state machine (finite, immediate spawn) ── */
   if (!TF.pulse) TF.pulse = { phase: 'idle', waves: [], trainLen: 6 };
   var pulse = TF.pulse;
   if (pulse.phase === 'idle') {
     pulse.phase = 'entering';
     pulse.waves = [];
     for (var i = 0; i < pulse.trainLen; i++) {
-      pulse.waves.push({ type: 'inc', s: -40 - i * lam1, active: true, hasSplit: false });
+      pulse.waves.push({ type: 'inc', s: -10 - i * lam1 * 0.35, active: true, hasSplit: false });
     }
   }
 
@@ -265,7 +281,14 @@ function tfDrawFrame(now) {
       if (wv.s > L + lam3) wv.active = false;
     }
   }
-  if (!anyActive) { TF.state.animating = false; }
+  if (!anyActive) { 
+    TF.state.animating = false; 
+    /* Auto-restart pulse after a brief pause */
+    setTimeout(function() {
+      if (TF.pulse) TF.pulse.phase = 'idle';
+      tfStartAnim();
+    }, 800);
+  }
 
   /* ── Draw each wavefront ── */
   for (var wi = 0; wi < pulse.waves.length; wi++) {
@@ -302,7 +325,7 @@ function tfDrawFrame(now) {
     var step = 3;
     for (var dist = 0; dist <= Math.min(wv.s, segLen); dist += step) {
       var phase = k * dist - omega * t + phase0;
-      var amp = 10 * Math.sin(phase);
+      var amp = 8 * e * Math.sin(phase);
       var x = sx + nx * dist + px * amp;
       var y = sy + ny * dist + py * amp;
       if (dist === 0) c.moveTo(x, y); else c.lineTo(x, y);
@@ -352,8 +375,8 @@ function tfDrawFrame(now) {
   var comp = tfComputeAll();
   c.textAlign = 'right';
   c.fillStyle = 'rgba(255,255,255,0.55)';
-  c.fillText('\u211b = ' + (comp.R * 100).toFixed(1) + '%', w - 12, 22);
-  c.fillText('\u8476; = ' + (comp.T * 100).toFixed(1) + '%', w - 12, 38);
+  c.fillText('R = ' + (comp.R * 100).toFixed(1) + '%', w - 12, 22);
+  c.fillText('T = ' + (comp.T * 100).toFixed(1) + '%', w - 12, 38);
   c.fillText('\u03b2 = ' + comp.beta.toFixed(2) + ' rad', w - 12, 54);
   c.textAlign = 'left';
 
@@ -372,11 +395,17 @@ function tfStartAnim() {
 function tfStopAnim() {
   TF.state.animating = false;
   if (TF.animId) { cancelAnimationFrame(TF.animId); TF.animId = null; }
+  TF.lastTime = 0;
 }
 function tfResetPulse() {
+  tfStopAnim();
   if (TF.pulse) TF.pulse.phase = 'idle';
   tfStartAnim();
 }
+
+/* ── Module-level layout caches (stable, avoids getGraphDiv internal API) ── */
+var _tfRTLayout = null;
+var _tfStandingLayout = null;
 
 /* ═══════════════════════ Plotly Spectral Plots ═══════════════════════ */
 
@@ -385,26 +414,28 @@ function tfInitPlots() {
   var dark = { paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)' };
 
   /* R(lambda) + T(lambda) */
-  Plotly.newPlot('plot-RT', [
-    { x: [], y: [], mode: 'lines', name: '\u211b', line: { color: '#00f0ff', width: 2 } },
-    { x: [], y: [], mode: 'lines', name: '\u8476;', line: { color: '#4ade80', width: 2 } },
-    { x: [], y: [], mode: 'lines', name: 'cursor', line: { color: '#ff4ecd', width: 1, dash: 'dash' } }
-  ], Object.assign({}, dark, {
+  _tfRTLayout = Object.assign({}, dark, {
     xaxis: { title: '\u03bb (nm)', color: '#8899aa', gridcolor: 'rgba(255,255,255,0.06)' },
     yaxis: { title: 'Intensity', range: [0, 1.05], color: '#8899aa', gridcolor: 'rgba(255,255,255,0.06)' },
     margin: { t: 20, b: 40, l: 50, r: 20 }, showlegend: true,
     legend: { font: { color: '#8899aa' }, x: 0.02, y: 0.98 }
-  }), { responsive: true, displayModeBar: false });
+  });
+  Plotly.newPlot('tf-plot-RT', [
+    { x: [], y: [], mode: 'lines', name: 'R', line: { color: '#00f0ff', width: 2 } },
+    { x: [], y: [], mode: 'lines', name: 'T', line: { color: '#4ade80', width: 2 } },
+    { x: [], y: [], mode: 'lines', name: 'cursor', line: { color: '#ff4ecd', width: 1, dash: 'dash' } }
+  ], _tfRTLayout, { responsive: true, displayModeBar: false });
 
   /* Standing wave |E(z)|^2 inside film */
-  Plotly.newPlot('plot-standing', [
-    { x: [], y: [], mode: 'lines', fill: 'tozeroy', fillcolor: 'rgba(74,222,128,0.18)',
-      line: { color: '#4ade80', width: 2 }, name: '|E(z)|\u00b2' }
-  ], Object.assign({}, dark, {
+  _tfStandingLayout = Object.assign({}, dark, {
     xaxis: { title: 'z inside film (nm)', color: '#8899aa', gridcolor: 'rgba(255,255,255,0.06)' },
     yaxis: { title: '|E|', color: '#8899aa', gridcolor: 'rgba(255,255,255,0.06)' },
     margin: { t: 20, b: 40, l: 50, r: 20 }, showlegend: false
-  }), { responsive: true, displayModeBar: false });
+  });
+  Plotly.newPlot('tf-plot-standing', [
+    { x: [], y: [], mode: 'lines', fill: 'tozeroy', fillcolor: 'rgba(74,222,128,0.18)',
+      line: { color: '#4ade80', width: 2 }, name: '|E(z)|\u00b2' }
+  ], _tfStandingLayout, { responsive: true, displayModeBar: false });
 }
 
 /**
@@ -427,12 +458,12 @@ function tfRefreshSpectral() {
     tys.push(a.T);
   }
 
-  Plotly.react('plot-RT', [
-    { x: xs, y: rys, mode: 'lines', name: '\u211b', line: { color: '#00f0ff', width: 2 } },
-    { x: xs, y: tys, mode: 'lines', name: '\u8476;', line: { color: '#4ade80', width: 2 } },
+  Plotly.react('tf-plot-RT', [
+    { x: xs, y: rys, mode: 'lines', name: 'R', line: { color: '#00f0ff', width: 2 } },
+    { x: xs, y: tys, mode: 'lines', name: 'T', line: { color: '#4ade80', width: 2 } },
     { x: [st.lam, st.lam], y: [0, 1.05], mode: 'lines', name: 'cursor',
       line: { color: '#ff4ecd', width: 1, dash: 'dash' } }
-  ], Plotly.Plots.getGraphDiv('plot-RT').layout, { displayModeBar: false });
+  ], _tfRTLayout, { displayModeBar: false });
 }
 
 /**
@@ -464,10 +495,10 @@ function tfRefreshStanding() {
     es.push(Math.min(e2, 5.0));
   }
 
-  Plotly.react('plot-standing', [
+  Plotly.react('tf-plot-standing', [
     { x: zs, y: es, mode: 'lines', fill: 'tozeroy', fillcolor: 'rgba(74,222,128,0.18)',
       line: { color: '#4ade80', width: 2 } }
-  ], Plotly.Plots.getGraphDiv('plot-standing').layout, { displayModeBar: false });
+  ], _tfStandingLayout, { displayModeBar: false });
 }
 
 /* ═══════════════════════ Live Readout DOM ═══════════════════════ */
@@ -481,7 +512,7 @@ function tfUpdateReadout() {
   set('live-n2',   st.n2.toFixed(2));
   set('live-n3',   st.n3.toFixed(2));
   set('live-d',    st.d);
-  set('live-lam',  st.lam);
+  set('tf-live-lam',  st.lam);
   set('live-th1',  st.theta1 + '\u00b0');
   set('live-th2',  comp.th2.toFixed(1) + '\u00b0');
   set('live-th3',  comp.th3.toFixed(1) + '\u00b0');
@@ -491,11 +522,11 @@ function tfUpdateReadout() {
   set('live-R-t',    (comp.R * 100).toFixed(1));
   set('live-T-t',    (comp.T * 100).toFixed(1));
 
-  set('live-R',    '\u211b = ' + (comp.R * 100).toFixed(1) + '%');
-  set('live-T',    '\u8476; = ' + (comp.T * 100).toFixed(1) + '%');
-  set('live-beta', '\u03b2 = ' + comp.beta.toFixed(2));
-  set('live-theta2', '\u03b8\u2082 = ' + comp.th2.toFixed(1) + '\u00b0');
-  set('live-theta3', '\u03b8\u2083 = ' + comp.th3.toFixed(1) + '\u00b0');
+  set('tf-live-R',    'R = ' + (comp.R * 100).toFixed(1) + '%');
+  set('tf-live-T',    'T = ' + (comp.T * 100).toFixed(1) + '%');
+  set('tf-live-beta', '\u03b2 = ' + comp.beta.toFixed(2));
+  set('tf-live-theta2', '\u03b8\u2082 = ' + comp.th2.toFixed(1) + '\u00b0');
+  set('tf-live-theta3', '\u03b8\u2083 = ' + comp.th3.toFixed(1) + '\u00b0');
 
   if (typeof MathJax !== 'undefined') {
     var hero = document.getElementById('eq-hero-text');
@@ -510,7 +541,19 @@ function tfSliderN2(v) { TF.state.n2 = parseFloat(v); document.getElementById('v
 function tfSliderN3(v) { TF.state.n3 = parseFloat(v); document.getElementById('val-n3').textContent = v; tfResetPulse(); tfRefreshSpectral(); tfRefreshStanding(); tfUpdateReadout(); }
 function tfSliderD(v)  { TF.state.d  = parseFloat(v); document.getElementById('val-d').textContent = v + ' nm'; tfResetPulse(); tfRefreshSpectral(); tfRefreshStanding(); tfUpdateReadout(); }
 function tfSliderTheta1(v) { TF.state.theta1 = parseFloat(v); document.getElementById('val-theta1').textContent = v + '\u00b0'; tfResetPulse(); tfRefreshSpectral(); tfRefreshStanding(); tfUpdateReadout(); }
-function tfSliderLam(v)    { TF.state.lam = parseFloat(v); document.getElementById('val-lam').textContent = v + ' nm'; tfResetPulse(); tfRefreshSpectral(); tfRefreshStanding(); tfUpdateReadout(); }
+function tfSliderLam(v)    { TF.state.lam = parseFloat(v); document.getElementById('val-tf-lam').textContent = v + ' nm'; tfResetPulse(); tfRefreshSpectral(); tfRefreshStanding(); tfUpdateReadout(); }
+
+function tfSliderEnergy(v) {
+  /* Wave energy scale e: multiplies frequency, speed, and amplitude.
+   * lam1 = lambda * 0.15 / e ; v1 = 180 * e ; omega = k1 * v1 ; amp = 8 * e * sin(phase) */
+  TF.state.energyScale = parseFloat(v);
+  var el = document.getElementById('val-energy');
+  if (el) el.textContent = v + 'x';
+  tfResetPulse();
+  tfRefreshSpectral();
+  tfRefreshStanding();
+  tfUpdateReadout();
+}
 
 /* ═══════════════════════ Presets ═══════════════════════ */
 
@@ -539,7 +582,7 @@ function tfSetPreset(key) {
   document.getElementById('val-n3').textContent = p.n3.toFixed(2);
   document.getElementById('val-d').textContent = p.d + ' nm';
   document.getElementById('val-theta1').textContent = p.theta1 + '\u00b0';
-  document.getElementById('val-lam').textContent = p.lam + ' nm';
+  document.getElementById('val-tf-lam').textContent = p.lam + ' nm';
 
   document.querySelectorAll('.preset-btn').forEach(function(b) { b.classList.remove('active'); });
   var activeBtn = document.querySelector('.preset-btn[onclick*="' + key + '"]');

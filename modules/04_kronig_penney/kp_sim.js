@@ -10,6 +10,9 @@
 // ============ STATE ============
 let state = { V0:5, b:0.2, a:1.0, E:2.0, scheme:'reduced', numK:200 };
 
+// Cache for solveBands so plotBands + updateLiveReadouts share one computation
+let __kpBandsCache = { key: null, result: null };
+
 // ============ PHYSICS ============
 
 // Solve for Periodic Bands (Kronig-Penney Transcendental)
@@ -42,6 +45,9 @@ function bisect(fn, target, lo, hi, eps) {
 }
 
 function solveBands(V0, a, b, numK) {
+  const key = [V0, a, b, numK].join('|');
+  if (__kpBandsCache.key === key) return __kpBandsCache.result;
+
   const kvals = [];
   for(let i=0;i<numK;i++) kvals.push(-Math.PI/a + 2*Math.PI/a * i/(numK-1));
   const bands = [[],[],[],[],[]];
@@ -66,7 +72,8 @@ function solveBands(V0, a, b, numK) {
       bands[ib].push({k:k, E:roots[ib]});
     }
   }
-  return {kvals, bands};
+  __kpBandsCache = { key: key, result: {kvals, bands} };
+  return __kpBandsCache.result;
 }
 
 /**
@@ -242,11 +249,19 @@ function plotBands(){
     margin:{t:25,r:10,b:40,l:55},
     paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',
     font:{family:'JetBrains Mono,monospace',color:'#8080a0',size:11},
-    xaxis:{title:'k (π/a)',color:'#505070',gridcolor:'#1a1a28',tickmode:'array',tickvals:[-Math.PI/state.a,0,Math.PI/state.a],ticktext:['-1','0','+1']},
-    yaxis:{title:'E (ħ²/ma²)',color:'#505070',gridcolor:'#1a1a28'},
+    xaxis:{title:'k (π/a)',color:'#505070',gridcolor:'#1a1a28'},
+    yaxis:{title:'E (ℏ²/ma²)',color:'#505070',gridcolor:'#1a1a28'},
     legend:{x:0.02,y:0.98,bgcolor:'rgba(10,10,15,0.8)',bordercolor:'#2a2a3a',borderwidth:1},
     hovermode:'x unified'
   };
+
+  if(state.scheme==='reduced'){
+    layout.xaxis.tickmode = 'array';
+    layout.xaxis.tickvals = [-Math.PI/state.a, 0, Math.PI/state.a];
+    layout.xaxis.ticktext = ['-1','0','+1'];
+    layout.xaxis.range = [-Math.PI/state.a, Math.PI/state.a];
+    layout.xaxis.autorange = false;
+  }
 
   if(state.scheme==='extended'){
     const extTraces=[];
@@ -269,13 +284,93 @@ function plotBands(){
     traces.push(...extTraces);
     traces.push({x:[-Math.PI/state.a,-Math.PI/state.a],y:[0,ymax],mode:'lines',name:'BZ edge',line:{color:'rgba(255,255,255,0.15)',width:1}});
     traces.push({x:[Math.PI/state.a,Math.PI/state.a],y:[0,ymax],mode:'lines',showlegend:false,line:{color:'rgba(255,255,255,0.15)',width:1}});
+    // Extended zone: keep a clean x-axis across all repeated zones
+    layout.xaxis.tickmode = 'array';
+    layout.xaxis.tickvals = [-5,-4,-3,-2,-1,0,1,2,3,4,5].map(v=>v*Math.PI/state.a);
+    layout.xaxis.ticktext = ['-5','-4','-3','-2','-1','0','+1','+2','+3','+4','+5'];
+    layout.xaxis.autorange = true;
   }
 
   layout.yaxis.range = [0, ymax*1.05];
   _plot('plot-bands', traces, layout, {responsive:true,displayModeBar:false});
 }
 
+// ============ RESPONSIVE RESIZE WHEN PLAYGROUND BECOMES VISIBLE ============
+var _kpPlotIds = ['plot-potential', 'plot-tunneling', 'plot-bands'];
+function _resizeKPPlots() {
+  if (typeof Plotly === 'undefined') return;
+  var section = document.getElementById('section-play');
+  if (!section || section.style.display === 'none') return;
+  _kpPlotIds.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && el.data) {
+      try { Plotly.Plots.resize(el); } catch(e) {}
+    }
+  });
+}
+window.addEventListener('resize', _resizeKPPlots);
+
+var _kpPlayObserver = new MutationObserver(function(mutations) {
+  mutations.forEach(function(m) {
+    if (m.attributeName === 'style' && m.target.id === 'section-play') {
+      if (m.target.style.display !== 'none') {
+        // If init deferred updateAll, run it in the next frame so the click stays responsive.
+        if (_kpUpdatePending) {
+          _kpUpdatePending = false;
+          requestAnimationFrame(updateAll);
+        }
+        _resizeKPPlots();
+        setTimeout(_resizeKPPlots, 50);
+        setTimeout(_resizeKPPlots, 150);
+      }
+    }
+  });
+});
+if (document.getElementById('section-play')) {
+  _kpPlayObserver.observe(document.getElementById('section-play'), { attributes: true });
+}
+
 // ============ UI ============
+// Track which plots need a full rebuild (vs just resize) when their sub-tab is shown.
+var _plotDirty = { potential: false, tunneling: false, bands: false };
+
+function setPlayMode(mode) {
+  var modes = ['potential', 'tunneling', 'bands'];
+  modes.forEach(function(m) {
+    var btn = document.getElementById('pg-mode-' + m);
+    var view = document.getElementById('pg-view-' + m);
+    if (btn) btn.classList.toggle('active', m === mode);
+    if (view) view.style.display = (m === mode ? '' : 'none');
+  });
+  // Show/hide sidebar controls depending on which canvas is active
+  document.querySelectorAll('.pg-control-scope').forEach(function(el) {
+    var show = el.classList.contains('scope-global');
+    if (mode === 'tunneling' && el.classList.contains('scope-tunneling')) show = true;
+    if (mode === 'bands' && el.classList.contains('scope-bands')) show = true;
+    el.style.display = show ? '' : 'none';
+  });
+  // Build or rebuild the plot for this sub-tab.
+  var plotMap = { potential: plotPotential, tunneling: plotTunneling, bands: plotBands };
+  var idMap = { potential: 'plot-potential', tunneling: 'plot-tunneling', bands: 'plot-bands' };
+  var el = document.getElementById(idMap[mode]);
+  if (!el) return;
+  if (!el.children.length || _plotDirty[mode]) {
+    // First time shown, or slider values changed since last build.
+    plotMap[mode]();
+    _plotDirty[mode] = false;
+  } else if (typeof Plotly !== 'undefined') {
+    // Plot is current — just resize to fill the now-visible container.
+    requestAnimationFrame(function() { Plotly.Plots.resize(el); });
+    setTimeout(function() { Plotly.Plots.resize(el); }, 60);
+  }
+}
+window.setPlayMode = setPlayMode;
+
+function initPlaygroundControls() {
+  // Default to potential view on first load
+  setPlayMode('potential');
+}
+
 function setScheme(s){
   state.scheme = s;
   var btnR = document.getElementById('btn-reduced');
@@ -286,47 +381,101 @@ function setScheme(s){
 }
 window.setScheme = setScheme;
 
+function _fmtVal(value, unit) {
+  var num = Number(value).toFixed(1);
+  if (unit) return num + ' \u003cspan class="unit-tag"\u003e' + unit + '\u003c/span\u003e';
+  return num;
+}
+
+// updateAll: rebuilds the visible plot + live readouts.
+// Marks non-visible plots as dirty so they get rebuilt when their sub-tab is activated.
+// Called on slider 'change' (drag end) and on first Playground open.
 function updateAll(){
-  plotPotential();
-  plotTunneling();
-  plotBands();
+  // Only rebuild the plot that is actually visible — the other two
+  // will be rebuilt on-demand when their sub-tab is activated.
+  updateVisiblePlayground();
+  // Mark the other two plots as dirty (data changed, need rebuild on next show).
+  var active = getActivePlayMode();
+  var allModes = ['potential', 'tunneling', 'bands'];
+  for (var i = 0; i < allModes.length; i++) {
+    if (allModes[i] !== active) _plotDirty[allModes[i]] = true;
+  }
+  // Live readouts always update (cheap thanks to solveBands cache).
   updateLiveReadouts(state.V0, state.a, state.b);
 }
 window.updateAll = updateAll;
 
-// Animation loop for tunneling
-function animateTunneling() {
-  plotTunneling();
-  requestAnimationFrame(animateTunneling);
+// Fast update: only the playground sub-tab that is currently visible
+function getActivePlayMode() {
+  var modes = ['potential', 'tunneling', 'bands'];
+  for (var i = 0; i < modes.length; i++) {
+    var btn = document.getElementById('pg-mode-' + modes[i]);
+    if (btn && btn.classList.contains('active')) return modes[i];
+  }
+  return 'potential';
 }
 
+function updateVisiblePlayground() {
+  var mode = getActivePlayMode();
+  if (mode === 'potential') plotPotential();
+  else if (mode === 'tunneling') plotTunneling();
+  else if (mode === 'bands') plotBands();
+}
+window.updateVisiblePlayground = updateVisiblePlayground;
+
+// Animation loop for tunneling — only draw when tunneling tab is active
+function animateTunneling() {
+  if (getActivePlayMode() === 'tunneling') {
+    plotTunneling();
+  }
+  requestAnimationFrame(animateTunneling);
+}
+window.animateTunneling = animateTunneling;
+
 // Live readout updater
+// Effective mass m* = ℏ² / (d²E/dk²) computed at the band minimum (not mid-array)
 function updateLiveReadouts(V0, a, b) {
-  if (typeof solveBands !== 'function') return;
-  var result = solveBands(V0, a, b, 200);
+  var result;
+  if (typeof solveBands === 'function') {
+    result = solveBands(V0, a, b, 200);
+  }
+  if (!result) return;
   var bands = result.bands;
   var gaps = [];
   var widths = [];
   var masses = [];
+
+  // Helper: compute d²E/dk² at the band minimum (edge-safe)
+  function massAtBandMin(band) {
+    if (!band || band.length < 5) return '—';
+    var E_vals = band.map(function(p){ return p.E; });
+    var min_idx = E_vals.indexOf(Math.min.apply(null, E_vals));
+    var dk = band[1].k - band[0].k;
+    if (Math.abs(dk) < 1e-10) return '—';
+    var d2E;
+    if (min_idx === 0) {
+      d2E = (band[2].E - 2*band[1].E + band[0].E) / (dk*dk);
+    } else if (min_idx >= band.length - 1) {
+      d2E = (band[band.length-1].E - 2*band[band.length-2].E + band[band.length-3].E) / (dk*dk);
+    } else {
+      d2E = (band[min_idx+1].E - 2*band[min_idx].E + band[min_idx-1].E) / (dk*dk);
+    }
+    return d2E > 1e-10 ? (1/d2E).toFixed(3) : '—';
+  }
+
   for (var ib = 0; ib < 4; ib++) {
+    // Gaps and widths require both band ib and ib+1
     if (bands[ib] && bands[ib].length > 2 && bands[ib+1] && bands[ib+1].length > 2) {
       var top = Math.max.apply(null, bands[ib].map(function(p){ return p.E; }));
       var bot = Math.min.apply(null, bands[ib+1].map(function(p){ return p.E; }));
       gaps.push(bot - top);
       var botBand = Math.min.apply(null, bands[ib].map(function(p){ return p.E; }));
       widths.push(top - botBand);
-      var d2E = 0;
-      if (bands[ib].length > 4) {
-        var mid = Math.floor(bands[ib].length/2);
-        var dk = bands[ib][mid+1].k - bands[ib][mid].k;
-        if (Math.abs(dk) > 1e-10) {
-          d2E = (bands[ib][mid+1].E - 2*bands[ib][mid].E + bands[ib][mid-1].E)/(dk*dk);
-        }
-      }
-      masses.push(d2E > 1e-10 ? (1/d2E).toFixed(3) : '—');
     } else {
-      gaps.push(null); widths.push(null); masses.push('—');
+      gaps.push(null); widths.push(null);
     }
+    // Effective mass only needs band ib itself
+    masses.push(massAtBandMin(bands[ib]));
   }
   var el1 = document.getElementById('live-gap1'); if (el1) el1.textContent = (gaps[0] !== null ? gaps[0].toFixed(3) : '—');
   var el2 = document.getElementById('live-gap2'); if (el2) el2.textContent = (gaps[1] !== null ? gaps[1].toFixed(3) : '—');
@@ -344,36 +493,71 @@ function initKP() {
   var sliderA = document.getElementById('slider-a');
   var sliderE = document.getElementById('slider-e');
 
+  var fastUpdatePending = false;
+  var fullUpdateTimeout = null;
+
+  function scheduleFastUpdate() {
+    if (fastUpdatePending) return;
+    fastUpdatePending = true;
+    requestAnimationFrame(function() {
+      fastUpdatePending = false;
+      updateVisiblePlayground();
+    });
+  }
+
+  function scheduleFullUpdate() {
+    if (fullUpdateTimeout) clearTimeout(fullUpdateTimeout);
+    fullUpdateTimeout = setTimeout(function() {
+      fullUpdateTimeout = null;
+      updateAll();
+    }, 120);
+  }
+
+  function onSliderInput() {
+    scheduleFastUpdate();
+    scheduleFullUpdate();
+  }
+
+  function onSliderChange() {
+    if (fullUpdateTimeout) clearTimeout(fullUpdateTimeout);
+    fullUpdateTimeout = null;
+    updateAll();
+  }
+
   if(sliderV0){
     sliderV0.addEventListener('input',function(){
       state.V0 = parseFloat(this.value);
-      var el = document.getElementById('val-v0'); if(el) el.textContent = state.V0.toFixed(1);
-      updateAll();
+      var el = document.getElementById('val-v0'); if(el) el.innerHTML = _fmtVal(state.V0, 'ℏ²/ma²');
+      onSliderInput();
     });
+    sliderV0.addEventListener('change', onSliderChange);
   }
   if(sliderB){
     sliderB.addEventListener('input',function(){
       state.b = parseFloat(this.value) * state.a;
       var el = document.getElementById('val-b'); if(el) el.textContent = (state.b/state.a).toFixed(2);
-      updateAll();
+      onSliderInput();
     });
+    sliderB.addEventListener('change', onSliderChange);
   }
   if(sliderA){
     sliderA.addEventListener('input',function(){
       let ratio = state.b / state.a;
       state.a = parseFloat(this.value);
       state.b = ratio * state.a;
-      var elA = document.getElementById('val-a'); if(elA) elA.textContent = state.a.toFixed(1);
+      var elA = document.getElementById('val-a'); if(elA) elA.innerHTML = _fmtVal(state.a, 'a');
       var elB = document.getElementById('val-b'); if(elB) elB.textContent = ratio.toFixed(2);
-      updateAll();
+      onSliderInput();
     });
+    sliderA.addEventListener('change', onSliderChange);
   }
   if(sliderE){
     sliderE.addEventListener('input',function(){
       state.E = parseFloat(this.value);
-      var el = document.getElementById('val-e'); if(el) el.textContent = state.E.toFixed(1);
-      updateAll();
+      var el = document.getElementById('val-e'); if(el) el.innerHTML = _fmtVal(state.E, 'ℏ²/ma²');
+      onSliderInput();
     });
+    sliderE.addEventListener('change', onSliderChange);
   }
 
   var btnRed = document.getElementById('btn-reduced');
@@ -389,8 +573,69 @@ function initKP() {
     });
   }
 
-  updateAll();
+  initPlaygroundControls();
+
+  // Defer heavy plotting until Playground is actually visible.
+  var section = document.getElementById('section-play');
+  if (section && section.style.display !== 'none') {
+    updateAll();
+  } else {
+    _kpUpdatePending = true;
+  }
   animateTunneling();
 }
 
+var _kpUpdatePending = false;
+
 window.initKP = initKP;
+window.initPlaygroundControls = initPlaygroundControls;
+
+// ============ OVERRIDE setGameMode FOR THIS MODULE ============
+// Bypass shared_games.js smooth-scroll for Playground; keep instant jump + resize.
+(function() {
+  var origSetGameMode = window.setGameMode;
+
+  function fastPlaygroundSwitch(mode) {
+    if (mode !== 'play') {
+      if (typeof origSetGameMode === 'function') origSetGameMode(mode);
+      return;
+    }
+
+    // For 'play' we replicate the shared toggle logic but skip smooth scroll.
+    document.querySelectorAll('.game-mode-btn').forEach(function(b) { b.classList.remove('active'); });
+    var btn = document.getElementById('mode-play');
+    if (btn) btn.classList.add('active');
+
+    document.querySelectorAll('.mode-section').forEach(function(s) { s.style.display = 'none'; });
+    var section = document.getElementById('section-play');
+    if (section) {
+      section.style.display = 'block';
+      // Instant jump — no smooth animation
+      window.scrollTo({ top: section.offsetTop, behavior: 'auto' });
+    }
+
+    var container = document.querySelector('.game-container');
+    if (container) container.setAttribute('data-active-mode', 'play');
+
+    // Trigger init + resize (defer heavy plotting so the click stays responsive)
+    if (typeof initPlayground === 'function') initPlayground();
+    _resizeKPPlots();
+    requestAnimationFrame(function() {
+      _resizeKPPlots();
+      if (_kpUpdatePending) {
+        _kpUpdatePending = false;
+        updateAll();
+      }
+    });
+  }
+
+  window.__fastPlaygroundSwitch = fastPlaygroundSwitch;
+
+  window.setGameMode = function(mode) {
+    if (mode === 'play') {
+      fastPlaygroundSwitch(mode);
+    } else if (typeof origSetGameMode === 'function') {
+      origSetGameMode(mode);
+    }
+  };
+})();

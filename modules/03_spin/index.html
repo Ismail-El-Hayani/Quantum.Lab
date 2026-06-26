@@ -21,36 +21,60 @@
   a{color:var(--accent-cyan);text-decoration:none}
   a:hover{text-decoration:underline}
 
-  /* Additional game styles */
+  /* Hero */
   .gradient-cyan{background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-  .hero{padding:3rem 2rem 2rem;max-width:1400px;margin:0 auto}
-  .hero h1{font-size:2.8rem;font-weight:700;letter-spacing:-0.02em;line-height:1.1;margin-bottom:0.6rem}
-  .hero-subtitle{font-size:1.1rem;color:var(--text-muted);max-width:700px;line-height:1.6;margin-bottom:2rem}
-  .topic-badge{display:inline-flex;align-items:center;gap:0.5rem;background:var(--bg-elevated);border:1px solid var(--glass-border);padding:0.4rem 1rem;border-radius:20px;font-size:0.85rem;color:var(--text-muted);font-family:var(--font-mono)}
-  .topic-badge::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--accent-green)}
 
-  .container{max-width:1400px;margin:0 auto;padding:0 2rem 3rem;display:grid;grid-template-columns:1fr 380px;gap:1.5rem}
-  @media(max-width:1100px){.container{grid-template-columns:1fr}}
+  /* Layout helpers */
+  .game-container{max-width:1600px;margin:0 auto;padding:0 2rem 3rem}
+  .macro-panel{
+  background:var(--bg-panel);border:1px solid var(--glass-border);
+  border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.5rem;
+  width:100%;min-width:0
+}
+  .macro-panel:first-of-type{margin-top:0}
+  .macro-panel h3{margin:0 0 1rem;font-size:1.1rem;color:var(--text-bright)}
+  .macro-panel p{font-size:0.95rem;line-height:1.7;color:var(--text-main);margin-bottom:1rem}
 
-  .card{background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:16px;padding:1.5rem;transition:border-color .2s}
-  .card:hover{border-color:var(--glass-border)}
-  .card-title{font-size:0.9rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem}
+  .insights{display:grid;grid-template-columns:1fr;gap:1rem;margin-top:1rem}
+  @media(min-width:900px){.insights{grid-template-columns:1fr 1fr}}
+  .insight-card{background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1.2rem}
+  .insight-card .insight-title{margin:0 0 0.6rem;font-size:1rem;font-weight:600;color:var(--text-bright)}
+  .insight-card p{font-size:0.9rem;line-height:1.6;color:var(--text-dim);margin-bottom:0}
+  .insight-card a{color:var(--accent-cyan)}
 
-  .sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
-  @media(max-width:700px){.sim-grid{grid-template-columns:1fr}}
-  .plot-container{min-height:320px;background:var(--bg-deep);border-radius:12px;overflow:hidden}
+  .sim-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;
+    width:100%
+  }
+  .sim-grid>div{min-width:0}
+  @media(max-width:900px){.sim-grid{grid-template-columns:1fr}}
+  .plot-container{
+  min-height:320px;height:360px;background:var(--bg-deep);
+  border-radius:var(--radius-md);overflow:hidden;
+  display:flex;align-items:center;justify-content:center
+}
+.plot-container>.js-plotly-plot,
+.plot-container>div{
+  width:100% !important;height:100% !important
+}
+  .plot-caption{font-size:0.8rem;color:var(--text-dim);text-align:center;margin-top:0.5rem}
 
+  /* Controls */
   .control-row{display:flex;align-items:center;justify-content:space-between;gap:1rem}
   .control-label{font-size:0.9rem;color:var(--text-muted);min-width:130px}
   .control-value{font-family:var(--font-mono);font-size:0.85rem;color:var(--accent-cyan);min-width:80px;text-align:right}
-  input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:4px;background:var(--bg-elevated);border-radius:2px;outline:none}
-  input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent-cyan);cursor:pointer;box-shadow:0 0 12px rgba(0,240,255,0.4);border:2px solid var(--bg-deep)}
+  .slider-group{margin-bottom:1rem}
+  .slider-group label{display:block;font-size:0.85rem;color:var(--text-muted);margin-bottom:0.35rem}
+  .slider-group input[type=range]{width:100%}
+  .slider-desc{font-size:0.75rem;color:var(--text-dim);margin-top:0.25rem}
 
   .btn{padding:0.6rem 1.2rem;border-radius:8px;border:1px solid var(--glass-border);background:var(--bg-elevated);color:var(--text-muted);font-size:0.85rem;font-weight:500;cursor:pointer;transition:all .15s;font-family:inherit}
   .btn:hover{border-color:var(--accent-cyan);color:var(--text-main)}
   .btn.active{background:rgba(0,240,255,0.12);border-color:var(--accent-cyan);color:var(--accent-cyan)}
+  .btn:disabled{opacity:0.5;cursor:not-allowed}
   .btn-group{display:flex;gap:0.5rem;flex-wrap:wrap}
 
+  /* Theory */
   .theory-content{font-size:0.95rem;line-height:1.7;color:var(--text-main)}
   .theory-content p{margin-bottom:1rem}
   .theory-content strong{color:var(--accent-cyan);font-weight:500}
@@ -59,6 +83,7 @@
   .insight-callout{background:linear-gradient(90deg,rgba(0,240,255,0.08),transparent);border-left:3px solid var(--accent-cyan);padding:1rem 1.2rem;border-radius:0 8px 8px 0;margin:1rem 0;font-size:0.92rem;color:var(--text-main)}
   .insight-callout .label{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent-cyan);font-weight:600;margin-bottom:0.4rem}
 
+  /* Tables */
   table{width:100%;border-collapse:collapse;font-size:0.9rem;margin:1rem 0}
   th,td{padding:0.7rem 0.8rem;text-align:left;border-bottom:1px solid var(--glass-border)}
   th{color:var(--text-dim);font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.06em}
@@ -72,85 +97,69 @@
   @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
   .unit-tag{display:inline-block;background:rgba(0,240,255,0.08);color:var(--accent-cyan);font-family:var(--font-mono);font-size:0.7rem;padding:0.15rem 0.4rem;border-radius:4px;margin-left:0.3rem}
 
-  .scoreboard{display:grid;grid-template-columns:repeat(4,1fr);gap:0.8rem;margin:1rem 0}
-  .score-cell{background:var(--bg-elevated);border:1px solid var(--glass-border);border-radius:8px;padding:0.7rem 1rem;text-align:center}
-  .score-num{font-family:var(--font-mono);font-size:1.2rem;color:var(--accent-cyan);font-weight:600}
-  .score-label{font-size:0.7rem;color:var(--text-dim);margin-top:0.2rem}
+  .hero-desc{font-size:1.1rem;color:var(--text-muted);max-width:700px;line-height:1.6;margin-bottom:1.5rem}
+  /* Plot legends */
+  .plot-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:0.75rem;margin-top:0.6rem;font-size:0.78rem;color:var(--text-dim)}
+  .legend-item{display:inline-flex;align-items:center;gap:0.35rem}
+  .legend-swatch{display:inline-block;width:12px;height:12px;border-radius:2px}
 
+  /* Sidebar cards */
+  .sidebar-card{background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem}
+  .sidebar-card:last-child{margin-bottom:0}
+  .sidebar-card h4{margin:0 0 0.6rem;font-size:0.9rem;color:var(--text-bright)}
   .badge-list{display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem}
   .badge-item{background:var(--bg-deep);border:1px solid var(--glass-border);border-radius:8px;padding:0.4rem 0.7rem;font-size:0.78rem;color:var(--text-muted);display:flex;align-items:center;gap:0.3rem}
 
-  .tooltip-container { position: relative; display: inline-block; cursor: help; border-bottom: 1px dashed var(--text-dim); }
-  .tooltip-container::after { content: attr(data-tooltip); position: absolute; bottom: 130%; left: 0; transform: translateY(4px); background: var(--bg-elevated); color: var(--text-main); padding: 0.7rem 1rem; border-radius: 10px; border: 1px solid var(--glass-border); font-size: 0.78rem; line-height: 1.5; opacity: 0; visibility: hidden; transition: all 0.2s ease; z-index: 1000; box-shadow: 0 8px 24px rgba(0,0,0,0.4); pointer-events: none; max-width: 320px; white-space: normal; text-transform: none; letter-spacing: normal; font-weight: 400; }
-  .tooltip-container:hover::after { opacity: 1; visibility: visible; transform: translateY(0); }
-  .tooltip-container:hover { color: var(--accent-cyan); border-bottom-color: var(--accent-cyan); }
+  /* Module navigator tiles */
+  .nav-tile{display:block;padding:0.7rem 1rem;border-radius:8px;background:var(--bg-deep);border:1px solid var(--glass-border);color:var(--text-dim);font-size:0.9rem;transition:all .15s}
+  .nav-tile:hover{border-color:var(--accent-cyan);color:var(--text-main);text-decoration:none}
+  .nav-tile.current{background:rgba(187,134,252,0.1);border-color:rgba(187,134,252,0.3);color:var(--accent-cyan);font-weight:500}
 
+  /* Challenges / Puzzles: keep existing panel styles */
   .challenge-panel, .puzzle-panel {
     background: var(--bg-panel);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
     padding: var(--space-lg);
     margin-bottom: var(--space-lg);
-    transition: border-color 0.2s, box-shadow 0.2s;
   }
   .challenge-panel:hover, .puzzle-panel:hover {
     border-color: rgba(0,240,255,0.12);
     box-shadow: var(--shadow-md);
   }
   .challenge-header, .puzzle-header {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    margin-bottom: var(--space-md);
+    display: flex; align-items: center; gap: 0.6rem; margin-bottom: var(--space-md);
   }
   .challenge-icon, .puzzle-icon {
-    width: 32px; height: 32px;
-    display: inline-flex; align-items: center; justify-content: center;
-    border-radius: var(--radius-sm);
-    font-size: 1rem;
+    width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: var(--radius-sm); font-size: 1rem;
   }
   .challenge-title, .puzzle-title {
-    flex: 1;
-    font-family: var(--font-display);
-    font-size: 1.1rem; font-weight: 600;
-    color: var(--text-main);
+    flex: 1; font-family: var(--font-display); font-size: 1.1rem; font-weight: 600; color: var(--text-main);
   }
   .challenge-difficulty {
     font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
-    padding: 0.25rem 0.6rem; border-radius: var(--radius-pill);
-    border: 1px solid;
+    padding: 0.25rem 0.6rem; border-radius: var(--radius-pill); border: 1px solid;
   }
   .challenge-difficulty.easy   { color: var(--accent-green); border-color: rgba(74,222,128,0.3); background: rgba(74,222,128,0.08); }
   .challenge-difficulty.medium { color: var(--accent-yellow); border-color: rgba(250,204,21,0.3); background: rgba(250,204,21,0.08); }
   .challenge-difficulty.hard   { color: var(--accent-red); border-color: rgba(255,85,85,0.3); background: rgba(255,85,85,0.08); }
   .challenge-difficulty.master { color: var(--accent-pink); border-color: rgba(255,78,205,0.3); background: rgba(255,78,205,0.08); }
-
-  .challenge-desc, .puzzle-desc {
-    font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; margin-bottom: var(--space-md);
-  }
+  .challenge-desc, .puzzle-desc { font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; margin-bottom: var(--space-md); }
   .challenge-reward, .puzzle-reward {
-    display: inline-flex; align-items: center; gap: 0.4rem;
-    font-size: 0.8rem; font-weight: 500; color: var(--accent-yellow);
-    background: rgba(250,204,21,0.06);
-    border: 1px solid rgba(250,204,21,0.15);
-    padding: 0.35rem 0.8rem; border-radius: var(--radius-pill);
-    margin-bottom: var(--space-md);
+    display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 500; color: var(--accent-yellow);
+    background: rgba(250,204,21,0.06); border: 1px solid rgba(250,204,21,0.15);
+    padding: 0.35rem 0.8rem; border-radius: var(--radius-pill); margin-bottom: var(--space-md);
   }
-  .challenge-controls, .puzzle-controls { margin-bottom: var(--space-md); }
   .challenge-plot, .puzzle-plot {
-    background: var(--bg-deep);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-md);
-    min-height: 260px;
-    margin-bottom: var(--space-md);
-    overflow: hidden;
+    background: var(--bg-deep); border: 1px solid var(--glass-border); border-radius: var(--radius-md);
+    min-height: 260px; margin-bottom: var(--space-md); overflow: hidden;
   }
   .challenge-plot:empty, .puzzle-plot:empty { display: none; }
   .challenge-feedback, .puzzle-feedback {
     font-size: 0.9rem; line-height: 1.6; padding: var(--space-md) var(--space-lg);
     border-radius: var(--radius-sm); border-left: 3px solid transparent;
-    margin-top: var(--space-sm);
-    display: none;
+    margin-top: var(--space-sm); display: none;
   }
   .challenge-feedback.success, .puzzle-feedback.success { background: rgba(74,222,128,0.08); border-left-color: var(--accent-green); color: var(--accent-green); display: block; }
   .challenge-feedback.error, .puzzle-feedback.error   { background: rgba(255,85,85,0.08); border-left-color: var(--accent-red); color: var(--accent-red); display: block; }
@@ -169,6 +178,16 @@
   .section-header p { font-size: 0.9rem; color: var(--text-muted); max-width: 600px; line-height: 1.6; }
 
   @media(max-width:700px){.scoreboard{grid-template-columns:repeat(2,1fr)}}
+
+  /* Plotly playground fix */
+  #section-play .game-main{min-width:0;width:100%}
+  #section-play .plot-container .svg-container{height:100%!important;width:100%!important}
+  #section-play .plot-container .main-svg{height:100%!important;width:100%!important}
+
+  
+  #section-play .sim-grid .plot-container{
+    width:100%;height:480px;max-width:480px;margin:0 auto
+  }
 </style>
 </head>
 <body>
@@ -188,174 +207,274 @@
   </div>
 </nav>
 
-<!-- HERO -->
-<div class="hero game-hero">
-  <div class="topic-badge">Module 03 · Level N · Spin-1/2 &amp; Quantum Measurement</div>
-  <h1><span class="gradient-cyan">The Quantum Bit</span></h1>
-  <p class="hero-subtitle">
-    Spin-1/2 is the simplest quantum system — two states, superposition, and the mystery of measurement. Every qubit, every MRI scan, every atomic clock relies on manipulating this tiny magnetic moment. Master the Bloch sphere, predict Stern-Gerlach outcomes, and unlock quantum reality.
-  </p>
-  <div class="live-indicator">Live simulation running</div>
-</div>
+<div class="game-container">
 
-<!-- GAME MODE BAR -->
-<div class="container game-container" style="padding-bottom:0.5rem;">
-  <div class="game-mode-bar" style="width:100%;">
-    <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
+  <!-- HERO -->
+  <div class="game-hero" style="padding-bottom:0;">
+    <div class="level-badge">Module 03 · Level N · Spin-1/2 &amp; Quantum Measurement</div>
+    <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">The Quantum Bit</span></h1>
+    <p class="hero-desc">
+      Spin-1/2 is the simplest quantum system — two states, superposition, and the mystery of measurement. Every qubit, every MRI scan, every atomic clock relies on manipulating this tiny magnetic moment. Master the Bloch sphere, predict Stern-Gerlach outcomes, and unlock quantum reality.
+    </p>
+    <div class="live-indicator">Live simulation running</div>
+  </div>
+
+  <!-- GAME MODE BAR -->
+  <div class="game-mode-bar">
+    <button class="game-mode-btn active" id="mode-story" onclick="setGameMode('story')">📖 Story</button>
+    <button class="game-mode-btn" id="mode-theory" onclick="setGameMode('theory')">🎓 Theory</button>
+    <button class="game-mode-btn" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
     <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">🎯 Challenges</button>
     <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">🧩 Puzzles</button>
   </div>
-</div>
 
-<div class="container game-container">
-  <div class="left-col">
-
-    <!-- ===== PLAYGROUND ===== -->
-    <div id="section-play" class="mode-section">
-      <div class="card">
-        <div class="card-title">🔬 Playground — Build a state on the Bloch sphere</div>
-        <div class="sim-grid">
-          <div>
-            <div class="plot-container" id="plot-bloch"></div>
-            <p style="font-size:0.8rem;color:var(--text-dim);text-align:center;margin-top:0.5rem;">Bloch sphere — |ψ⟩ = cos(θ/2)|↑⟩ + e^{iφ}sin(θ/2)|↓⟩</p>
-          </div>
-          <div>
-            <div class="plot-container" id="plot-components"></div>
-            <p style="font-size:0.8rem;color:var(--text-dim);text-align:center;margin-top:0.5rem;">Spin expectation values ⟨Sₓ⟩,⟨Sᵧ⟩,⟨Sᵤ⟩<span class="unit-tag">ℏ/2</span></p>
-          </div>
-        </div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-          <div class="card" style="background:var(--bg-deep);">
-            <div class="card-title">Controls</div>
-            <div style="margin-bottom:1rem;">
-              <div class="control-row">
-                <span class="control-label">Polar angle θ</span>
-                <span class="control-value" id="val-theta">60°</span>
-              </div>
-              <input type="range" id="slider-theta" min="0" max="180" value="60" step="1">
-              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">θ = 0° → |↑z⟩, θ = 180° → |↓z⟩</p>
+  <!-- ═══════════════ STORY ═══════════════ -->
+  <div class="mode-section" id="section-story" style="display:block">
+    <div class="game-layout">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>📖 The Story — Spin, the Quantum Bit</h3>
+          <p>
+            Imagine flipping a coin. Classically it can land heads or tails — a simple two-state system.
+            But a quantum coin is different: before you look at it, it can be in a superposition of both.
+            Spin-1/2 is the simplest such system nature offers. It has only two outcomes when measured
+            along any axis, yet between measurements it can point in any direction on an abstract sphere.
+          </p>
+          <div class="insights">
+            <div class="insight-card">
+              <div class="insight-title">🧪 Why It Matters</div>
+              <p>
+                Every qubit is a spin-1/2. MRI scanners read nuclear spins. Atomic clocks tick to the flip
+                of electron spin. The Stern-Gerlach experiment showed atoms splitting into exactly two beams,
+                giving the first direct glimpse of quantization and launching quantum mechanics as we know it.
+              </p>
             </div>
-            <div style="margin-bottom:1rem;">
-              <div class="control-row">
-                <span class="control-label">Azimuthal φ</span>
-                <span class="control-value" id="val-phi">45°</span>
-              </div>
-              <input type="range" id="slider-phi" min="0" max="360" value="45" step="1">
+            <div class="insight-card">
+              <div class="insight-title">🤯 What Surprised Physicists</div>
+              <p>
+                Classically, a spinning charged body can point in any direction. Quantum silver atoms in a
+                magnetic field did not fan out smoothly — they split into two sharp spots. There is no
+                classical rotation that produces only two outcomes; spin is intrinsic, not orbital motion.
+              </p>
             </div>
-            <div class="btn-group">
-              <button class="btn" id="btn-animate">Animate Larmor precession</button>
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">🎮 How the Playground Lets You Feel It</div>
+              <p>
+                The Bloch sphere is the quantum coin in 3D. Drag θ to move from |↑⟩ at the north pole to
+                |↓⟩ at the south pole. Drag φ to rotate the quantum phase. Watch ⟨Sₓ⟩, ⟨Sᵧ⟩, ⟨S&#x209b;⟩ update
+                live — the arrow is not a real spinning object; it is a map of measurement probabilities.
+                Turn on animation to see Larmor precession: a spin in a magnetic field traces circles,
+                the same motion that drives electron spin resonance (ESR) and MRI pulses.
+              </p>
             </div>
           </div>
-
-          <div class="card" style="background:var(--bg-deep);">
-            <div class="card-title">Live Parameters</div>
-            <table>
-              <tr><th>Quantity</th><th>Value</th></tr>
-              <tr><td>Polar θ</td><td class="highlight-num" id="live-theta">—</td></tr>
-              <tr><td>Azimuthal φ</td><td class="highlight-num" id="live-phi">—</td></tr>
-              <tr><td>⟨Sx⟩</td><td class="highlight-pink" id="live-sx">—</td></tr>
-              <tr><td>⟨Sy⟩</td><td class="highlight-pink" id="live-sy">—</td></tr>
-              <tr><td>⟨Sz⟩</td><td class="highlight-pink" id="live-sz">—</td></tr>
-              <tr><td>Larmor f (g=2, B=1T)</td><td id="live-omega">—</td></tr>
-            </table>
-          </div>
-        </div>
+        </section>
       </div>
 
-      <!-- Theory -->
-      <div class="card">
-        <div class="card-title">📖 Theory — Why is spin quantized?</div>
-        <div class="theory-content">
-          <p>Unlike orbital angular momentum which comes from spatial motion, <strong>spin</strong> is an intrinsic property of the electron — it has no classical analogue. The Stern-Gerlach experiment (1922) proved it is quantized: a beam of silver atoms splits into exactly two paths, never three, never a continuum.</p>
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Module Navigator</h4>
+          <div id="module-nav-story"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-story" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges-story">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles-story">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp-story">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges-story">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ═══════════════ THEORY ═══════════════ -->
+  <div class="mode-section" id="section-theory" style="display:none">
+    <div class="game-layout">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>🎓 Theory — The Mathematics of Spin-1/2</h3>
+          <p>
+            Unlike orbital angular momentum, spin has no classical analogue: it is an intrinsic degree of
+            freedom of the electron. The Stern-Gerlach experiment proved it is quantized into two states.
+            All spin observables are built from the Pauli matrices, and any pure state can be represented
+            as a point on the Bloch sphere.
+          </p>
           <div class="equation-box">
             <p><strong>Pauli matrices:</strong></p>
             $$\sigma_x = \begin{pmatrix} 0 & 1 \\ 1 & 0 \end{pmatrix}, \quad
               \sigma_y = \begin{pmatrix} 0 & -i \\ i & 0 \end{pmatrix}, \quad
               \sigma_z = \begin{pmatrix} 1 & 0 \\ 0 & -1 \end{pmatrix}$$
-            <p style="margin-top:1rem;"><strong>Spin operator:</strong> $\vec{S} = \frac{\hbar}{2}\vec{\sigma}$</p>
-            <p style="margin-top:1rem;"><strong>Any pure state:</strong></p>
+            <p style="margin-top:1rem"><strong>Spin operator:</strong> \(\vec{S} = \frac{\hbar}{2}\vec{\sigma}\)</p>
+            <p style="margin-top:1rem"><strong>Any pure state:</strong></p>
             $$|\psi\rangle = \cos\frac{\theta}{2}|\uparrow_z\rangle + e^{i\phi}\sin\frac{\theta}{2}|\downarrow_z\rangle$$
-            <p style="margin-top:1rem;"><strong>Expectation value:</strong> $\langle\vec{S}\rangle = \frac{\hbar}{2}(\sin\theta\cos\phi, \sin\theta\sin\phi, \cos\theta)$ — this is the arrow on the Bloch sphere.</p>
+            <p style="margin-top:1rem"><strong>Expectation value:</strong> \(\langle\vec{S}\rangle = \frac{\hbar}{2}(\sin\theta\cos\phi, \sin\theta\sin\phi, \cos\theta)\) — this is the arrow on the Bloch sphere.</p>
           </div>
           <div class="insight-callout">
             <div class="label">Measurement Postulate</div>
-            When you measure Sz, the state <strong>collapses</strong> to either |↑z⟩ or |↓z⟩ with probabilities |cos(θ/2)|² and |sin(θ/2)|². After the measurement, the state <em>is</em> the result — not a mixture. This is why you cannot measure Sx and Sz simultaneously: measuring one destroys information about the other.
+            When you measure S<sub>z</sub>, the state <strong>collapses</strong> to either |↑<sub>z</sub>⟩ or |↓<sub>z</sub>⟩ with probabilities |cos(θ/2)|² and |sin(θ/2)|². After the measurement, the state <em>is</em> the result — not a mixture. This is why you cannot measure S<sub>x</sub> and S<sub>z</sub> simultaneously: measuring one destroys information about the other.
           </div>
-          <p><strong>The commutation relation</strong> $[S_x, S_y] = i\hbar S_z$ (and cyclic permutations) is the mathematical root of uncertainty. It means the spin operators do not share eigenstates — there is no state that is simultaneously an eigenstate of Sx and Sz.</p>
+          <p><strong>The commutation relation</strong> \([S_x, S_y] = i\hbar S_z\) (and cyclic permutations) is the mathematical root of uncertainty. It means the spin operators do not share eigenstates — there is no state that is simultaneously an eigenstate of S<sub>x</sub> and S<sub>z</sub>.</p>
+        </section>
+      </div>
+
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Module Navigator</h4>
+          <div id="module-nav-theory"></div>
         </div>
-      </div>
-    </div>
-
-    <!-- ===== CHALLENGES ===== -->
-    <div id="section-challenge" class="mode-section" style="display:none">
-      <div class="section-header"><h2>🎯 Challenges</h2><p>Timed physics missions. Beat the clock and earn XP.</p></div>
-      <div id="challenge-1-container"></div>
-      <div id="challenge-2-container"></div>
-      <div id="challenge-3-container"></div>
-    </div>
-
-    <!-- ===== PUZZLES ===== -->
-    <div id="section-puzzle" class="mode-section" style="display:none">
-      <div class="section-header"><h2>🧩 Puzzles</h2><p>Step-by-step quantum reasoning. Build circuits and solve algebra.</p></div>
-      <div id="puzzle-1-container"></div>
-      <div id="puzzle-2-container"></div>
-      <div id="puzzle-3-container"></div>
-    </div>
-
-  </div>
-
-  <!-- RIGHT SIDEBAR -->
-  <div class="right-col">
-    <div class="card" style="position:sticky;top:1.5rem;">
-      <div class="card-title">📊 Scoreboard</div>
-      <div class="scoreboard">
-        <div class="score-cell"><div class="score-num" id="sb-xp">0</div><div class="score-label">XP</div></div>
-        <div class="score-cell"><div class="score-num" id="sb-badges">0</div><div class="score-label">Badges</div></div>
-        <div class="score-cell"><div class="score-num" id="sb-progress">0%</div><div class="score-label">Progress</div></div>
-        <div class="score-cell"><div class="score-num" id="sb-combo">0</div><div class="score-label">Combo</div></div>
-      </div>
-
-      <div class="card-title">🏅 Badges</div>
-      <div class="badge-list" id="badge-list">
-        <span style="font-size:0.8rem;color:var(--text-dim);">Complete challenges and puzzles to earn badges.</span>
-      </div>
-
-      <div class="section-divider" style="margin:1.5rem 0;"></div>
-
-      <div class="card-title">🗺 Module Navigator</div>
-      <div style="display:flex;flex-direction:column;gap:0.4rem;">
-        <a href="../01_qho/index.html"><div style="padding:0.7rem 1rem;border-radius:8px;background:var(--bg-deep);border:1px solid var(--glass-border);color:var(--text-dim);font-size:0.9rem;">01. Quantum Harmonic Oscillator</div></a>
-        <a href="../02_hydrogen/index.html"><div style="padding:0.7rem 1rem;border-radius:8px;background:var(--bg-deep);border:1px solid var(--glass-border);color:var(--text-dim);font-size:0.9rem;">02. Hydrogen Atom</div></a>
-        <div style="padding:0.7rem 1rem;border-radius:8px;background:rgba(187,134,252,0.1);border:1px solid rgba(187,134,252,0.3);color:var(--accent-cyan);font-weight:500;font-size:0.9rem;">03. Spin-1/2 (here)</div>
-        <a href="../04_kronig_penney/index.html"><div style="padding:0.7rem 1rem;border-radius:8px;background:var(--bg-deep);border:1px solid var(--glass-border);color:var(--text-dim);font-size:0.9rem;">04. Kronig-Penney Model</div></a>
-        <a href="../05_energy_bands/index.html"><div style="padding:0.7rem 1rem;border-radius:8px;background:var(--bg-deep);border:1px solid var(--glass-border);color:var(--text-dim);font-size:0.9rem;">05. Energy Bands &amp; DOS</div></a>
-        <a href="../06_fermi_surface/index.html"><div style="padding:0.7rem 1rem;border-radius:8px;background:var(--bg-deep);border:1px solid var(--glass-border);color:var(--text-dim);font-size:0.9rem;">06. Fermi Surface</div></a>
-        <a href="../07_conductivity/index.html"><div style="padding:0.7rem 1rem;border-radius:8px;background:var(--bg-deep);border:1px solid var(--glass-border);color:var(--text-dim);font-size:0.9rem;">07. Electrical Conductivity</div></a>
-      </div>
-
-      <div class="section-divider" style="margin:1.5rem 0;"></div>
-
-      <div class="card-title">📚 Study Flow</div>
-      <div style="font-size:0.85rem;color:var(--text-muted);line-height:1.6;">
-        <p style="margin-bottom:0.8rem;"><strong style="color:var(--accent-cyan);">1.</strong> Drag θ to move the state from North pole (|↑⟩) to South pole (|↓⟩).</p>
-        <p style="margin-bottom:0.8rem;"><strong style="color:var(--accent-purple);">2.</strong> Drag φ to rotate around the z-axis. Watch ⟨Sx⟩ and ⟨Sy⟩ oscillate.</p>
-        <p style="margin-bottom:0.8rem;"><strong style="color:var(--accent-pink);">3.</strong> Click "Animate" to see Larmor precession — the arrow circles around B.</p>
-        <p><strong style="color:var(--accent-yellow);">4.</strong> Read the theory: the commutation relation [Sx, Sy] = iℏSz forbids simultaneous knowledge.</p>
-      </div>
-
-      <div class="section-divider" style="margin:1.5rem 0;"></div>
-
-      <div class="card-title">⚙ Constants</div>
-      <table style="font-size:0.78rem;">
-        <tr><td>μ_B</td><td style="font-family:var(--font-mono);">5.788×10⁻⁵ eV/T</td></tr>
-        <tr><td>g_e</td><td style="font-family:var(--font-mono);">2.002319</td></tr>
-        <tr><td>ℏ/2</td><td style="font-family:var(--font-mono);">0.5 (natural units)</td></tr>
-        <tr><td>ESR (g=2)</td><td style="font-family:var(--font-mono);">28.024 GHz/T</td></tr>
-        <tr><td>NMR ¹H</td><td style="font-family:var(--font-mono);">42.577 MHz/T</td></tr>
-      </table>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-theory" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📚 Study Flow</h4>
+          <div style="font-size:0.85rem;color:var(--text-muted);line-height:1.6;">
+            <p style="margin-bottom:0.8rem;"><strong style="color:var(--accent-cyan);">1.</strong> Drag θ to move the state from North pole (|↑⟩) to South pole (|↓⟩).</p>
+            <p style="margin-bottom:0.8rem;"><strong style="color:var(--accent-purple);">2.</strong> Drag φ to rotate around the z-axis. Watch ⟨Sx⟩ and ⟨Sy⟩ oscillate.</p>
+            <p style="margin-bottom:0.8rem;"><strong style="color:var(--accent-pink);">3.</strong> Click "Animate" to see Larmor precession — the arrow circles around B.</p>
+            <p><strong style="color:var(--accent-yellow);">4.</strong> Read the theory: the commutation relation [Sx, Sy] = iℏSz forbids simultaneous knowledge.</p>
+          </div>
+        </div>
+      </aside>
     </div>
   </div>
+
+  <!-- ═══════════════ PLAYGROUND ═══════════════ -->
+  <div class="mode-section" id="section-play" style="display:none">
+    <div class="game-layout">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>🔬 Playground — Build a state on the Bloch sphere</h3>
+          <p class="slider-desc" style="font-size:0.9rem;line-height:1.6;">
+            Spin is the simplest quantum system: two states, continuous superpositions, and measurement that collapses the state.
+            Drag θ and φ to move the arrow on the Bloch sphere, then animate Larmor precession around the z-axis.
+          </p>
+
+          <div class="sim-grid">
+            <div>
+              <div class="plot-container" id="plot-bloch"></div>
+              <p class="plot-caption">Bloch sphere — |ψ⟩ = cos(θ/2)|↑⟩ + e^{iφ}sin(θ/2)|↓⟩</p>
+              <div class="plot-legend">
+                <span class="legend-item"><span class="legend-swatch" style="background:#ff3864;"></span> state arrow |ψ⟩</span>
+                <span class="legend-item"><span class="legend-swatch" style="background:#ff4ecd;"></span> Sx axis</span>
+                <span class="legend-item"><span class="legend-swatch" style="background:#4ade80;"></span> Sy axis</span>
+                <span class="legend-item"><span class="legend-swatch" style="background:#c084fc;"></span> Sz axis / |↑⟩,|↓⟩</span>
+              </div>
+            </div>
+            <div>
+              <div class="plot-container" id="plot-components"></div>
+              <p class="plot-caption">Spin expectation values ⟨Sₓ⟩,⟨Sᵧ⟩,⟨S&#x209b;⟩<span class="unit-tag">ℏ/2</span></p>
+              <div class="plot-legend">
+                <span class="legend-item"><span class="legend-swatch" style="background:#ff4ecd;"></span> ⟨Sₓ⟩</span>
+                <span class="legend-item"><span class="legend-swatch" style="background:#4ade80;"></span> ⟨Sᵧ⟩</span>
+                <span class="legend-item"><span class="legend-swatch" style="background:#c084fc;"></span> ⟨Sz⟩</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="macro-panel">
+          <h3>💡 Why Spin is Quantized — Quick Reminder</h3>
+          <div class="theory-content">
+            <p>Spin is an intrinsic degree of freedom with no classical analogue. The Stern-Gerlach experiment showed that a beam of silver atoms splits into exactly two paths. See the <strong>Theory</strong> tab for the full Pauli-matrix derivation and the measurement postulate.</p>
+          </div>
+        </section>
+      </div>
+
+      <aside class="game-sidebar">
+
+        <div class="sidebar-card">
+          <h4>⚙ Controls</h4>
+          <div class="slider-group">
+            <label>Polar angle θ <span class="control-value" id="val-theta">60°</span></label>
+            <input type="range" id="slider-theta" min="0" max="180" value="60" step="1">
+            <p class="slider-desc">θ = 0° → |↑z⟩, θ = 180° → |↓z⟩</p>
+          </div>
+          <div class="slider-group">
+            <label>Azimuthal φ <span class="control-value" id="val-phi">45°</span></label>
+            <input type="range" id="slider-phi" min="0" max="360" value="45" step="1">
+          </div>
+          <div class="slider-group">
+            <label>Animation speed <span class="control-value" id="val-speed">1.0×</span></label>
+            <input type="range" id="slider-speed" min="0.1" max="5.0" value="1.0" step="0.1">
+            <p class="slider-desc">Adjust Larmor precession rate</p>
+          </div>
+          <div class="btn-group" id="anim-ctrls">
+            <button class="btn" id="btn-play">▶ Play</button>
+            <button class="btn" id="btn-pause" disabled>⏸ Pause</button>
+            <button class="btn" id="btn-reset">↺ Reset</button>
+          </div>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>📊 Live Parameters</h4>
+          <table style="font-size:0.85rem;">
+            <tr><th>Quantity</th><th>Value</th></tr>
+            <tr><td>Polar θ</td><td class="highlight-num" id="live-theta">—</td></tr>
+            <tr><td>Azimuthal φ</td><td class="highlight-num" id="live-phi">—</td></tr>
+            <tr><td>⟨Sx⟩</td><td class="highlight-pink" id="live-sx">—</td></tr>
+            <tr><td>⟨Sy⟩</td><td class="highlight-pink" id="live-sy">—</td></tr>
+            <tr><td>⟨Sz⟩</td><td class="highlight-pink" id="live-sz">—</td></tr>
+            <tr><td>Larmor f (g=2, B=1T)</td><td id="live-omega">—</td></tr>
+          </table>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>🗺 Module Navigator</h4>
+          <div id="module-nav"></div>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>⚙ Constants</h4>
+          <table style="font-size:0.78rem;">
+            <tr><td>μ_B</td><td style="font-family:var(--font-mono);">5.788×10⁻⁵ eV/T</td></tr>
+            <tr><td>g_e</td><td style="font-family:var(--font-mono);">2.002319</td></tr>
+            <tr><td>ℏ/2</td><td style="font-family:var(--font-mono);">0.5 (natural units)</td></tr>
+            <tr><td>ESR (g=2)</td><td style="font-family:var(--font-mono);">28.024 GHz/T</td></tr>
+            <tr><td>NMR ¹H</td><td style="font-family:var(--font-mono);">42.577 MHz/T</td></tr>
+          </table>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ═══════════════ CHALLENGES ═══════════════ -->
+  <div class="mode-section" id="section-challenge" style="display:none">
+    <div class="section-header"><h2>🎯 Challenges</h2><p>Timed physics missions. Beat the clock and earn XP.</p></div>
+    <div id="challenge-1-container"></div>
+    <div id="challenge-2-container"></div>
+    <div id="challenge-3-container"></div>
+  </div>
+
+  <!-- ═══════════════ PUZZLES ═══════════════ -->
+  <div class="mode-section" id="section-puzzle" style="display:none">
+    <div class="section-header"><h2>🧩 Puzzles</h2><p>Step-by-step quantum reasoning. Build circuits and solve algebra.</p></div>
+    <div id="puzzle-1-container"></div>
+    <div id="puzzle-2-container"></div>
+    <div id="puzzle-3-container"></div>
+  </div>
+
 </div>
 
 <!-- SCRIPTS -->
@@ -367,6 +486,85 @@
 
 <script>
 (function(){
+  var badgeMap = {
+    'spin_explorer': '🔬 Bloch Navigator',
+    'sg_predictor': '🧲 Stern-Gerlach Predictor',
+    'esr_master': '⚡ Resonance Hunter',
+    'bell_solver': '🔮 Bell Solver',
+    'chain_builder': '🧲 Chain Master',
+    'pauli_master': '📐 Pauli Architect',
+    'gate_master': '💻 Quantum Architect'
+  };
+
+  function getCounts() {
+    var prog = (__GameState && __GameState.getProgress && __GameState.getProgress('spin')) || 0;
+    var xp = (__GameState && __GameState.xp && __GameState.xp()) || 0;
+    var achs = (__GameState && __GameState.get && __GameState.get('achievements')) || [];
+    var combo = (typeof __Combo !== 'undefined' && __Combo && __Combo.count) || 0;
+    return { xp: xp, badges: achs.length, progress: prog, combo: combo, achievements: achs };
+  }
+
+  function setText(id, text) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = text;
+  }
+
+  function renderBadgeList(containerId, achievements) {
+    var list = document.getElementById(containerId);
+    if (!list) return;
+    if (!achievements || achievements.length === 0) {
+      list.innerHTML = '<span style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</span>';
+      return;
+    }
+    list.innerHTML = achievements.map(function(id) {
+      return '<span class="badge-item">' + (badgeMap[id] || id) + '</span>';
+    }).join('');
+  }
+
+  function updateScoreboard() {
+    var c = getCounts();
+    setText('sb-xp', c.xp);
+    setText('sb-badges', c.badges);
+    setText('sb-progress', c.progress + '%');
+    setText('sb-combo', c.combo);
+
+    // Update any scoreboard IDs found in the new sidebars.
+    setText('stat-xp', c.xp);
+    setText('stat-badges', c.badges);
+    setText('stat-progress', c.progress + '%');
+    var chall = (__GameState && __GameState.get && __GameState.get('challenges_completed')) || 0;
+    var puzz = (__GameState && __GameState.get && __GameState.get('puzzles_completed')) || 0;
+    setText('stat-challenges', chall);
+    setText('stat-puzzles', puzz);
+    setText('stat-challenges-story', chall);
+    setText('stat-puzzles-story', puzz);
+    setText('stat-xp-story', c.xp);
+    setText('stat-badges-story', c.badges);
+
+    // Story/Theory/Play badge lists
+    renderBadgeList('badge-list-story', c.achievements);
+    renderBadgeList('badge-list-theory', c.achievements);
+    renderBadgeList('badge-list', c.achievements);
+
+    // Module navigator can be filled by shared_ui.js; provide fallback links if empty.
+    ['module-nav-story','module-nav-theory','module-nav'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el && !el.hasChildNodes()) {
+        el.innerHTML = '<a href="../02_waves/index.html" style="display:block;margin:0.25rem 0;font-size:0.8rem;">← 02 Wave Mechanics</a>' +
+                       '<a href="../04_atoms/index.html" style="display:block;margin:0.25rem 0;font-size:0.8rem;">04 Atoms →</a>';
+      }
+    });
+  }
+
+  function wireAddXP() {
+    if (!window.__GameState || !__GameState.addXP) return;
+    var orig = __GameState.addXP;
+    __GameState.addXP = function(n, reason) {
+      orig.call(__GameState, n, reason);
+      updateScoreboard();
+    };
+  }
+
   // Mode switching override to initialize games on first entry
   var origSetMode = window.setGameMode;
   window.setGameMode = function(mode) {
@@ -379,42 +577,10 @@
     if (mode === 'challenge' && typeof initChallenges === 'function') initChallenges();
     if (mode === 'puzzle' && typeof initPuzzles === 'function') initPuzzles();
     if (mode === 'play' && typeof initPlayground === 'function') initPlayground();
-  };
-
-  function updateScoreboard() {
-    var xp = __GameState.xp();
-    var badges = (__GameState.get('achievements') || []).length;
-    var prog = __GameState.getProgress('spin');
-    var elXp = document.getElementById('sb-xp'); if (elXp) elXp.textContent = xp;
-    var elBad = document.getElementById('sb-badges'); if (elBad) elBad.textContent = badges;
-    var elProg = document.getElementById('sb-progress'); if (elProg) elProg.textContent = prog + '%';
-    var elCombo = document.getElementById('sb-combo'); if (elCombo) elCombo.textContent = (__Combo.count || 0);
-
-    var list = document.getElementById('badge-list');
-    if (list && badges > 0) {
-      var achs = __GameState.get('achievements') || [];
-      var badgeMap = {
-        'spin_explorer': '🔬 Bloch Navigator',
-        'sg_predictor': '🔬 Quantum Crusher',
-        'esr_master': '⚡ Resonance Hunter',
-        'bell_solver': '🔮 Bell Solver',
-        'chain_builder': '🧲 Chain Master',
-        'pauli_master': '📐 Pauli Architect',
-        'gate_master': '💻 Quantum Architect'
-      };
-      list.innerHTML = achs.map(function(id) {
-        return '<span class="badge-item">' + (badgeMap[id] || id) + '</span>';
-      }).join('');
-    }
-  }
-
-  // Scoreboard updater hook
-  var origAddXP = __GameState.addXP;
-  __GameState.addXP = function(n, reason) {
-    origAddXP.call(__GameState, n, reason);
     updateScoreboard();
   };
 
+  wireAddXP();
   setTimeout(updateScoreboard, 500);
   window.addEventListener('load', updateScoreboard);
 })();
@@ -422,4 +588,7 @@
 
 <script src="../../shared_effects.js"></script>
 </body>
-</html>
+</html>  .score-cell{display:inline-block;min-width:60px;text-align:center;background:var(--bg-deep);border:1px solid var(--glass-border);border-radius:8px;padding:0.4rem;margin:0.2rem}
+  .score-num{font-size:1rem;font-weight:700;color:var(--accent-cyan)}
+  .score-label{font-size:0.65rem;color:var(--text-muted);text-transform:uppercase}
+

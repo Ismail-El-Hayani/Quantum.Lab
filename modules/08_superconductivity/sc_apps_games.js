@@ -25,16 +25,18 @@ var SC_MODULE_NAV = [
 ];
 
 function buildModuleNavSC() {
-  var el = document.getElementById('module-nav');
-  if (!el) return;
-  el.innerHTML = '';
-  SC_MODULE_NAV.forEach(function(m) {
-    var a = document.createElement('a');
-    a.href = m.path;
-    a.textContent = m.name;
-    a.className = 'nav-link' + (m.current ? ' current' : '');
-    if (m.current) a.style.fontWeight = '700';
-    el.appendChild(a);
+  ['module-nav', 'module-nav-story', 'module-nav-theory'].forEach(function(navId) {
+    var el = document.getElementById(navId);
+    if (!el) return;
+    el.innerHTML = '';
+    SC_MODULE_NAV.forEach(function(m) {
+      var a = document.createElement('a');
+      a.href = m.path;
+      a.textContent = m.name;
+      a.className = 'nav-link' + (m.current ? ' current' : '');
+      if (m.current) a.style.fontWeight = '700';
+      el.appendChild(a);
+    });
   });
 }
 
@@ -49,41 +51,50 @@ var SC_BADGES = [
 ];
 
 function renderBadgesSC() {
-  var el = document.getElementById('badge-list');
-  if (!el || !window._GameState) return;
-  var s = _GameState.earnedBadges;
-  var earned = SC_BADGES.filter(function(b) { return s.has(b.id); });
-  var pending = SC_BADGES.filter(function(b) { return !s.has(b.id); });
-  var html = '';
-  if (earned.length) {
-    html += '<div style="margin-bottom:0.5rem;color:var(--accent-green);">✨ Earned:</div>';
-    earned.forEach(function(b) {
-      html += '<span style="display:inline-block;margin:0.25rem;padding:0.35rem 0.7rem;border-radius:6px;background:rgba(0,240,255,0.08);border:1px solid var(--accent-cyan);font-size:0.8rem;">' + b.icon + ' ' + b.name + '</span>';
-    });
-  }
-  if (pending.length) {
-    html += '<div style="margin:0.5rem 0;color:var(--text-dim);">🔒 Pending:</div>';
-    pending.forEach(function(b) {
-      html += '<span style="display:inline-block;margin:0.25rem;padding:0.35rem 0.7rem;border-radius:6px;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-dim);font-size:0.8rem;">' + b.icon + ' ' + b.name + '</span>';
-    });
-  }
-  el.innerHTML = html || 'Complete challenges to earn badges!';
+  ['badge-list', 'badge-list-story', 'badge-list-theory'].forEach(function(badgeId) {
+    var el = document.getElementById(badgeId);
+    if (!el || !window._GameState) return;
+    var s = _GameState.earnedBadges;
+    var earned = SC_BADGES.filter(function(b) { return s.has(b.id); });
+    var pending = SC_BADGES.filter(function(b) { return !s.has(b.id); });
+    var html = '';
+    if (earned.length) {
+      html += '<div style="margin-bottom:0.5rem;color:var(--accent-green);">✨ Earned:</div>';
+      earned.forEach(function(b) {
+        html += '<span style="display:inline-block;margin:0.25rem;padding:0.35rem 0.7rem;border-radius:6px;background:rgba(0,240,255,0.08);border:1px solid var(--accent-cyan);font-size:0.8rem;">' + b.icon + ' ' + b.name + '</span>';
+      });
+    }
+    if (pending.length) {
+      html += '<div style="margin:0.5rem 0;color:var(--text-dim);">🔒 Pending:</div>';
+      pending.forEach(function(b) {
+        html += '<span style="display:inline-block;margin:0.25rem;padding:0.35rem 0.7rem;border-radius:6px;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-dim);font-size:0.8rem;">' + b.icon + ' ' + b.name + '</span>';
+      });
+    }
+    el.innerHTML = html || 'Complete challenges to earn badges!';
+  });
 }
 
 function updateScoreboardSC() {
   if (!window._GameState) return;
   var challenges = _GameState.moduleScores['sc_challenges'] || 0;
   var puzzles = _GameState.moduleScores['sc_puzzles'] || 0;
-  var elCh = document.getElementById('stat-challenges');
-  var elPuz = document.getElementById('stat-puzzles');
-  var elXP = document.getElementById('stat-xp');
-  var elBad = document.getElementById('stat-badges');
-  if (elCh) elCh.textContent = challenges;
-  if (elPuz) elPuz.textContent = puzzles;
-  if (elXP) elXP.textContent = _GameState.xp;
-  if (elBad) elBad.textContent = _GameState.earnedBadges.size;
+  var xp = _GameState.xp || 0;
+  var bdgs = _GameState.earnedBadges ? _GameState.earnedBadges.size : 0;
+  // Mirror into all sidebar variants
+  ['stat-xp', 'stat-xp-story', 'stat-xp-theory'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.textContent = xp;
+  });
+  ['stat-challenges', 'stat-challenges-story', 'stat-challenges-theory'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.textContent = challenges;
+  });
+  ['stat-puzzles', 'stat-puzzles-story', 'stat-puzzles-theory'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.textContent = puzzles;
+  });
+  ['stat-badges', 'stat-badges-story', 'stat-badges-theory'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.textContent = bdgs;
+  });
   var elNav = document.getElementById('nav-xp');
-  if (elNav) elNav.textContent = _GameState.xp + ' XP';
+  if (elNav) elNav.textContent = xp + ' XP';
   renderBadgesSC();
 }
 
@@ -110,7 +121,8 @@ function startTcMatcher() {
   var txt = document.getElementById('tc-target-text');
   if (!txt) return;
   tcMatcher.current = tcMatcher.materials[Math.floor(Math.random() * tcMatcher.materials.length)];
-  var T = (Math.random() * 100).toFixed(1);
+  var Tc = tcMatcher.current.Tc;
+  var T = Math.max(0.1, (Tc - 5 + Math.random() * 10)).toFixed(1);
   tcMatcher.current.givenT = parseFloat(T);
   txt.innerHTML = '<strong>' + tcMatcher.current.name + '</strong> — Tc ≈ ' + tcMatcher.current.Tc + ' K<br><span style="font-size:1.4rem;">Is it superconducting at T = ' + T + ' K?</span>';
   tcMatcher.timeLeft = 15;
@@ -121,7 +133,7 @@ function startTcMatcher() {
     updateTcTimer();
     if (tcMatcher.timeLeft <= 0) {
       clearInterval(tcMatcher.timer);
-      guessSCState(false);
+      guessSCState('timeout');
     }
   }, 1000);
 }
@@ -134,27 +146,36 @@ function updateTcTimer() {
 function guessSCState(yes) {
   clearInterval(tcMatcher.timer);
   var fb = document.getElementById('tc-feedback');
-  var correct = yes === (tcMatcher.current.givenT < tcMatcher.current.Tc);
-  if (correct) {
-    tcMatcher.combo += 1;
-    tcMatcher.streak += 1;
-    tcMatcher.score += 50 + tcMatcher.combo * 5;
-    if (fb) {
-      fb.innerHTML = '<span class="success">✓ Correct! ' + (tcMatcher.givenT < tcMatcher.current.Tc ? 'Below Tc → superconducting.' : 'Above Tc → normal state.') + '</span>';
-      fb.style.display = 'block';
-    }
-    if (window._GameState) {
-      _GameState.addXP(50 + tcMatcher.combo * 5, 'sc_challenges');
-      if (tcMatcher.streak >= 3) _GameState.earnedBadges.add('tc-master');
-      _GameState.save();
-      updateScoreboardSC();
-    }
-  } else {
+  if (yes === 'timeout') {
     tcMatcher.combo = 0;
     tcMatcher.streak = 0;
     if (fb) {
-      fb.innerHTML = '<span class="error">✗ Wrong. ' + tcMatcher.current.name + ' has Tc = ' + tcMatcher.current.Tc + ' K. At ' + tcMatcher.current.givenT + ' K it is ' + (tcMatcher.current.givenT < tcMatcher.current.Tc ? 'superconducting' : 'normal') + '.</span>';
+      fb.innerHTML = '<span class="error">⏰ Time\'s up! ' + tcMatcher.current.name + ' has Tc = ' + tcMatcher.current.Tc + ' K. At ' + tcMatcher.current.givenT + ' K it is ' + (tcMatcher.current.givenT < tcMatcher.current.Tc ? 'superconducting' : 'normal') + '.</span>';
       fb.style.display = 'block';
+    }
+  } else {
+    var correct = yes === (tcMatcher.current.givenT < tcMatcher.current.Tc);
+    if (correct) {
+      tcMatcher.combo += 1;
+      tcMatcher.streak += 1;
+      tcMatcher.score += 50 + tcMatcher.combo * 5;
+      if (fb) {
+        fb.innerHTML = '<span class="success">✓ Correct! ' + (tcMatcher.current.givenT < tcMatcher.current.Tc ? 'Below Tc → superconducting.' : 'Above Tc → normal state.') + '</span>';
+        fb.style.display = 'block';
+      }
+      if (window._GameState) {
+        _GameState.addXP(50 + tcMatcher.combo * 5, 'sc_challenges');
+        if (tcMatcher.streak >= 3) _GameState.earnedBadges.add('tc-master');
+        _GameState.save();
+        updateScoreboardSC();
+      }
+    } else {
+      tcMatcher.combo = 0;
+      tcMatcher.streak = 0;
+      if (fb) {
+        fb.innerHTML = '<span class="error">✗ Wrong. ' + tcMatcher.current.name + ' has Tc = ' + tcMatcher.current.Tc + ' K. At ' + tcMatcher.current.givenT + ' K it is ' + (tcMatcher.current.givenT < tcMatcher.current.Tc ? 'superconducting' : 'normal') + '.</span>';
+        fb.style.display = 'block';
+      }
     }
   }
   var elScore = document.getElementById('tc-score');
@@ -184,6 +205,8 @@ function startTypeChallenge() {
   var q = typeIIChallenge.pool[typeIIChallenge.asked % typeIIChallenge.pool.length];
   typeIIChallenge.current = q;
   txt.textContent = q.text;
+  var fb = document.getElementById('type-feedback');
+  if (fb) fb.style.display = 'none';
 }
 
 function guessType(ans) {
@@ -405,17 +428,32 @@ function checkMeissnerPuzzle() {
 /* ---- Game Mode Switch ---- */
 function setGameMode(mode) {
   document.querySelectorAll('.game-mode-btn').forEach(function(b) { b.classList.remove('active'); });
-  document.getElementById('mode-' + mode).classList.add('active');
-  ['play', 'challenge', 'puzzle'].forEach(function(m) {
-    var el = document.getElementById('section-' + m);
-    if (el) el.style.display = (m === mode) ? 'block' : 'none';
-  });
+  var btn = document.getElementById('mode-' + mode);
+  if (btn) btn.classList.add('active');
+  // Toggle all mode sections dynamically
+  document.querySelectorAll('.mode-section').forEach(function(s) { s.style.display = 'none'; });
+  var sec = document.getElementById('section-' + mode);
+  if (sec) sec.style.display = 'block';
+  // Module-specific hooks
   if (mode === 'challenge') { startTcMatcher(); startTypeChallenge(); startIsoChallenge(); }
   if (mode === 'puzzle') { initCooperBuilder(); startHCPuzzle(); initMeissnerPuzzle(); }
   if (mode === 'play') {
-    if (window.initSuperconductivity) window.initSuperconductivity();
+    if (typeof initSuperconductivityV2 === 'function') {
+      if (_scInited) {
+        setPlayMode(_scActiveSubTab);
+      } else {
+        initSuperconductivityV2();
+      }
+    }
+  }
+  // Pause all canvas animations when leaving Playground
+  if (mode !== 'play') {
+    if (typeof cooperAnimId !== 'undefined' && cooperAnimId) { cancelAnimationFrame(cooperAnimId); cooperAnimId = null; }
+    if (typeof meissnerAnimId !== 'undefined' && meissnerAnimId) { cancelAnimationFrame(meissnerAnimId); meissnerAnimId = null; }
+    if (typeof gapAnimId !== 'undefined' && gapAnimId) { cancelAnimationFrame(gapAnimId); gapAnimId = null; }
   }
 }
+window.setGameMode = setGameMode;
 
 /* ---- Boot ---- */
 function initSCGames() {

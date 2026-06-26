@@ -434,59 +434,83 @@ function _condModeHook() {
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', function() {
-  // Sync __COND sliders with new cond_sim.js sliders
-  ['slider-Efield','slider-tau','slider-T-cond','slider-n-cond'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) {
-      el.addEventListener('input', function(e) {
-        var v = parseFloat(e.target.value);
-        if (id === 'slider-Efield') __COND.Efield = v;
-        if (id === 'slider-tau') __COND.tau = v;
-        if (id === 'slider-T-cond') __COND.T = v;
-        if (id === 'slider-n-cond') __COND.n = v;
-        plotDriftAnimation();
-        plotResistivityTemp();
-        plotIVCurve();
-        plotMeanFreePathApp();
-        plotHallApp();
-        plotIoffeRegelApp();
-        plotWiedemannFranzApp();
-      });
-    }
-  });
+  // Slider wiring is handled entirely by cond_sim.js condWireSliders().
+  // We only need to sync __COND → COND_STATE for the challenge/puzzle code
+  // that reads __COND. Do NOT add duplicate listeners or call plot functions here.
+  // The MutationObserver below handles first-visibility init.
 
-  setTimeout(function() {
-    plotDriftAnimation();
-    plotResistivityTemp();
-    plotIVCurve();
-    plotMeanFreePathApp();
-    plotHallApp();
-    plotIoffeRegelApp();
-    plotWiedemannFranzApp();
-  }, 500);
+  // Defer plot init until Playground is actually visible.
+  // cond_sim.js initConductivity() also defers, but the index.html wrapper
+  // calls it at 800ms — which may fire while section-play is still display:none.
+  // We use a MutationObserver to detect when Playground becomes visible.
+  var _condPlayObserver = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      if (m.attributeName === 'style' && m.target.id === 'section-play') {
+        if (m.target.style.display !== 'none') {
+          // Playground just became visible — init canvas if needed, then resize + rebuild plots.
+          if (typeof initConductivity === 'function' && !COND_CANVAS.ctx) {
+            initConductivity();
+          }
+          if (typeof condResizeCanvas === 'function' && COND_CANVAS.ctx) condResizeCanvas();
+          if (typeof condUpdatePlots === 'function') condUpdatePlots();
+          if (typeof condUpdateReadout === 'function') condUpdateReadout();
+          // Plotly resize after a frame so the layout has settled
+          requestAnimationFrame(function() {
+            ['plot-drift','plot-rho-T','plot-iv','plot-mfp','plot-hall','plot-ioffe','plot-wf'].forEach(function(pid) {
+              var pel = document.getElementById(pid);
+              if (pel && pel.data && typeof Plotly !== 'undefined') {
+                try { Plotly.Plots.resize(pel); } catch(e) {}
+              }
+            });
+          });
+        }
+      }
+    });
+  });
+  var _condPlaySection = document.getElementById('section-play');
+  if (_condPlaySection) _condPlayObserver.observe(_condPlaySection, { attributes: true });
 
   _condModeHook();
 
-  var nav = document.getElementById('module-nav');
-  if (nav) {
-    var modules = [
-      { num: '01', name: 'QHO', url: '../01_qho/index.html' },
-      { num: '02', name: 'Hydrogen', url: '../02_hydrogen/index.html' },
-      { num: '03', name: 'Spin-1/2', url: '../03_spin/index.html' },
-      { num: '04', name: 'KP Model', url: '../04_kronig_penney/index.html' },
-      { num: '05', name: 'Bands', url: '../05_energy_bands/index.html' },
-      { num: '06', name: 'Fermi', url: '../06_fermi_surface/index.html' },
-      { num: '07', name: 'Conductivity', current: true }
-    ];
+  // Build nav for all sidebar instances (playground + story + theory + challenges + puzzles)
+  var modules = [
+    { num: '00', name: 'Intro', url: '../00_crystal_to_quantum/index.html' },
+    { num: '01', name: 'QHO', url: '../01_qho/index.html' },
+    { num: '02', name: 'Hydrogen', url: '../02_hydrogen/index.html' },
+    { num: '03', name: 'Spin-1/2', url: '../03_spin/index.html' },
+    { num: '04', name: 'KP Model', url: '../04_kronig_penney/index.html' },
+    { num: '05', name: 'Bands', url: '../05_energy_bands/index.html' },
+    { num: '06', name: 'Fermi', url: '../06_fermi_surface/index.html' },
+    { num: '07', name: 'Conductivity', current: true }
+  ];
+  ['module-nav', 'module-nav-story', 'module-nav-theory', 'module-nav-ch', 'module-nav-pz'].forEach(function(navId) {
+    var navEl = document.getElementById(navId);
+    if (!navEl) return;
+    navEl.textContent = '';
     modules.forEach(function(m) {
       var el = document.createElement(m.current ? 'div' : 'a');
       if (!m.current) { el.href = m.url; el.style.textDecoration = 'none'; }
       el.style.cssText = 'display:block;padding:0.5rem 0.7rem;border-radius:8px;margin-bottom:0.3rem;font-size:0.85rem;';
       if (m.current) { el.style.background = 'rgba(255,64,129,0.08)'; el.style.border = '1px solid rgba(255,64,129,0.3)'; el.style.color = '#ff4ecd'; el.textContent = m.num + '. ' + m.name + ' (here)'; }
       else { el.style.background = 'var(--bg-elevated)'; el.style.border = '1px solid var(--border-subtle)'; el.style.color = 'var(--text-dim)'; el.textContent = m.num + '. ' + m.name; }
-      nav.appendChild(el);
+      navEl.appendChild(el);
     });
-  }
-  var xpEl = document.getElementById('stat-xp'); if (xpEl) xpEl.textContent = __GameState.xp();
-  var navXp = document.getElementById('nav-xp'); if (navXp) navXp.textContent = __GameState.xp() + ' XP';
+  });
+  var xpVal = (typeof __GameState !== 'undefined') ? __GameState.xp() : 0;
+  var chVal = (typeof __GameState !== 'undefined') ? (__GameState.get('challengesCompleted') || 0) : 0;
+  var pzVal = (typeof __GameState !== 'undefined') ? (__GameState.get('puzzlesCompleted') || 0) : 0;
+  var bdVal = (typeof __GameState !== 'undefined') ? (__GameState.get('achievements') || []).length : 0;
+  ['stat-xp', 'stat-xp-story', 'stat-xp-theory', 'stat-xp-ch', 'stat-xp-pz'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.textContent = xpVal;
+  });
+  ['stat-challenges', 'stat-challenges-story', 'stat-challenges-theory', 'stat-challenges-ch', 'stat-challenges-pz'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.textContent = chVal;
+  });
+  ['stat-puzzles', 'stat-puzzles-story', 'stat-puzzles-theory', 'stat-puzzles-ch', 'stat-puzzles-pz'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.textContent = pzVal;
+  });
+  ['stat-badges', 'stat-badges-story', 'stat-badges-theory', 'stat-badges-ch', 'stat-badges-pz'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.textContent = bdVal;
+  });
+  var navXp = document.getElementById('nav-xp'); if (navXp) navXp.textContent = xpVal + ' XP';
 });

@@ -10,36 +10,71 @@
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <link rel="stylesheet" href="../../shared_styles.css">
 <style>
-  .cond-canvas-wrap { width: 100%; min-height: 420px; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--glass-border); background: var(--bg-panel); position: relative; }
-  #cond-canvas { display: block; width: 100%; height: 420px; }
-  .cond-layout { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; }
-  .cond-plot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-  .material-btn { display: block; width: 100%; padding: 0.5rem 0.7rem; margin-bottom: 0.4rem; border: 1px solid var(--glass-border); border-radius: var(--radius-sm); background: var(--bg-elevated); color: var(--text-main); font-family: var(--font-mono); font-size: 0.8rem; cursor: pointer; transition: all 0.15s; text-align: left; }
-  .material-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
-  .material-btn.active { border-color: var(--accent-cyan); background: rgba(0,240,255,0.08); color: var(--accent-cyan); }
-  .toggle-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.8rem; }
-  .toggle-btn { padding: 0.3rem 0.6rem; border: 1px solid var(--glass-border); border-radius: var(--radius-sm); background: var(--bg-elevated); color: var(--text-muted); font-family: var(--font-mono); font-size: 0.75rem; cursor: pointer; transition: all 0.15s; }
-  .toggle-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
-  .toggle-btn.on { border-color: var(--accent-cyan); background: rgba(0,240,255,0.06); color: var(--accent-cyan); }
-  .legend-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.2rem 0; }
-  .legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-  .challenge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  .draggable-target { cursor: grab; border: 2px dashed var(--glass-border); border-radius: var(--radius-sm); padding: 0.8rem; transition: all 0.2s; text-align: center; background: var(--bg-elevated); }
-  .draggable-target:hover { border-color: var(--accent-cyan); background: rgba(0,240,255,0.04); }
-  .drop-zone { border: 2px dashed var(--glass-border); border-radius: var(--radius-sm); padding: 1rem; min-height: 50px; transition: all 0.2s; background: var(--bg-panel); }
-  .drop-zone.correct { border-color: var(--accent-green); background: rgba(74,222,128,0.08); }
-  .drop-zone.wrong { border-color: var(--accent-red); background: rgba(255,68,68,0.08); }
-  .timer-bar { height: 4px; background: var(--bg-elevated); border-radius: 2px; overflow: hidden; margin-bottom: 1rem; }
-  .timer-fill { height: 100%; background: var(--accent-cyan); transition: width 1s linear; }
-  @media (max-width: 900px) {
-    .cond-layout { grid-template-columns: 1fr; }
-    .cond-plot-grid { grid-template-columns: 1fr; }
-  }
+  .cond-canvas-wrap { width:100%; min-height:420px; background:var(--bg-deep); border-radius:12px; border:1px solid var(--glass-border); position:relative; overflow:hidden; margin-bottom:1rem; }
+  #cond-canvas { display:block; width:100%; height:420px; }
+  .cond-overlay { position:absolute; top:8px; left:12px; font-size:0.75rem; color:var(--text-dim); pointer-events:none; }
+  .cond-legend-bar { position:absolute; bottom:8px; left:12px; display:flex; gap:0.8rem; pointer-events:none; flex-wrap:wrap; }
+  .cond-legend-item { display:flex; align-items:center; gap:0.3rem; font-size:0.7rem; color:var(--text-dim); }
+  .cond-legend-dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .material-card { padding:0.8rem; background:var(--bg-elevated); border-radius:var(--radius-sm); border:1px solid var(--glass-border); text-align:center; cursor:pointer; transition:all 0.2s; }
+  .material-card:hover { border-color:var(--accent-cyan); }
+  .material-card.selected { border-color:var(--accent-purple); background:rgba(192,132,252,0.08); }
+  .app-plot { min-height:260px; margin-top:1.5rem; }
+
+  /* Module 06 layout utilities */
+  .game-mode-bar { display:flex; justify-content:center; gap:0.5rem; padding:0.6rem; background:rgba(0,0,0,0.35); backdrop-filter:blur(8px); border-bottom:1px solid var(--glass-border); margin-bottom:1.5rem; flex-wrap:wrap; }
+  .game-layout { max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg); align-items:start; }
+  @media (max-width:1000px) { .game-layout { grid-template-columns:1fr; } }
+  .game-main { min-width:0; }
+  .game-sidebar { min-width:0; position:sticky; top:5rem; }
+  .macro-panel { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-top:1rem; }
+  .macro-panel:first-of-type { margin-top:0; }
+  .macro-panel h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
+  .sidebar-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-bottom:1rem; }
+  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
+  .slider-group { margin-bottom:1rem; }
+  .slider-group label { display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:0.3rem; }
+  .slider-group input[type=range] { width:100%; }
+  .slider-value { font-family:var(--font-mono); color:var(--accent-cyan); font-weight:700; }
+  .slider-desc { font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; }
+  .readout-row { display:flex; flex-wrap:wrap; gap:0.5rem; }
+  .readout-tile { flex:1 1 90px; background:var(--bg-deep); padding:8px 10px; border-radius:6px; border:1px solid var(--glass-border); text-align:center; }
+  .readout-tile .readout-label { font-size:0.65rem; color:var(--text-dim); text-transform:uppercase; }
+  .readout-tile .readout-value { font-family:var(--font-mono); font-size:1.05rem; font-weight:700; }
+  .readout-tile .readout-unit { font-size:0.65rem; color:var(--text-muted); }
+  .unit-tag { display:inline-block; background:rgba(0,240,255,0.08); color:var(--accent-cyan); font-family:var(--font-mono); font-size:0.7rem; padding:0.15rem 0.4rem; border-radius:4px; margin-left:0.3rem; }
+
+  /* Story / Theory helpers (mirroring modules 01/03/04/05/06) */
+  .theory-content { font-size:0.95rem; line-height:1.7; color:var(--text-main); }
+  .theory-content p { margin-bottom:1rem; }
+  .theory-content strong { color:var(--accent-cyan); font-weight:500; }
+  .equation-box { background:var(--bg-deep); border:1px solid var(--glass-border); border-radius:10px; padding:1rem 1.2rem; margin:1rem 0; font-size:0.85rem; overflow-x:auto; color:var(--text-main); }
+  .equation-box .mjx-chtml { font-size:1.1em !important; }
+  .insight-callout { background:linear-gradient(90deg, rgba(0,240,255,0.08), transparent); border-left:3px solid var(--accent-cyan); padding:1rem 1.2rem; border-radius:0 8px 8px 0; margin:1rem 0; font-size:0.92rem; color:var(--text-main); }
+  .insight-callout .label { font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent-cyan); font-weight:600; margin-bottom:0.4rem; }
+  .insights { display:grid; grid-template-columns:1fr; gap:1rem; margin-top:1rem; }
+  @media (min-width:900px) { .insights { grid-template-columns:1fr 1fr; } }
+  .insight-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; }
+  .insight-card .insight-title { margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright); }
+
+  .toggle-row { display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.8rem; }
+  .toggle-btn { padding:0.3rem 0.6rem; border:1px solid var(--glass-border); border-radius:var(--radius-sm); background:var(--bg-elevated); color:var(--text-muted); font-family:var(--font-mono); font-size:0.75rem; cursor:pointer; transition:all 0.15s; }
+  .toggle-btn:hover { border-color:var(--accent-cyan); color:var(--accent-cyan); }
+  .toggle-btn.on { border-color:var(--accent-cyan); background:rgba(0,240,255,0.06); color:var(--accent-cyan); }
+  .challenge-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  .draggable-target { cursor:grab; border:2px dashed var(--glass-border); border-radius:var(--radius-sm); padding:0.8rem; transition:all 0.2s; text-align:center; background:var(--bg-elevated); }
+  .draggable-target:hover { border-color:var(--accent-cyan); background:rgba(0,240,255,0.04); }
+  .drop-zone { border:2px dashed var(--glass-border); border-radius:var(--radius-sm); padding:1rem; min-height:60px; transition:all 0.2s; background:var(--bg-panel); }
+  .drop-zone.dragover { border-color:var(--accent-cyan); background:rgba(0,240,255,0.04); }
+  .drop-zone.correct { border-color:var(--accent-green); background:rgba(74,222,128,0.08); }
+  .drop-zone.wrong { border-color:var(--accent-red); background:rgba(255,68,68,0.08); }
+  .timer-bar { height:4px; background:var(--bg-elevated); border-radius:2px; overflow:hidden; margin-bottom:1rem; }
+  .timer-fill { height:100%; background:var(--accent-cyan); transition:width 1s linear; }
+  .timer-fill.urgent { background:var(--accent-red); }
 </style>
 </head>
 <body>
 
-<!-- AMBIENT ORBS -->
 <div class="orb orb-cyan"></div>
 <div class="orb orb-purple"></div>
 <div class="orb orb-pink"></div>
@@ -61,341 +96,677 @@
 <div class="game-container">
 
   <div class="game-mode-bar">
-    <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
+    <button class="game-mode-btn active" id="mode-story" onclick="setGameMode('story')">📖 Story</button>
+    <button class="game-mode-btn" id="mode-theory" onclick="setGameMode('theory')">🎓 Theory</button>
+    <button class="game-mode-btn" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
     <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">🎯 Challenges</button>
     <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">🧩 Puzzles</button>
   </div>
 
-  <!-- PLAYGROUND -->
-  <div class="mode-section" id="section-play">
-    <div class="playground-area">
-      <div class="playground-header">
-        <div class="playground-title">🔬 Drude Electron Drift</div>
-        <div class="playground-level">Electrons drift through a crystal lattice. Yellow flash = scattering event. Purple arrow = E-field. Cyan vector = average drift velocity.</div>
+  <!-- ═══════════════ STORY ═══════════════ -->
+  <div class="mode-section" id="section-story" style="display:block;">
+    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>📖 The Story — Why Metals Conduct and Insulators Don't</h3>
+          <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.6;margin-bottom:1rem;">
+            Apply an electric field to a metal and electrons drift — slowly, against the random thermal
+            motion — producing a current. The <strong style="color:var(--accent-cyan);">Drude model</strong>
+            (1900) captured this with one parameter: the <strong style="color:var(--accent-cyan);">relaxation
+            time</strong> <i>τ</i>, the average interval between scattering events. From <i>τ</i> comes
+            conductivity <i>σ = ne²τ/m*</i>, resistivity <i>ρ = 1/σ</i>, and the Hall coefficient. Yet the
+            model fails: it predicts <i>C<sub>v</sub> = 3nk<sub>B</sub></i> (wrong by a factor of 100) and
+            <i>τ</i> that doesn't match measured mean free paths. The fix came with Sommerfeld (1928), who
+            replaced the classical electron gas with Fermi-Dirac statistics — only electrons near
+            <i>E<sub>F</sub></i> participate, giving the correct specific heat and Wiedemann-Franz law.
+          </p>
+          <div class="insights">
+            <div class="insight-card">
+              <div class="insight-title">🧩 Drude vs Sommerfeld</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Drude treated all electrons as classical particles sharing thermal energy <i>k<sub>B</sub>T</i>.
+                Sommerfeld showed that Pauli blocking freezes 99% of electrons — only those within
+                <i>k<sub>B</sub>T</i> of <i>E<sub>F</sub></i> can scatter. This fixes the specific heat
+                (from <i>3nk<sub>B</sub></i> to <i>γT</i>) and the Wiedemann-Franz ratio, while leaving
+                <i>σ</i> essentially unchanged because the Fermi velocity <i>v<sub>F</sub></i> replaces the
+                thermal velocity.
+              </p>
+            </div>
+            <div class="insight-card">
+              <div class="insight-title">🔬 Scattering and Matthiessen's Rule</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Electrons scatter off phonons (temperature-dependent), impurities (temperature-independent),
+                and boundaries. <b>Matthiessen's rule</b> says these add: <i>1/τ = 1/τ<sub>ph</sub> +
+                1/τ<sub>imp</sub> + 1/τ<sub>bd</sub></i>. At low <i>T</i>, impurity scattering dominates and
+                <i>ρ</i> plateaus (residual resistivity). At high <i>T</i>, phonon scattering dominates and
+                <i>ρ ∝ T</i>. The Ioffe-Regel limit <i>k<sub>F</sub>ℓ ≈ 1</i> marks the breakdown of
+                metallic behaviour.
+              </p>
+            </div>
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">🎮 How the Playground Lets You Feel It</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Use the <strong style="color:var(--accent-cyan);">Playground</strong> to watch electrons drift
+                through a lattice under an electric field. Tune <i>τ</i> (scattering time), <i>T</i>
+                (temperature), <i>n</i> (carrier density), and <i>E</i> (field strength). Yellow flashes mark
+                scattering events. The resistivity-vs-T plot shows the transition from impurity plateau to
+                phonon-dominated linear regime. Explore the Hall effect, Ioffe-Regel criterion, and
+                Wiedemann-Franz law in the applications section.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-story"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-story" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges-story">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles-story">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp-story">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges-story">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ═══════════════ THEORY ═══════════════ -->
+  <div class="mode-section" id="section-theory" style="display:none;">
+    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>🎓 Theory — Drude Model, Hall Effect, and Transport</h3>
+          <div class="theory-content">
+            <p>
+              The <strong>Drude model</strong> treats conduction electrons as a classical gas moving under
+              an electric field <i>E</i>, scattering randomly with average time <i>τ</i> between collisions.
+              The equation of motion gives the drift velocity:
+            </p>
+            <div class="equation-box">
+              $$v_d = -\frac{eE\tau}{m^*}, \qquad \sigma = \frac{ne^2\tau}{m^*}$$
+            </div>
+            <p>
+              where \(n\) is the carrier density and \(m^*\) the effective mass. The mean free path is
+              \(\ell = v_F \tau\).
+            </p>
+          </div>
+
+          <div class="insights">
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">1. Hall Effect</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                In a magnetic field <i>B</i>, the Lorentz force deflects drifting electrons sideways,
+                building up a transverse Hall voltage:
+              </p>
+              <div class="equation-box">
+                $$R_H = \frac{1}{ne} = \frac{V_H t}{IB}, \qquad \mu = \frac{v_d}{E} = \frac{e\tau}{m^*}$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                The sign of <i>R<sub>H</sub></i> reveals the carrier type (electrons vs holes). The mobility
+                <i>μ</i> measures how easily carriers respond to a field.
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">2. Temperature Dependence of Resistivity</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                <b>Matthiessen's rule:</b> independent scattering channels add:
+              </p>
+              <div class="equation-box">
+                $$\frac{1}{\tau} = \frac{1}{\tau_{\text{imp}}} + \frac{1}{\tau_{\text{ph}}(T)}$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                At low <i>T</i>, <i>ρ → ρ<sub>0</sub></i> (impurity residual). At high <i>T</i>,
+                <i>ρ ∝ T</i> (phonon scattering dominates). In superconductors, <i>ρ → 0</i> below
+                <i>T<sub>c</sub></i>.
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">3. Wiedemann-Franz Law</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                In a Fermi liquid, the same electrons carry both charge and heat, giving a universal ratio:
+              </p>
+              <div class="equation-box">
+                $$\frac{\kappa}{\sigma T} = L = \frac{\pi^2}{3}\left(\frac{k_B}{e}\right)^2 \approx 2.44 \times 10^{-8}\;\text{W}\Omega/\text{K}^2$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Violations signal non-Fermi-liquid behaviour (e.g. strange metals near a Mott transition)
+                or phonon-dominated heat transport (semiconductors).
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">4. Ioffe-Regel Criterion</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                Metallic transport requires the mean free path to exceed the lattice spacing:
+              </p>
+              <div class="equation-box">
+                $$k_F \ell \gg 1 \;\;\text{(metal)}, \qquad k_F \ell \sim 1 \;\;\text{(bad metal / Anderson localisation)}$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                When <i>k<sub>F</sub>ℓ → 1</i>, the Drude model breaks down and the material enters the
+                "bad metal" regime — the precursor to localisation.
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">5. Sommerfeld Correction</div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                The Drude model's conductivity is essentially correct because <i>v<sub>F</sub></i> replaces the
+                thermal velocity, but it gets the specific heat wrong. Sommerfeld's quantum correction:
+              </p>
+              <div class="equation-box">
+                $$C_v^{\text{el}} = \gamma T, \qquad \gamma = \frac{\pi^2}{2}\frac{nk_B^2}{E_F}$$
+              </div>
+              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+                This is ~100× smaller than the classical value <i>3nk<sub>B</sub></i> at room temperature,
+                resolving the major Drude failure.
+              </p>
+            </div>
+          </div>
+        </section>
       </div>
 
-      <div class="cond-layout">
-        <!-- LEFT: Canvas + Plots -->
-        <div>
-          <!-- CANVAS (top) -->
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-theory"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-theory" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges-theory">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles-theory">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp-theory">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges-theory">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- PLAYGROUND -->
+  <div class="mode-section" id="section-play" style="display:none;">
+    <div class="game-layout">
+      <div class="game-main">
+
+        <section class="macro-panel">
+          <h3>🔬 Drude Electron Drift</h3>
+          <p class="slider-desc" style="font-size:0.9rem; line-height:1.6;">
+            Electrons drift through a crystal lattice under an applied electric field.
+            <b>Yellow flash</b> = scattering event. <b>Purple arrow</b> = E-field.
+            <b>Cyan vector</b> = average drift velocity. The Drude model gives
+            conductivity <b>σ = ne²τ/m*</b> and drift velocity <b>v<sub>d</sub> = −eEτ/m*</b>.
+          </p>
+        </section>
+
+        <section class="macro-panel">
+          <h3>💎 Material Presets</h3>
+          <p class="slider-desc" style="font-size:0.85rem; margin-bottom:0.8rem; line-height:1.55;">
+            Pick a material preset to load its scattering time and dominant scattering mechanisms.
+            Sliders and live readouts update automatically.
+          </p>
+          <div class="challenge-grid" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));">
+            <div class="material-card selected" id="preset-Cu" data-mat="Cu" onclick="condSetMaterial('Cu'); condHighlightMat(this);">
+              <div style="font-size:0.95rem;">Pure Cu</div>
+              <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">τ = 30 fs</div>
+            </div>
+            <div class="material-card" id="preset-CuZn" data-mat="CuZn" onclick="condSetMaterial('CuZn'); condHighlightMat(this);">
+              <div style="font-size:0.95rem;">Brass CuZn</div>
+              <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">τ = 15 fs · alloy</div>
+            </div>
+            <div class="material-card" id="preset-Al_poly" data-mat="Al_poly" onclick="condSetMaterial('Al_poly'); condHighlightMat(this);">
+              <div style="font-size:0.95rem;">Polycrystal Al</div>
+              <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">τ = 20 fs · grains</div>
+            </div>
+            <div class="material-card" id="preset-Cu_film" data-mat="Cu_film" onclick="condSetMaterial('Cu_film'); condHighlightMat(this);">
+              <div style="font-size:0.95rem;">Thin-film Cu</div>
+              <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">τ = 10 fs · surface</div>
+            </div>
+            <div class="material-card" id="preset-Si_n" data-mat="Si_n" onclick="condSetMaterial('Si_n'); condHighlightMat(this);">
+              <div style="font-size:0.95rem;">n-type Si</div>
+              <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">τ = 100 fs · dopants</div>
+            </div>
+            <div class="material-card" id="preset-GaAs" data-mat="GaAs" onclick="condSetMaterial('GaAs'); condHighlightMat(this);">
+              <div style="font-size:0.95rem;">GaAs</div>
+              <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">τ = 60 fs · dislocation</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- CANVAS PRIMARY VISUAL -->
+        <section class="macro-panel pg-section">
+          <h3>🌌 Electron Lattice Simulation</h3>
+          <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
+            A 2D slice of a crystal lattice: electrons (cyan dots) accelerate in the E-field and scatter off phonons (thermal lattice vibrations), impurities, grain boundaries, and surfaces. The cyan arrow shows the net drift velocity averaged over all electrons.
+          </p>
           <div class="cond-canvas-wrap">
             <canvas id="cond-canvas"></canvas>
-          </div>
-
-          <!-- PLOTS (below canvas) -->
-          <div class="cond-plot-grid" style="margin-top:1.5rem;">
-            <div>
-              <!-- plot-drift viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Drift Velocity v_d(E)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Ohmic response: v_d = -eEτ/m*. Saturation at high fields.</p>
-  <div class="plot-container" id="plot-drift" style="min-height:280px;"></div>
-</div>
-
-              <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
-                ⚡ <b>Drift Velocity</b> — v_d = eEτ/m*. Linear with field; saturation at high E.
-              </div>
+            <div class="cond-overlay">
+              <span id="cond-overlay-mat" style="color:var(--text-main);">Pure Cu</span>
+              · E = <span id="cond-overlay-E" style="color:var(--accent-cyan);">0.01</span> V/nm
+              · τ = <span id="cond-overlay-tau" style="color:var(--accent-pink);">30</span> fs
             </div>
-            <div>
-              <!-- plot-rho-T viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Resistivity ρ(T)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Bloch-Grüneisen: ρ ∝ T⁵ (low T) → ρ ∝ T (high T).</p>
-  <div class="plot-container" id="plot-rho-T" style="min-height:280px;"></div>
-</div>
-
-              <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
-                📈 <b>Resistivity vs T</b> — Bloch-Grüneisen: ρ ∝ T⁵ (low T) → ρ ∝ T (high T).
-              </div>
-            </div>
-            <div>
-              <!-- plot-iv viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">I-V Characteristics</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Linear (ohmic) vs exponential (diode). Log scale shows crossover.</p>
-  <div class="plot-container" id="plot-iv" style="min-height:280px;"></div>
-</div>
-
-              <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
-                🔌 <b>I-V Curves</b> — Ohmic (linear) vs Diode (exponential). Log scale highlights turn-on.
-              </div>
-            </div>
-            <div>
-              <!-- plot-mfp viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Mean Free Path λ(T)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">λ = v_F τ. Matthiessen rule: 1/λ = 1/λ_ph + 1/λ_imp.</p>
-  <div class="plot-container" id="plot-mfp" style="min-height:280px;"></div>
-</div>
-
-              <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
-                🎯 <b>Mean Free Path</b> — Matthiessen's rule: 1/λ_total = 1/λ_ph + 1/λ_imp.
-              </div>
-            </div>
-            <div>
-              <!-- plot-hall viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Hall Voltage V_H(B)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">V_H = IB/(nqd). Sign reveals carrier type: n-type (-) vs p-type (+).</p>
-  <div class="plot-container" id="plot-hall" style="min-height:280px;"></div>
-</div>
-
-              <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
-                🧲 <b>Hall Effect</b> — Sign of V_H distinguishes n-type (negative) vs p-type (positive).
-              </div>
-            </div>
-            <div>
-              <!-- plot-ioffe viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Ioffe-Regel Criterion</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Metallic limit: k_F λ > 1. Below → Anderson localization.</p>
-  <div class="plot-container" id="plot-ioffe" style="min-height:280px;"></div>
-</div>
-
-              <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
-                🧊 <b>Ioffe–Regel Criterion</b> — k_F λ > 1 marks the metallic limit. Below → localization.
-              </div>
-            </div>
-            <div>
-              <!-- plot-wf viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Wiedemann-Franz Ratio</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">L = κ/(σT) → 2.44×10⁻⁸ WΩ/K² for a Fermi liquid.</p>
-  <div class="plot-container" id="plot-wf" style="min-height:280px;"></div>
-</div>
-
-              <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem; font-family:var(--font-mono);">
-                🔥 <b>Wiedemann–Franz Law</b> — L = κ/(σT). Approaches 2.44×10⁻⁸ WΩ/K² for Fermi liquids.
-              </div>
+            <div class="cond-legend-bar">
+              <span class="cond-legend-item"><span class="cond-legend-dot" style="background:#00f0ff;"></span> Electron</span>
+              <span class="cond-legend-item"><span class="cond-legend-dot" style="background:rgba(255,255,255,0.5);"></span> Lattice ion</span>
+              <span class="cond-legend-item"><span class="cond-legend-dot" style="background:#ffd740;"></span> Scattering flash</span>
+              <span class="cond-legend-item"><span class="cond-legend-dot" style="background:#c084fc;"></span> E-field</span>
+              <span class="cond-legend-item"><span class="cond-legend-dot" style="background:#ffd740;border:1px solid #ffd740;"></span> Drift v<sub>d</sub></span>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- RIGHT: Controls -->
-        <div>
-          <div class="challenge-panel" style="margin-bottom:1rem;">
-            <div class="challenge-header">
-              <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙</span>
-              <span class="challenge-title">Controls</span>
-            </div>
-            <div class="control-row">
-              <span class="control-label">E-field</span>
-              <span class="control-value" id="val-Efield">0.01</span><span class="unit-tag">V/nm</span>
-            </div>
-            <input type="range" id="slider-Efield" min="0.001" max="0.5" value="0.01" step="0.001">
-            <div class="control-row" style="margin-top:0.8rem;">
-              <span class="control-label">Scattering time τ</span>
-              <span class="control-value" id="val-tau">30</span><span class="unit-tag">fs</span>
-            </div>
-            <input type="range" id="slider-tau" min="5" max="100" value="30" step="5">
-            <div class="control-row" style="margin-top:0.8rem;">
-              <span class="control-label">Temperature</span>
-              <span class="control-value" id="val-T-cond">300</span><span class="unit-tag">K</span>
-            </div>
-            <input type="range" id="slider-T-cond" min="1" max="1000" value="300" step="10">
-            <div class="control-row" style="margin-top:0.8rem;">
-              <span class="control-label">Carrier density n</span>
-              <span class="control-value" id="val-n-cond">1.0e28</span><span class="unit-tag">m⁻³</span>
-            </div>
-            <input type="range" id="slider-n-cond" min="1e20" max="1e30" value="1e28" step="1e20">
+        <!-- CONDUCTIVITY PLOTS -->
+        <section class="macro-panel pg-section">
+          <h3>📈 Conductivity & Transport Curves</h3>
+          <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
+            Standard solid-state transport relations derived from the Drude model and Bloch-Grüneisen theory.
+          </p>
 
-            <div class="toggle-row">
-              <button class="toggle-btn on" id="btn-phonons" onclick="condTogglePhonons();this.classList.toggle('on');">Phonons</button>
-              <button class="toggle-btn on" id="btn-impurities" onclick="condToggleImpurities();this.classList.toggle('on');">Impurities</button>
-              <button class="toggle-btn" id="btn-mfp" onclick="condToggleMFP();this.classList.toggle('on');">MFP trails</button>
-              <button class="toggle-btn" id="btn-drift" onclick="condToggleDriftOnly();this.classList.toggle('on');">Drift only</button>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+            <div class="viz-card">
+              <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Drift Velocity v<sub>d</sub>(E)</h4>
+              <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Ohmic response: v<sub>d</sub> = −eEτ/m*. Saturation at high fields.</p>
+              <div class="plot-container" id="plot-drift" style="min-height:280px;"></div>
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;line-height:1.5;">
+                At low fields the drift velocity grows linearly with E. At very high fields the model saturates because the electron cannot gain more energy between scattering events than it loses at each collision.
+              </p>
+            </div>
+
+            <div class="viz-card">
+              <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Resistivity ρ(T)</h4>
+              <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Bloch-Grüneisen: ρ ∝ T⁵ (low T) → ρ ∝ T (high T).</p>
+              <div class="plot-container" id="plot-rho-T" style="min-height:280px;"></div>
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;line-height:1.5;">
+                At low temperature electron-phonon scattering is frozen out, so ρ is dominated by impurities. As T rises, phonons appear and ρ increases, first as T⁵ and then linearly above the Debye temperature.
+              </p>
+            </div>
+
+            <div class="viz-card">
+              <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">I-V Characteristics</h4>
+              <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Linear (ohmic) vs exponential (diode). Log scale shows crossover.</p>
+              <div class="plot-container" id="plot-iv" style="min-height:280px;"></div>
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;line-height:1.5;">
+                A resistor follows Ohm's law I = V/R. A p-n diode only conducts once the forward bias exceeds the built-in junction potential; reverse bias gives a tiny leakage current.
+              </p>
+            </div>
+
+            <div class="viz-card">
+              <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Mean Free Path λ(T)</h4>
+              <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">λ = v<sub>F</sub>τ. Matthiessen rule: 1/λ = 1/λ<sub>ph</sub> + 1/λ<sub>imp</sub>.</p>
+              <div class="plot-container" id="plot-mfp" style="min-height:280px;"></div>
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;line-height:1.5;">
+                Matthiessen's rule adds inverse mean free paths because each scattering mechanism shortens the average uninterrupted path. Impurities dominate at low T; phonons dominate at high T.
+              </p>
+            </div>
+
+            <div class="viz-card">
+              <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Hall Voltage V<sub>H</sub>(B)</h4>
+              <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">V<sub>H</sub> = IB/(nqd). Sign reveals carrier type: n-type (−) vs p-type (+).</p>
+              <div class="plot-container" id="plot-hall" style="min-height:280px;"></div>
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;line-height:1.5;">
+                The Hall effect measures carrier density and sign. Electrons bend one way, holes the opposite, so a Hall probe can distinguish n-type and p-type semiconductors without contacts.
+              </p>
+            </div>
+
+            <div class="viz-card">
+              <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Ioffe-Regel Criterion</h4>
+              <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Metallic limit: k<sub>F</sub>λ > 1. Below → Anderson localization.</p>
+              <div class="plot-container" id="plot-ioffe" style="min-height:280px;"></div>
+              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;line-height:1.5;">
+                When the mean free path becomes shorter than the Fermi wavelength, the electron waves interfere destructively and the material crosses over from a diffusive metal to an Anderson insulator.
+              </p>
             </div>
           </div>
 
-          <div class="challenge-panel" style="margin-bottom:1rem;">
-            <div class="challenge-header">
-              <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">🔘</span>
-              <span class="challenge-title">Material Preset</span>
-            </div>
-            <button class="material-btn active" id="mat-Cu" onclick="condSetMaterial('Cu');condHighlightMat(this);">Pure Cu — τ=30 fs, substitutional</button>
-            <button class="material-btn" id="mat-CuZn" onclick="condSetMaterial('CuZn');condHighlightMat(this);">Brass CuZn — τ=15 fs, alloy</button>
-            <button class="material-btn" id="mat-Al_poly" onclick="condSetMaterial('Al_poly');condHighlightMat(this);">Polycrystal Al — τ=20 fs, grain boundaries</button>
-            <button class="material-btn" id="mat-Cu_film" onclick="condSetMaterial('Cu_film');condHighlightMat(this);">Thin-film Cu — τ=10 fs, surface rough</button>
-            <button class="material-btn" id="mat-Si_n" onclick="condSetMaterial('Si_n');condHighlightMat(this);">n-type Si — τ=100 fs, ionized dopants</button>
-            <button class="material-btn" id="mat-GaAs" onclick="condSetMaterial('GaAs');condHighlightMat(this);">GaAs — τ=60 fs, dislocation</button>
+          <div class="viz-card" style="margin-top:1rem;">
+            <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Wiedemann-Franz Ratio</h4>
+            <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">L = κ/(σT) → 2.44×10⁻⁸ WΩ/K² for a Fermi liquid.</p>
+            <div class="plot-container" id="plot-wf" style="min-height:320px;"></div>
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;line-height:1.5;">
+              The Wiedemann-Franz law states that the ratio of thermal to electrical conductivity divided by temperature is a universal constant. It holds for metals where electrons carry both heat and charge, but fails in semiconductors where phonons dominate heat transport.
+            </p>
           </div>
+        </section>
 
-            <div class="challenge-panel" style="margin-bottom:1rem;">
-            <div class="challenge-header">
-              <span class="challenge-icon" style="background:rgba(255,215,64,0.1);">📖</span>
-              <span class="challenge-title">Canvas Legend</span>
-            </div>
-            <div style="font-family:var(--font-mono);font-size:0.78rem;color:var(--text-main);">
-              <div class="legend-row"><span class="legend-dot" style="background:#00f0ff;"></span> Electron</div>
-              <div class="legend-row"><span class="legend-dot" style="background:rgba(255,255,255,0.5);"></span> Lattice ion</div>
-              <div class="legend-row"><span class="legend-dot" style="background:rgba(255,68,68,0.6);"></span> Substitutional impurity</div>
-              <div class="legend-row"><span class="legend-dot" style="background:rgba(251,146,60,0.7);"></span> Alloy atom</div>
-              <div class="legend-row"><span class="legend-dot" style="background:rgba(150,150,150,0.6);"></span> Grain boundary</div>
-              <div class="legend-row"><span class="legend-dot" style="background:rgba(59,130,246,0.6);"></span> Rough surface</div>
-              <div class="legend-row"><span class="legend-dot" style="background:rgba(239,68,68,0.7);"></span> Ionized dopant +</div>
-              <div class="legend-row"><span class="legend-dot" style="background:rgba(192,132,252,0.6);"></span> Dislocation <span style="font-family:monospace">⊥</span></div>
-              <div class="legend-row"><span class="legend-dot" style="background:#ffd740;"></span> Scattering flash</div>
-              <div class="legend-row"><span class="legend-dot" style="background:#c084fc;"></span> E-field</div>
-              <div class="legend-row"><span class="legend-dot" style="background:#ffd740;border:1px solid #ffd740;"></span> Drift velocity v_d</div>
-              <div class="legend-row"><span class="legend-dot" style="background:rgba(74,222,128,0.5);"></span> MFP trail (if on)</div>
-            </div>
-          </div>
+        <!-- PHYSICAL INSIGHTS -->
+        <section class="macro-panel pg-section">
+          <h3>💡 Physical Insights</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-bottom:0.8rem;">
+            The Drude model treats conduction electrons as a classical gas that accelerates freely between instantaneous scattering events. Its central result is conductivity <strong>σ = ne²τ/m*</strong>, where <strong>n</strong> is carrier density, <strong>e</strong> is the elementary charge, <strong>τ</strong> is the mean scattering time, and <strong>m*</strong> is the effective mass. This simple formula captures why metals conduct so well: large n and short m* together give σ ~ 10⁷ S/m.
+          </p>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-bottom:0.8rem;">
+            Scattering limits τ. Phonon scattering grows with temperature while impurity scattering is roughly temperature-independent. In a pure metal at low T, τ can exceed 10⁻¹¹ s and mean free paths can reach micrometres. In dirty alloys or thin films, τ can drop to ~10⁻¹⁵ s and the material approaches the Ioffe-Regel limit where the electron wavefunction localizes.
+          </p>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+            The Hall sign reveals the carrier type. In metals both electrons and holes contribute; a positive Hall coefficient means hole-like orbits dominate. Semiconductors are deliberately doped to obtain either electron (n-type) or hole (p-type) carriers, and the Hall voltage is the standard way to measure doping density and mobility.
+          </p>
+        </section>
 
-          <div class="challenge-panel">
-            <div class="challenge-header">
-              <span class="challenge-icon" style="background:rgba(74,222,128,0.1);">📊</span>
-              <span class="challenge-title">Live Readout</span>
-            </div>
-            <table>
-              <tr><th>Quantity</th><th>Value</th></tr>
-              <tr><td>Drift velocity v_d</td><td class="highlight-num" id="live-vd">0.01 mm/s</td></tr>
-              <tr><td>Conductivity σ</td><td class="highlight-pink" id="live-sigma">5.9×10⁷ S/m</td></tr>
-              <tr><td>Mean free path λ</td><td class="highlight-num" id="live-mfp">40 nm</td></tr>
-              <tr><td>Mobility μ</td><td class="highlight-num" id="live-mu">~40 cm²/Vs</td></tr>
-              <tr><td>Scattering time τ</td><td class="highlight-num" id="live-tau">30 fs</td></tr>
-              <tr><td>E-field</td><td class="highlight-num" id="live-E">0.01 V/nm</td></tr>
-              <tr><td>Temperature</td><td class="highlight-num" id="live-T">300 K</td></tr>
-              <tr><td>Carrier density n</td><td class="highlight-num" id="live-n">1.0×10²⁸ m⁻³</td></tr>
-            </table>
-          </div>
-        </div>
       </div>
+
+      <!-- Right sidebar -->
+      <aside class="game-sidebar">
+        <div class="sidebar-card">
+          <h4>⚙ Quantum Controls</h4>
+
+          <div class="slider-group">
+            <label>E-field <span class="unit-tag">V/nm</span></label>
+            <span class="slider-value" id="val-Efield">0.01</span>
+            <input type="range" id="slider-Efield" min="0.001" max="0.5" value="0.01" step="0.001">
+            <div class="slider-desc">Electric field driving electron drift.</div>
+          </div>
+
+          <div class="slider-group">
+            <label>Scattering time τ <span class="unit-tag">fs</span></label>
+            <span class="slider-value" id="val-tau">30</span>
+            <input type="range" id="slider-tau" min="5" max="100" value="30" step="5">
+            <div class="slider-desc">Average time between scattering events.</div>
+          </div>
+
+          <div class="slider-group">
+            <label>Temperature <span class="unit-tag">K</span></label>
+            <span class="slider-value" id="val-T-cond">300</span>
+            <input type="range" id="slider-T-cond" min="1" max="1000" value="300" step="10">
+            <div class="slider-desc">Controls phonon scattering strength.</div>
+          </div>
+
+          <div class="slider-group">
+            <label>Carrier density n <span class="unit-tag">m⁻³</span></label>
+            <span class="slider-value" id="val-n-cond">1.0e28</span>
+            <input type="range" id="slider-n-cond" min="1e20" max="1e30" value="1e28" step="1e20">
+            <div class="slider-desc">Number of charge carriers per unit volume.</div>
+          </div>
+
+          <div class="toggle-row">
+            <button class="toggle-btn on" id="btn-phonons" onclick="condTogglePhonons(); this.classList.toggle('on');">Phonons</button>
+            <button class="toggle-btn on" id="btn-impurities" onclick="condToggleImpurities(); this.classList.toggle('on');">Impurities</button>
+            <button class="toggle-btn" id="btn-mfp" onclick="condToggleMFP(); this.classList.toggle('on');">MFP trails</button>
+            <button class="toggle-btn" id="btn-drift" onclick="condToggleDriftOnly(); this.classList.toggle('on');">Drift only</button>
+          </div>
+
+          <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.8rem;line-height:1.5;">
+            Use the material preset to load realistic τ and scattering mechanisms, then tune E, T, and n to see how σ, λ, and mobility respond.
+          </p>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>📊 Live Readout</h4>
+
+          <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:0.6rem;">
+            <div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;">
+              <span style="width:8px;height:8px;border-radius:50%;background:#00f0ff;display:inline-block;"></span> Electron
+            </div>
+            <div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;">
+              <span style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.5);display:inline-block;"></span> Lattice ion
+            </div>
+            <div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;">
+              <span style="width:8px;height:8px;border-radius:50%;background:#ffd740;display:inline-block;"></span> Scattering flash
+            </div>
+            <div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;">
+              <span style="width:8px;height:8px;border-radius:50%;background:#c084fc;display:inline-block;"></span> E-field direction
+            </div>
+            <div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;">
+              <span style="width:8px;height:8px;border-radius:50%;background:#ffd740;border:1px solid #ffd740;display:inline-block;"></span> Drift velocity v<sub>d</sub>
+            </div>
+          </div>
+
+          <div class="readout-row">
+            <div class="readout-tile">
+              <div class="readout-label">Drift velocity</div>
+              <div class="readout-value" id="live-vd" style="color:var(--accent-cyan);font-size:0.95rem;">0.01 mm/s</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">Conductivity σ</div>
+              <div class="readout-value" id="live-sigma" style="color:var(--accent-pink);">5.9×10⁷</div>
+              <div class="readout-unit">S/m</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">Mean free path</div>
+              <div class="readout-value" id="live-mfp" style="color:var(--text-bright);">40</div>
+              <div class="readout-unit">nm</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">Mobility μ</div>
+              <div class="readout-value" id="live-mu" style="color:var(--text-bright);">~40</div>
+              <div class="readout-unit">cm²/Vs</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">Scattering time</div>
+              <div class="readout-value" id="live-tau" style="color:var(--text-bright);">30</div>
+              <div class="readout-unit">fs</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">E-field</div>
+              <div class="readout-value" id="live-E" style="color:var(--accent-cyan);">0.01</div>
+              <div class="readout-unit">V/nm</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">Temperature</div>
+              <div class="readout-value" id="live-T" style="color:var(--text-bright);">300</div>
+              <div class="readout-unit">K</div>
+            </div>
+            <div class="readout-tile">
+              <div class="readout-label">Carrier density</div>
+              <div class="readout-value" id="live-n" style="color:var(--text-bright);">1.0×10²⁸</div>
+              <div class="readout-unit">m⁻³</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav"></div>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list" style="font-size:0.8rem; color:var(--text-dim); line-height:1.6;">Complete challenges to earn badges!</div>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
     </div>
   </div>
 
   <!-- CHALLENGES -->
   <div class="mode-section" id="section-challenge" style="display:none;">
+    <div class="game-layout">
+      <div class="game-main">
 
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span>
-        <span class="challenge-title">Challenge 1: I-V Curve Tracer</span>
-        <span class="challenge-difficulty easy">Easy</span>
-      </div>
-      <div class="challenge-desc">Identify electronic components from their I-V characteristics.</div>
-      <div class="challenge-reward">🏆 Reward: 50 XP · Combo bonus: +5 XP per streak</div>
-      <div class="timer-bar"><div class="timer-fill" id="iv-timer" style="width:100%"></div></div>
-      <div id="iv-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <div style="display:flex; gap:0.5rem;">
-        <button class="btn" onclick="guessIVCurve('ohmic')">Ohmic resistor</button>
-        <button class="btn" onclick="guessIVCurve('diode')">p-n Diode</button>
-        <button class="btn" onclick="guessIVCurve('schottky')">Schottky</button>
-      </div>
-      <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;">
-        <strong>Score:</strong> <span id="iv-score">0</span> · <strong>Combo:</strong> <span id="iv-combo">0</span>
-      </div>
-      <div class="challenge-feedback" id="iv-feedback"></div>
-    </div>
+        <section class="macro-panel">
+          <h3>🎮 Challenges</h3>
+          <p class="slider-desc" style="font-size:0.9rem; line-height:1.6; margin-bottom:1rem;">
+            Test your conductivity intuition. Solve all three challenges to unlock badges and XP.
+          </p>
 
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🧲</span>
-        <span class="challenge-title">Challenge 2: Hall Effect Sign</span>
-        <span class="challenge-difficulty medium">Medium</span>
-      </div>
-      <div class="challenge-desc">Determine if the Hall voltage is positive or negative.</div>
-      <div class="challenge-reward">🏆 Reward: 60 XP · "Hall Detector" badge</div>
-      <div id="hall-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <div style="display:flex; gap:0.5rem;">
-        <button class="btn" onclick="guessHallSign('positive')">Positive V_H</button>
-        <button class="btn" onclick="guessHallSign('negative')">Negative V_H</button>
-      </div>
-      <div class="challenge-feedback" id="hall-feedback"></div>
-    </div>
+          <div class="insights">
+            <div class="insight-card">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span>
+                <span class="challenge-title">I-V Curve Tracer</span>
+                <span class="challenge-difficulty easy">Easy</span>
+              </div>
+              <div class="challenge-desc">Identify electronic components from their I-V characteristics.</div>
+              <div class="challenge-reward">🏆 Reward: 50 XP · Combo bonus: +5 XP per streak</div>
+              <div class="timer-bar"><div class="timer-fill" id="iv-timer" style="width:100%"></div></div>
+              <div id="iv-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <button class="btn" onclick="guessIVCurve('ohmic')">Ohmic resistor</button>
+                <button class="btn" onclick="guessIVCurve('diode')">p-n Diode</button>
+                <button class="btn" onclick="guessIVCurve('schottky')">Schottky</button>
+              </div>
+              <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;">
+                <strong>Score:</strong> <span id="iv-score">0</span> · <strong>Combo:</strong> <span id="iv-combo">0</span>
+              </div>
+              <div class="challenge-feedback" id="iv-feedback"></div>
+            </div>
 
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(74,222,128,0.12);">❄</span>
-        <span class="challenge-title">Challenge 3: Superconductor Challenge</span>
-        <span class="challenge-difficulty hard">Hard</span>
+            <div class="insight-card">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🧲</span>
+                <span class="challenge-title">Hall Effect Sign</span>
+                <span class="challenge-difficulty medium">Medium</span>
+              </div>
+              <div class="challenge-desc">Determine if the Hall voltage is positive or negative.</div>
+              <div class="challenge-reward">🏆 Reward: 60 XP · "Hall Detector" badge</div>
+              <div id="hall-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+              <div style="display:flex; gap:0.5rem;">
+                <button class="btn" onclick="guessHallSign('positive')">Positive V_H</button>
+                <button class="btn" onclick="guessHallSign('negative')">Negative V_H</button>
+              </div>
+              <div class="challenge-feedback" id="hall-feedback"></div>
+            </div>
+
+            <div class="insight-card">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(74,222,128,0.12);">❄</span>
+                <span class="challenge-title">Superconductor Challenge</span>
+                <span class="challenge-difficulty hard">Hard</span>
+              </div>
+              <div class="challenge-desc">Is the material superconducting at 4 K?</div>
+              <div class="challenge-reward">🏆 Reward: 80 XP + "Superconductor" badge</div>
+              <div id="super-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
+              <div style="display:flex; gap:0.5rem;">
+                <button class="btn" onclick="guessSuperConducting(true)">Superconducting</button>
+                <button class="btn" onclick="guessSuperConducting(false)">Normal</button>
+              </div>
+              <div class="challenge-feedback" id="super-feedback"></div>
+            </div>
+          </div>
+        </section>
+
       </div>
-      <div class="challenge-desc">Is the material superconducting at 4 K?</div>
-      <div class="challenge-reward">🏆 Reward: 80 XP + "Superconductor" badge</div>
-      <div id="super-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <div style="display:flex; gap:0.5rem;">
-        <button class="btn" onclick="guessSuperConducting(true)">Superconducting</button>
-        <button class="btn" onclick="guessSuperConducting(false)">Normal</button>
-      </div>
-      <div class="challenge-feedback" id="super-feedback"></div>
+
+      <aside class="game-sidebar" style="position:static;">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-ch"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-ch" style="font-size:0.8rem; color:var(--text-dim); line-height:1.6;">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges-ch">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles-ch">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp-ch">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges-ch">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
     </div>
   </div>
 
   <!-- PUZZLES -->
   <div class="mode-section" id="section-puzzle" style="display:none;">
+    <div class="game-layout">
+      <div class="game-main">
 
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🔧</span>
-        <span class="challenge-title">Puzzle 1: Mean Free Path Builder</span>
-        <span class="challenge-difficulty medium">Medium</span>
-      </div>
-      <div class="challenge-desc">Match scattering mechanisms to their effects on resistivity.</div>
-      <div class="challenge-reward">🏆 Reward: 60 XP</div>
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:0.5rem;">
-        <div>
-          <p style="font-size:0.85rem;color:var(--text-muted);">Mechanisms:</p>
-          <div id="mfp-pool" style="display:flex;flex-wrap:wrap;gap:0.5rem;"></div>
-        </div>
-        <div>
-          <p style="font-size:0.85rem;color:var(--text-muted);">Effects:</p>
-          <div id="mfp-zones" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
-        </div>
-      </div>
-      <button class="btn" onclick="checkMFPBuilder()">✓ Verify</button>
-      <div class="challenge-feedback" id="mfp-feedback"></div>
-    </div>
+        <section class="macro-panel">
+          <h3>🧩 Puzzles</h3>
+          <p class="slider-desc" style="font-size:0.9rem; line-height:1.6; margin-bottom:1rem;">
+            Build formulas, match mechanisms, and classify systems. Drag-and-drop puzzles test the core physics of conductivity.
+          </p>
 
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">📐</span>
-        <span class="challenge-title">Puzzle 2: Build σ = ne²τ/m*</span>
-        <span class="challenge-difficulty hard">Hard</span>
-      </div>
-      <div class="challenge-desc">Drag terms into the conductivity formula.</div>
-      <div class="challenge-reward">🏆 Reward: 80 XP</div>
-      <div id="sigma-target" style="font-size:1.5rem;margin:1rem 0;font-family:var(--font-mono);color:var(--text-main);"></div>
-      <div id="sigma-pool" style="display:flex;gap:0.5rem;flex-wrap:wrap;"></div>
-      <button class="btn" onclick="checkSigmaBuilder()">✓ Check Formula</button>
-      <div class="challenge-feedback" id="sigma-feedback"></div>
-    </div>
+          <div class="insights">
+            <div class="insight-card">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🔧</span>
+                <span class="challenge-title">Mean Free Path Builder</span>
+                <span class="challenge-difficulty medium">Medium</span>
+              </div>
+              <div class="challenge-desc">Match scattering mechanisms to their effects on resistivity.</div>
+              <div class="challenge-reward">🏆 Reward: 60 XP</div>
+              <div class="challenge-grid">
+                <div>
+                  <p style="font-size:0.85rem;color:var(--text-muted);">Mechanisms:</p>
+                  <div id="mfp-pool" style="display:flex;flex-wrap:wrap;gap:0.5rem;"></div>
+                </div>
+                <div>
+                  <p style="font-size:0.85rem;color:var(--text-muted);">Effects:</p>
+                  <div id="mfp-zones" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+                </div>
+              </div>
+              <button class="btn" onclick="checkMFPBuilder()">✓ Verify</button>
+              <div class="challenge-feedback" id="mfp-feedback"></div>
+            </div>
 
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🛡</span>
-        <span class="challenge-title">Puzzle 3: Wiedemann-Franz Detective</span>
-        <span class="challenge-difficulty master">Master</span>
-      </div>
-      <div class="challenge-desc">Does each system obey or violate the Wiedemann-Franz law?</div>
-      <div class="challenge-reward">🏆 Reward: 120 XP</div>
-      <div id="wf-list" style="margin-top:0.5rem;"></div>
-      <button class="btn" onclick="checkWFPuzzle()">✓ Check Classification</button>
-      <div class="challenge-feedback" id="wf-cond-feedback"></div>
-    </div>
-  </div>
+            <div class="insight-card">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">📐</span>
+                <span class="challenge-title">Build σ = ne²τ/m*</span>
+                <span class="challenge-difficulty hard">Hard</span>
+              </div>
+              <div class="challenge-desc">Drag terms into the conductivity formula.</div>
+              <div class="challenge-reward">🏆 Reward: 80 XP</div>
+              <div id="sigma-target" style="font-size:1.5rem;margin:1rem 0;font-family:var(--font-mono);color:var(--text-main);"></div>
+              <div id="sigma-pool" style="display:flex;gap:0.5rem;flex-wrap:wrap;"></div>
+              <button class="btn" onclick="checkSigmaBuilder()">✓ Check Formula</button>
+              <div class="challenge-feedback" id="sigma-feedback"></div>
+            </div>
 
-  <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; margin-top:2rem;">
-    <div></div>
-    <div>
-      <div class="challenge-panel" style="position:sticky; top:5rem;">
-        <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(0,240,255,0.08);">🗺</span>
-          <span class="challenge-title">Lab Navigator</span>
-        </div>
-        <div id="module-nav"></div>
-        <div class="section-divider" style="margin:1rem 0;"></div>
-        <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(74,222,128,0.08);">🏆</span>
-          <span class="challenge-title">Your Badges</span>
-        </div>
-        <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        <div class="section-divider" style="margin:1rem 0;"></div>
-        <div class="scoreboard">
-          <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
-        </div>
+            <div class="insight-card">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🛡</span>
+                <span class="challenge-title">Wiedemann-Franz Detective</span>
+                <span class="challenge-difficulty master">Master</span>
+              </div>
+              <div class="challenge-desc">Does each system obey or violate the Wiedemann-Franz law?</div>
+              <div class="challenge-reward">🏆 Reward: 120 XP</div>
+              <div id="wf-list" style="margin-top:0.5rem;"></div>
+              <button class="btn" onclick="checkWFPuzzle()">✓ Check Classification</button>
+              <div class="challenge-feedback" id="wf-cond-feedback"></div>
+            </div>
+          </div>
+        </section>
+
       </div>
+
+      <aside class="game-sidebar" style="position:static;">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-pz"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-pz" style="font-size:0.8rem; color:var(--text-dim); line-height:1.6;">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges-pz">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles-pz">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp-pz">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges-pz">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
     </div>
   </div>
 
@@ -404,19 +775,34 @@
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
-<script src="cond_apps_games.js?v=3"></script>
-<script src="cond_sim.js?v=3"></script>
+<script src="cond_sim.js?v=6"></script>
+<script src="cond_apps_games.js?v=7"></script>
 <script src="../../shared_effects.js"></script>
 <script>
-function condHighlightMat(btn) {
-  document.querySelectorAll('.material-btn').forEach(function(b) { b.classList.remove('active'); });
-  btn.classList.add('active');
+function condHighlightMat(card) {
+  document.querySelectorAll('.material-card').forEach(function(b) { b.classList.remove('selected'); });
+  card.classList.add('selected');
 }
 document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(function() {
-    if (typeof initConductivity === 'function') { initConductivity(); }
-    else { console.warn('[COND] initConductivity not loaded'); }
-  }, 800);
+  // initConductivity() is deferred until Playground is actually visible
+  // to avoid building plots/canvas at 0×0 while section-play is display:none.
+  // The MutationObserver in cond_apps_games.js handles the first-visibility init.
+  var _condInited = false;
+  function _tryInitCond() {
+    if (_condInited) return;
+    var section = document.getElementById('section-play');
+    if (section && section.style.display !== 'none') {
+      _condInited = true;
+      if (typeof initConductivity === 'function') { initConductivity(); }
+      else { console.warn('[COND] initConductivity not loaded'); }
+    }
+  }
+  // Try immediately (in case Playground is visible on load)
+  setTimeout(_tryInitCond, 100);
+  // Also observe section-play for when it becomes visible
+  var _condInitObs = new MutationObserver(function() { _tryInitCond(); });
+  var sp = document.getElementById('section-play');
+  if (sp) _condInitObs.observe(sp, { attributes: true });
 });
 </script>
 </body>

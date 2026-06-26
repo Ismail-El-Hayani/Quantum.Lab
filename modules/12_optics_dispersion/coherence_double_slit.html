@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Partial Coherence — Double Slit</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<style>
+  :root {
+    --bg-deep: #080c18;
+    --bg-panel: #0b1222;
+    --glass-border: rgba(0,240,255,0.15);
+    --text-main: #e0f0ff;
+    --text-dim: #7a90a8;
+    --accent-cyan: #00f0ff;
+    --accent-magenta: #ff4ecd;
+    --accent-red: #ff4468;
+    --accent-green: #4ade80;
+    --font-main: 'Segoe UI', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg-deep);
+    color: var(--text-main);
+    font-family: var(--font-main);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+  }
+  h1 {
+    margin: 0 0 0.5rem;
+    font-weight: 300;
+    letter-spacing: 1px;
+    text-align: center;
+  }
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    margin-bottom: 1.2rem;
+    text-align: center;
+  }
+  .main-wrap {
+    width: 100%;
+    max-width: 1100px;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 1rem;
+  }
+  .control-panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    height: fit-content;
+  }
+  .control-panel h3 {
+    margin: 0 0 0.2rem;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent-cyan);
+  }
+  .slider-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .slider-row label {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    display: flex;
+    justify-content: space-between;
+  }
+  .slider-row label b {
+    color: var(--accent-cyan);
+    font-weight: 600;
+  }
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent-cyan);
+  }
+  .readout-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+  }
+  .readout-item {
+    background: rgba(0,0,0,0.25);
+    padding: 0.35rem 0.5rem;
+    border-radius: 4px;
+    border-left: 2px solid var(--glass-border);
+  }
+  .readout-item span {
+    color: var(--text-dim);
+    display: block;
+  }
+  .readout-item b {
+    color: var(--accent-green);
+    font-size: 0.85rem;
+  }
+  .btn {
+    background: transparent;
+    border: 1px solid var(--accent-cyan);
+    color: var(--accent-cyan);
+    padding: 0.45rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    text-align: center;
+    transition: 0.2s;
+  }
+  .btn:hover { background: rgba(0,240,255,0.1); }
+  .viz-area {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .canvas-wrap {
+    position: relative;
+    width: 100%;
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: #050810;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 380px;
+  }
+  .canvas-legend {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(5,8,16,0.85);
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    pointer-events: none;
+    line-height: 1.5;
+  }
+  .canvas-legend .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+  .plot-wrap {
+    width: 100%;
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg-panel);
+  }
+  .plot-wrap .plot-title {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+    color: var(--accent-cyan);
+    border-bottom: 1px solid var(--glass-border);
+    letter-spacing: 0.5px;
+  }
+
+  /* Distributed description blocks */
+  .desc-block {
+    background: rgba(11,18,34,0.85);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin: 0.2rem 0 0.8rem;
+    font-size: 0.77rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .desc-block p { margin: 0.2rem 0; }
+  .desc-block ul {
+    margin: 0.2rem 0;
+    padding-left: 1.2rem;
+    font-size: 0.75rem;
+  }
+  .desc-block li { margin-bottom: 0.15rem; }
+  .desc-block .eq-mini {
+    background: rgba(0,0,0,0.35);
+    border-left: 2px solid var(--accent-magenta);
+    padding: 0.35rem 0.5rem;
+    margin: 0.4rem 0 0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.72rem;
+    color: var(--accent-green);
+    border-radius: 0 4px 4px 0;
+    overflow-x: auto;
+    line-height: 1.6;
+  }
+  .desc-block .eq-mini strong {
+    color: var(--text-main);
+    font-family: var(--font-main);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .param-label {
+    display: inline-block;
+    background: rgba(0,240,255,0.12);
+    border: 1px solid rgba(0,240,255,0.25);
+    border-radius: 3px;
+    padding: 0 0.35rem;
+    margin: 0 0.1rem;
+    font-family: 'Courier New', monospace;
+    color: var(--accent-cyan);
+    font-size: 0.7rem;
+  }
+
+  @media (max-width: 860px) {
+    .main-wrap { grid-template-columns: 1fr; }
+    canvas { height: 300px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Partial Coherence — Double-Slit Interference</h1>
+<p class="subtitle">
+  A finite wave pulse hits a wall with two slits. Temporal partial coherence (spectral width &Delta;&lambda;)
+  washes out high-order fringes. Visibility decays when path difference exceeds coherence length.
+</p>
+
+<div class="main-wrap">
+  <!-- LEFT: Controls + Readouts -->
+  <div class="control-panel">
+    <h3>Parameters</h3>
+
+    <div class="slider-row">
+      <label>Wavelength &lambda; <b id="val-lam">550</b> nm</label>
+      <input type="range" id="slider-lam" min="400" max="700" value="550">
+    </div>
+    <div class="slider-row">
+      <label>Slit separation d <b id="val-d">0.50</b> mm</label>
+      <input type="range" id="slider-d" min="0.10" max="2.00" step="0.01" value="0.50">
+    </div>
+    <div class="slider-row">
+      <label>Spectral width &Delta;&lambda; <b id="val-dlam">0</b> nm</label>
+      <input type="range" id="slider-dlam" min="0" max="150" step="0.5" value="0">
+    </div>
+    <div class="slider-row">
+      <label>Slit width a <b id="val-a">0.10</b> mm</label>
+      <input type="range" id="slider-a" min="0.01" max="0.50" step="0.01" value="0.10">
+    </div>
+
+    <div class="readout-grid">
+      <div class="readout-item">
+        <span>Coherence length L<sub>c</sub></span>
+        <b id="live-Lc">&infin;</b>
+      </div>
+      <div class="readout-item">
+        <span>Visibility V (m=1)</span>
+        <b id="live-V">1.000</b>
+      </div>
+      <div class="readout-item">
+        <span>Fringe spacing &Delta;y</span>
+        <b id="live-dy">&mdash;</b>
+      </div>
+      <div class="readout-item">
+        <span>Path diff. &Delta;r (m=1)</span>
+        <b id="live-dr">&mdash;</b>
+      </div>
+    </div>
+
+    <button class="btn" id="btn-fire">Fire Pulse</button>
+    <button class="btn" id="btn-reset">Reset</button>
+
+    <div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.4rem;line-height:1.4;">
+      &Delta;&lambda; = 0 &rarr; fully coherent<br>
+      &Delta;&lambda; &gt; 0 &rarr; high-order fringes wash out
+    </div>
+  </div>
+
+  <!-- RIGHT: Canvas + Plot -->
+  <div class="viz-area">
+    <div class="canvas-wrap">
+      <canvas id="coherence-canvas"></canvas>
+      <div class="canvas-legend">
+        <div><span class="dot" style="background:#00f0ff"></span> Incident wave</div>
+        <div><span class="dot" style="background:#ff4ecd"></span> Slit 1 wavelet</div>
+        <div><span class="dot" style="background:#4ade80"></span> Slit 2 wavelet</div>
+      </div>
+    </div>
+    <!-- Stripe heatmap -->
+    <div class="plot-wrap">
+      <div class="plot-title">2-D Interference Pattern &mdash; Intensity stripes on screen</div>
+      <div id="stripe-plot" style="width:100%;height:220px;"></div>
+    </div>
+    <div class="desc-block">
+      <p>
+        <strong>Heatmap</strong> of light intensity on the screen. Horizontal = screen position <em>y</em> (mm). 
+        Vertical repeats the profile to show <strong>vertical fringe stripes</strong>. 
+        Bright magenta = constructive (maxima), dark = destructive (minima). 
+        When <strong>Δλ &gt; 0</strong>, high-order fringes fade because different wavelengths have different spacings.
+      </p>
+      <p class="eq-mini">
+        <strong>Fraunhofer Double-Slit Intensity</strong><br>
+        I(y) = I₀ · sinc²(π a y / λ L) · cos²(π d y / λ L)<br>
+        <span class="param-label">a</span> = slit width &nbsp;|&nbsp; <span class="param-label">d</span> = slit separation &nbsp;|&nbsp; <span class="param-label">λ</span> = wavelength &nbsp;|&nbsp; <span class="param-label">L</span> = screen distance
+      </p>
+    </div>
+
+    <!-- Path diff + visibility -->
+    <div class="plot-wrap">
+      <div class="plot-title">Path Difference &amp; Visibility &mdash; Δr(y) and V(y) vs screen position</div>
+      <div id="pathdiff-plot" style="width:100%;height:280px;"></div>
+    </div>
+    <div class="desc-block">
+      <p>
+        <strong style="color:#00f0ff">Cyan</strong> = geometric path difference Δr(y) = d·|y|/L. 
+        <strong style="color:#ff4ecd">Magenta</strong> = visibility V(y) = (I_max − I_min)/(I_max + I_min). 
+        V starts at 1 and decays once Δr exceeds <strong>Lc</strong>. 
+        <strong style="color:#4ade80">Green dashed</strong> = Lc = λ²/Δλ — fringes wash out beyond this.
+      </p>
+      <p class="eq-mini">
+        <strong>Visibility for Rectangular Spectrum</strong><br>
+        V(Δr) = | sin(π · Δr · Δλ / λ²) / (π · Δr · Δλ / λ²) |<br>
+        <span class="param-label">Δr</span> = d·|y|/L &nbsp;|&nbsp; <span class="param-label">Δλ</span> = spectral width &nbsp;|&nbsp; <span class="param-label">λ</span> = central wavelength &nbsp;|&nbsp; <span class="param-label">Lc</span> = λ²/Δλ
+      </p>
+    </div>
+
+    <!-- Intensity profile -->
+    <div class="plot-wrap">
+      <div class="plot-title">Screen Intensity Profile &mdash; I(y) vs position on screen</div>
+      <div id="intensity-plot" style="width:100%;height:300px;"></div>
+    </div>
+    <div class="desc-block">
+      <p>
+        Classic <strong>double-slit Fraunhofer pattern</strong>. 
+        <strong style="color:#00f0ff">Cyan</strong> = fully coherent (Δλ = 0). 
+        <strong style="color:#ff4ecd">Magenta</strong> = partially coherent — high orders blur. 
+        <strong style="color:#ff4468">Red dashed</strong> = single-slit envelope <code>sinc²(β)</code>. 
+        <strong style="color:#ff8c00">Orange</strong> / <strong style="color:#4ade80">Green dotted</strong> = Slit 1 / Slit 2 alone.
+      </p>
+      <p class="eq-mini">
+        <strong>Double-Slit Fraunhofer (Far-Field)</strong><br>
+        I(y) = I₀ · sinc²(π a y / λ L) · cos²(π d y / λ L)<br>
+        <span class="param-label">β</span> = π a y / λ L &nbsp;|&nbsp; <span class="param-label">δ</span> = π d y / λ L &nbsp;|&nbsp; <span class="param-label">Δy</span> = λ L / d = fringe spacing
+      </p>
+    </div>
+
+    <!-- Correlation -->
+    <div class="plot-wrap">
+      <div class="plot-title">Photon-Photon Correlation &mdash; Joint detection vs photon separation</div>
+      <div id="correlation-plot" style="width:100%;height:280px;"></div>
+    </div>
+    <div class="desc-block">
+      <p>
+        <strong>Second-order correlation</strong> g⁽²⁾(Δx) — <strong>Hanbury Brown–Twiss</strong> effect. 
+        Photons from a chaotic source tend to <strong>bunch</strong> (arrive together).
+      </p>
+      <ul>
+        <li><strong style="color:#ff4468">Red solid</strong> = 0.5 + 0.5·|γ|²·I(Δx). Peak at Δx=0 → g⁽²⁾(0)=2. Decays to 0.5 over Lc.</li>
+        <li><strong style="color:#4ade80">Green dotted</strong> = interference structure = 0.5 + 0.5·I(Δx). Side peaks at Δy = λL/d.</li>
+        <li><strong style="color:#00f0ff">Blue solid</strong> = uncorrelated baseline 0.5 (g⁽²⁾ = 1).</li>
+        <li><strong style="color:#00f0ff">Cyan arrow</strong> = ±Lc span — distance where bunching survives.</li>
+      </ul>
+      <p class="eq-mini">
+        <strong>Second-Order Coherence (HBT)</strong><br>
+        g⁽²⁾(Δx) = 1 + |γ(Δx)|² &nbsp; where &nbsp; |γ(Δx)| = |sinc(π · Δx / Lc)|<br>
+        <span class="param-label">Δx</span> = photon separation &nbsp;|&nbsp; <span class="param-label">γ</span> = complex degree of coherence &nbsp;|&nbsp; <span class="param-label">Lc</span> = λ²/Δλ = coherence length
+      </p>
+    </div>
+
+    <!-- Canvas desc -->
+    <div class="desc-block">
+      <p>
+        <strong>Wave propagation:</strong> A finite wave packet (3–5 crests) travels toward a wall with two slits. 
+        Each slit emits circular <strong>Huygens wavelets</strong>. 
+        The overlap region shows interference fringes. <strong>One-shot pulse</strong> — not continuous.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+/**
+ * ================================================================
+ * PARTIAL COHERENCE DOUBLE-SLIT SIMULATION
+ * ================================================================
+ *
+ * Physics:
+ *   Monochromatic point source (fully coherent):
+ *     I(y) = I0 * sinc^2(pi*a*y/(lambda*L)) * cos^2(pi*d*y/(lambda*L))
+ *     a = slit width, d = slit separation, L = screen distance
+ *
+ *   Temporal partial coherence (spectral width Delta_lambda):
+ *     I_total(y) = integral over lambda' of I(y;lambda') * S(lambda') dlambda'
+ *     For rectangular spectrum, visibility decays as:
+ *       V(Delta_r) = | sin(pi*Delta_lambda*Delta_r / lambda^2) / (pi*Delta_lambda*Delta_r / lambda^2) |
+ *     Coherence length:  Lc = lambda^2 / Delta_lambda
+ *
+ *   Fringe spacing:  Delta_y = lambda*L / d
+ *   Path difference at order m:  Delta_r = m * lambda = d*y/L
+ *
+ * ================================================================
+ */
+
+/* ---------- State ---------- */
+var st = {
+  lam:   550,   // nm
+  d:     0.50,  // mm
+  dlam:  0,     // nm
+  a:     0.10,  // mm
+  L:     1000,  // mm (screen distance, fixed)
+  t:     0,
+  phase: 'idle', // idle | entering | splitting | propagating | done
+  pulseWavefronts: [],
+  animId: null
+};
+
+/* ---------- DOM refs ---------- */
+var canvas = document.getElementById('coherence-canvas');
+var ctx = canvas.getContext('2d');
+var wrap = document.querySelector('.canvas-wrap');
+
+function $(id){ return document.getElementById(id); }
+
+/* ---------- Canvas sizing ---------- */
+function resizeCanvas(){
+  var w = Math.max(200, wrap.clientWidth);
+  var h = 380;
+  var dpr = window.devicePixelRatio || 1;
+  canvas.width  = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width  = w + 'px';
+  canvas.style.height = h + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawFrame();
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+/* ---------- Physics helpers ---------- */
+
+/**
+ * Single-wavelength intensity profile on screen:
+ *   I(y) = I0 * sinc^2(pi*a*y/(lam*L)) * cos^2(pi*d*y/(lam*L))
+ *   sinc(x) = sin(x)/x
+ */
+function intensityAt(lam_nm, y_mm){
+  var lam = lam_nm * 1e-6;   // mm
+  var a   = st.a;             // mm
+  var d   = st.d;             // mm
+  var L   = st.L;             // mm
+  var beta = Math.PI * a * y_mm / (lam * L);
+  var delta = Math.PI * d * y_mm / (lam * L);
+  var env = (Math.abs(beta) < 1e-12) ? 1 : Math.pow(Math.sin(beta) / beta, 2);
+  var fringe = Math.pow(Math.cos(delta), 2);
+  return env * fringe;
+}
+
+/**
+ * Polychromatic intensity = incoherent sum over spectrum.
+ * Spectrum: rectangular [lam - dlam/2, lam + dlam/2].
+ *   I_total(y) = (1/Delta_lambda) * integral_{lam-dlam/2}^{lam+dlam/2} I(y;lam') dlam'
+ */
+function polychromaticIntensity(y_mm, nSamples){
+  if (st.dlam <= 0) return intensityAt(st.lam, y_mm);
+  var sum = 0;
+  var lam0 = st.lam;
+  var half = st.dlam / 2;
+  var N = nSamples || 81;
+  var dl = st.dlam / (N - 1);
+  for (var i = 0; i < N; i++){
+    var lam = lam0 - half + i * dl;
+    if (lam < 1) lam = 1;
+    sum += intensityAt(lam, y_mm);
+  }
+  return sum / N;
+}
+
+/**
+ * Visibility at path difference Delta_r for rectangular spectrum:
+ *   V(Delta_r) = | sin(pi*Delta_r*dlam / lam^2) / (pi*Delta_r*dlam / lam^2) |
+ *   At Delta_r = 0, limit V = 1.
+ */
+function visibilityAt(Delta_r_mm){
+  if (st.dlam <= 0) return 1.0;
+  var lam = st.lam * 1e-6; // mm
+  var x = Math.PI * Delta_r_mm * (st.dlam * 1e-6) / (lam * lam);
+  if (Math.abs(x) < 1e-12) return 1.0;
+  return Math.abs(Math.sin(x) / x);
+}
+
+/**
+ * Coherence length:  Lc = lam^2 / dlam   (nm units cancel -> nm)
+ */
+function coherenceLength(){
+  if (st.dlam <= 0) return Infinity;
+  return (st.lam * st.lam) / st.dlam; // nm
+}
+
+/* ---------- Plot ---------- */
+var plotEl = $('intensity-plot');
+
+/**
+ * Build screen intensity traces:
+ *   - Coherent limit (cyan): monochromatic at st.lam
+ *   - Partially coherent (magenta): polychromatic sum
+ *   - Diffraction envelope (dashed red): single-slit envelope only
+ */
+function updatePlot(){
+  var yMax = 15; // mm half-width on screen
+  var N = 401;
+  var yArr = [], Icoh = [], Ipoly = [], Ienv = [], Is1 = [], Is2 = [];
+  var dy = (2 * yMax) / (N - 1);
+  for (var i = 0; i < N; i++){
+    var y = -yMax + i * dy;
+    yArr.push(parseFloat(y.toFixed(2)));
+    Icoh.push(intensityAt(st.lam, y));
+    Ipoly.push(polychromaticIntensity(y, 81));
+    // envelope only (same for both slits in far-field)
+    var lam = st.lam * 1e-6;
+    var beta = Math.PI * st.a * y / (lam * st.L);
+    var env = (Math.abs(beta) < 1e-12) ? 1 : Math.pow(Math.sin(beta)/beta, 2);
+    Ienv.push(env);
+    // Individual slit intensities: I_s1 = I_s2 = I0/2 * sinc^2(beta)
+    Is1.push(env * 0.5);
+    Is2.push(env * 0.5);
+  }
+
+  var traces = [
+    {
+      x: yArr, y: Icoh,
+      mode: 'lines', name: 'Coherent (Δλ = 0)',
+      line: { color: '#00f0ff', width: 1.5 },
+      opacity: 0.6
+    },
+    {
+      x: yArr, y: Ipoly,
+      mode: 'lines', name: 'Partially coherent',
+      line: { color: '#ff4ecd', width: 2 }
+    },
+    {
+      x: yArr, y: Ienv,
+      mode: 'lines', name: 'Diffraction envelope',
+      line: { color: '#ff4468', width: 1.5, dash: 'dash' },
+      opacity: 0.7
+    },
+    {
+      x: yArr, y: Is1,
+      mode: 'lines', name: 'Slit 1 only',
+      line: { color: '#ff8c00', width: 1.5, dash: 'dot' },
+      opacity: 0.75
+    },
+    {
+      x: yArr, y: Is2,
+      mode: 'lines', name: 'Slit 2 only',
+      line: { color: '#4ade80', width: 1.5, dash: 'dot' },
+      opacity: 0.75
+    }
+  ];
+
+  var layout = {
+    title: {
+      text: 'Screen Intensity Profile I(y)',
+      font: { color: '#7a90a8', size: 13, family: 'Segoe UI, sans-serif' },
+      x: 0.5, xanchor: 'center', y: 0.98
+    },
+    paper_bgcolor: '#0b1222',
+    plot_bgcolor: '#0b1222',
+    font: { color: '#7a90a8', family: 'Segoe UI, sans-serif' },
+    margin: { t: 40, b: 40, l: 55, r: 15 },
+    xaxis: {
+      title: { text: 'Screen position y (mm)', font: { color: '#7a90a8' } },
+      color: '#7a90a8',
+      gridcolor: 'rgba(0,240,255,0.08)',
+      zerolinecolor: 'rgba(0,240,255,0.2)'
+    },
+    yaxis: {
+      title: { text: 'Normalized intensity I(y)', font: { color: '#7a90a8' } },
+      color: '#7a90a8',
+      gridcolor: 'rgba(0,240,255,0.08)',
+      zerolinecolor: 'rgba(0,240,255,0.2)',
+      range: [0, 1.05]
+    },
+    legend: {
+      x: 0.01, y: 0.99,
+      xanchor: 'left',
+      yanchor: 'top',
+      bgcolor: 'rgba(5,8,16,0.92)',
+      bordercolor: 'rgba(0,240,255,0.35)',
+      borderwidth: 1,
+      font: { color: '#e0f0ff', size: 10, family: 'Segoe UI, sans-serif' }
+    }
+  };
+
+  Plotly.react(plotEl, traces, layout, { displayModeBar: false });
+}
+
+/* ---------- Stripe heatmap (separate Plotly graph) ---------- */
+
+/**
+ * Build a 2D heatmap of vertical intensity stripes.
+ * Horizontal axis = screen position y (mm).
+ * Vertical axis = arbitrary "distance" (arb. units) — uniform, no y-dependence.
+ * Color at each (x,y) pixel = I(y) from the polychromatic double-slit formula.
+ * This produces smooth vertical bands (stripes) exactly like lecture diagrams.
+ *   I(y) = I0 * sinc^2(pi*a*y/(lam*L)) * cos^2(pi*d*y/(lam*L))
+ */
+function updateStripePlot(){
+  var yMax = 15; // mm half-width
+  var Ny = 401;
+  var dy = (2 * yMax) / (Ny - 1);
+  var yArr = [];
+  var zMatrix = [];
+  for (var j = 0; j < 40; j++){
+    var row = [];
+    for (var i = 0; i < Ny; i++){
+      var y = -yMax + i * dy;
+      if (j === 0) yArr.push(parseFloat(y.toFixed(2)));
+      var Ival = polychromaticIntensity(y, 81);
+      row.push(parseFloat(Ival.toFixed(4)));
+    }
+    zMatrix.push(row);
+  }
+
+  var trace = {
+    x: yArr,
+    z: zMatrix,
+    type: 'heatmap',
+    colorscale: [
+      [0,   '#050810'],
+      [0.1, '#1a0a2e'],
+      [0.3, '#4a0a4a'],
+      [0.5, '#8a0a5a'],
+      [0.7, '#c02080'],
+      [0.85, '#e040a0'],
+      [1,   '#ff80c0']
+    ],
+    showscale: true,
+    colorbar: {
+      title: { text: 'I(y)', font: { color: '#7a90a8', size: 11 } },
+      tickfont: { color: '#7a90a8', size: 10 },
+      len: 0.7,
+      thickness: 14,
+      outlinecolor: 'rgba(0,240,255,0.15)'
+    },
+    hoverongaps: false
+  };
+
+  var layout = {
+    title: {
+      text: '2-D Interference Pattern',
+      font: { color: '#7a90a8', size: 13, family: 'Segoe UI, sans-serif' },
+      x: 0.5, xanchor: 'center', y: 0.98
+    },
+    paper_bgcolor: '#0b1222',
+    plot_bgcolor: '#0b1222',
+    font: { color: '#7a90a8', family: 'Segoe UI, sans-serif' },
+    margin: { t: 40, b: 40, l: 55, r: 70 },
+    xaxis: {
+      title: { text: 'Distance from the center (mm)', font: { color: '#7a90a8' } },
+      color: '#7a90a8',
+      gridcolor: 'rgba(0,240,255,0.08)',
+      zerolinecolor: 'rgba(0,240,255,0.2)'
+    },
+    yaxis: {
+      title: { text: 'Distance (arb. units)', font: { color: '#7a90a8' } },
+      color: '#7a90a8',
+      showticklabels: false,
+      gridcolor: 'rgba(0,240,255,0.08)',
+      zerolinecolor: 'rgba(0,240,255,0.2)'
+    }
+  };
+
+  Plotly.react('stripe-plot', [trace], layout, { displayModeBar: false });
+}
+
+/* ---------- Path Difference + Visibility plot ---------- */
+
+/**
+ * Path-difference profile + visibility decay:
+ *   Path difference:   Delta_r(y) = d * |y| / L   (mm)
+ *   Visibility:        V(y) = | sinc(pi * Delta_r(y) * Delta_lambda / lambda^2) |
+ *   Coherence length:  Lc = lambda^2 / Delta_lambda
+ * This plot shows WHY fringes wash out: once Delta_r exceeds Lc,
+ * the two paths are no longer coherent and V → 0.
+ */
+function updatePathDiffPlot(){
+  var yMax = 15; // mm
+  var N = 401;
+  var dy = (2 * yMax) / (N - 1);
+  var yArr = [], dRarr = [], Varr = [];
+  for (var i = 0; i < N; i++){
+    var y = -yMax + i * dy;
+    yArr.push(parseFloat(y.toFixed(2)));
+    // geometric path difference between slit 1 and slit 2 to screen point y
+    // Delta_r(y) = d * |y| / L (small-angle approximation)
+    var dR = Math.abs(st.d * y / st.L);
+    dRarr.push(dR);
+    Varr.push(visibilityAt(dR));
+  }
+
+  // coherence length as horizontal line (in mm)
+  var Lc_mm = (st.dlam <= 0) ? yMax * 2 : (st.lam * st.lam / st.dlam) * 1e-6;
+  var xFull = [-yMax, yMax];
+  var lcLine = [Lc_mm, Lc_mm];
+
+  var traces = [
+    {
+      x: yArr, y: dRarr,
+      mode: 'lines', name: 'Δr(y) = d|y|/L',
+      line: { color: '#00f0ff', width: 1.5 },
+      yaxis: 'y'
+    },
+    {
+      x: yArr, y: Varr,
+      mode: 'lines', name: 'V(y) visibility',
+      line: { color: '#ff4ecd', width: 2 },
+      yaxis: 'y2'
+    }
+  ];
+
+  // Only add coherence-length threshold line when finite
+  if (st.dlam > 0){
+    traces.push({
+      x: xFull, y: lcLine,
+      mode: 'lines', name: 'Lc = λ²/Δλ',
+      line: { color: '#4ade80', width: 1.5, dash: 'dash' },
+      yaxis: 'y',
+      opacity: 0.7
+    });
+  }
+
+  var layout = {
+    title: {
+      text: 'Path Difference Δr(y) & Visibility V(y)',
+      font: { color: '#7a90a8', size: 13, family: 'Segoe UI, sans-serif' },
+      x: 0.5, xanchor: 'center', y: 0.98
+    },
+    paper_bgcolor: '#0b1222',
+    plot_bgcolor: '#0b1222',
+    font: { color: '#7a90a8', family: 'Segoe UI, sans-serif' },
+    margin: { t: 40, b: 40, l: 55, r: 55 },
+    xaxis: {
+      title: { text: 'Screen position y (mm)', font: { color: '#7a90a8' } },
+      color: '#7a90a8',
+      gridcolor: 'rgba(0,240,255,0.08)',
+      zerolinecolor: 'rgba(0,240,255,0.2)'
+    },
+    yaxis: {
+      title: { text: 'Δr(y) (mm)', font: { color: '#00f0ff' } },
+      color: '#00f0ff',
+      gridcolor: 'rgba(0,240,255,0.08)',
+      zerolinecolor: 'rgba(0,240,255,0.2)',
+      range: [0, Math.max(0.015, Math.min(Lc_mm * 2.5, yMax * st.d / st.L * 1.2))]
+    },
+    yaxis2: {
+      title: { text: 'Visibility V(y)', font: { color: '#ff4ecd' } },
+      color: '#ff4ecd',
+      overlaying: 'y',
+      side: 'right',
+      range: [0, 1.05],
+      showgrid: false
+    },
+    legend: {
+      x: 0.01, y: 0.99,
+      xanchor: 'left',
+      yanchor: 'top',
+      bgcolor: 'rgba(5,8,16,0.92)',
+      bordercolor: 'rgba(0,240,255,0.35)',
+      borderwidth: 1,
+      font: { color: '#e0f0ff', size: 10, family: 'Segoe UI, sans-serif' }
+    }
+  };
+
+  Plotly.react('pathdiff-plot', traces, layout, { displayModeBar: false });
+}
+
+/* ---------- Photon-Photon Correlation (joint detection) ---------- */
+
+/**
+ * Second-order correlation / photon-photon joint detection probability
+ * as a function of separation distance Delta_x between two photons.
+ *
+ * Classical intensity correlation for partially coherent light:
+ *   g^(2)(Delta_x) = 1 + |gamma(Delta_x)|^2
+ * where gamma(Delta_x) is the complex degree of coherence.
+ * For chaotic (thermal) light: g^(2)(0) = 2 (photon bunching, HBT).
+ * For fully coherent light: g^(2)(Delta_x) = 1 everywhere (no bunching).
+ * |gamma| decays with coherence length Lc = lambda^2 / Delta_lambda.
+ *
+ * Displayed curves are NORMALIZED by 2 so the baseline sits at 0.5:
+ *   g^(2)_norm = g^(2) / 2 = 0.5 + 0.5 * |gamma|^2
+ *
+ * The double-slit interference pattern contributes spatial modulation:
+ *   I(Delta_x) = env * cos^2(pi*d*Delta_x/(lambda*L))
+ *
+ * Total displayed correlation:
+ *   red = 0.5 + 0.5 * |gamma|^2 * I(Delta_x)
+ *   green = 0.5 + 0.5 * I(Delta_x)          // fully coherent limit
+ *   blue = 0.5                               // uncorrelated baseline
+ *
+ * Curves:
+ *   Red   solid : total correlation (bunching envelope + interference side peaks)
+ *   Green dotted: interference structure alone (no coherence decay)
+ *   Blue  solid : uncorrelated baseline at y = 0.5
+ *   Cyan  arrow : coherence-length span [-Lc, +Lc]
+ */
+function updateCorrelationPlot(){
+  var dMax = 2000; // arb. units half-range (same as reference image)
+  var N = 801;
+  var dd = (2 * dMax) / (N - 1);
+  var xArr = [], Ired = [], Igreen = [], Iblue = [];
+
+  var lam = st.lam * 1e-6; // mm
+  var fringeSpacing = (lam * st.L) / st.d; // mm (Delta_y)
+  var Lc_mm = (st.dlam <= 0) ? (dMax * 2) : (st.lam * st.lam / st.dlam) * 1e-6; // mm
+
+  // Convert to arb.units scale: map fringe spacing to ~1500 arb.units
+  var arbPerMm = (fringeSpacing > 0) ? (1500 / fringeSpacing) : 1;
+  var Lc_arb = Lc_mm * arbPerMm;
+
+  for (var i = 0; i < N; i++){
+    var dx_mm = -dMax / arbPerMm + i * (dd / arbPerMm); // mm from center
+    var dx_arb = -dMax + i * dd;
+    xArr.push(parseFloat(dx_arb.toFixed(1)));
+
+    // Complex degree of coherence |gamma(dx)| for rectangular spectrum
+    // |gamma(dx)| = |sinc(pi * dx / Lc)| = |sin(pi*dx/Lc) / (pi*dx/Lc)|
+    var gamma2;  // |gamma|^2
+    if (st.dlam <= 0){
+      gamma2 = 1; // fully coherent => |gamma| = 1 everywhere
+    } else {
+      var arg = Math.PI * Math.abs(dx_mm) / Lc_mm;
+      var sinc = (Math.abs(arg) < 1e-12) ? 1 : Math.abs(Math.sin(arg) / arg);
+      gamma2 = sinc * sinc;
+    }
+
+    // Interference factor from double-slit at separation dx
+    // beta = pi*a*dx/(lambda*L), delta = pi*d*dx/(lambda*L)
+    var beta = Math.PI * st.a * dx_mm / (lam * st.L);
+    var env = (Math.abs(beta) < 1e-12) ? 1 : Math.pow(Math.sin(beta) / beta, 2);
+    var delta = Math.PI * st.d * dx_mm / (lam * st.L);
+    var cos2 = Math.pow(Math.cos(delta), 2);
+
+    // Interference modulation factor (no baseline)
+    var modulation = env * cos2;
+
+    // Green dotted = fully coherent limit: 0.5 + 0.5 * I(dx)
+    var greenVal = 0.5 + 0.5 * modulation;
+    Igreen.push(parseFloat(greenVal.toFixed(4)));
+
+    // Red solid = partial coherence: 0.5 + 0.5 * |gamma|^2 * I(dx)
+    // Central peak = 1 (bunching), baseline = 0.5, side peaks within Lc envelope
+    var redVal = 0.5 + 0.5 * gamma2 * modulation;
+    Ired.push(parseFloat(redVal.toFixed(4)));
+
+    // Blue = uncorrelated baseline at y = 0.5
+    Iblue.push(0.5);
+  }
+
+  var traces = [
+    {
+      x: xArr, y: Ired,
+      mode: 'lines', name: 'Joint detection (g^(2) * I)',
+      line: { color: '#ff4468', width: 2 },
+      hovertemplate: 'Δx: %{x} arb.u.<br>I: %{y:.3f}<extra></extra>'
+    },
+    {
+      x: xArr, y: Igreen,
+      mode: 'lines', name: 'Interference structure',
+      line: { color: '#4ade80', width: 2, dash: 'dot' },
+      opacity: 0.6,
+      hovertemplate: 'Δx: %{x} arb.u.<br>I: %{y:.3f}<extra></extra>'
+    },
+    {
+      x: xArr, y: Iblue,
+      mode: 'lines', name: 'Uncorrelated baseline',
+      line: { color: '#00f0ff', width: 1.5 },
+      opacity: 0.5,
+      hovertemplate: 'Δx: %{x} arb.u.<br>I: 0.5<extra></extra>'
+    }
+  ];
+
+  // Cyan double-headed arrow annotation at y = 0.5, spanning [-Lc_arb, +Lc_arb]
+  var annotations = [];
+  if (st.dlam > 0 && Lc_arb < dMax){
+    annotations.push({
+      x: -Lc_arb,
+      y: 0.5,
+      ax: Lc_arb * 2,
+      ay: 0,
+      xref: 'x', yref: 'y',
+      axref: 'x', ayref: 'y',
+      showarrow: true,
+      arrowhead: 2, arrowsize: 1.2, arrowwidth: 1.5,
+      arrowcolor: 'rgba(0,240,255,0.60)',
+      startarrowhead: 2,
+      standoff: 6,
+      startstandoff: 6
+    });
+  }
+
+  var layout = {
+    title: {
+      text: 'Distance between photons',
+      font: { color: '#7a90a8', size: 13, family: 'Segoe UI, sans-serif' },
+      x: 0.5, xanchor: 'center', y: 0.98
+    },
+    paper_bgcolor: '#0b1222',
+    plot_bgcolor: '#0b1222',
+    font: { color: '#7a90a8', family: 'Segoe UI, sans-serif' },
+    margin: { t: 40, b: 40, l: 65, r: 15 },
+    xaxis: {
+      title: { text: 'Distance (arb.units)', font: { color: '#7a90a8' } },
+      color: '#7a90a8',
+      gridcolor: 'rgba(0,240,255,0.08)',
+      zerolinecolor: 'rgba(0,240,255,0.2)',
+      range: [-dMax, dMax]
+    },
+    yaxis: {
+      title: { text: 'Intensity (arb.units)', font: { color: '#7a90a8' } },
+      color: '#7a90a8',
+      gridcolor: 'rgba(0,240,255,0.08)',
+      zerolinecolor: 'rgba(0,240,255,0.2)',
+      range: [0, 1.05]
+    },
+    annotations: annotations,
+    legend: {
+      x: 0.01, y: 0.99,
+      xanchor: 'left',
+      yanchor: 'top',
+      bgcolor: 'rgba(5,8,16,0.92)',
+      bordercolor: 'rgba(0,240,255,0.35)',
+      borderwidth: 1,
+      font: { color: '#e0f0ff', size: 10, family: 'Segoe UI, sans-serif' }
+    }
+  };
+
+  Plotly.react('correlation-plot', traces, layout, { displayModeBar: false });
+}
+
+/* ---------- Readout update ---------- */
+function updateReadouts(){
+  var Lc = coherenceLength();
+  $('live-Lc').textContent = (Lc === Infinity) ? '\u221e' : (Lc / 1e6).toFixed(2) + ' mm';
+  var lam_mm = st.lam * 1e-6;
+  var dy = (lam_mm * st.L) / st.d;
+  $('live-dy').textContent = dy.toFixed(3) + ' mm';
+  var dr = st.lam * 1e-6; // path diff at first fringe = lambda (mm)
+  $('live-dr').textContent = dr.toFixed(4) + ' mm';
+  var V1 = visibilityAt(st.d * dy / st.L);
+  $('live-V').textContent = V1.toFixed(3);
+}
+
+/* ---------- Canvas animation ---------- */
+
+/**
+ * Convert physical slit parameters to canvas positions.
+ *   slit separation d ∈ [0.1, 2.0] mm → canvas pixel separation
+ *   slit width     a ∈ [0.01, 0.50] mm → slit opening height in px
+ */
+function computeSlitGeometry(H){
+  var dNorm = (st.d - 0.10) / (2.00 - 0.10); // 0..1
+  var sepPx = H * 0.08 + dNorm * H * 0.56;   // min ~8% H, max ~64% H
+  var cy1 = H/2 - sepPx/2;
+  var cy2 = H/2 + sepPx/2;
+
+  var aNorm = (st.a - 0.01) / (0.50 - 0.01);
+  var hPx = Math.max(4, Math.min(60, 6 + aNorm * 54));
+  return { cy1: cy1, cy2: cy2, hPx: hPx, sepPx: sepPx };
+}
+
+/**
+ * Visual wavelength on canvas (pixels between crests).
+ * Fixed for display — independent of physical λ which is too
+ * tiny to render at this scale.
+ */
+function visualWavePx(W){
+  return Math.max(12, Math.min(36, W * 0.035));
+}
+
+/**
+ * Spawn a Gaussian-envelope wave packet entering from the left.
+ *   ψ(x,t) = exp(-(x−x₀−vt)²/2σ²) · cos(k·(x−x₀−vt) − ωt)
+ *
+ * The packet moves right at cPxPerSec.  When its center crosses
+ * the wall, Huygens wavelets are emitted from each slit.
+ */
+function spawnPulse(){
+  st.pulseWavefronts = [];
+  st.t = 0;
+  st.phase = 'entering';
+  st.packetPos = -200;           // start well off-screen left
+  st.slitFired = false;
+}
+
+/**
+ * Draw faint interference wedges in the overlap region between
+ * the two slits.  Brightness = cos²(Δφ/2) × visibility — so
+ * constructive / destructive fringes are visible in the fan.
+ */
+function interferenceShading(ctx, W, H, wallX, slitCY1, slitCY2){
+  if (st.phase === 'idle' || st.phase === 'done') return;
+  var lam_mm = st.lam * 1e-6;
+  var d = st.d;
+  var xEnd = W * 0.86;
+  var maxAngle = Math.atan2(H * 0.5 - slitCY1, xEnd - wallX);
+  var aStep = 0.005;
+  var midY = (slitCY1 + slitCY2) / 2;
+
+  ctx.globalAlpha = 0.25;
+  for (var a = -maxAngle; a <= maxAngle; a += aStep){
+    var sinA = Math.sin(a);
+    var pathDiff_mm = d * sinA;
+    var deltaPhi = 2 * Math.PI * pathDiff_mm / lam_mm;
+    var V = visibilityAt(Math.abs(pathDiff_mm));
+    var I = Math.pow(Math.cos(deltaPhi / 2), 2);
+    var brightness = 0.12 + 0.88 * I * V;
+
+    var yOff = (xEnd - wallX) * sinA;
+    if (Math.abs(yOff) < H * 0.48){
+      ctx.strokeStyle = 'rgba(255,240,200,' + (0.07 * brightness) + ')';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(wallX + 4, midY + 4 * sinA);
+      ctx.lineTo(xEnd, midY + yOff * 0.85);
+      ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+/**
+ * Canvas draw loop:
+ *   1. Background + faint grid
+ *   2. Wall with two slits (positions + width react to sliders)
+ *   3. Incident Gaussian wave packet approaching the wall
+ *   4. At wall: spawn Huygens wavelets from each slit
+ *   5. Interference wedges in overlap region
+ *   6. Screen with fringe intensity bars
+ *   7. Annotations: Lc gauge, Δy readout, path arcs, hint text
+ */
+function drawFrame(){
+  var dpr = window.devicePixelRatio || 1;
+  var W = canvas.width / dpr;
+  var H = canvas.height / dpr;
+  var wallX = W * 0.30;
+  var screenX = W * 0.88;
+  var dt = 0.016;
+  var cPxPerSec = 200;
+
+  /* Physical + visual wavelengths */
+  var lam_mm = st.lam * 1e-6;
+  var vlam = visualWavePx(W);                 // px between crests (display)
+  var halfVlam = vlam / 2;
+
+  /* Slit geometry from current slider values */
+  var geo = computeSlitGeometry(H);
+  var slitCY1 = geo.cy1, slitCY2 = geo.cy2, slitH = geo.hPx;
+
+  /* ---------- 1. BACKGROUND ---------- */
+  ctx.fillStyle = '#050810';
+  ctx.fillRect(0, 0, W, H);
+
+  /* Faint grid behind the wall */
+  ctx.strokeStyle = 'rgba(128,128,160,0.04)';
+  ctx.lineWidth = 1;
+  for (var gx = wallX; gx < screenX; gx += 40){
+    ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
+  }
+
+  /* ---------- 2. WALL + SLITS ---------- */
+  /* Wall body */
+  ctx.fillStyle = '#131b35';
+  ctx.fillRect(0, 0, wallX, H);
+  ctx.strokeStyle = 'rgba(0,240,255,0.45)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(0, 0, wallX, H);
+
+  /* Slit openings — clear cut-outs showing the dark background */
+  ctx.clearRect(wallX - 4, slitCY1 - slitH/2, 8, slitH);
+  ctx.clearRect(wallX - 4, slitCY2 - slitH/2, 8, slitH);
+
+  /* Thin cyan glow at slit edges */
+  ctx.shadowColor = '#00f0ff'; ctx.shadowBlur = 10;
+  ctx.strokeStyle = 'rgba(0,240,255,0.85)'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(wallX, slitCY1 - slitH/2); ctx.lineTo(wallX, slitCY1 + slitH/2);
+  ctx.moveTo(wallX, slitCY2 - slitH/2); ctx.lineTo(wallX, slitCY2 + slitH/2);
+  ctx.stroke(); ctx.shadowBlur = 0;
+
+  /* Labels with current d and a values */
+  ctx.fillStyle = '#7a90a8'; ctx.font = '11px Segoe UI, sans-serif';
+  ctx.fillText('Wall', 10, 20);
+  ctx.fillStyle = '#6a7a90'; ctx.font = '10px Segoe UI, sans-serif';
+  ctx.fillText('d = ' + st.d.toFixed(2) + ' mm', 10, 38);
+  ctx.fillText('a = ' + st.a.toFixed(2) + ' mm', 10, 52);
+  ctx.fillStyle = '#ff4ecd'; ctx.font = '10px Segoe UI, sans-serif';
+  ctx.fillText('S1', wallX + 8, slitCY1 + 4);
+  ctx.fillStyle = '#4ade80';
+  ctx.fillText('S2', wallX + 8, slitCY2 + 4);
+
+  /* ---------- 3. INCIDENT GAUSSIAN WAVE PACKET ---------- */
+  if (st.phase === 'entering'){
+    var packetCenter = wallX + st.packetPos;
+    var sigmaPx = 32;
+    var amp = 14;
+
+    if (st.packetPos < 30){
+      /* Dynamic draw range — follow the packet, clip at the wall */
+      var x0 = Math.max(0, Math.floor(packetCenter - 4*sigmaPx));
+      var x1 = Math.min(wallX, Math.ceil(packetCenter + 4*sigmaPx));
+      if (x1 <= x0){ /* skip — packet fully past wall */ } else {
+        ctx.beginPath();
+        var started = false;
+        for (var xx = x0; xx < x1; xx += 1){
+          var xRel = xx - packetCenter;
+          var env = Math.exp(-xRel*xRel / (2*sigmaPx*sigmaPx));
+          if (env < 0.005) continue;
+          var yy = H/2 + env * amp * Math.cos(2*Math.PI*xRel/vlam - 8*st.t);
+          if (!started){ ctx.moveTo(xx, yy); started = true; }
+          else ctx.lineTo(xx, yy);
+        }
+        if (started){
+          ctx.strokeStyle = 'rgba(0,240,255,0.85)';
+          ctx.lineWidth = 2.2;
+          ctx.shadowColor = '#00f0ff'; ctx.shadowBlur = 8;
+          ctx.stroke(); ctx.shadowBlur = 0;
+        }
+      }
+    }
+
+    /* Advance the packet */
+    st.packetPos += cPxPerSec * dt;
+
+    /* Centre has crossed the wall → spawn wavelets */
+    if (st.packetPos > 0 && !st.slitFired){
+      st.slitFired = true;
+      st.pulseWavefronts = [];
+      for (var ci = 0; ci < 2; ci++){
+        st.pulseWavefronts.push({
+          s: 0, type: (ci === 0 ? 's1' : 's2'), active: true,
+          cx: wallX, cy: (ci === 0 ? slitCY1 : slitCY2)
+        });
+      }
+    }
+
+    /* Once the packet is fully past the wall, switch to 'propagating' */
+    if (st.packetPos > 160){
+      st.phase = 'propagating';
+    }
+  }
+
+  /* ---------- 4. HUYGENS WAVELETS ---------- */
+  for (var i2 = 0; i2 < st.pulseWavefronts.length; i2++){
+    var wf = st.pulseWavefronts[i2];
+    if (!wf.active) continue;
+
+    var cx = wf.cx, cy = wf.cy, r = wf.s;
+    var maxR = Math.min(screenX - cx, H) * 1.1;
+    var nCrests = Math.min(10, Math.floor(maxR / vlam) + 2);
+
+    for (var crest = 0; crest < nCrests; crest++){
+      var rc = r - crest * vlam;
+      if (rc < 3 || rc > maxR) continue;
+      var fade = Math.max(0.08, 1 - rc / maxR);
+      var alpha = fade * 0.50 + 0.04;
+
+      var color;
+      if (wf.type === 's1'){
+        color = 'rgba(255,78,205,' + alpha + ')';
+      } else {
+        color = 'rgba(74,222,128,' + alpha + ')';
+      }
+      /* Partial-coherence hue shift */
+      if (st.dlam > 0){
+        var shift = Math.sin(rc * st.dlam / 1000) * 0.15;
+        if (wf.type === 's1'){
+          color = 'rgba(255,' + Math.round(78 + shift*180) + ',205,' + alpha + ')';
+        }
+      }
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.6;
+      ctx.shadowColor = color; ctx.shadowBlur = 3;
+      ctx.beginPath();
+      ctx.arc(cx, cy, rc, -Math.PI/2.2, Math.PI/2.2);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    wf.s = r + cPxPerSec * dt;
+    if (wf.s > maxR + 40) wf.active = false;
+  }
+
+  /* ---------- 5. INTERFERENCE WEDGE SHADING ---------- */
+  if (st.phase !== 'idle' && st.phase !== 'entering'){
+    interferenceShading(ctx, W, H, wallX, slitCY1, slitCY2);
+  }
+
+  /* ---------- 6. SCREEN ---------- */
+  ctx.fillStyle = 'rgba(10,14,30,0.92)';
+  ctx.fillRect(screenX - 4, 0, 14, H);
+  ctx.strokeStyle = 'rgba(0,240,255,0.5)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(screenX - 4, 0, 14, H);
+
+  /* Intensity profile on screen */
+  var yMax = 15;
+  var Ny = Math.floor(H * 0.5);
+  var stepY = H / Ny;
+  var maxI = 0;
+  var screenI = [];
+
+  for (var sy = 0; sy < Ny; sy++){
+    var yNorm = (sy / Ny) * 2 - 1;
+    var y_mm = yNorm * yMax;
+    var I = polychromaticIntensity(y_mm, 81);
+    screenI.push(I);
+    if (I > maxI) maxI = I;
+  }
+
+  if (maxI > 0){
+    var barMax = 40;
+    for (var sy2 = 0; sy2 < Ny; sy2++){
+      var Ival = screenI[sy2] / maxI;
+      var yPos = sy2 * stepY;
+      var bw = Ival * barMax;
+      if (bw > 0.5){
+        var hue = 300 + Ival * 60;
+        ctx.fillStyle = 'hsla(' + hue + ', 80%, 60%, ' + (Ival * 0.7) + ')';
+        ctx.fillRect(screenX + 6, yPos, bw, Math.max(1, stepY + 1));
+      }
+    }
+  }
+
+  /* Diffraction envelope (dashed) */
+  ctx.setLineDash([3,3]);
+  ctx.strokeStyle = 'rgba(255,68,104,0.25)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  for (var sy3 = 0; sy3 < Ny; sy3++){
+    var yN = (sy3 / Ny) * 2 - 1;
+    var ym = yN * yMax;
+    var beta = Math.PI * st.a * ym / (lam_mm * st.L);
+    var env = (Math.abs(beta) < 1e-12) ? 1 : Math.pow(Math.sin(beta)/beta, 2);
+    var yp = sy3 * stepY;
+    var bw2 = env * barMax;
+    if (sy3 === 0) ctx.moveTo(screenX + 6 + bw2, yp);
+    else ctx.lineTo(screenX + 6 + bw2, yp);
+  }
+  ctx.stroke(); ctx.setLineDash([]);
+
+  /* ---------- 7. ANNOTATIONS ---------- */
+
+  /* Coherence-length gauge */
+  var Lc = coherenceLength();
+  var gaugeY = H - 22;
+  ctx.fillStyle = 'rgba(5,8,16,0.85)';
+  ctx.fillRect(8, gaugeY - 12, 280, 18);
+  ctx.fillStyle = '#7a90a8';
+  ctx.font = '11px Segoe UI, sans-serif';
+  var gaugeText = (Lc === Infinity)
+    ? 'Lc = \u221e  (fully coherent)'
+    : 'Lc = ' + (Lc/1e6).toFixed(2) + ' mm  |  \u0394\u03bb = ' + st.dlam + ' nm';
+  ctx.fillText(gaugeText, 14, gaugeY);
+
+  /* Fringe spacing readout */
+  var fringeSpacing_mm = (lam_mm * st.L) / st.d;
+  ctx.fillStyle = 'rgba(5,8,16,0.85)';
+  ctx.fillRect(screenX - 90, 8, 130, 16);
+  ctx.fillStyle = '#4ade80';
+  ctx.font = '10px Segoe UI, sans-serif';
+  ctx.fillText('\u0394y = ' + fringeSpacing_mm.toFixed(3) + ' mm', screenX - 84, 20);
+
+  /* Faint path-difference arcs near slits */
+  if (st.phase !== 'idle' && st.phase !== 'done'){
+    ctx.setLineDash([3,5]);
+    ctx.strokeStyle = 'rgba(224,240,255,0.12)';
+    ctx.lineWidth = 1;
+    var rr = vlam * 3;
+    ctx.beginPath(); ctx.arc(wallX, slitCY1, rr, -Math.PI/5, Math.PI/5); ctx.stroke();
+    ctx.beginPath(); ctx.arc(wallX, slitCY2, rr, -Math.PI/5, Math.PI/5); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  /* Idle hint */
+  if (st.phase === 'idle'){
+    ctx.fillStyle = 'rgba(224,240,255,0.35)';
+    ctx.font = '14px Segoe UI, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Click "Fire Pulse" to launch a wave packet', W * 0.6, H * 0.46);
+    ctx.fillText('then watch fringes build on the screen \u2192', W * 0.6, H * 0.52);
+    ctx.textAlign = 'left';
+  }
+
+  /* Auto-stop */
+  var anyActive = false;
+  for (var k = 0; k < st.pulseWavefronts.length; k++){
+    if (st.pulseWavefronts[k].active){ anyActive = true; break; }
+  }
+  if (!anyActive && st.phase !== 'idle' && st.phase !== 'entering'){
+    st.phase = 'done';
+  }
+}
+
+function animateLoop(){
+  if (st.phase !== 'idle' && st.phase !== 'done'){
+    drawFrame();
+    st.t += 0.016;
+    st.animId = requestAnimationFrame(animateLoop);
+  } else if (st.phase === 'done'){
+    drawFrame();
+  }
+}
+
+/* ---------- Slider wiring ---------- */
+function bindSlider(id, key, fmt){
+  var el = $(id);
+  var disp = $('val-' + key);
+  el.addEventListener('input', function(){
+    st[key] = parseFloat(this.value);
+    disp.textContent = fmt ? fmt(st[key]) : st[key];
+    updatePlot();
+    updateStripePlot();
+    updatePathDiffPlot();
+    updateCorrelationPlot();
+    updateReadouts();
+    if (st.phase !== 'idle'){
+      cancelAnimationFrame(st.animId);
+      spawnPulse();
+      animateLoop();
+    } else {
+      drawFrame();
+    }
+  });
+}
+
+bindSlider('slider-lam',  'lam',  function(v){ return Math.round(v); });
+bindSlider('slider-d',    'd',    function(v){ return v.toFixed(2); });
+bindSlider('slider-dlam', 'dlam', function(v){ return v.toFixed(1); });
+bindSlider('slider-a',    'a',    function(v){ return v.toFixed(2); });
+
+/* ---------- Buttons ---------- */
+$('btn-fire').addEventListener('click', function(){
+  cancelAnimationFrame(st.animId);
+  spawnPulse();
+  animateLoop();
+});
+
+$('btn-reset').addEventListener('click', function(){
+  cancelAnimationFrame(st.animId);
+  st.phase = 'idle';
+  st.pulseWavefronts = [];
+  drawFrame();
+});
+
+/* ---------- Init ---------- */
+updatePlot();
+updateStripePlot();
+updatePathDiffPlot();
+updateCorrelationPlot();
+updateReadouts();
+drawFrame();
+
+</script>
+</body>
+</html>

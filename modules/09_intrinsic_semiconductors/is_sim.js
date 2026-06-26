@@ -168,8 +168,13 @@ function initIS3D() {
   }
   if (IS3D.scene) { return true; }
 
-  var w = container.clientWidth || 640;
-  var h = container.clientHeight || 400;
+  // Defer if container is hidden (display:none) — dimensions would be 0
+  var w = container.clientWidth;
+  var h = container.clientHeight;
+  if (w === 0 || h === 0) {
+    console.log('[IS] 3D container has zero dimensions — deferring init');
+    return false;
+  }
 
   // Scene
   IS3D.scene = new THREE.Scene();
@@ -558,6 +563,8 @@ function updateIS3D() {
 
 function animateIS3D() {
   IS3D.animId = requestAnimationFrame(animateIS3D);
+  var pg = document.getElementById('section-play');
+  if (!pg || pg.style.display === 'none') return;
   IS3D.time += 0.016;
 
   // Auto-rotate if no interaction for 3 seconds
@@ -774,7 +781,10 @@ function setDopingIS(type, val) {
 window.setDopingIS = setDopingIS;
 
 /* ============ INIT ============ */
+var __IS_ready = false;
 function initIntrinsicSemi() {
+  if (__IS_ready) return;
+  __IS_ready = true;
   // Material buttons
   ['Si', 'GaAs', 'Ge'].forEach(function(key) {
     var btn = document.getElementById('btn-mat-' + key.toLowerCase());

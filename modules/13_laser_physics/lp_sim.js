@@ -183,8 +183,9 @@ function lpUpdatePhotons() {
 
     // Lens collimation: output photons passing through the lens zone get vy damped toward 0
     if (p.type === 'output' && p.vx < 0) {
-      var lensL = geo.cavityX - 42;
-      var lensR = geo.cavityX - 12;
+      // Semiconductor lens spans cx - 38 to cx - 18 (width 20 px); gas lens is narrower inside it.
+      var lensL = geo.cavityX - 38;
+      var lensR = geo.cavityX - 18;
       if (p.x >= lensL && p.x <= lensR) {
         // Gradually straighten the beam as it leaves the lens
         p.vy *= 0.88;
@@ -733,6 +734,9 @@ function lpUpdateReadouts() {
 /* ---------- Animation loop ---------- */
 function lpAnimate() {
   if (!LP_CANVAS.running) return;
+  // Pause if Playground is hidden (safety net)
+  var secPlay = document.getElementById('section-play');
+  if (!secPlay || secPlay.style.display === 'none') { LP_CANVAS.running = false; return; }
   LP_CANVAS.frame++;
   lpUpdatePhotons();
   lpDraw();
@@ -773,6 +777,7 @@ function setLaserMaterial(name) {
   if (sN) { sN.value = mat.n; var el = document.getElementById('val-n-lp'); if (el) el.textContent = mat.n.toFixed(2); }
   updatePresetButtons();
   lpUpdateGeometry();
+  if (window.lpRefreshPlots) window.lpRefreshPlots();
 }
 
 function initLaser() {
@@ -783,11 +788,14 @@ function initLaser() {
   var sAlpha = document.getElementById('slider-alpha');
   var sPump = document.getElementById('slider-pumping');
 
+  var lpRefreshPlots = window.lpRefreshPlots || function(){};
+
   if (sEg) {
     sEg.addEventListener('input', function() {
       lpState.Eg = parseFloat(this.value);
       var el = document.getElementById('val-Eg');
       if (el) el.textContent = lpState.Eg.toFixed(2);
+      lpRefreshPlots();
     });
   }
   if (sL) {
@@ -796,6 +804,7 @@ function initLaser() {
       var el = document.getElementById('val-L');
       if (el) el.textContent = lpState.L;
       lpUpdateGeometry();
+      lpRefreshPlots();
     });
   }
   if (sN) {
@@ -803,6 +812,7 @@ function initLaser() {
       lpState.n = parseFloat(this.value);
       var el = document.getElementById('val-n-lp');
       if (el) el.textContent = lpState.n.toFixed(2);
+      lpRefreshPlots();
     });
   }
   if (sR) {
@@ -810,6 +820,7 @@ function initLaser() {
       lpState.R = parseFloat(this.value);
       var el = document.getElementById('val-R');
       if (el) el.textContent = lpState.R.toFixed(2);
+      lpRefreshPlots();
     });
   }
   if (sAlpha) {
@@ -817,6 +828,7 @@ function initLaser() {
       lpState.alpha = parseFloat(this.value);
       var el = document.getElementById('val-alpha');
       if (el) el.textContent = lpState.alpha.toFixed(1);
+      lpRefreshPlots();
     });
   }
   if (sPump) {
@@ -824,37 +836,276 @@ function initLaser() {
       lpState.pumping = parseFloat(this.value);
       var el = document.getElementById('val-pumping');
       if (el) el.textContent = lpState.pumping.toFixed(1);
+      lpRefreshPlots();
     });
   }
+
+  // Deferred init guard
+  if (window.__LP_inited) return;
+  window.__LP_inited = true;
 
   updatePresetButtons();
   lpInitCanvas();
   lpStartAnim();
 }
 
-// Wire mode switch: pause animation when leaving playground
-var origSetGameMode = window.setGameMode;
-if (origSetGameMode) {
-  window.setGameMode = function(mode) {
-    origSetGameMode(mode);
-    if (mode === 'play') { lpStartAnim(); }
-    else { lpStopAnim(); }
-  };
-} else {
-  var obs = new MutationObserver(function(muts) {
-    muts.forEach(function(m) {
-      if (m.target.id === 'section-play') {
-        if (m.target.style.display !== 'none') lpStartAnim();
-        else lpStopAnim();
-      }
-    });
-  });
-  var secPlay = document.getElementById('section-play');
-  if (secPlay) obs.observe(secPlay, { attributes: true, attributeFilter: ['style'] });
-}
-
-initLaser();
+// Expose for deferred init from inline script
 window.initLaser = initLaser;
 window.setLaserMaterial = setLaserMaterial;
 window.lpState = lpState;
 window.LP_MATERIALS = LP_MATERIALS;
+
+/* ================================================================
+ *  Gain Spectrum Plot
+ * ================================================================
+ *  Shows material gain g(λ) vs wavelength, threshold gain line,
+ *  and Fabry–Pérot cavity mode positions.
+ */
+function lpUpdateGainPlot() {
+  var el = document.getElementById('gain-plot');
+  if (!el || el.offsetParent === null) return;
+
+  var lam0 = 1240 / lpState.Eg;            // nm
+  var dLam = 30;                            // nm — gain FWHM
+  var g0 = lpState.pumping * 150;           // cm⁻¹, peak gain scales with pump
+  var gth = thresholdGain(lpState.alpha, lpState.R, lpState.L);
+
+  /* Gain lineshape */
+  var N = 401;
+  var lamArr = [], gArr = [];
+  var lo = lam0 - 3 * dLam, hi = lam0 + 3 * dLam;
+  for (var i = 0; i < N; i++) {
+    var lam = lo + i * (hi - lo) / (N - 1);
+    lamArr.push(lam);
+    var env = Math.exp(-Math.pow((lam - lam0) / (dLam * 0.5), 2));
+    gArr.push(g0 * env);
+  }
+
+  /* Cavity modes */
+  var modeLams = [];
+  var modeLabels = [];
+  var TWO_nL = 2 * lpState.n * lpState.L;
+  var m0 = Math.round(TWO_nL / lam0);
+  for (var dm = -4; dm <= 4; dm++) {
+    var m = m0 + dm;
+    if (m < 1) continue;
+    var lamM = TWO_nL / m;
+    if (lamM >= lo && lamM <= hi) {
+      modeLams.push(lamM);
+      modeLabels.push('m=' + m);
+    }
+  }
+
+  var traces = [];
+
+  /* Gain curve */
+  traces.push({
+    x: lamArr, y: gArr,
+    mode: 'lines', name: 'Gain g(<span style="font-size:0.7em">λ</span>)',
+    line: { color: '#00f0ff', width: 2.5 },
+    hovertemplate: 'λ = %{x:.1f} nm<br>g = %{y:.1f} cm⁻¹<extra></extra>'
+  });
+
+  /* Threshold gain line */
+  traces.push({
+    x: [lo, hi], y: [gth, gth],
+    mode: 'lines', name: 'g<sub>th</sub> = ' + gth.toFixed(0) + ' cm⁻¹',
+    line: { color: '#ff4468', width: 2, dash: 'dash' },
+    hovertemplate: 'g<sub>th</sub> = %{y:.1f} cm⁻¹<extra></extra>'
+  });
+
+  /* Cavity modes as vertical lines */
+  for (var mi = 0; mi < modeLams.length; mi++) {
+    traces.push({
+      x: [modeLams[mi], modeLams[mi]],
+      y: [0, g0 * 1.05],
+      mode: 'lines',
+      name: modeLabels[mi],
+      line: { color: 'rgba(255,78,205,0.4)', width: 1 },
+      showlegend: false,
+      hovertemplate: modeLabels[mi] + ' = ' + modeLams[mi].toFixed(1) + ' nm<extra></extra>'
+    });
+  }
+
+  var layout = {
+    title: {
+      text: 'Gain Spectrum &amp; Cavity Modes',
+      font: { color: '#7a90a8', size: 13, family: 'Segoe UI, sans-serif' },
+      x: 0.5, xanchor: 'center', y: 0.97
+    },
+    paper_bgcolor: '#0b1222', plot_bgcolor: '#0b1222',
+    font: { color: '#7a90a8', family: 'Segoe UI, sans-serif' },
+    margin: { t: 40, b: 45, l: 60, r: 20 },
+    xaxis: {
+      title: { text: 'Wavelength (nm)', font: { color: '#7a90a8' } },
+      color: '#7a90a8', gridcolor: 'rgba(0,240,255,0.08)', zerolinecolor: 'rgba(0,240,255,0.2)'
+    },
+    yaxis: {
+      title: { text: 'Gain coefficient (cm⁻¹)', font: { color: '#00f0ff' } },
+      color: '#00f0ff', gridcolor: 'rgba(0,240,255,0.08)', zerolinecolor: 'rgba(0,240,255,0.2)',
+      range: [0, Math.max(g0 * 1.15, gth * 1.3)]
+    },
+    legend: {
+      x: 0.01, y: 0.99, xanchor: 'left', yanchor: 'top',
+      bgcolor: 'rgba(5,8,16,0.92)', bordercolor: 'rgba(0,240,255,0.35)', borderwidth: 1,
+      font: { color: '#e0f0ff', size: 10, family: 'Segoe UI, sans-serif' }
+    }
+  };
+
+  Plotly.react(el, traces, layout, { displayModeBar: false });
+
+  /* Update gain readout beneath plot */
+  var eLam0 = document.getElementById('gain-lam0');
+  if (eLam0) eLam0.textContent = lam0.toFixed(1) + ' nm';
+  var eG0 = document.getElementById('gain-g0');
+  if (eG0) eG0.textContent = g0.toFixed(0) + ' cm⁻¹';
+  var eGth = document.getElementById('gain-gth');
+  if (eGth) eGth.textContent = gth.toFixed(0) + ' cm⁻¹';
+  /* Count modes above threshold */
+  var nAbove = 0;
+  for (var mi2 = 0; mi2 < modeLams.length; mi2++) {
+    var lamM = modeLams[mi2];
+    var gAtMode = g0 * Math.exp(-Math.pow((lamM - lam0) / (dLam * 0.5), 2));
+    if (gAtMode >= gth) nAbove++;
+  }
+  var eModes = document.getElementById('gain-modes');
+  if (eModes) eModes.textContent = nAbove;
+}
+
+/* ================================================================
+ *  L–L (Light–Light) Curve Plot
+ * ================================================================
+ *  Output power vs pumping factor.  The "knee" at threshold is the
+ *  defining signature of laser operation.
+ */
+function lpUpdateLLPlot() {
+  var el = document.getElementById('ll-plot');
+  if (!el || el.offsetParent === null) return;
+
+  var gth = thresholdGain(lpState.alpha, lpState.R, lpState.L);
+  var pth = gth / 150;  // pumping factor at threshold
+  var pMax = 5.0;
+
+  var pumpArr = [], powArr = [], sponArr = [];
+  var N = 300;
+  for (var i = 0; i < N; i++) {
+    var p = 0.3 + i * (pMax - 0.3) / (N - 1);
+    pumpArr.push(p);
+
+    // Spontaneous component (always present)
+    var spont = 0.08 * (p - 0.3);
+
+    // Stimulated component (only above threshold)
+    var stim = 0;
+    if (p > pth) {
+      stim = 2.5 * (p - pth);
+    }
+
+    powArr.push(spont + stim);
+    sponArr.push(spont);
+  }
+
+  /* Trace: total output */
+  var traces = [
+    {
+      x: pumpArr, y: powArr,
+      mode: 'lines', name: 'Total output',
+      line: { color: '#ffd54f', width: 2.5 },
+      hovertemplate: 'Pump = %{x:.2f}<br>P<sub>out</sub> = %{y:.3f}<extra></extra>'
+    },
+    {
+      x: pumpArr, y: sponArr,
+      mode: 'lines', name: 'Spontaneous',
+      line: { color: 'rgba(255,255,255,0.35)', width: 1.5, dash: 'dot' },
+      hovertemplate: 'Pump = %{x:.2f}<br>Spontaneous = %{y:.3f}<extra></extra>'
+    }
+  ];
+
+  /* Threshold marker */
+  var pthClamped = Math.max(0.3, Math.min(pMax, pth));
+  var pthPow = 0.08 * (pthClamped - 0.3);
+  traces.push({
+    x: [pthClamped], y: [pthPow],
+    mode: 'markers', name: 'Threshold',
+    marker: { color: '#ff4468', size: 12, symbol: 'star' },
+    showlegend: true,
+    hovertemplate: 'P<sub>th</sub> = ' + pthClamped.toFixed(2) + '<extra></extra>'
+  });
+
+  /* Annotation */
+  var annotations = [{
+    x: pthClamped, y: pthPow,
+    xref: 'x', yref: 'y',
+    text: 'Threshold',
+    showarrow: true, arrowhead: 2, arrowsize: 1, arrowwidth: 1.5,
+    arrowcolor: '#ff4468', ax: 40, ay: -40,
+    font: { color: '#ff4468', size: 11 }
+  }];
+
+  var layout = {
+    title: {
+      text: 'Light–Light (L–L) Curve',
+      font: { color: '#7a90a8', size: 13, family: 'Segoe UI, sans-serif' },
+      x: 0.5, xanchor: 'center', y: 0.97
+    },
+    paper_bgcolor: '#0b1222', plot_bgcolor: '#0b1222',
+    font: { color: '#7a90a8', family: 'Segoe UI, sans-serif' },
+    margin: { t: 40, b: 45, l: 60, r: 20 },
+    annotations: annotations,
+    xaxis: {
+      title: { text: 'Pumping factor', font: { color: '#7a90a8' } },
+      color: '#7a90a8', gridcolor: 'rgba(0,240,255,0.08)', zerolinecolor: 'rgba(0,240,255,0.2)',
+      range: [0.2, pMax + 0.3]
+    },
+    yaxis: {
+      title: { text: 'Output power (arb. units)', font: { color: '#ffd54f' } },
+      color: '#ffd54f', gridcolor: 'rgba(0,240,255,0.08)', zerolinecolor: 'rgba(0,240,255,0.2)',
+      range: [0, null]
+    },
+    legend: {
+      x: 0.01, y: 0.99, xanchor: 'left', yanchor: 'top',
+      bgcolor: 'rgba(5,8,16,0.92)', bordercolor: 'rgba(0,240,255,0.35)', borderwidth: 1,
+      font: { color: '#e0f0ff', size: 10, family: 'Segoe UI, sans-serif' }
+    }
+  };
+
+  Plotly.react(el, traces, layout, { displayModeBar: false });
+
+  /* Update L-L readout beneath plot */
+  var ePth = document.getElementById('ll-pth');
+  if (ePth) ePth.textContent = pthClamped.toFixed(2);
+  var eSlope = document.getElementById('ll-slope');
+  if (eSlope) eSlope.textContent = '2.50';
+  var eCurPump = document.getElementById('ll-current-pump');
+  if (eCurPump) eCurPump.textContent = lpState.pumping.toFixed(2);
+}
+
+/* ----------------------------------------------------------------
+ *  lpRefreshPlots — called by slider handlers; only updates if
+ *  the plot container is visible (offsetParent !== null).
+ * ---------------------------------------------------------------- */
+window.lpRefreshPlots = function() {
+  /* Sync sub-tab slider displays from lpState */
+  var syncMap = {
+    'val-Eg-gain':      lpState.Eg.toFixed(2),
+    'val-Eg-ll':        lpState.Eg.toFixed(2),
+    'val-pumping-gain': lpState.pumping.toFixed(1),
+    'val-pumping-ll':   lpState.pumping.toFixed(1),
+    'val-L-gain':       String(lpState.L),
+    'val-n-gain':       lpState.n.toFixed(2),
+    'val-R-gain':       lpState.R.toFixed(2),
+    'val-R-ll':         lpState.R.toFixed(2),
+    'val-alpha-gain':   lpState.alpha.toFixed(1),
+    'val-alpha-ll':     lpState.alpha.toFixed(1)
+  };
+  for (var sid in syncMap) {
+    var el = document.getElementById(sid);
+    if (el) el.textContent = syncMap[sid];
+  }
+
+  /* Refresh only the visible sub-tab plot */
+  var gainEl = document.getElementById('gain-plot');
+  if (gainEl && gainEl.offsetParent !== null) lpUpdateGainPlot();
+  var llEl = document.getElementById('ll-plot');
+  if (llEl && llEl.offsetParent !== null) lpUpdateLLPlot();
+};

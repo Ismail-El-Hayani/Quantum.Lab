@@ -16,6 +16,11 @@ npm-debug.log*
 node_modules/
 package-lock.json
 
+# Backup files
+*.bak
+*.bak.*
+*.bak-*
+
 # Large auto-generated files (keep source, ignore heavy renders)
 # Uncomment if you want to exclude media:
 # *.mp4

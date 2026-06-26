@@ -299,6 +299,8 @@ function linspace(a, b, n) {
 function _plot(id, traces, lay, cfg) {
   var el = document.getElementById(id);
   if (!el || typeof Plotly === 'undefined') return;
+  // Skip hidden containers to prevent zero-dimension renders
+  if (el.offsetParent === null) return;
   Plotly.react(id, traces, lay, cfg || {responsive: true, displayModeBar: false});
 }
 var _plotApp = _plot;

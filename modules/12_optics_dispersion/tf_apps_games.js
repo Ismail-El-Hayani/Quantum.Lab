@@ -1,10 +1,10 @@
 
 /* ═══════════════════════════════════════════════════════════════
-   tf_apps_games.js  —  Thin Film Module: Challenges, Puzzles, Nav
+   tf_apps_games.js  —  Module 12 — Optics & Dispersion: Challenges, Puzzles, Nav
    ═══════════════════════════════════════════════════════════════ */
 
 /* ── Module Navigation ── */
-var TF_MODULE_NAV = [
+var OD_MODULE_NAV = [
   { name: 'Crystal to Quantum',   path: '../00_crystal_to_quantum/index.html', current: false },
   { name: 'QHO',                path: '../01_qho/index.html', current: false },
   { name: 'Hydrogen',           path: '../02_hydrogen/index.html', current: false },
@@ -17,26 +17,25 @@ var TF_MODULE_NAV = [
   { name: 'Intrinsic Semi',     path: '../09_intrinsic_semiconductors/index.html', current: false },
   { name: 'Doped Semi',         path: '../10_doped_semiconductors/index.html', current: false },
   { name: 'Junctions',          path: '../11_junctions_devices/index.html', current: false },
-  { name: 'Optics',             path: '../12_optics_dispersion/index.html', current: false },
+  { name: 'Optics &amp; Dispersion', path: './index.html', current: true },
   { name: 'Lasers',             path: '../13_laser_physics/index.html', current: false },
   { name: 'Magnetism',          path: '../14_magnetism/index.html', current: false },
   { name: 'Thermal',            path: '../15_thermal_properties/index.html', current: false },
-  { name: 'Thin Film',          path: './index.html', current: true }
 ];
 
 /* ── Badges ── */
-var TF_BADGES = [
-  { id: 'tf-explorer', name: 'Thin Film Explorer', desc: 'First playground visit', icon: '\u{1F50D}' },
-  { id: 'tf-airy',     name: 'Airy Master',        desc: 'Match an Airy fringe prediction', icon: '\u{1F4CA}' },
-  { id: 'tf-coating',  name: 'AR Coating Designer', desc: 'Solve the AR puzzle', icon: '\u{1F9EA}' },
-  { id: 'tf-champ',    name: 'Interference Champ',  desc: 'Score 5/5 in challenges', icon: '\u{1F3C6}' }
+var OD_BADGES = [
+  { id: 'od-explorer', name: 'Optics Explorer',         desc: 'First playground visit',      icon: '\u{1F50D}' },
+  { id: 'od-airy',     name: 'Airy Master',             desc: 'Match an Airy fringe prediction', icon: '\u{1F4CA}' },
+  { id: 'od-coating',  name: 'AR Coating Designer',     desc: 'Solve the AR puzzle',         icon: '\u{1F9EA}' },
+  { id: 'od-champ',    name: 'Optics Champion',         desc: 'Score 5/5 in challenges',     icon: '\u{1F3C6}' }
 ];
 
 /* ── Challenge Bank ── */
-var TF_CHALLENGE_BANK = [
+var OD_CHALLENGE_BANK = [
   {
     q: "For air/SiO\u2082/Si with d=195 nm and \u03bb=620 nm, which outcome is dominant?",
-    options: ["High reflection (\u211b \u2248 65%)", "High transmission (\u8476; \u2248 80%)", "Total absorption", "R = T = 50%"],
+    options: ["High reflection (R \u2248 65%)", "High transmission (T \u2248 80%)", "Total absorption", "R = T = 50%"],
     answer: 0, xp: 20,
     hint: "SiO\u2082 on Si has a large index contrast at the 2\u21923 interface, giving strong reflection."
   },
@@ -67,7 +66,7 @@ var TF_CHALLENGE_BANK = [
 ];
 
 /* ── AR Puzzle Data ── */
-var TF_PUZZLE_BANK = [
+var OD_PUZZLE_BANK = [
   { substrate: 'Si (n=3.5)',   correctN2: 1.87, correctD: 78,  n2Tol: 0.15, dTol: 12 },
   { substrate: 'Glass (n=1.5)', correctN2: 1.22, correctD: 112, n2Tol: 0.10, dTol: 15 },
   { substrate: 'GaAs (n=3.4)', correctN2: 1.84, correctD: 80,  n2Tol: 0.15, dTol: 12 }
@@ -75,72 +74,72 @@ var TF_PUZZLE_BANK = [
 
 /* ═══════════════════════ Challenge Engine ═══════════════════════ */
 
-var tfCh = { score: 0, combo: 0, current: null, timeLeft: 20, timer: null, total: 0 };
+var odCh = { score: 0, combo: 0, current: null, timeLeft: 20, timer: null, total: 0 };
 
-function initTFChallenge() {
-  tfCh.score = 0; tfCh.combo = 0; tfCh.total = 0;
-  nextTFChallenge();
+function initODChallenge() {
+  odCh.score = 0; odCh.combo = 0; odCh.total = 0;
+  nextODChallenge();
 }
 
-function nextTFChallenge() {
-  clearInterval(tfCh.timer);
-  var idx = Math.floor(Math.random() * TF_CHALLENGE_BANK.length);
-  tfCh.current = TF_CHALLENGE_BANK[idx];
-  tfCh.total++;
-  tfCh.timeLeft = 20;
-  document.getElementById('ch-question').textContent = tfCh.current.q;
+function nextODChallenge() {
+  clearInterval(odCh.timer);
+  var idx = Math.floor(Math.random() * OD_CHALLENGE_BANK.length);
+  odCh.current = OD_CHALLENGE_BANK[idx];
+  odCh.total++;
+  odCh.timeLeft = 20;
+  document.getElementById('ch-question').textContent = odCh.current.q;
   var opts = document.getElementById('ch-options');
   opts.innerHTML = '';
-  for (var i = 0; i < tfCh.current.options.length; i++) {
+  for (var i = 0; i < odCh.current.options.length; i++) {
     var btn = document.createElement('button');
     btn.className = 'submit-btn';
-    btn.textContent = tfCh.current.options[i];
-    btn.onclick = (function(ans) { return function() { guessTFChallenge(ans); }; })(i);
+    btn.textContent = odCh.current.options[i];
+    btn.onclick = (function(ans) { return function() { guessODChallenge(ans); }; })(i);
     opts.appendChild(btn);
   }
   document.getElementById('ch-feedback').textContent = '';
-  startTFTimer(20);
+  startODTimer(20);
 }
 
-function startTFTimer(seconds) {
+function startODTimer(seconds) {
   var fill = document.getElementById('ch-timer');
   fill.style.width = '100%';
-  tfCh.timer = setInterval(function() {
-    tfCh.timeLeft--;
-    fill.style.width = (tfCh.timeLeft / seconds * 100) + '%';
-    if (tfCh.timeLeft <= 10) fill.classList.add('urgent');
-    if (tfCh.timeLeft <= 0) { clearInterval(tfCh.timer); guessTFChallenge(-1); }
+  odCh.timer = setInterval(function() {
+    odCh.timeLeft--;
+    fill.style.width = (odCh.timeLeft / seconds * 100) + '%';
+    if (odCh.timeLeft <= 10) fill.classList.add('urgent');
+    if (odCh.timeLeft <= 0) { clearInterval(odCh.timer); guessODChallenge(-1); }
   }, 1000);
 }
 
-function guessTFChallenge(ans) {
-  clearInterval(tfCh.timer);
+function guessODChallenge(ans) {
+  clearInterval(odCh.timer);
   var fb = document.getElementById('ch-feedback');
-  if (ans === tfCh.current.answer) {
-    tfCh.combo++;
-    var bonus = tfCh.combo >= 3 ? 5 : 0;
-    var gain = tfCh.current.xp + bonus;
-    tfCh.score += gain;
+  if (ans === odCh.current.answer) {
+    odCh.combo++;
+    var bonus = odCh.combo >= 3 ? 5 : 0;
+    var gain = odCh.current.xp + bonus;
+    odCh.score += gain;
     fb.innerHTML = '\u2705 Correct! +' + gain + ' XP' + (bonus > 0 ? ' (combo!)' : '');
     _GameState.addXP(gain);
-    if (tfCh.score >= 100) grantTFBadge('tf-airy');
-    if (tfCh.combo >= 5) grantTFBadge('tf-champ');
+    if (odCh.score >= 100) grantODBadge('od-airy');
+    if (odCh.combo >= 5) grantODBadge('od-champ');
   } else {
-    tfCh.combo = 0;
-    fb.innerHTML = '\u274C Wrong. ' + tfCh.current.hint;
+    odCh.combo = 0;
+    fb.innerHTML = '\u274C Wrong. ' + odCh.current.hint;
   }
-  updateTFScoreboard();
+  updateODScoreboard();
   _GameState.save();
-  setTimeout(nextTFChallenge, 2500);
+  setTimeout(nextODChallenge, 2500);
 }
 
 /* ═══════════════════════ Puzzle Engine ═══════════════════════ */
 
-function initTFPuzzle() {
+function initODPuzzle() {
   var list = document.getElementById('puz-list');
   list.innerHTML = '';
-  for (var i = 0; i < TF_PUZZLE_BANK.length; i++) {
-    var p = TF_PUZZLE_BANK[i];
+  for (var i = 0; i < OD_PUZZLE_BANK.length; i++) {
+    var p = OD_PUZZLE_BANK[i];
     var row = document.createElement('div');
     row.style.cssText = 'display:flex;gap:12px;align-items:center;margin:8px 0;flex-wrap:wrap;';
     row.innerHTML =
@@ -151,10 +150,10 @@ function initTFPuzzle() {
   }
 }
 
-function checkTFPuzzle() {
-  var ok = 0, total = TF_PUZZLE_BANK.length;
+function checkODPuzzle() {
+  var ok = 0, total = OD_PUZZLE_BANK.length;
   for (var i = 0; i < total; i++) {
-    var p = TF_PUZZLE_BANK[i];
+    var p = OD_PUZZLE_BANK[i];
     var n2el = document.getElementById('pz-n2-' + i);
     var dEl  = document.getElementById('pz-d-' + i);
     var n2 = parseFloat(n2el ? n2el.value : '0');
@@ -165,33 +164,32 @@ function checkTFPuzzle() {
   if (ok === total) {
     fb.innerHTML = '\u2705 Perfect! +' + (ok * 20) + ' XP';
     _GameState.addXP(ok * 20);
-    grantTFBadge('tf-coating');
+    grantODBadge('od-coating');
   } else {
     fb.innerHTML = ok + '/' + total + ' correct. Hint: n\u2082 \u2248 \u221a(n\u2081n\u2083) and d = \u03bb/(4n\u2082). ' +
       'For Si: n\u2082 \u2248 1.87, d \u2248 78 nm at \u03bb=550 nm.';
   }
   document.getElementById('stat-puzzles').textContent = ok + '/' + total;
-  updateTFScoreboard();
+  updateODScoreboard();
   _GameState.save();
 }
 
 /* ═══════════════════════ Badge / Scoreboard ═══════════════════════ */
 
-function grantTFBadge(id) {
-  if (_GameState.earnedBadges.indexOf(id) === -1) {
-    _GameState.earnedBadges.push(id);
-    var b = TF_BADGES.find(function(x) { return x.id === id; });
-    if (b) _GameState.addXP(30);
-  }
+function grantODBadge(id) {
+  if (_GameState.earnedBadges.has(id)) return;
+  _GameState.earnedBadges.add(id);
+  var b = OD_BADGES.find(function(x) { return x.id === id; });
+  if (b) _GameState.addXP(30);
 }
 
-function renderTFBadges() {
+function renderODBadges() {
   var box = document.getElementById('badge-list');
   if (!box) return;
   box.innerHTML = '';
-  for (var i = 0; i < TF_BADGES.length; i++) {
-    var b = TF_BADGES[i];
-    var earned = _GameState.earnedBadges.indexOf(b.id) !== -1;
+  for (var i = 0; i < OD_BADGES.length; i++) {
+    var b = OD_BADGES[i];
+    var earned = _GameState.earnedBadges.has(b.id);
     var el = document.createElement('span');
     el.className = 'material-badge';
     el.style.cssText = earned
@@ -203,23 +201,23 @@ function renderTFBadges() {
   }
 }
 
-function updateTFScoreboard() {
-  document.getElementById('stat-challenges').textContent = tfCh.score > 0 ? tfCh.score : '0';
+function updateODScoreboard() {
+  document.getElementById('stat-challenges').textContent = odCh.score > 0 ? odCh.score : '0';
   var pu = document.getElementById('stat-puzzles').textContent || '0';
-  document.getElementById('stat-badges').textContent = _GameState.earnedBadges.length;
+  document.getElementById('stat-badges').textContent = _GameState.earnedBadges.size;
   document.getElementById('stat-xp').textContent = _GameState.xp ? _GameState.xp() : 0;
   document.getElementById('nav-xp').textContent = (_GameState.xp ? _GameState.xp() : 0) + ' XP';
-  renderTFBadges();
+  renderODBadges();
 }
 
 /* ═══════════════════════ Module Nav Render ═══════════════════════ */
 
-function renderTFModuleNav() {
+function renderODModuleNav() {
   var box = document.getElementById('module-nav');
   if (!box) return;
   box.innerHTML = '';
-  for (var i = 0; i < TF_MODULE_NAV.length; i++) {
-    var m = TF_MODULE_NAV[i];
+  for (var i = 0; i < OD_MODULE_NAV.length; i++) {
+    var m = OD_MODULE_NAV[i];
     var a = document.createElement('a');
     a.href = m.path;
     a.textContent = m.name;
@@ -232,19 +230,32 @@ function renderTFModuleNav() {
 
 /* ═══════════════════════ Mode Switch Hook ═══════════════════════ */
 
+var _prevODMode = '';
 var _origSetGameMode = window.setGameMode;
 window.setGameMode = function(mode) {
   if (typeof _origSetGameMode === 'function') _origSetGameMode(mode);
-  if (mode === 'challenge') { initTFChallenge(); }
-  else if (mode === 'puzzle') { initTFPuzzle(); }
-  else if (mode === 'play')   { if (typeof tfResetPulse === 'function') tfResetPulse(); }
+
+  if (mode === 'challenge') { initODChallenge(); }
+  else if (mode === 'puzzle') { initODPuzzle(); }
+  else if (mode === 'play') {
+    /* Deferred init: init Playground on first access */
+    if (typeof initODPlayground === 'function') initODPlayground();
+    /* Show default sub-tab (Snell) */
+    if (typeof odSubTab === 'function') odSubTab('snell');
+  }
+
+  /* Stop attenuation animation when leaving Playground */
+  if (_prevODMode === 'play' && mode !== 'play') {
+    if (typeof _odStopSkinAnim === 'function') _odStopSkinAnim();
+  }
+  _prevODMode = mode;
 };
 
 /* ═══════════════════════ Init ── */
 
-function initTFGames() {
-  renderTFModuleNav();
-  updateTFScoreboard();
-  grantTFBadge('tf-explorer');
+function initODGames() {
+  renderODModuleNav();
+  updateODScoreboard();
+  grantODBadge('od-explorer');
 }
-window.initTFGames = initTFGames;
+window.initODGames = initODGames;

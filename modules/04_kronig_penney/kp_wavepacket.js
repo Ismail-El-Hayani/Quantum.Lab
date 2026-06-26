@@ -115,7 +115,11 @@ function initWavePacketUI() {
 
   var orig = window.setGameMode;
   window.setGameMode = function(mode) {
-    if (typeof orig === 'function') orig(mode);
+    if (mode === 'play' && typeof window.__fastPlaygroundSwitch === 'function') {
+      window.__fastPlaygroundSwitch(mode);
+    } else if (typeof orig === 'function') {
+      orig(mode);
+    }
     if (mode === 'wavepacket') { _onWavePacketVisible(); wpPlay(); }
     else { wpPause(); }
   };

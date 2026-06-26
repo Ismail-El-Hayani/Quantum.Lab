@@ -3,47 +3,355 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QHO Lab — Wavefunction Playground</title>
+<title>QHO Lab — Physics Playground</title>
 <script src="plotly-2.27.0.min.js"></script>
-
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
 <link rel="stylesheet" href="../../shared_styles.css">
 <style>
-  .challenge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  .puzzle-board { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; padding: 1rem; background: var(--bg-panel); border-radius: var(--radius-sm); }
-  .energy-slot { aspect-ratio: 1; border: 2px dashed var(--glass-border); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-dim); transition: all 0.2s; }
-  .energy-slot.occupied { border-style: solid; border-color: var(--accent-cyan); background: rgba(0,240,255,0.06); color: var(--accent-cyan); }
-  .energy-particle { width: 36px; height: 36px; border-radius: 50%; background: radial-gradient(circle, var(--accent-cyan), var(--accent-purple)); box-shadow: 0 0 12px rgba(0,240,255,0.4); cursor: grab; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 0.7rem; font-weight: 700; }
-  .energy-particle:active { cursor: grabbing; }
-  .target-wave { border: 2px solid var(--glass-border); border-radius: var(--radius-sm); padding: 0.8rem; background: var(--bg-elevated); }
-  .target-wave.correct { border-color: var(--accent-green); box-shadow: 0 0 16px rgba(74,222,128,0.15); }
-  .draggable-target { cursor: pointer; border: 2px dashed var(--glass-border); border-radius: var(--radius-sm); padding: 1rem; transition: all 0.2s; text-align: center; }
-  .draggable-target:hover { border-color: var(--accent-cyan); background: rgba(0,240,255,0.04); }
-  .draggable-target.selected { border-color: var(--accent-purple); background: rgba(192,132,252,0.08); }
-  .timer-bar { height: 4px; background: var(--bg-elevated); border-radius: 2px; overflow: hidden; margin-bottom: 1rem; }
-  .timer-fill { height: 100%; background: var(--accent-cyan); transition: width 1s linear; }
-  .timer-fill.urgent { background: var(--accent-red); }
-  .laser-cannon { display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-elevated); border-radius: var(--radius-sm); border: 1px solid var(--glass-border); }
-  .laser-beam { flex: 1; height: 4px; background: linear-gradient(90deg, var(--accent-pink), var(--accent-cyan)); border-radius: 2px; position: relative; overflow: hidden; }
-  .laser-pulse { position: absolute; width: 20px; height: 100%; background: #fff; border-radius: 50%; filter: blur(2px); animation: laserFly 2s infinite linear; }
-  @keyframes laserFly { from { left: -20px; } to { left: 100%; } }
-  .atom-target { width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--glass-border); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
-  .atom-target.excited { border-color: var(--accent-pink); box-shadow: 0 0 20px rgba(255,78,205,0.3); animation: pulse 0.5s infinite alternate; }
-  @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
-.mode-btn-group { display:flex; gap:0.5rem; margin:0.75rem 0; }
-.mode-btn-group button { flex:1; }
-.plot-container {
-  width: 100%;
-  min-height: 200px;
-  background: var(--bg-panel);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--glass-border);
-}
-.atom-legend-card { background: var(--bg-panel); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); padding: 0.8rem; }
-.atom-legend-row { display: flex; justify-content: space-between; align-items: center; padding: 0.25rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.atom-legend-row:last-child { border-bottom: none; }
-.atom-legend-label { font-size: 0.75rem; color: var(--text-dim); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.5px; }
-.atom-legend-value { font-size: 0.85rem; color: var(--accent-cyan); font-family: var(--font-mono); font-weight: 600; }
+  /* === Module canonical layout === */
+  .game-layout {
+    max-width:1600px;
+    margin:0 auto;
+    padding:0;
+    display:grid;
+    grid-template-columns:1fr 340px;
+    gap:var(--space-lg);
+    align-items:start;
+    position:relative;
+    z-index:1;
+  }
+  @media (max-width:1000px) { .game-layout { grid-template-columns:1fr; } }
+
+  .game-main { min-width:0; position:relative; z-index:1; container-type:inline-size; container-name:playMain; }
+
+  .game-sidebar {
+    min-width:0;
+    position:sticky;
+    top:5rem;
+    align-self:start;
+    max-height:calc(100vh - 6rem);
+    overflow-y:auto;
+    padding:1rem;
+    background:var(--bg-game);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-lg);
+    z-index:10;
+  }
+  .game-sidebar::-webkit-scrollbar { width:4px; }
+  .game-sidebar::-webkit-scrollbar-thumb { background:var(--glass-border); border-radius:2px; }
+  .game-sidebar.static { position:static; max-height:none; overflow-y:visible; }
+
+  .sidebar-card {
+    background:rgba(16,16,28,0.55);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+    margin-bottom:1rem;
+  }
+  .sidebar-card:last-child { margin-bottom:0; }
+  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
+
+  .macro-panel {
+    background:var(--bg-panel);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+    margin-top:1rem;
+  }
+  .macro-panel:first-of-type { margin-top:0; }
+  .macro-panel h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
+
+  .insights {
+    display:grid;
+    grid-template-columns:1fr;
+    gap:1rem;
+    margin-top:1rem;
+  }
+  @media (min-width:900px) { .insights { grid-template-columns:1fr 1fr; } }
+
+  .insight-card {
+    background:var(--bg-panel);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+  }
+  .insight-card .insight-title { margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright); }
+
+  .viz-card {
+    background:var(--bg-elevated);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-sm);
+    padding:0.8rem;
+    margin-bottom:1rem;
+  }
+  .viz-card:last-child { margin-bottom:0; }
+  .viz-card h4 { margin:0 0 0.4rem; font-size:0.9rem; color:var(--text-bright); }
+
+  .slider-group { margin-bottom:1rem; }
+  .slider-group label { display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:0.3rem; }
+  .slider-group input[type=range], .slider-group select { width:100%; }
+  .slider-value { font-family:var(--font-mono); color:var(--accent-cyan); font-weight:700; }
+  .slider-desc { font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; }
+
+  .dash-row {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0.35rem 0;
+    border-bottom:1px solid rgba(255,255,255,0.04);
+  }
+  .dash-row:last-child { border-bottom:none; }
+  .dash-label { font-size:0.78rem; color:var(--text-dim); }
+  .dash-val { font-family:var(--font-mono); font-size:0.82rem; color:var(--text-main); min-width:90px; text-align:right; }
+
+  /* === Equation styling === */
+  .equation-box {
+    background:rgba(0,0,0,0.18);
+    border:1px solid var(--glass-border);
+    border-left:3px solid var(--accent-cyan);
+    border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+    padding:0.8rem 1rem;
+    font-size:0.85rem;
+    color:var(--text-main);
+    line-height:1.7;
+    overflow-x:auto;
+    margin-top:0.8rem;
+  }
+  .mjx-chtml { font-size:105% !important; }
+
+  /* === Centered pill mode bar === */
+  .game-mode-bar {
+    display:flex;
+    justify-content:center;
+    gap:0.75rem;
+    flex-wrap:wrap;
+    margin:1.5rem auto 2rem;
+    padding:0.5rem;
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--glass-border);
+    border-radius:999px;
+    width:fit-content;
+    max-width:95%;
+  }
+  .game-mode-btn {
+    appearance:none;
+    border:1px solid transparent;
+    background:transparent;
+    color:var(--text-dim);
+    font-family:inherit;
+    font-size:0.85rem;
+    padding:0.55rem 1.25rem;
+    border-radius:999px;
+    cursor:pointer;
+    transition:all 0.2s ease;
+    display:inline-flex;
+    align-items:center;
+    gap:0.45rem;
+  }
+  .game-mode-btn:hover {
+    background:rgba(255,255,255,0.05);
+    color:var(--text-main);
+    border-color:var(--glass-border);
+  }
+  .game-mode-btn.active {
+    background:linear-gradient(135deg, rgba(0,240,255,0.85), rgba(255,78,205,0.85));
+    color:#fff;
+    border-color:transparent;
+    box-shadow:0 4px 18px rgba(0,240,255,0.25);
+    font-weight:600;
+  }
+
+  /* === Module-specific cards === */
+  .plot-grid {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:1rem;
+  }
+  @container playMain (max-width:650px) { .plot-grid { grid-template-columns:1fr; } }
+  @media (max-width:1000px) { .plot-grid { grid-template-columns:1fr; } }
+
+  .plot-box {
+    background:var(--bg-elevated);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-sm);
+    padding:0.6rem;
+    min-width:0;
+    overflow:hidden;
+  }
+  .plot-box.full { grid-column:1 / -1; }
+  .plot-box-label {
+    font-family:var(--font-mono);
+    font-size:0.65rem;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:var(--accent-cyan);
+    margin-bottom:0.4rem;
+    padding-bottom:0.3rem;
+    border-bottom:1px solid var(--glass-border);
+  }
+
+  .plot-desc {
+    margin-top:1rem;
+    padding:0.8rem 1rem;
+    background:rgba(0,0,0,0.2);
+    border-left:3px solid var(--accent-cyan);
+    border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+    font-size:0.82rem;
+    color:var(--text-muted);
+    line-height:1.6;
+  }
+
+  .legend-row {
+    display:flex;
+    flex-wrap:wrap;
+    gap:0.4rem 0.85rem;
+    font-size:0.66rem;
+    color:var(--text-muted);
+    margin-top:0.5rem;
+  }
+  .legend-row span { display:inline-flex; align-items:center; gap:0.3rem; }
+  .legend-dot {
+    width:7px; height:7px;
+    border-radius:50%;
+    display:inline-block; flex-shrink:0;
+  }
+  .dot-cyan   { background:#00f0ff; box-shadow:0 0 4px #00f0ff; }
+  .dot-pink   { background:#ff4ecd; box-shadow:0 0 4px #ff4ecd; }
+  .dot-gold   { background:#ffd54f; box-shadow:0 0 4px #ffd54f; }
+  .dot-green  { background:#4ade80; box-shadow:0 0 4px #4ade80; }
+  .dot-purple { background:#c084fc; box-shadow:0 0 4px #c084fc; }
+
+  .mode-btn-group { display:flex; gap:0.5rem; margin:0.75rem 0; }
+  .mode-btn-group button { flex:1; }
+
+  .plot-container {
+    width:100%;
+    min-height:240px;
+    background:var(--bg-panel);
+    border-radius:var(--radius-sm);
+    overflow:hidden;
+  }
+
+  /* Legacy puzzle/challenge styles kept for JS compat */
+  .challenge-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  .puzzle-board { display:grid; grid-template-columns:repeat(6, 1fr); gap:0.5rem; padding:1rem; background:var(--bg-panel); border-radius:var(--radius-sm); }
+  .energy-slot { aspect-ratio:1; border:2px dashed var(--glass-border); border-radius:8px; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:0.85rem; color:var(--text-dim); transition:all 0.2s; }
+  .energy-slot.occupied { border-style:solid; border-color:var(--accent-cyan); background:rgba(0,240,255,0.06); color:var(--accent-cyan); }
+  .energy-particle { width:36px; height:36px; border-radius:50%; background:radial-gradient(circle, var(--accent-cyan), var(--accent-purple)); box-shadow:0 0 12px rgba(0,240,255,0.4); cursor:grab; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-size:0.7rem; font-weight:700; }
+  .energy-particle:active { cursor:grabbing; }
+  .target-wave { border:2px solid var(--glass-border); border-radius:var(--radius-sm); padding:0.8rem; background:var(--bg-elevated); }
+  .target-wave.correct { border-color:var(--accent-green); box-shadow:0 0 16px rgba(74,222,128,0.15); }
+  .draggable-target { cursor:pointer; border:2px dashed var(--glass-border); border-radius:var(--radius-sm); padding:1rem; transition:all 0.2s; text-align:center; }
+  .draggable-target:hover { border-color:var(--accent-cyan); background:rgba(0,240,255,0.04); }
+  .draggable-target.selected { border-color:var(--accent-purple); background:rgba(192,132,252,0.08); }
+  .timer-bar { height:4px; background:var(--bg-elevated); border-radius:2px; overflow:hidden; margin-bottom:1rem; }
+  .timer-fill { height:100%; background:var(--accent-cyan); transition:width 1s linear; }
+  .timer-fill.urgent { background:var(--accent-red); }
+  .laser-cannon { display:flex; align-items:center; gap:1rem; padding:1rem; background:var(--bg-elevated); border-radius:var(--radius-sm); border:1px solid var(--glass-border); }
+  .laser-beam { flex:1; height:4px; background:linear-gradient(90deg, var(--accent-pink), var(--accent-cyan)); border-radius:2px; position:relative; overflow:hidden; }
+  .laser-pulse { position:absolute; width:20px; height:100%; background:#fff; border-radius:50%; filter:blur(2px); animation:laserFly 2s infinite linear; }
+  @keyframes laserFly { from { left:-20px; } to { left:100%; } }
+  .atom-target { width:60px; height:60px; border-radius:50%; border:2px solid var(--glass-border); display:flex; align-items:center; justify-content:center; font-size:1.5rem; }
+  .atom-target.excited { border-color:var(--accent-pink); box-shadow:0 0 20px rgba(255,78,205,0.3); animation:pulse 0.5s infinite alternate; }
+  @keyframes pulse { from { transform:scale(1); } to { transform:scale(1.1); } }
+
+  .challenge-panel {
+    background:var(--bg-panel);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+    margin-top:1rem;
+  }
+  .challenge-panel:first-of-type { margin-top:0; }
+  .challenge-header { display:flex; align-items:center; gap:0.6rem; margin-bottom:0.6rem; }
+  .challenge-icon { width:2rem; height:2rem; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1rem; }
+  .challenge-title { font-size:0.95rem; font-weight:700; color:var(--text-bright); }
+  .challenge-difficulty { margin-left:auto; font-size:0.65rem; text-transform:uppercase; padding:0.2rem 0.5rem; border-radius:999px; font-weight:700; }
+  .challenge-difficulty.easy  { background:rgba(74,222,128,0.15); color:var(--accent-green); }
+  .challenge-difficulty.medium { background:rgba(255,213,79,0.15); color:#ffd54f; }
+  .challenge-difficulty.hard { background:rgba(255,68,68,0.15); color:var(--accent-red); }
+  .challenge-difficulty.master { background:rgba(192,132,252,0.15); color:var(--accent-purple); }
+  .challenge-desc { font-size:0.82rem; color:var(--text-dim); line-height:1.5; margin-bottom:0.6rem; }
+  .challenge-reward { font-size:0.75rem; color:var(--accent-gold); margin-bottom:0.8rem; }
+  .challenge-feedback { margin-top:0.8rem; padding:0.7rem; border-radius:var(--radius-sm); font-size:0.82rem; display:none; }
+  .challenge-feedback.success { background:rgba(74,222,128,0.12); color:var(--accent-green); border:1px solid rgba(74,222,128,0.3); }
+  .challenge-feedback.error { background:rgba(255,68,68,0.12); color:var(--accent-red); border:1px solid rgba(255,68,68,0.3); }
+  .challenge-feedback.hint { background:rgba(255,213,79,0.12); color:#ffd54f; border:1px solid rgba(255,213,79,0.3); }
+
+  .drop-zone {
+    border:2px dashed var(--glass-border);
+    border-radius:var(--radius-sm);
+    padding:1rem;
+    text-align:center;
+    font-size:0.8rem;
+    color:var(--text-dim);
+    transition:all 0.2s;
+  }
+  .drop-zone.dragover { border-color:var(--accent-cyan); background:rgba(0,240,255,0.06); }
+  .drop-zone.correct { border-color:var(--accent-green); background:rgba(74,222,128,0.08); }
+
+  .control-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.3rem; }
+  .control-label { font-size:0.8rem; color:var(--text-dim); }
+  .control-value { font-family:var(--font-mono); font-size:0.85rem; color:var(--accent-cyan); font-weight:700; }
+  .btn-group { display:flex; gap:0.5rem; }
+  .btn-group button { flex:1; }
+
+  .scoreboard {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:0.5rem;
+  }
+  .score-cell { background:var(--bg-elevated); border:1px solid var(--glass-border); border-radius:var(--radius-sm); padding:0.5rem; text-align:center; }
+  .score-num { font-family:var(--font-mono); font-size:1.1rem; color:var(--accent-cyan); font-weight:700; }
+  .score-label { font-size:0.65rem; color:var(--text-dim); text-transform:uppercase; }
+
+  .section-divider { height:1px; background:var(--glass-border); }
+
+  /* Compact layout when Playground/Challenges/Puzzles are active */
+  .game-container[data-active-mode="play"] .game-hero .hero-desc,
+  .game-container[data-active-mode="challenge"] .game-hero .hero-desc,
+  .game-container[data-active-mode="puzzle"] .game-hero .hero-desc {
+    display: none;
+  }
+  .game-container[data-active-mode="play"] .game-mode-bar,
+  .game-container[data-active-mode="challenge"] .game-mode-bar,
+  .game-container[data-active-mode="puzzle"] .game-mode-bar {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .game-container[data-active-mode="play"] .game-hero,
+  .game-container[data-active-mode="challenge"] .game-hero,
+  .game-container[data-active-mode="puzzle"] .game-hero {
+    padding-bottom: 0.5rem;
+  }
+  .game-container[data-active-mode="play"] .game-hero h1,
+  .game-container[data-active-mode="challenge"] .game-hero h1,
+  .game-container[data-active-mode="puzzle"] .game-hero h1 {
+    font-size: 1.6rem;
+    margin-bottom: 0;
+  }
+  .game-container[data-active-mode="play"] .macro-panel,
+  .game-container[data-active-mode="challenge"] .macro-panel,
+  .game-container[data-active-mode="puzzle"] .macro-panel {
+    padding: 0.6rem;
+    margin-top: 0.6rem;
+  }
+  .game-container[data-active-mode="play"] .plot-box,
+  .game-container[data-active-mode="challenge"] .plot-box,
+  .game-container[data-active-mode="puzzle"] .plot-box {
+    padding: 0.4rem;
+  }
+  .game-container[data-active-mode="play"] .plot-desc,
+  .game-container[data-active-mode="challenge"] .plot-desc,
+  .game-container[data-active-mode="puzzle"] .plot-desc {
+    display: none;
+  }
+  .game-container[data-active-mode="play"] .play-insight,
+  .game-container[data-active-mode="challenge"] .play-insight,
+  .game-container[data-active-mode="puzzle"] .play-insight {
+    display: none;
+  }
 </style>
 </head>
 <body>
@@ -60,22 +368,28 @@
   </div>
 </nav>
 
-<div class="game-hero" style="padding-bottom:0;">
-  <div class="level-badge">Module 01 · Level <span id="current-level">1</span> · Quantum Initiate</div>
-  <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">The Quantum Harmonic Oscillator</span></h1>
-  <p class="hero-desc">
-    <b>Simulation 1: The Wavefunction Sandbox</b><br>
-    Explore the fundamental "building block" of quantum vibrations. This sandbox visualizes the <b>time evolution</b> of a particle in a parabolic potential. 
-    Switch between <b>Eigenstates</b> (stationary energy levels), <b>Superpositions</b> (interfering waves), and <b>Coherent States</b> (the bridge to classical physics).
-    <br>Re(ψ) in cyan, Im(ψ) in pink, |ψ|² in gold.
-  </p>
-</div>
-
 <div class="game-container">
 
-  <!-- MODE SELECTOR -->
+  <div class="game-hero" style="padding-bottom:0;">
+    <div class="level-badge">Module 01 · Level <span id="current-level">1</span> · Quantum Initiate</div>
+    <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">The Quantum Harmonic Oscillator</span></h1>
+    <p class="hero-desc">
+      <b>Simulation 1: The Wavefunction Sandbox</b><br>
+      Explore the fundamental "building block" of quantum vibrations. This sandbox visualizes the <b>time evolution</b> of a particle in a parabolic potential.
+      Switch between <b>Eigenstates</b> (stationary energy levels), <b>Superpositions</b> (interfering waves), and <b>Coherent States</b> (the bridge to classical physics).
+      <br>Re(ψ) in cyan, Im(ψ) in pink, |ψ|² in gold.
+    </p>
+  </div>
+
+    <!-- ═══════════════ MODE SELECTOR ═══════════════ -->
   <div class="game-mode-bar">
-    <button class="game-mode-btn active" id="mode-play" onclick="setGameMode('play')">
+    <button class="game-mode-btn active" id="mode-story" onclick="setGameMode('story')">
+      <span class="mode-icon">📖</span> Story
+    </button>
+    <button class="game-mode-btn" id="mode-theory" onclick="setGameMode('theory')">
+      <span class="mode-icon">🎓</span> Theory
+    </button>
+    <button class="game-mode-btn" id="mode-play" onclick="setGameMode('play')">
       <span class="mode-icon">🔬</span> Playground
     </button>
     <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">
@@ -86,590 +400,620 @@
     </button>
   </div>
 
-  <!-- ===== PLAYGROUND MODE ===== -->
-  <div class="mode-section" id="section-play">
-    <div class="playground-area">
-      <div class="playground-header">
-        <div class="playground-title">🔬 Wavefunction Sandbox</div>
-        <div class="playground-level">Switch between eigenstate (C–F in the figure), superposition (G), and coherent state (H). Watch Re ψ, Im ψ, and |ψ|² evolve in time.</div>
+  <!-- ═══════════════ STORY MODE ═══════════════ -->
+  <div class="mode-section active" id="section-story">
+
+    <div class="game-layout">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>📖 The Story — The Quantum Harmonic Oscillator</h3>
+          <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.6;margin-bottom:1rem;">
+            Imagine a marble rolling in a smooth bowl. In the classical world it can sit still at the bottom.
+            In the quantum world, the marble is never truly still: it carries a residual jitter, a minimum energy
+            that cannot be squeezed away. This is the quantum harmonic oscillator — the simplest trap in which
+            a particle is bound, yet never rests.
+          </p>
+
+          <div class="insights">
+            <div class="insight-card">
+              <div class="insight-title">🧩 Historical Context</div>
+              <p>
+                Planck used a set of equally-spaced oscillators to explain the black-body spectrum in 1900.
+                Einstein later showed that these quanta also carry momentum, turning the harmonic oscillator
+                into the first quantum field mode. The QHO became the universal language for any system near a
+                stable equilibrium: phonons in a crystal, molecular vibrations, cavity photons, and even the
+                "qubits" of superconducting circuits.
+              </p>
+            </div>
+
+            <div class="insight-card">
+              <div class="insight-title">🔬 Why It Surprised Physicists</div>
+              <p>
+                Classical intuition says a particle at the bottom of a well has zero energy. Quantum mechanics
+                forbids it: the uncertainty principle demands \(\Delta x \, \Delta p \geq \hbar/2\), so confining the
+                particle costs kinetic energy. The ground state still holds \(\frac{1}{2}\hbar\omega\) — the
+                zero-point energy. This same energy keeps liquid helium from freezing at absolute zero and
+                prevents any real oscillator from ever coming to rest.
+              </p>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">🎮 How the Playground Lets You Feel It</div>
+              <p>
+                The Wavefunction Sandbox has three lenses. <strong>Eigen</strong> freezes the probability density
+                and lets you count nodes: each extra node is one more quantum of energy. <strong>Super</strong>
+                mixes two eigenstates and produces a breathing probability that sloshes back and forth — direct
+                evidence of interference between energy levels. <strong>Coherent</strong> builds a Gaussian
+                wavepacket that oscillates like a classical ball on a spring, proving that quantum mechanics
+                can look classical when many levels are phased just right.
+              </p>
+            </div>
+          </div>
+        </section>
       </div>
 
-      <div style="display:grid; grid-template-columns: 1fr 320px; gap: 1.5rem;">
-        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-          <!-- Main wave plot: Re ψ, Im ψ, |ψ|² -->
-          <!-- plot-psi viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Wavefunction Ψ(x,t)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Real (cyan) and imaginary (pink) parts of Ψ plus |ψ|² probability density (gold).</p>
-  <div class="plot-container" id="plot-psi" style="min-height:300px;"></div>
-</div>
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-story"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-story" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges-story">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles-story">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp-story">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges-story">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
 
-          
-          <!-- ATOMIC 3D Plot (Revealed when Atom mode active) -->
-          <!-- plot-atom-3d viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">3D Probability Density</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Isosurface of |ψ|² in 3D Cartesian space. Colour follows the Viridis scale.</p>
-  <div class="plot-container" id="plot-atom-3d" style="min-height:500px; display:none;"></div>
-</div>
+  <!-- ═══════════════ THEORY MODE ═══════════════ -->
+  <div class="mode-section" id="section-theory" style="display:none;">
+    <div class="game-layout">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>🎓 Theory — From the Hamiltonian to the Energy Ladder</h3>
+          <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.6;margin-bottom:1rem;">
+            The quantum harmonic oscillator describes a particle in a parabolic potential. Because the potential is
+            quadratic, the Schrödinger equation separates and the spectrum turns out to be exactly solvable — a rare
+            gift that makes the QHO the textbook model for every confined mode.
+          </p>
 
-          <!-- Atom 3D color scale legend -->
-          <div id="atom-3d-legend" class="atom-legend-card" style="display:none;">
-            <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.75rem; color:var(--text-dim); font-family:var(--font-mono);">
-              <span>Low |ψ|²</span>
-              <div style="flex:1; height:8px; background:linear-gradient(90deg, #440154, #31688e, #35b779, #fde725); border-radius:4px;"></div>
-              <span>High |ψ|²</span>
+          <div class="insights">
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">1. The Hamiltonian</div>
+              <p>
+                The total energy is the sum of kinetic and quadratic potential energy. Using natural units where
+                \(m = \omega = \hbar = 1\), it simplifies to a dimensionless operator:
+              </p>
+              <div class="equation-box">
+                $$\hat{H} = \frac{\hat{p}^2}{2m} + \frac{1}{2} m \omega^2 \hat{x}^2 \quad \xrightarrow{\;m=\omega=\hbar=1\;} \quad \hat{H} = \frac{1}{2}\left(\hat{x}^2 + \hat{p}^2\right)$$
+              </div>
             </div>
-            <div style="margin-top:0.4rem; font-size:0.72rem; color:var(--text-muted); line-height:1.4;">
-              Iso-surface = 12% of peak density. Scatter cloud shows &gt;3.5% of peak. Colors follow the Viridis scale.
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">2. Energy Spectrum</div>
+              <p>
+                Solving the time-independent Schrödinger equation gives equally spaced levels. The \(\frac{1}{2}\)
+                offset is the zero-point energy demanded by the uncertainty principle:
+              </p>
+              <div class="equation-box">
+                $$E_n = \left(n + \frac{1}{2}\right)\hbar\omega \qquad n = 0, 1, 2, \dots$$
+              </div>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">3. Wavefunctions and Hermite Polynomials</div>
+              <p>
+                Each eigenstate is a Gaussian modulated by a Hermite polynomial \(H_n\). The number of nodes equals
+                \(n\), and the natural length scale is the oscillator length \(\xi = \sqrt{\hbar/m\omega}\):
+              </p>
+              <div class="equation-box">
+                $$\Psi_n(x) = \frac{1}{\sqrt{2^n n!}} \left(\frac{m\omega}{\pi\hbar}\right)^{1/4} H_n\!\left(\sqrt{\frac{m\omega}{\hbar}}x\right) \exp\!\left(-\frac{m\omega x^2}{2\hbar}\right)$$
+              </div>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">4. Ladder Operators and Quantized Transitions</div>
+              <p>
+                Define raising \(\hat{a}^\dagger\) and lowering \(\hat{a}\) operators. They move between levels and
+                explain why absorption and emission change \(n\) by exactly one — the dipole selection rule
+                \(\Delta n = \pm 1\) you test in Puzzle 3:
+              </p>
+              <div class="equation-box">
+                $$\hat{a} = \sqrt{\frac{m\omega}{2\hbar}}\left(\hat{x} + \frac{i\hat{p}}{m\omega}\right), \qquad \hat{a}^\dagger = \sqrt{\frac{m\omega}{2\hbar}}\left(\hat{x} - \frac{i\hat{p}}{m\omega}\right)$$
+                $$\hat{a}\,|n\rangle = \sqrt{n}\,|n-1\rangle, \qquad \hat{a}^\dagger|n\rangle = \sqrt{n+1}\,|n+1\rangle, \qquad [\hat{a}, \hat{a}^\dagger] = 1$$
+              </div>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">5. Coherent States and the Classical Limit</div>
+              <p>
+                A coherent state \(|\alpha\rangle\) is an eigenstate of \(\hat{a}\). It has the same Gaussian width
+                as the ground state, but its center oscillates like a classical harmonic oscillator. This is the
+                closest quantum analogue to a pendulum or a mass on a spring:
+              </p>
+              <div class="equation-box">
+                $$|\alpha(t)\rangle = e^{-i\omega t/2}|\alpha e^{-i\omega t}\rangle, \qquad \langle \hat{x}\rangle_t = \sqrt{\frac{2\hbar}{m\omega}}\,|\alpha|\cos(\omega t + \phi)$$
+              </div>
+            </div>
+
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="insight-title">6. Uncertainty and Zero-Point Motion</div>
+              <p>
+                In the ground state the position and momentum uncertainties are equal and saturate the uncertainty bound.
+                This is why a trapped particle can never stop:
+              </p>
+              <div class="equation-box">
+                $$\Delta x = \sqrt{\frac{\hbar}{2m\omega}}, \qquad \Delta p = \sqrt{\frac{m\hbar\omega}{2}}, \qquad \Delta x \, \Delta p = \frac{\hbar}{2}$$
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-theory"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-theory" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges-theory">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles-theory">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp-theory">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges-theory">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PLAYGROUND MODE ═══════════════ -->
+  <div class="mode-section" id="section-play" style="display:none;">
+
+    <div class="game-layout">
+      <div class="game-main">
+
+        <!-- Hero / state selector -->
+        <section class="macro-panel">
+          <h3>🔬 Wavefunction Sandbox</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.6;">
+            Switch between eigenstate, superposition, and coherent state. Watch Re ψ, Im ψ, and |ψ|² evolve in time.
+          </p>
+          <div class="mode-btn-group">
+            <button class="btn active" id="btn-eigen" onclick="setStateMode('eigenstate')">Eigen</button>
+            <button class="btn" id="btn-super" onclick="setStateMode('superposition')">Super</button>
+            <button class="btn" id="btn-coherent" onclick="setStateMode('coherent')">Coherent</button>
+          </div>
+          <div class="plot-grid">
+            <div class="plot-box">
+              <div class="plot-box-label">Wavefunction ψ(x,t)</div>
+              <div class="plot-container" id="plot-psi" style="height:280px;"></div>
+              <div class="legend-row">
+                <span><span class="legend-dot dot-cyan"></span> Re ψ(x)</span>
+                <span><span class="legend-dot dot-pink"></span> Im ψ(x)</span>
+                <span><span class="legend-dot dot-gold"></span> |ψ|²</span>
+                <span><span class="legend-dot dot-green"></span> Turning point</span>
+              </div>
+            </div>
+            <div class="plot-box">
+              <div class="plot-box-label">Energy ladder</div>
+              <div class="plot-container" id="plot-energy" style="height:280px;"></div>
+              <p style="font-size:0.72rem;color:var(--text-muted);margin-top:0.4rem;line-height:1.5;">
+                The hallmark of the QHO: every level is spaced by ℏω. Each bar is the probability |cₙ|² for the chosen state (eigenstate = one bar, coherent = Poisson distribution, superposition = two bars).
+              </p>
             </div>
           </div>
 
-          <!-- PHASE SPACE: WIGNER PLOT (New Integration) -->
-          <!-- plot-wigner viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Wigner Phase-Space Distribution</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Quasi-probability W(x,p). Negative regions = quantum non-classicality.</p>
-  <div class="plot-container" id="plot-wigner" style="min-height:300px;"></div>
-</div>
-
-
-          <div class="legend-bar" style="display:flex; justify-content:center; gap:1.5rem; margin-top:0.5rem; font-size:0.75rem; color:var(--text-dim);">
-            <span><span style="color:#00f0ff;">—</span> Re ψ(x)</span>
-            <span><span style="color:#ff4ecd;">—</span> Im ψ(x)</span>
-            <span><span style="color:#ffd54f;">—</span> |ψ(x)|²</span>
-            <span><span style="color:#4ade80;font-style:dashed;">···</span> classical turning point</span>
-          </div>
-          <!-- Dynamic plot caption -->
-          <div id="plot-caption" style="margin-top:0.6rem; padding:0.6rem 1rem; background:rgba(10,10,18,0.6); border:1px solid var(--glass-border); border-radius:var(--radius-sm); font-size:0.82rem; color:var(--text-muted); line-height:1.6;">
+          <div class="plot-desc" id="plot-caption">
             <strong style="color:var(--accent-cyan);">x</strong> = position in units of √(ℏ/mω) — the natural width of the ground-state Gaussian.
             The <strong style="color:#4ade80;">green dashed lines</strong> mark the classical turning points ±√(2E): the farthest a classical oscillator with the same energy would swing.
             <span id="caption-eigen"><strong>Eigen mode:</strong> The wave is frozen in shape (|ψ|² gold does not move). Only Re and Im swap places as the global phase e⁻ⁱᴱᵗ/ℏ rotates.</span>
             <span id="caption-super" style="display:none;"><strong>Super mode:</strong> Two eigenstates interfere. The gold probability density breathes and sloshes left-right as the two phases run at different speeds.</span>
             <span id="caption-coherent" style="display:none;"><strong>Coherent mode:</strong> The whole Gaussian packet slides back and forth like a classical ball on a spring, hitting the green turning points and rebounding.</span>
           </div>
-          <!-- Classical vs Quantum comparison -->
-          <!-- plot-classical viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Classical vs Quantum Turning Points</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Classical ±√(2E) turning points overlaid on |ψ|² probability density.</p>
-  <div class="plot-container" id="plot-classical" style="min-height:260px; margin-top:1.5rem;"></div>
-</div>
+        </section>
 
-          <!-- Energy levels -->
-          <!-- plot-energy viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Energy Eigenvalue Ladder</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Quantized levels Eₙ = (n+½)ℏω with equal spacing of ℏω.</p>
-  <div class="plot-container" id="plot-energy" style="min-height:200px; margin-top:1.5rem;"></div>
-</div>
-
-        </div>
-
-        <div>
-    <div class="challenge-panel" style="margin-bottom:1rem;">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">🌌</span>
-        <span class="challenge-title">System Selection</span>
-      </div>
-      <div class="mode-btn-group">
-        <button class="btn active" id="btn-sys-qho" onclick="setSystem('qho')">1D Harmonic</button>
-        <button class="btn" id="btn-sys-atom" onclick="setSystem('atom')">3D Hydrogen Atom</button>
-      </div>
-    </div>
-
-    <!-- QHO State selector -->
-    <div id="qho-controls-panel">
-      <div class="challenge-panel" style="margin-bottom:1rem;">
-        <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">🎭</span>
-          <span class="challenge-title">State Type</span>
-        </div>
-        <div class="mode-btn-group">
-          <button class="btn active" id="btn-eigen" onclick="setStateMode('eigenstate')">Eigen</button>
-          <button class="btn" id="btn-super" onclick="setStateMode('superposition')">Super</button>
-          <button class="btn" id="btn-coherent" onclick="setStateMode('coherent')">Coherent</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ATOM State selector -->
-    <div id="atom-controls-panel" style="display:none;">
-      <div class="challenge-panel" style="margin-bottom:1rem;">
-        <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">⚛️</span>
-          <span class="challenge-title">Orbital Quantum Numbers</span>
-        </div>
-        
-        <div class="control-row">
-          <span class="control-label">n (Principal)</span>
-          <span class="control-value" id="val-atom-n">1</span>
-        </div>
-        <input type="range" id="slider-atom-n" min="1" max="5" value="1" step="1">
-        <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Energy level and size of orbital.</p>
-
-        <div class="control-row" style="margin-top:0.6rem;">
-          <span class="control-label">l (Angular)</span>
-          <span class="control-value" id="val-atom-l">0</span>
-        </div>
-        <input type="range" id="slider-atom-l" min="0" max="4" value="0" step="1">
-        <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Orbital shape (s, p, d, f).</p>
-
-        <div class="control-row" style="margin-top:0.6rem;">
-          <span class="control-label">m (Magnetic)</span>
-          <span class="control-value" id="val-atom-m">0</span>
-        </div>
-        <input type="range" id="slider-atom-m" min="-4" max="4" value="0" step="1">
-        <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Orientation in space.</p>
-      </div>
-    </div>
-
-    <!-- ATOM Legend Panel (appears below controls in Atom mode) -->
-    <div id="atom-legend" style="display:none; margin-bottom:1rem;"></div>
-
-          <!-- Controls -->
-          <div class="challenge-panel" style="margin-bottom:1rem;">
-            <div class="challenge-header">
-              <span class="challenge-icon" style="background:rgba(0,240,255,0.1);">⚙</span>
-              <span class="challenge-title">Controls</span>
-            </div>
-
-            <div id="omega-control" style="margin-bottom:1rem;">
-              <div class="control-row">
-                <span class="control-label">Frequency ω (K/m)</span>
-                <span class="control-value" id="val-omega">1.0</span>
+        <!-- Classical vs Wigner -->
+        <section class="macro-panel">
+          <h3>📈 Classical / Quantum Comparison</h3>
+          <div class="plot-grid">
+            <div class="plot-box">
+              <div class="plot-box-label">Classical vs Quantum</div>
+              <div class="plot-container" id="plot-classical" style="height:220px;"></div>
+              <div class="legend-row">
+                <span><span class="legend-dot dot-cyan"></span> ⟨x(t)⟩</span>
+                <span><span class="legend-dot dot-yellow"></span> Classical trajectory</span>
               </div>
-              <input type="range" id="slider-omega" min="0.5" max="2.0" value="1.0" step="0.1">
-              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Controls the curvature of the potential well and cycle speed.</p>
             </div>
-
-            <div style="margin-bottom:1rem;">
-              <div class="control-row">
-                <span class="control-label">Quantum number n</span>
-                <span class="control-value" id="val-n">0</span>
+            <div class="plot-box">
+              <div class="plot-box-label">Wigner phase space</div>
+              <div class="plot-container" id="plot-wigner" style="height:220px;"></div>
+              <div class="legend-row">
+                <span><span class="legend-dot dot-cyan"></span> W &gt; 0</span>
+                <span><span class="legend-dot dot-purple"></span> W &lt; 0 (quantum)</span>
               </div>
-              <input type="range" id="slider-n" min="0" max="10" value="0" step="1">
-              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Eigenstate |n⟩ or component of superposition.</p>
-            </div>
-
-            <div id="m-control" style="margin-bottom:1rem; display:none;">
-              <div class="control-row">
-                <span class="control-label">Second state m</span>
-                <span class="control-value" id="val-m">3</span>
-              </div>
-              <input type="range" id="slider-m" min="0" max="10" value="3" step="1">
-              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">For superposition: |Ψ⟩ = c₀|n⟩ + c₁|m⟩.</p>
-            </div>
-
-            <div id="alpha-controls" style="margin-bottom:1rem; display:none;">
-              <div class="control-row">
-                <span class="control-label">Re(α)</span>
-                <span class="control-value" id="val-alpha-re">2.0</span>
-              </div>
-              <input type="range" id="slider-alpha-re" min="0" max="5" value="2.0" step="0.1">
-              <div class="control-row" style="margin-top:0.6rem;">
-                <span class="control-label">Im(α)</span>
-                <span class="control-value" id="val-alpha-im">0.0</span>
-              </div>
-              <input type="range" id="slider-alpha-im" min="-5" max="5" value="0.0" step="0.1">
-              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Displacement in phase space ⟨x⟩ = √2 Re α, ⟨p⟩ = √2 Im α.</p>
-            </div>
-
-            <div class="control-row" style="margin-top:0.8rem;">
-              <span class="control-label">Speed</span>
-              <span class="control-value" id="val-speed">1.0</span>
-            </div>
-            <input type="range" id="slider-speed" min="0.1" max="3" value="1.0" step="0.1">
-
-            <!-- Animation buttons -->
-            <div class="btn-group" style="margin-top:1rem;">
-              <button class="btn" id="btn-play" onclick="startAnimation()">⏵ Play</button>
-              <button class="btn" id="btn-pause" onclick="stopAnimation()">⏸ Pause</button>
-              <button class="btn" id="btn-reset" onclick="resetTime()">↺ Reset</button>
-            </div>
-            <div class="control-row" style="margin-top:0.5rem;">
-              <span class="control-label">Time t</span>
-              <span class="control-value" id="val-time">0.00</span>
             </div>
           </div>
+        </section>
 
-          <!-- Live Parameters -->
-          <div class="challenge-panel">
-            <div class="challenge-header">
-              <span class="challenge-icon" style="background:rgba(192,132,252,0.1);">📊</span>
-              <span class="challenge-title">Live Readout</span>
-            </div>
-            <table>
-              <tr><th>Quantity</th><th>Value</th></tr>
-              <tr><td>Energy E</td><td class="highlight-num" id="live-energy">0.500 ħω</td></tr>
-              <tr><td>Zero-point</td><td class="highlight-pink" id="live-zpe">0.500 ħω</td></tr>
-              <tr><td>Classical turning</td><td class="highlight-num" id="live-turning">±1.000</td></tr>
-              <tr><td>⟨x⟩</td><td class="highlight-num" id="live-x">0.000</td></tr>
-              <tr><td>⟨x²⟩</td><td class="highlight-num" id="live-x2">0.500</td></tr>
-              <tr><td>Δx</td><td class="highlight-pink" id="live-dx">Δx = 0.707 ħ/2</td></tr>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- THEORY TAB -->
-    <div class="insight-card" style="margin-top:1rem;">
-      <div class="insight-title">✨ Why does this matter?</div>
-      <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;">
-        The QHO is the <strong>training gym</strong> of quantum mechanics. Its energy is quantized because confinement forces standing waves.
-        Every n adds a node. The zero-point energy E₀ = ½ℏω means even at absolute zero, the particle still vibrates.
-        The <strong>coherent state</strong> |α⟩ is a displaced Gaussian that oscillates back and forth like a classical particle — the closest quantum analog to a macroscopic oscillator.
-      </p>
-      <div class="equation-box" style="font-size:0.85rem;">
-        $$H = \frac{p^2}{2m} + \frac{1}{2}m\omega^2 x^2, \quad E_n = \hbar\omega\left(n + \frac{1}{2}\right), \quad |\alpha(t)\rangle = |\alpha(0)e^{-i\omega t}\rangle$$
-      </div>
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top:1rem;">
-        <div style="font-size:0.85rem; color:var(--text-muted);">
-          <strong style="color:var(--accent-cyan);">Eigenstate |n⟩</strong><br>
-          Stationary state: ψ(x,t) = ψₙ(x)e⁻ⁱᴱⁿᵗ/ℏ. Re and Im oscillate in place. |ψ|² is <em>time-independent</em>.
-        </div>
-        <div style="font-size:0.85rem; color:var(--text-muted);">
-          <strong style="color:var(--accent-pink);">Coherent state |α⟩</strong><br>
-          Displaced Gaussian: ⟨x(t)⟩ = x₀ cos(ωt). The packet shape doesn't spread — minimum uncertainty at all times.
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== CHALLENGE MODE ===== -->
-  <div class="mode-section" id="section-challenge" style="display:none;">
-
-    <!-- CHALLENGE 1: Match the Wavefunction -->
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span>
-        <span class="challenge-title">Challenge 1: Match the Wavefunction</span>
-        <span class="challenge-difficulty easy">Easy</span>
-      </div>
-      <div class="challenge-desc">
-        A mysterious quantum state is shown (dashed). Drag the quantum number n to rebuild it (solid).
-        A correct match earns 50 XP. Wrong matches cost time. You have 60 seconds.
-      </div>
-      <div class="challenge-reward">🏆 Reward: 50 XP · Combo bonus: +5 XP per streak</div>
-
-      <div class="timer-bar"><div class="timer-fill" id="timer-1" style="width:100%"></div></div>
-
-      <div class="challenge-grid">
-        <div>
-          <div class="target-wave">
-            <div id="challenge-target-plot" style="height:240px;"></div>
-            <p style="text-align:center;font-size:0.8rem;color:var(--text-dim);margin-top:0.3rem;">Target state (dashed) — match it!</p>
-          </div>
-        </div>
-        <div>
-          <div class="target-wave" id="challenge-user-plot-wrap">
-            <div id="challenge-user-plot" style="height:240px;"></div>
-            <p style="text-align:center;font-size:0.8rem;color:var(--text-dim);margin-top:0.3rem;">Your state (solid) — drag n to match</p>
-          </div>
-        </div>
-      </div>
-
-      <div style="display:flex; align-items:center; gap:1.5rem; margin-top:1rem;">
-        <div style="flex:1;">
-          <div class="control-row">
-            <span class="control-label">n (guess)</span>
-            <span class="control-value" id="val-challenge-n">0</span>
-          </div>
-          <input type="range" id="slider-challenge-n" min="0" max="8" value="0" step="1">
-        </div>
-        <div style="font-size:0.85rem;color:var(--text-muted);">
-          <strong>Score:</strong> <span id="challenge-score">0</span> · 
-          <strong>Combo:</strong> <span id="challenge-combo">0</span>
-        </div>
-        <button class="btn" id="btn-check-match" onclick="checkWaveMatch()">✓ Check Match</button>
-        <button class="btn" onclick="skipTarget()">⏭ Skip (–10 XP)</button>
-      </div>
-
-      <div class="challenge-feedback" id="challenge-1-feedback"></div>
-    </div>
-
-    <!-- CHALLENGE 2: Laser Frequency -->
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🎯</span>
-        <span class="challenge-title">Challenge 2: Laser Frequency Matcher</span>
-        <span class="challenge-difficulty medium">Medium</span>
-      </div>      <div class="challenge-desc">
-        A harmonic oscillator absorbs photons only at ΔE = ℏω. Tune the laser frequency until the atom absorbs energy.
-        The target transition is from n = <strong id="laser-from">0</strong> to n = <strong id="laser-to">1</strong>.
-      </div>      <div class="challenge-reward">🏆 Reward: 75 XP · Hint cost: –5 XP · Wrong guess: –5s</div>
-
-      <div class="laser-cannon">
-        <div style="font-family:var(--font-mono);font-size:0.8rem;">Laser: ω = <span id="laser-freq-val">0.5</span> ℏω</div>
-        <input type="range" id="slider-laser-freq" min="0.1" max="3" value="0.5" step="0.1" style="flex:1;">
-        <div class="laser-beam"><div class="laser-pulse"></div></div>
-        <div class="atom-target" id="atom-target">⚪</div>
-      </div>
-
-      <div style="display:flex; gap:1rem; margin-top:1rem;">
-        <button class="btn" onclick="fireLaser()">🔥 FIRE LASER</button>
-        <button class="btn" onclick="showLaserHint()">💡 Hint</button>
-        <div id="laser-feedback" class="challenge-feedback" style="display:none;"></div>
-      </div>
-
-      <!-- plot-laser-levels viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Laser Pump Level Scheme</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Two-level energy scheme: pump absorption + stimulated emission.</p>
-  <div class="plot-container" id="plot-laser-levels" style="height:200px;margin-top:1rem;"></div>
-</div>
-
-    </div>
-
-    <!-- CHALLENGE 3: Zero-Point Race -->
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(74,222,128,0.12);">🏎</span>
-        <span class="challenge-title">Challenge 3: Zero-Point Race</span>
-        <span class="challenge-difficulty hard">Hard</span>
-      </div>
-      <div class="challenge-desc">
-        The particle must never stop (zero-point energy). Freeze it at absolute zero — but you can't! 
-        Answer: the minimum uncertainty Δx·Δp = ℏ/2 <em>prevents</em> the particle from sitting still.
-        Can you beat the uncertainty principle?
-      </div>
-      <div class="challenge-reward">🏆 Reward: 100 XP + "Uncertainty Crusher" badge</div>
-
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
-        <div>
-          <p style="font-size:0.9rem;color:var(--text-main);margin-bottom:1rem;">
-            <strong>Question:</strong> If we measure the position of a ground-state QHO particle to be exactly at x = 0, what happens to its momentum uncertainty?
+        <!-- Physics insight -->
+        <section class="macro-panel play-insight">
+          <h3>✨ Why does this matter?</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+            The QHO is the simplest realistic potential in quantum mechanics. Its equally-spaced spectrum appears in molecular vibrations, lattice phonons, cavity modes, and quantum computing resonators. The coherent state is the closest quantum analogue to a classical oscillator — a Gaussian wavepacket that oscillates without spreading.
           </p>
-          <div class="btn-group" style="flex-direction:column;gap:0.5rem;">
-            <button class="btn" onclick="checkZeroPointAnswer('infinite')">Δp → ∞ (momentum is completely uncertain)</button>
-            <button class="btn" onclick="checkZeroPointAnswer('zero')">Δp → 0 (momentum is known perfectly)</button>
-            <button class="btn" onclick="checkZeroPointAnswer('same')">Δp stays the same</button>
-            <button class="btn" onclick="checkZeroPointAnswer('violated')">The uncertainty principle is violated</button>
-          </div>        
-        </div>
-        <div id="zero-point-anim" style="background:var(--bg-elevated);border-radius:var(--radius-sm);min-height:200px;display:flex;align-items:center;justify-content:center;">
-          <div style="text-align:center;color:var(--text-dim);font-size:0.9rem;">
-            <div style="font-size:3rem;margin-bottom:0.5rem;">❄</div>
-            Particle at T = 0 K
-            <br/><span style="font-size:0.75rem;">Still vibrating!</span>
+          <div class="equation-box">
+            $$E_n = \left(n + \frac{1}{2}\right)\hbar\omega, \qquad \Psi_n(x) = \frac{1}{\sqrt{2^n n!}}\left(\frac{m\omega}{\pi\hbar}\right)^{1/4} H_n\left(\sqrt{\frac{m\omega}{\hbar}}x\right) e^{-m\omega x^2/2\hbar}$$
+          </div>
+        </section>
+
+      </div>
+
+      <aside class="game-sidebar">
+
+        <div class="sidebar-card" id="ctrl-1d">
+          <h4>⚙ Controls</h4>
+
+          <div id="omega-control" class="slider-group">
+            <label>Frequency ω <span class="slider-value" id="val-omega">1.0</span></label>
+            <input type="range" id="slider-omega" min="0.5" max="2.0" value="1.0" step="0.1">
+            <p class="slider-desc">Curvature of the potential well and cycle speed.</p>
+          </div>
+
+          <div class="slider-group">
+            <label>Quantum number n <span class="slider-value" id="val-n">0</span></label>
+            <input type="range" id="slider-n" min="0" max="10" value="0" step="1">
+            <p class="slider-desc">Eigenstate |n⟩ or component of superposition.</p>
+          </div>
+
+          <div id="m-control" class="slider-group" style="display:none;">
+            <label>Second state m <span class="slider-value" id="val-m">3</span></label>
+            <input type="range" id="slider-m" min="0" max="10" value="3" step="1">
+            <p class="slider-desc">For superposition: |Ψ⟩ = c₀|n⟩ + c₁|m⟩.</p>
+          </div>
+
+          <div id="alpha-controls" class="slider-group" style="display:none;">
+            <label>Re(α) <span class="slider-value" id="val-alpha-re">2.0</span></label>
+            <input type="range" id="slider-alpha-re" min="0" max="5" value="2.0" step="0.1">
+            <label style="margin-top:0.6rem;">Im(α) <span class="slider-value" id="val-alpha-im">0.0</span></label>
+            <input type="range" id="slider-alpha-im" min="-5" max="5" value="0.0" step="0.1">
+            <p class="slider-desc">Displacement in phase space ⟨x⟩ = √2 Re α, ⟨p⟩ = √2 Im α.</p>
+          </div>
+
+          <div class="slider-group">
+            <label>Speed <span class="slider-value" id="val-speed">1.0</span></label>
+            <input type="range" id="slider-speed" min="0.1" max="3" value="1.0" step="0.1">
+          </div>
+
+          <div class="btn-group">
+            <button class="btn" id="btn-play">⏵ Play</button>
+            <button class="btn" id="btn-pause">⏸ Pause</button>
+            <button class="btn" id="btn-reset">↺ Reset</button>
+          </div>
+          <div class="control-row" style="margin-top:0.6rem;">
+            <span class="control-label">Time t</span>
+            <span class="control-value" id="val-time">0.00</span>
           </div>
         </div>
-      </div>
-      <div id="zero-point-feedback" class="challenge-feedback"></div>
-    </div>
 
+        <div class="sidebar-card">
+          <h4>📊 Live Readout</h4>
+          <div class="dash-row"><span class="dash-label">Energy E</span><span class="dash-val" id="live-energy">0.500 ħω</span></div>
+          <div class="dash-row"><span class="dash-label">Zero-point</span><span class="dash-val" id="live-zpe">0.500 ħω</span></div>
+          <div class="dash-row"><span class="dash-label">Classical turning</span><span class="dash-val" id="live-turning">±1.000</span></div>
+          <div class="dash-row"><span class="dash-label">⟨x⟩</span><span class="dash-val" id="live-x">0.000</span></div>
+          <div class="dash-row"><span class="dash-label">⟨x²⟩</span><span class="dash-val" id="live-x2">0.500</span></div>
+          <div class="dash-row"><span class="dash-label">Δx</span><span class="dash-val" id="live-dx">0.707</span></div>
+        </div>
+
+        <div class="sidebar-card" style="position:sticky;top:0;">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav"></div>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
+        </div>
+
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+
+      </aside>
+    </div>
   </div>
 
-  <!-- ===== PUZZLE MODE ===== -->
+  <!-- ═══════════════ CHALLENGE MODE ═══════════════ -->
+  <div class="mode-section" id="section-challenge" style="display:none;">
+    <div class="game-layout">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>🎮 Challenges</h3>
+          <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.6;margin-bottom:1rem;">
+            Test your QHO intuition. Solve all three challenges to unlock badges and XP.
+          </p>
+
+          <div class="insights">
+
+            <!-- Challenge 1 -->
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span>
+                <span class="challenge-title">Challenge 1: Match the Wavefunction</span>
+                <span class="challenge-difficulty easy">Easy</span>
+              </div>
+              <div class="challenge-desc">
+                A mysterious quantum state is shown (dashed). Drag the quantum number n to rebuild it (solid).
+                A correct match earns 50 XP. Wrong matches cost time. You have 60 seconds.
+              </div>
+              <div class="challenge-reward">🏆 Reward: 50 XP · Combo bonus: +5 XP per streak</div>
+              <div class="timer-bar"><div class="timer-fill" id="timer-1" style="width:100%"></div></div>
+              <div class="challenge-grid">
+                <div class="target-wave">
+                  <div id="challenge-target-plot" style="height:240px;"></div>
+                  <p style="text-align:center;font-size:0.8rem;color:var(--text-dim);margin-top:0.3rem;">Target state (dashed) — match it!</p>
+                </div>
+                <div class="target-wave" id="challenge-user-plot-wrap">
+                  <div id="challenge-user-plot" style="height:240px;"></div>
+                  <p style="text-align:center;font-size:0.8rem;color:var(--text-dim);margin-top:0.3rem;">Your state (solid) — drag n to match</p>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:1.5rem; margin-top:1rem; flex-wrap:wrap;">
+                <div style="flex:1; min-width:180px;">
+                  <div class="control-row">
+                    <span class="control-label">n (guess)</span>
+                    <span class="control-value" id="val-challenge-n">0</span>
+                  </div>
+                  <input type="range" id="slider-challenge-n" min="0" max="8" value="0" step="1" oninput="plotUserWave(Number.parseInt(this.value))">
+                </div>
+                <div style="font-size:0.85rem;color:var(--text-muted);">
+                  <strong>Score:</strong> <span id="challenge-score">0</span> ·
+                  <strong>Combo:</strong> <span id="challenge-combo">0</span>
+                </div>
+                <button class="btn" id="btn-check-match" onclick="checkWaveMatch()">✓ Check Match</button>
+                <button class="btn" onclick="skipTarget()">⏭ Skip (–10 XP)</button>
+              </div>
+              <div class="challenge-feedback" id="challenge-1-feedback"></div>
+            </div>
+
+            <!-- Challenge 2 -->
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🎯</span>
+                <span class="challenge-title">Challenge 2: Laser Frequency Matcher</span>
+                <span class="challenge-difficulty medium">Medium</span>
+              </div>
+              <div class="challenge-desc">
+                A harmonic oscillator absorbs photons only at ΔE = ℏω. Tune the laser frequency until the atom absorbs energy.
+                The target transition is from n = <strong id="laser-from">0</strong> to n = <strong id="laser-to">1</strong>.
+              </div>
+              <div class="challenge-reward">🏆 Reward: 75 XP · Hint cost: –5 XP · Wrong guess: –5s</div>
+              <div class="laser-cannon">
+                <div style="font-family:var(--font-mono);font-size:0.8rem;">Laser: ω = <span id="laser-freq-val">0.5</span> ℏω</div>
+                <input type="range" id="slider-laser-freq" min="0.1" max="3" value="0.5" step="0.1" style="flex:1;" oninput="document.getElementById('laser-freq-val').textContent = Number.parseFloat(this.value).toFixed(1)">
+                <div class="laser-beam"><div class="laser-pulse"></div></div>
+                <div class="atom-target" id="atom-target">⚪</div>
+              </div>
+              <div style="display:flex; gap:1rem; margin-top:1rem; flex-wrap:wrap;">
+                <button class="btn" onclick="fireLaser()">🔥 FIRE LASER</button>
+                <button class="btn" onclick="showLaserHint()">💡 Hint</button>
+                <div id="laser-feedback" class="challenge-feedback" style="display:none;"></div>
+              </div>
+              <div class="plot-container" id="plot-laser-levels" style="height:200px;margin-top:1rem;"></div>
+            </div>
+
+            <!-- Challenge 3 -->
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(74,222,128,0.12);">🏎</span>
+                <span class="challenge-title">Challenge 3: Zero-Point Race</span>
+                <span class="challenge-difficulty hard">Hard</span>
+              </div>
+              <div class="challenge-desc">
+                The particle must never stop (zero-point energy). Freeze it at absolute zero — but you can't!
+                Answer: the minimum uncertainty Δx·Δp = ℏ/2 <em>prevents</em> the particle from sitting still.
+              </div>
+              <div class="challenge-reward">🏆 Reward: 100 XP + "Uncertainty Crusher" badge</div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+                <div>
+                  <p style="font-size:0.9rem;color:var(--text-main);margin-bottom:1rem;">
+                    <strong>Question:</strong> If we measure the position of a ground-state QHO particle to be exactly at x = 0, what happens to its momentum uncertainty?
+                  </p>
+                  <div class="btn-group" style="flex-direction:column;gap:0.5rem;">
+                    <button class="btn" onclick="checkZeroPointAnswer('infinite')">Δp → ∞ (momentum is completely uncertain)</button>
+                    <button class="btn" onclick="checkZeroPointAnswer('zero')">Δp → 0 (momentum is known perfectly)</button>
+                    <button class="btn" onclick="checkZeroPointAnswer('same')">Δp stays the same</button>
+                    <button class="btn" onclick="checkZeroPointAnswer('violated')">The uncertainty principle is violated</button>
+                  </div>
+                </div>
+                <div id="zero-point-anim" style="background:var(--bg-elevated);border-radius:var(--radius-sm);min-height:200px;display:flex;align-items:center;justify-content:center;">
+                  <div style="text-align:center;color:var(--text-dim);font-size:0.9rem;">
+                    <div style="font-size:3rem;margin-bottom:0.5rem;">❄</div>
+                    Particle at T = 0 K<br/>
+                    <span style="font-size:0.75rem;">Still vibrating!</span>
+                  </div>
+                </div>
+              </div>
+              <div id="zero-point-feedback" class="challenge-feedback"></div>
+            </div>
+
+          </div>
+        </section>
+      </div>
+
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-challenge"></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-challenge" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
+        </div>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges-challenge">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles-challenge">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp-challenge">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges-challenge">0</div><div class="score-label">Badges</div></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PUZZLE MODE ═══════════════ -->
   <div class="mode-section" id="section-puzzle" style="display:none;">
+    <div class="game-layout">
+      <div class="game-main">
+        <section class="macro-panel">
+          <h3>🧩 Puzzles</h3>
+          <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.6;margin-bottom:1rem;">
+            Drag, drop, and reason your way through the quantum oscillator.
+          </p>
 
-    <!-- PUZZLE 1: Energy Ladder -->
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🧩</span>
-        <span class="challenge-title">Puzzle 1: Energy Ladder</span>
-        <span class="challenge-difficulty medium">Medium</span>
-      </div>      <div class="challenge-desc">
-        The QHO has equally-spaced energy levels: E_n = ℏω(n + ½). Place the particles in their correct energy slots.
-        <strong>Rule:</strong> A particle with n nodes belongs in the nth level.
-      </div>      <div class="challenge-reward">🏆 Reward: 60 XP</div>
+          <div class="insights">
 
-      <div class="puzzle-board" id="energy-ladder">
+            <!-- Puzzle 1 -->
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🧩</span>
+                <span class="challenge-title">Puzzle 1: Energy Ladder</span>
+                <span class="challenge-difficulty medium">Medium</span>
+              </div>
+              <div class="challenge-desc">
+                The QHO has equally-spaced energy levels: E_n = ℏω(n + ½). Place the particles in their correct energy slots.
+                <strong>Rule:</strong> A particle with n nodes belongs in the nth level.
+              </div>
+              <div class="challenge-reward">🏆 Reward: 60 XP</div>
+              <div class="puzzle-board" id="energy-ladder"></div>
+              <div style="display:flex; gap:0.5rem; margin-top:1rem; flex-wrap:wrap;" id="particle-pool"></div>
+              <div id="ladder-feedback" class="challenge-feedback"></div>
+              <div style="display:flex; gap:0.5rem; margin-top:0.8rem;">
+                <button class="btn" onclick="checkLadder()">✓ Check Solution</button>
+                <button class="btn" onclick="resetLadder()">↺ Reset</button>
+              </div>
+            </div>
+
+            <!-- Puzzle 2 -->
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🧩</span>
+                <span class="challenge-title">Puzzle 2: Build the QHO Hamiltonian</span>
+                <span class="challenge-difficulty hard">Hard</span>
+              </div>
+              <div class="challenge-desc">
+                Drop the correct terms into the Hamiltonian:
+                <span style="font-family:var(--font-mono);font-size:0.9rem;color:var(--accent-cyan);">H = ___ + ___</span>
+              </div>
+              <div class="challenge-reward">🏆 Reward: 80 XP + "Hamiltonian Architect" badge</div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+                <div>
+                  <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem;">Drop zones (both needed):</p>
+                  <div class="drop-zone" id="drop-kinetic" data-term="kinetic">Drop kinetic energy term here</div>
+                  <div class="drop-zone" id="drop-potential" data-term="potential" style="margin-top:0.5rem;">Drop potential energy term here</div>
+                </div>
+                <div>
+                  <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem;">Draggable terms:</p>
+                  <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+                    <div class="draggable-target" id="term-kinetic" draggable="true">
+                      <div style="font-family:var(--font-mono);font-size:0.9rem;color:var(--accent-cyan);">−ℏ²/2m · d²/dx²</div>
+                      <div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.3rem;">Kinetic energy</div>
+                    </div>
+                    <div class="draggable-target" id="term-potential" draggable="true">
+                      <div style="font-family:var(--font-mono);font-size:0.9rem;color:var(--accent-cyan);">½mω²x²</div>
+                      <div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.3rem;">Harmonic potential</div>
+                    </div>
+                    <div class="draggable-target" id="term-total" draggable="true">
+                      <div style="font-family:var(--font-mono);font-size:0.9rem;color:var(--accent-cyan);">Eψ</div>
+                      <div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.3rem;">Total energy (wrong spot)</div>
+                    </div>
+                    <div class="draggable-target" id="term-momentum" draggable="true">
+                      <div style="font-family:var(--font-mono);font-size:0.9rem;color:var(--accent-cyan);">p²/2m</div>
+                      <div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.3rem;">Equivalent kinetic</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="hamilton-feedback" class="challenge-feedback"></div>
+              <button class="btn" style="margin-top:0.8rem;" onclick="checkHamiltonian()">✓ Verify Hamiltonian</button>
+            </div>
+
+            <!-- Puzzle 3 -->
+            <div class="insight-card" style="grid-column:1/-1;">
+              <div class="challenge-header">
+                <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🧩</span>
+                <span class="challenge-title">Puzzle 3: Selection Rules Detective</span>
+                <span class="challenge-difficulty master">Master</span>
+              </div>
+              <div class="challenge-desc">
+                The dipole operator x is <em>odd</em> under parity. This causes the selection rule Δn = ±1.
+                Which of these transitions are <strong>allowed</strong>? (Click a transition to toggle Allowed/Forbidden)
+              </div>
+              <div class="challenge-reward">🏆 Reward: 120 XP + "Dipole Master" badge</div>
+              <div class="plot-container" id="plot-selection" style="height:280px;"></div>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:1rem;" id="transitions"></div>
+              <div id="selection-feedback" class="challenge-feedback"></div>
+              <button class="btn" style="margin-top:0.8rem;" onclick="checkSelection()">✓ Check Selections</button>
+            </div>
+
+          </div>
+        </section>
       </div>
 
-      <div style="display:flex; gap:0.5rem; margin-top:1rem; flex-wrap:wrap;" id="particle-pool">
-      </div>
-
-      <div id="ladder-feedback" class="challenge-feedback"></div>
-      <button class="btn" onclick="checkLadder()">✓ Check Solution</button>
-      <button class="btn" onclick="resetLadder()">↺ Reset</button>
-    </div>
-
-    <!-- PUZZLE 2: Schrödinger Equation Builder -->
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🧩</span>
-        <span class="challenge-title">Puzzle 2: Build the QHO Hamiltonian</span>
-        <span class="challenge-difficulty hard">Hard</span>
-      </div>      <div class="challenge-desc">
-        Drop the correct terms into the Hamiltonian:
-        <span style="font-family:var(--font-mono);font-size:0.9rem;color:var(--accent-cyan);">H = ___ + ___</span>
-      </div>      <div class="challenge-reward">🏆 Reward: 80 XP + "Hamiltonian Architect" badge</div>
-
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
-        <div>
-          <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem;">Drop zones (both needed):</p>
-          <div class="drop-zone" id="drop-kinetic" data-term="kinetic">Drop kinetic energy term here</div>
-          <div class="drop-zone" id="drop-potential" data-term="potential" style="margin-top:0.5rem;">Drop potential energy term here</div>        
+      <aside class="game-sidebar static">
+        <div class="sidebar-card">
+          <h4>🗺 Lab Navigator</h4>
+          <div id="module-nav-puzzle"></div>
         </div>
-        <div>
-          <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem;">Draggable terms:</p>
-          <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
-            <div class="draggable-target" id="term-kinetic" draggable="true">
-              <div style="font-family:var(--font-mono);font-size:0.9rem;color:var(--accent-cyan);">−ℏ²/2m · d²/dx²</div>
-              <div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.3rem;">Kinetic energy</div>
-            </div>
-            <div class="draggable-target" id="term-potential" draggable="true">
-              <div style="font-family:var(--font-mono);font-size:0.9rem;color:var(--accent-cyan);">½mω²x²</div>
-              <div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.3rem;">Harmonic potential</div>
-            </div>
-            <div class="draggable-target" id="term-total" draggable="true">
-              <div style="font-family:var(--font-mono);font-size:0.9rem;color:var(--accent-cyan);">Eψ</div>
-              <div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.3rem;">Total energy (wrong spot)</div>
-            </div>
-            <div class="draggable-target" id="term-momentum" draggable="true">
-              <div style="font-family:var(--font-mono);font-size:0.9rem;color:var(--accent-cyan);">p²/2m</div>
-              <div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.3rem;">Equivalent kinetic</div>
-            </div>
-          </div>        
+        <div class="sidebar-card">
+          <h4>🏆 Your Badges</h4>
+          <div id="badge-list-puzzle" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
         </div>
-      </div>
-      <div id="hamilton-feedback" class="challenge-feedback"></div>
-      <button class="btn" onclick="checkHamiltonian()">✓ Verify Hamiltonian</button>
-    </div>
-
-    <!-- PUZZLE 3: Selection Rules -->
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🧩</span>
-        <span class="challenge-title">Puzzle 3: Selection Rules Detective</span>
-        <span class="challenge-difficulty master">Master</span>
-      </div>      <div class="challenge-desc">
-        The dipole operator x is <em>odd</em> under parity. This causes the selection rule Δn = ±1.
-        Which of these transitions are <strong>allowed</strong>? (Click a transition to toggle Allowed/Forbidden)
-      </div>      <div class="challenge-reward">🏆 Reward: 120 XP + "Dipole Master" badge</div>
-
-      <!-- plot-selection viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Selection Rules</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Δn parity and transition amplitude |⟨n'|x|n⟩|² govern spectral line strengths.</p>
-  <div class="plot-container" id="plot-selection" style="height:280px;"></div>
-</div>
-
-
-      <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:1rem;" id="transitions">
-      </div>      
-      <div id="selection-feedback" class="challenge-feedback"></div>
-      <button class="btn" onclick="checkSelection()">✓ Check Selections</button>
-    </div>
-  </div>
-
-  <!-- RIGHT SIDEBAR -->
-  <div style="display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; margin-top:2rem;">
-    <div></div>
-    <div>
-      <div class="challenge-panel" style="position:sticky; top:5rem;">
-        <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(0,240,255,0.08);">🗺</span>
-          <span class="challenge-title">Lab Navigator</span>
-        </div>        
-        <div id="module-nav"></div>        
-        <div class="section-divider" style="margin:1rem 0;"></div>        
-        <div class="challenge-header">
-          <span class="challenge-icon" style="background:rgba(74,222,128,0.08);">🏆</span>
-          <span class="challenge-title">Your Badges</span>
+        <div class="sidebar-card">
+          <h4>📊 Progress</h4>
+          <div class="scoreboard">
+            <div class="score-cell"><div class="score-num" id="stat-challenges-puzzle">0</div><div class="score-label">Challenges</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-puzzles-puzzle">0</div><div class="score-label">Puzzles</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-xp-puzzle">0</div><div class="score-label">Total XP</div></div>
+            <div class="score-cell"><div class="score-num" id="stat-badges-puzzle">0</div><div class="score-label">Badges</div></div>
+          </div>
         </div>
-        <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-
-        <div class="section-divider" style="margin:1rem 0;"></div>
-
-        <div class="scoreboard">
-          <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
-          <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
-        </div>
-      </div>
+      </aside>
     </div>
   </div>
+
 </div>
 
-<script>
-// MINIMAL FALLBACK ENGINE — runs if qho_sim.js fails
-(function(){
-  if (typeof updateWavePlot !== 'undefined') return; // qho_sim.js loaded fine
-
-  console.warn('[FALLBACK] qho_sim.js did not define updateWavePlot — using inline engine');
-
-  function makeX() {
-    var arr = [];
-    for (var i = 0; i < 500; i++) arr.push(-7 + i * 14 / 499);
-    return arr;
-  }
-  function psi_n(n, xArr) {
-    var N = xArr.length;
-    // Hermite H0 or H1 only for fallback demo
-    var out = new Float64Array(N);
-    if (n === 0) {
-      var norm = 1 / Math.pow(Math.PI, 0.25);
-      for (var i = 0; i < N; i++) out[i] = norm * Math.exp(-xArr[i]*xArr[i]/2);
-    } else {
-      var norm = 1 / Math.sqrt(Math.pow(2, n) * Math.sqrt(Math.PI));
-      for (var i = 0; i < N; i++) out[i] = norm * Math.exp(-xArr[i]*xArr[i]/2);
-    }
-    return out;
-  }
-  function energy_n(n) { return n + 0.5; }
-  function psi_n_time(n, xArr, t) {
-    var psi = psi_n(n, xArr);
-    var E = energy_n(n);
-    var c = Math.cos(E*t), s = Math.sin(E*t);
-    var N = xArr.length;
-    var re = new Float64Array(N), im = new Float64Array(N), prob = new Float64Array(N);
-    for (var i = 0; i < N; i++) {
-      var p = psi[i];
-      re[i] = p * c;
-      im[i] = -p * s;
-      prob[i] = p * p;
-    }
-    return { re: re, im: im, prob: prob };
-  }
-  function _plot(id, traces, lay, cfg) {
-    if (typeof Plotly === 'undefined') return;
-    Plotly.react(id, traces, lay, cfg || { responsive: true, displayModeBar: false });
-  }
-  window.updateWavePlot = function() {
-    var xArr = makeX();
-    var psi = psi_n_time(0, xArr, 0);
-    var traces = [
-      { x: xArr, y: psi.re, name: 'Re ψ(x)', mode: 'lines', line: { color: '#00f0ff', width: 2 } },
-      { x: xArr, y: psi.im, name: 'Im ψ(x)', mode: 'lines', line: { color: '#ff4ecd', width: 2 } },
-      { x: xArr, y: psi.prob, name: '|ψ|²', mode: 'lines', line: { color: '#ffd54f', width: 2 }, fill: 'tozeroy', fillcolor: 'rgba(255,213,79,0.15)' }
-    ];
-    var xTP = Math.sqrt(2 * 0.5);
-    traces.push({ x: [xTP, xTP], y: [-2, 2], mode: 'lines', line: { color: '#4ade80', width: 1.5, dash: 'dot' }, showlegend: false });
-    traces.push({ x: [-xTP, -xTP], y: [-2, 2], mode: 'lines', line: { color: '#4ade80', width: 1.5, dash: 'dot' }, showlegend: false });
-    _plot('plot-psi', traces, {
-      title: { text: 'Eigenstate |0⟩', font: { size: 13, color: '#e0e0f0' } },
-      xaxis: { title: 'x', gridcolor: '#2a2a3a', zerolinecolor: '#3a3a55', range: [-7, 7] },
-      yaxis: { title: 'Amplitude', gridcolor: '#2a2a3a', range: [-1.2, 1.4] },
-      paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#e0e0f0', family: 'JetBrains Mono, monospace' },
-      margin: { l: 50, r: 20, t: 50, b: 40 }
-    });
-  };
-  // Auto-render fallback
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function(){ window.updateWavePlot(); });
-  } else {
-    window.updateWavePlot();
-  }
-})();
-</script>
-
+<!-- ═══════════════ EXTERNAL SCRIPTS ═══════════════ -->
+<script src="../../shared_ui.js"></script>
+<script src="../../shared_games.js"></script>
+<script src="../../shared_interactive.js"></script>
 <script src="qho_sim.js"></script>
 <script src="qho_apps.js"></script>
-<script src="../../shared_ui.js"></script>
-<script src="../../shared_interactive.js"></script>
-<script src="../../shared_games.js"></script>
+<script src="qho_apps_games.js"></script>
 <script src="../../shared_effects.js"></script>
-<script src="qho_apps_games.js">
-<!-- plot-playground container -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">QHO Wavefunction Playground</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Interactive QHO wavefunction for arbitrary quantum number n. Shows |ψ|² probability density with classical turning points.</p>
-  <div class="plot-container" id="plot-playground" style="min-height:300px;"></div>
-</div>
-</script>
 </body>
 </html>

@@ -140,9 +140,19 @@ function plotConductivityDoped() {
 }
 
 /* ---- Animated band diagram on canvas ---- */
+var __DS_bandActive = false;
 function drawBandDiagram() {
   var canvas = document.getElementById('band-canvas-ds');
   if (!canvas) return;
+  // Pause when Playground or the Band sub-tab is hidden
+  var pg = document.getElementById('section-play');
+  var sub = document.getElementById('sub-band');
+  if (!pg || pg.style.display === 'none' || !sub || sub.style.display === 'none') {
+    __DS_bandActive = false;
+    requestAnimationFrame(drawBandDiagram);
+    return;
+  }
+  __DS_bandActive = true;
   var ctx = canvas.getContext('2d');
   var w = canvas.width, h = canvas.height;
   var mat = getMatFromState();
@@ -240,7 +250,10 @@ function updateLiveDS() {
   var eltype = document.getElementById('live-type-ds'); if (eltype) eltype.innerHTML = '<span class="tc-badge">' + type + '</span>';
 }
 
+var __DS_ready = false;
 function initDoped() {
+  if (__DS_ready) return;
+  __DS_ready = true;
   var sNd = document.getElementById('slider-Nd');
   var sNa = document.getElementById('slider-Na');
   var sT = document.getElementById('slider-T-ds');
@@ -279,6 +292,4 @@ function initDoped() {
   drawBandDiagram();
 }
 
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initDoped);
-else initDoped();
 window.initDoped = initDoped;

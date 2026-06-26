@@ -336,13 +336,11 @@ function wpCanvasEmbed(opts) {
     ctx.font = '11px JetBrains Mono,monospace';
     ctx.fillText('Re(ψ)  blue(-) → red(+)     |ψ|²     barriers: ' + bcount, 10, 16);
 
+    // update time readout
+    var elTime = document.getElementById('wp-time');
+    if (elTime) elTime.textContent = time.toFixed(2);
+
     // ---------- probability readout: P(left), P(barrier), P(right) ----------
-    // Integrate |ψ|² dx over three regions relative to the barrier array:
-    //  P_left   = Σ_{x <  first_barrier_left}  |ψ_i|² · dx
-    //  P_mid    = Σ_{barrier regions}          |ψ_i|² · dx
-    //  P_right  = Σ_{x >  last_barrier_right}  |ψ_i|² · dx
-    // Total = P_left + P_mid + P_right + P_absorbed, where P_absorbed
-    // accounts for the tail removed by the Gaussian edge mask.
     var bstartX = -(bcount - 1) * barrierSpacing * 0.5;
     var firstL = bstartX - barrierWidth / 2.0;
     var lastR  = bstartX + (bcount - 1) * barrierSpacing + barrierWidth / 2.0;
@@ -355,7 +353,6 @@ function wpCanvasEmbed(opts) {
       } else if (x > lastR) {
         pRight += prob_i;
       } else {
-        // Inside the 'forbidden' zone (covers all barriers when count > 1)
         pMid += prob_i;
       }
     }

@@ -5,13 +5,39 @@
 
 'use strict';
 
+/* ── Safe localStorage wrapper — file:// may block localStorage ── */
+var __safeLS = (function(){
+  var mem = {};
+  try {
+    var t = '___test___';
+    localStorage.setItem(t, '1');
+    localStorage.removeItem(t);
+    return {
+      get: function(k){ return localStorage.getItem(k); },
+      set: function(k,v){ localStorage.setItem(k,v); }
+    };
+  } catch(e) {
+    console.warn('[shared_games] localStorage unavailable — using in-memory fallback');
+    return {
+      get: function(k){ return mem[k] || null; },
+      set: function(k,v){ mem[k] = v; }
+    };
+  }
+})();
+
 // ===== SESSION STATE =====
 var __GameState = (function() {
   var key = 'physics-playground-v1';
-  var data = JSON.parse(localStorage.getItem(key) || '{}');
+  var data = {};
+  try {
+    var raw = __safeLS.get(key);
+    data = JSON.parse(raw || '{}');
+  } catch(e) {
+    data = {};
+  }
 
   function save() {
-    localStorage.setItem(key, JSON.stringify(data));
+    try { __safeLS.set(key, JSON.stringify(data)); } catch(e) {}
   }
 
   var msTarget = data.moduleScores || {};
@@ -176,9 +202,29 @@ function setGameMode(mode) {
   var section = document.getElementById('section-' + mode);
   if (section) section.style.display = 'block';
 
+  var container = document.querySelector('.game-container');
+  if (container) container.setAttribute('data-active-mode', mode);
+
+  if (['play','challenge','puzzle','experiment','thin','coherence'].indexOf(mode) !== -1 && section) {
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   if (mode === 'challenge' && typeof initChallenges === 'function') initChallenges();
   if (mode === 'puzzle' && typeof initPuzzles === 'function') initPuzzles();
   if (mode === 'experiment' && typeof initExperiments === 'function') initExperiments();
+  if (mode === 'thin' && typeof initTF === 'function') {
+    initTF();
+    if (window.MathJax && window.MathJax.typesetPromise) {
+      window.MathJax.typesetPromise([section]).catch(function(err){ console.log('MJ err', err); });
+    }
+  }
+  if (mode === 'coherence') {
+    var iframe = document.getElementById('coherence-iframe');
+    if (iframe) {
+      iframe.style.width  = iframe.parentElement.clientWidth + 'px';
+      iframe.contentWindow.postMessage({ action: 'resize' }, '*');
+    }
+  }
 }
 
 // ===== MODULE PROGRESS BAR =====

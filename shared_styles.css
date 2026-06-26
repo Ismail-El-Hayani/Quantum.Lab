@@ -185,12 +185,13 @@ body::after {
    HERO (root page)
    ═══════════════════════════════════════════════════════════════ */
 .game-hero {
-  max-width: 1400px; margin: 0 auto;
+  width: 100%; max-width: 1400px; margin: 0 auto;
   padding: var(--space-2xl) var(--space-xl) var(--space-xl);
-  display: grid; grid-template-columns: 1fr 420px; gap: var(--space-2xl);
+  display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: var(--space-2xl);
   align-items: center;
+  box-sizing: border-box;
 }
-@media (max-width: 1100px) { .game-hero { grid-template-columns: 1fr; } }
+@media (max-width: 1100px) { .game-hero { grid-template-columns: minmax(0, 1fr); } }
 
 .level-badge {
   display: inline-flex; align-items: center; gap: 0.4rem;
@@ -515,6 +516,12 @@ body::after {
   box-shadow: 0 4px 16px rgba(0,240,255,0.25);
   font-weight: 600;
 }
+.game-mode-bar {
+  display: flex; justify-content: center; align-items: center;
+  gap: 0.6rem; flex-wrap: wrap;
+  margin-bottom: var(--space-lg);
+}
+.game-mode-bar .game-mode-btn { margin: 0; }
 
 /* ═══════════════════════════════════════════════════════════════
    SLIDERS
@@ -736,6 +743,33 @@ input[type="range"]::-webkit-slider-thumb:hover {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LAB NAVIGATOR (module-to-module links)
+   ═══════════════════════════════════════════════════════════════ */
+.nav-link {
+  display: block;
+  padding: 0.45rem 0.7rem;
+  margin-bottom: 0.35rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.82rem;
+  transition: all 0.2s var(--ease-out);
+  border: 1px solid transparent;
+}
+.nav-link:hover {
+  background: rgba(255,255,255,0.05);
+  color: var(--text-main);
+  border-color: var(--glass-border);
+  transform: translateX(2px);
+}
+.nav-link.current {
+  background: rgba(0,240,255,0.10);
+  color: var(--accent-cyan);
+  border-color: rgba(0,240,255,0.20);
+  font-weight: 600;
 }
 
 /* ═══════════════════════════════════════════════════════════════

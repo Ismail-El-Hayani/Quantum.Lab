@@ -22,7 +22,7 @@ var OD_MATERIALS = {
 };
 
 /* ─── STATE ─── */
-window.odState = { mat:'Cu', E:2.0, angle:0 };
+window.odState = { mat:'Cu', E:2.0, angle:0, n:1.5 };
 
 /* ─── PHONON STATE ─── */
 var phonon = {
@@ -91,6 +91,7 @@ window.initOD = function() {
   odComputeSpectra();
   odUpdateLiveReadouts();
   odInitSpectralEngine();
+  _odInitNewSections();
 
   window.addEventListener('resize', odOnResize);
   animate();
@@ -706,6 +707,7 @@ function odOnResize() {
   camera.updateProjectionMatrix();
   renderer.setSize(container.clientWidth, container.clientHeight);
 }
+window.odOnResize = odOnResize;
 
 /* ─── UI WIRING ─── */
 window.odSetMaterial = function(name){
@@ -732,17 +734,6 @@ window.odSetMaterial = function(name){
   odComputeSpectra(); odUpdateLiveReadouts();
   odUpdateSpectralPlots();
   updateOverlay();
-
-  // sync equation engine — avoid mutual recursion by writing directly
-  if (typeof window.eqState !== 'undefined') {
-    window.eqState.mat = name;
-    var def = OD_MATERIALS[name];
-    if (def && def.n0) window.eqState.n2 = def.n0;
-    var o = (typeof _odOptical === 'function') ? _odOptical(Math.max(odState.E, 0.01), name) : null;
-    if (o) { window.eqState.n2 = o.n; window.eqState.kappa = o.k; }
-    if (typeof eqUpdateRibbon === 'function') eqUpdateRibbon();
-    if (typeof eqDrawActive === 'function') eqDrawActive();
-  }
 };
 
 window.odChangeSliderE = function(v){
@@ -753,12 +744,6 @@ window.odChangeSliderE = function(v){
   if (lamEl) lamEl.textContent = wavelengthNm(odState.E);
   odComputeSpectra(); odUpdateLiveReadouts();
   odUpdateSpectralPlots();
-  /* ── Sync to equation engine WITHOUT calling back to avoid mutual recursion ── */
-  if (typeof window.eqState !== 'undefined') {
-    window.eqState.E = odState.E;
-    if (typeof eqUpdateRibbon === 'function') eqUpdateRibbon();
-    if (typeof eqDrawActive === 'function') eqDrawActive();
-  }
 };
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1110,7 +1095,7 @@ window._odInitThinFilmPlot = function() {
   if (typeof Plotly === 'undefined') return;
   var data = _odGenerateThinFilmCurves();
   _tfPlotData = data;
-  Plotly.newPlot('plot-thinfilm', [
+  Plotly.newPlot('tf-plot-RT', [
     { x: data.lam, y: data.R, name: 'R(λ) · Reflectivity', type: 'scatter', mode: 'lines',
       line: { color: '#4ade80', width: 2 }, fill: 'tozeroy', fillcolor: 'rgba(74,222,128,0.08)' },
     { x: data.lam, y: data.T, name: 'T(λ) · Transmission', type: 'scatter', mode: 'lines',
@@ -1133,8 +1118,8 @@ window._odInitThinFilmPlot = function() {
 };
 
 window._odUpdateThinFilmCursor = function() {
-  if (typeof Plotly === 'undefined' || !document.getElementById('plot-thinfilm')) return;
-  Plotly.relayout('plot-thinfilm', {
+  if (typeof Plotly === 'undefined' || !document.getElementById('tf-plot-RT')) return;
+  Plotly.relayout('tf-plot-RT', {
     shapes: [{
       type: 'line',
       line: { color: '#ffffff', width: 1.5, dash: 'dash' },
@@ -1147,7 +1132,7 @@ window._odRefreshThinFilmPlot = function() {
   if (typeof Plotly === 'undefined') return;
   var data = _odGenerateThinFilmCurves();
   _tfPlotData = data;
-  Plotly.react('plot-thinfilm', [
+  Plotly.react('tf-plot-RT', [
     { x: data.lam, y: data.R, name: 'R(λ) · Reflectivity', type: 'scatter', mode: 'lines',
       line: { color: '#4ade80', width: 2 }, fill: 'tozeroy', fillcolor: 'rgba(74,222,128,0.08)' },
     { x: data.lam, y: data.T, name: 'T(λ) · Transmission', type: 'scatter', mode: 'lines',
@@ -1171,5 +1156,566 @@ window._odRefreshThinFilmPlot = function() {
 
 window.initODMacro3D = function(){ /* unified into initOD */ };
 window.initODMicro3D = function(){ /* unified into initOD */ };
+
+/* ═══════════════════════════════════════════════════════════════
+   NEW SECTIONS: Skin Depth, Brewster Angle, and Colour Rendering
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── CIE 1931 Standard Observer (x̄, ȳ, z̄) + D65 illuminant,
+   sampled every 5 nm from 380–780 nm (81 points).
+   Sources: CIE 15:2004 Colorimetry, 3rd Ed. (tabulated)        ─── */
+var _CIE_X = [0.001,0.005,0.018,0.038,0.061,0.091,0.131,0.189,0.285,0.431,0.612,0.810,0.991,1.159,1.282,1.337,1.310,1.195,1.006,0.791,0.600,0.431,0.297,0.199,0.132,0.086,0.055,0.034,0.021,0.013,0.008,0.005,0.003,0.002,0.001,0.001,0.001,0.001,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000];
+var _CIE_Y = [0.000,0.002,0.007,0.016,0.029,0.043,0.061,0.089,0.140,0.220,0.329,0.460,0.601,0.749,0.890,1.000,1.047,1.023,0.914,0.756,0.594,0.441,0.313,0.217,0.150,0.102,0.068,0.044,0.028,0.017,0.011,0.007,0.004,0.003,0.002,0.001,0.001,0.001,0.001,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000];
+var _CIE_Z = [0.007,0.032,0.127,0.295,0.537,0.870,1.319,1.882,2.532,3.187,3.825,4.383,4.779,4.956,4.870,4.580,4.069,3.456,2.780,2.125,1.552,1.088,0.736,0.481,0.315,0.206,0.134,0.087,0.056,0.035,0.022,0.014,0.009,0.006,0.004,0.002,0.001,0.001,0.001,0.001,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000];
+var _D65_ILL = [50.0,52.3,54.6,56.9,59.1,60.5,63.0,64.6,65.8,68.6,75.1,82.5,87.8,90.5,90.8,91.2,95.4,96.7,93.4,96.2,99.1,99.1,95.8,86.1,97.8,91.5,99.0,104.0,95.1,95.9,95.8,86.5,109.0,108.0,104.0,107.0,102.0,98.0,96.0,97.0,98.0,99.0,99.0,95.0,93.0,88.0,84.0,85.0,81.0,82.0,80.0,83.0,85.0,87.0,88.0,92.0,91.0,89.0,90.0,91.0,93.0,93.0,89.0,86.0,88.0,89.0,88.0,87.0,84.0,80.0,73.0,71.0,74.0,81.0,86.0,92.0,94.0,91.0,85.0,80.0,76.0,74.0,70.0];
+
+function _odWavelengthNm(E_eV){ /* E = hc/λ, h = 4.1357e-15 eV·s, c = 3e8 m/s */
+  if (E_eV <= 0.005) return 250000; /* cap far-IR */
+  return Math.round(1240.0 / E_eV);
+}
+
+/* ─── 1. SKIN DEPTH & ATTENUATION ENGINE ─── */
+var _odSkinCanvas = null, _odSkinCtx = null, _odSkinAnimId = null, _odSkinT0 = null;
+
+/*   α = 4πκ / λ   [nm⁻¹]   -- [Hummel Eq 10.22] absorbance
+     δ = 1/α = λ/(4πκ)   [nm]  -- [Hummel Eq 10.21] skin depth
+     I(z) = I₀·exp(−2αz)         -- [Hummel Eq 10.19] intensity attenuation
+     E(z,t) = E₀·exp(−αz)·cos(ωt − kz)  -- damped travelling wave [Hummel Eq 10.18]   */
+
+function _odComputeSkinParams(name, E){
+  var res = odComputeOptics(name, E, 0); /* normal incidence for skin depth */
+  var lam = _odWavelengthNm(E);
+  var kappa = res.k;
+  /* [Hummel Eq 10.21] δ = λ / (4πκ)  [nm] */
+  var delta = (kappa > 1e-9) ? (lam / (4 * Math.PI * kappa)) : 1e9;
+  /* [Hummel Eq 10.22] α = 4πκ / λ = 1/δ  [nm⁻¹] */
+  var alpha = (delta > 1e-9) ? (1.0 / delta) : 0;
+  return { lam: lam, kappa: kappa, delta: delta, alpha: alpha, n: res.n };
+}
+
+/* ─── Animation control ─── */
+window._odStartSkinAnim = function(){
+  if (_odSkinAnimId) cancelAnimationFrame(_odSkinAnimId);
+  _odSkinT0 = performance.now();
+  (function _loop(){
+    var t = (performance.now() - _odSkinT0) / 1000; /* elapsed seconds */
+    if (typeof _odDrawSkinAtten === 'function') _odDrawSkinAtten(t);
+    _odSkinAnimId = requestAnimationFrame(_loop);
+  })();
+};
+window._odStopSkinAnim = function(){
+  if (_odSkinAnimId){ cancelAnimationFrame(_odSkinAnimId); _odSkinAnimId = null; }
+};
+
+/* ─── Main render: static axes + animated damped wave ─── */
+function _odDrawSkinAtten(t){
+  if (t === undefined) t = 0; /* static call for screenshots / init */
+  var c = _odSkinCtx, cv = _odSkinCanvas;
+  if (!c || !cv) return;
+  var W = cv.width, H = cv.height;
+  var res = odComputeOptics(odState.mat, odState.E, 0);
+  var skin = _odComputeSkinParams(odState.mat, odState.E);
+
+  c.clearRect(0, 0, W, H);
+  /* material surface at x=60, depth increases to right */
+  var x0 = 60, xMax = W - 20, depthPx = xMax - x0;
+  var y0 = H * 0.35, yI0 = H * 0.78;
+
+  /* label axis */
+  c.fillStyle = '#667';
+  c.font = '11px var(--font-mono)';
+  c.fillText('surface', x0 - 2, y0 + 38);
+  c.fillText('depth z →', x0 + depthPx - 40, y0 + 38);
+  c.fillText('0', x0 - 4, y0 + 50);
+
+  /* ── depth scaling: two physical regimes ──
+     Absorbing  (δ < 100·λ_mat) : envelope dominates → show 5·δ
+     Transparent (δ ≥ 100·λ_mat): propagation dominates → show 20·λ_vac
+     In both cases the n-slider changes λ_mat = λ_vac/n:
+       • absorbing  : wave density inside fixed 5δ window changes
+       • transparent: ~20·n waves across the window          */
+  var delta = skin.delta; /* nm */
+  var nPhase = (typeof odState.n === 'number') ? odState.n : skin.n;
+  var lamMat = (skin.lam > 1e-9) ? (skin.lam / nPhase) : 1e9; /* λ_mat = λ_vac/n  [nm] */
+  var showDepth;
+  if (delta < lamMat * 100) {
+    /* Absorbing: skin depth is the relevant length scale */
+    showDepth = delta * 5;
+  } else {
+    /* Transparent: show fixed vacuum depth so N_waves = 20·n varies with slider */
+    showDepth = skin.lam * 20;
+    if (showDepth > 200000) showDepth = 200000; /* cap at 200 μm, beyond which skin depth ≈ ∞ */
+  }
+  if (showDepth < 1) showDepth = 1;
+  var nmPerPx = showDepth / depthPx;
+
+  /* mark δ, 2δ, 3δ, 4δ, 5δ (only if they fit; for metals δ << λ they bunch near surface) */
+  c.strokeStyle = 'rgba(255,78,205,0.3)';
+  c.setLineDash([2, 4]);
+  for (var m = 1; m <= 5; m++){
+    var xm = x0 + (m * delta) / nmPerPx;
+    if (xm > xMax) break;
+    c.beginPath(); c.moveTo(xm, 10); c.lineTo(xm, H - 10); c.stroke();
+    c.fillStyle = 'rgba(255,78,205,0.7)';
+    c.fillText((m === 1 ? 'δ' : m + 'δ'), xm + 2, H - 14);
+  }
+  c.setLineDash([]);
+
+  /* ── animated travelling damped wave: E(z,t) = E₀·exp(−αz)·cos(ωt − kz) ──
+     k = 2π·n/λ  [nm⁻¹]  wave number in material
+     If odState.n is set (slider override), use it for phase velocity only;
+     envelope δ = λ/(4πκ) stays tied to the material database (absorbance unchanged).
+     ω_display = 8π  [rad/s]  reduced frequency for visual smoothness   */
+  var omega = 8 * Math.PI; /* ~4 Hz display cycle */
+  var nPhase = (typeof odState.n === 'number') ? odState.n : skin.n; /* allow user override of n for k */
+  var kMat = (skin.lam > 1e-9) ? (2 * Math.PI * nPhase / skin.lam) : 0; /* nm⁻¹ */
+  var kPx = kMat * nmPerPx; /* radians per canvas pixel */
+
+  /* incident wave in vacuum (left of surface): E_inc(t) = cos(ωt) */
+  c.beginPath();
+  c.strokeStyle = 'rgba(255,255,255,0.6)'; c.lineWidth = 1;
+  for (var px = 0; px <= x0 - 10; px += 1){
+    var Einc = Math.cos(omega * t) * 35;
+    var x = px, y = y0 - Einc * (px / (x0 - 10)); /* taper toward surface */
+    if (px === 0) c.moveTo(x, y); else c.lineTo(x, y);
+  }
+  c.stroke();
+
+  /* field inside material: E(z,t) = E₀·exp(−z/δ)·cos(ωt − kz)  [Hummel Eq 10.18] */
+  c.beginPath();
+  c.strokeStyle = '#00f0ff'; c.lineWidth = 1.5;
+  for (var px = 0; px <= depthPx; px += 1){
+    var z = px * nmPerPx;
+    var damp = Math.exp(-z / delta);
+    var Ewave = damp * Math.cos(omega * t - kPx * px) * 55;
+    var x = x0 + px, y = y0 - Ewave;
+    if (px === 0) c.moveTo(x, y); else c.lineTo(x, y);
+  }
+  c.stroke();
+
+  /* lower envelope mirror (for symmetry visual) */
+  c.beginPath();
+  c.strokeStyle = 'rgba(0,240,255,0.25)';
+  for (var px = 0; px <= depthPx; px += 1){
+    var z = px * nmPerPx;
+    var damp = Math.exp(-z / delta);
+    var Ewave = damp * Math.cos(omega * t - kPx * px) * 55;
+    var x = x0 + px, y = y0 + Ewave;
+    if (px === 0) c.moveTo(x, y); else c.lineTo(x, y);
+  }
+  c.stroke();
+
+  /* animated intensity I(z,t) = I₀·exp(−2αz)·cos²(ωt − kz)  [Hummel Eq 10.19] */
+  c.beginPath();
+  c.strokeStyle = '#4ade80'; c.lineWidth = 1.5;
+  for (var px = 0; px <= depthPx; px += 1){
+    var z = px * nmPerPx;
+    var damp2 = Math.exp(-2 * z / delta);
+    var Iwave = damp2 * Math.pow(Math.cos(omega * t - kPx * px), 2) * 55;
+    var x = x0 + px, y = yI0 - Iwave;
+    if (px === 0) c.moveTo(x, y); else c.lineTo(x, y);
+  }
+  c.stroke();
+
+  /* static envelope overlays (dashed, faded) for reference */
+  c.strokeStyle = 'rgba(0,240,255,0.25)'; c.setLineDash([3,3]); c.lineWidth = 1;
+  c.beginPath();
+  for (var px = 0; px <= depthPx; px += 2){
+    var z = px * nmPerPx;
+    var env = Math.exp(-z / delta) * 55;
+    var x = x0 + px, y = y0 - env;
+    if (px === 0) c.moveTo(x, y); else c.lineTo(x, y);
+  }
+  c.stroke();
+  c.beginPath();
+  for (var px = 0; px <= depthPx; px += 2){
+    var z = px * nmPerPx;
+    var env = Math.exp(-z / delta) * 55;
+    var x = x0 + px, y = y0 + env;
+    if (px === 0) c.moveTo(x, y); else c.lineTo(x, y);
+  }
+  c.stroke();
+  c.setLineDash([]);
+
+  /* legend */
+  c.fillStyle = '#00f0ff'; c.fillRect(x0 + 8, 12, 10, 3);
+  c.fillStyle = '#9ab'; c.fillText('|E(z,t)|  exp(-z/δ) · cos(ωt−kz)', x0 + 22, 18);
+  c.fillStyle = '#4ade80'; c.fillRect(x0 + 8, 26, 10, 3);
+  c.fillStyle = '#9ab'; c.fillText('I(z,t) = |E|²  exp(-2z/δ) · cos²(ωt−kz)', x0 + 22, 32);
+  /* depth window readout */
+  var winUnit = showDepth >= 1000 ? (showDepth/1000).toFixed(1)+' μm' : showDepth.toFixed(1)+' nm';
+  var regime = (delta < lamMat * 100) ? 'absorbing (5δ)' : 'transparent (20 λ_vac)';
+  c.fillStyle = '#f59e0b'; c.fillText('window: '+winUnit+'  |  '+regime, x0 + 8, 44);
+
+  /* incident beam arrow on left */
+  c.strokeStyle = '#fff'; c.lineWidth = 1;
+  c.beginPath(); c.moveTo(10, y0); c.lineTo(x0 - 10, y0); c.stroke();
+  c.beginPath(); c.moveTo(x0 - 14, y0 - 4); c.lineTo(x0 - 10, y0); c.lineTo(x0 - 14, y0 + 4); c.stroke();
+  c.fillStyle = '#fff'; c.fillText('incident', 12, y0 - 8);
+}
+
+window._odUpdateSkinReadout = function(){
+  var s = _odComputeSkinParams(odState.mat, odState.E);
+  /* λ_mat = λ_vac / n  [nm]  — shows phase-velocity wavelength in material */
+  var nPhase = (typeof odState.n === 'number') ? odState.n : s.n;
+  var lamMat = (s.lam > 1e-9) ? (s.lam / nPhase) : 0;
+  var el;
+  if (el = document.getElementById('skin-alpha')) el.textContent = s.alpha.toExponential(2);
+  if (el = document.getElementById('skin-delta'))
+    el.textContent = s.delta < 10000 ? s.delta.toFixed(1) : (s.delta < 1e6 ? (s.delta/1000).toFixed(1) + ' μm' : '>1 mm');
+  if (el = document.getElementById('skin-lam-mat'))
+    el.textContent = lamMat < 10000 ? lamMat.toFixed(1) : (lamMat < 1e6 ? (lamMat/1000).toFixed(1)+' μm' : '>1 mm');
+  if (el = document.getElementById('skin-ratio')) el.textContent = (Math.exp(-2) * 100).toFixed(1) + '%';
+};
+
+function _odBuildSkinBarsData(){
+  /* compute δ for all 6 materials at current E; highlight current material */
+  var names = ['Cu','Ag','Al','Si','GaAs','NaCl'];
+  var deltas = [], cols = [];
+  /* palette + dimmed version for non-selected materials */
+  var palette =   { Cu:'#d97706', Ag:'#94a3b8', Al:'#94a3b8', Si:'#6366f1', GaAs:'#8b5cf6', NaCl:'#f472b6' };
+  var dimPalette ={ Cu:'#4d3300', Ag:'#334155', Al:'#334155', Si:'#1e1b4b', GaAs:'#3B0764', NaCl:'#4a0432' };
+  var isActive = (typeof odState === 'object' && odState.mat) ? odState.mat : 'Cu';
+  for (var i = 0; i < names.length; i++){
+    var s = _odComputeSkinParams(names[i], odState.E);
+    deltas.push(s.delta < 1e7 ? s.delta : 1e7); /* cap for plot */
+    cols.push(names[i] === isActive ? palette[names[i]] : dimPalette[names[i]]);
+  }
+  return { labels: names.slice().reverse(), deltas: deltas.slice().reverse(), colors: cols.slice().reverse() };
+}
+
+/* ─── horizontal bar chart: δ on x-axis (log), materials on y-axis ─── */
+window._odInitSkinPlot = function(){
+  if (typeof Plotly === 'undefined') return;
+  var d = _odBuildSkinBarsData();
+  var lamAir = 1240.0 / odState.E; /* nm */
+  Plotly.newPlot('plot-skin', [{
+    y: d.labels, x: d.deltas, type: 'bar', orientation: 'h',
+    marker: { color: d.colors, line: { color: '#111', width: 1 } },
+    name: 'δ (nm)',
+    text: d.deltas.map(function(v){ return v >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(0); }),
+    textposition: 'outside', textfont: { color: '#aaa', size: 10 }
+  }], {
+    paper_bgcolor: '#0a0a1a', plot_bgcolor: '#0a0a1a',
+    font: { color: '#bbb', size: 11 },
+    title: { text: 'Skin Depth δ(E) by Material at E = ' + odState.E.toFixed(2) + ' eV (λ_air = ' + lamAir.toFixed(0) + ' nm)', font: { color: '#ccc', size: 12 } },
+    xaxis: { title: 'δ (nm, log scale)', gridcolor: '#1a1a2e', color: '#888', type: 'log', range: [0, 7], autorange: false },
+    yaxis: { title: '', gridcolor: '#1a1a2e', color: '#888', autorange: 'reversed' },
+    margin: { t: 45, b: 65, l: 60, r: 80 },
+    annotations: [{
+      x: lamAir, y: 0.5, xref: 'x', yref: 'paper',
+      text: 'λ_air = ' + lamAir.toFixed(0) + ' nm',
+      showarrow: true, arrowhead: 2, arrowsize: 1, arrowwidth: 1,
+      arrowcolor: '#f59e0b', ax: 40, ay: 0,
+      font: { color: '#f59e0b', size: 10 }
+    }]
+  }, { displayModeBar: false, responsive: true });
+};
+
+window._odUpdateSkinPlot = function(){
+  if (typeof Plotly === 'undefined' || !document.getElementById('plot-skin')) return;
+  var d = _odBuildSkinBarsData();
+  var lamAir = 1240.0 / odState.E; /* nm */
+  Plotly.react('plot-skin', [{
+    y: d.labels, x: d.deltas, type: 'bar', orientation: 'h',
+    marker: { color: d.colors, line: { color: '#111', width: 1 } },
+    text: d.deltas.map(function(v){ return v >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(0); }),
+    textposition: 'outside', textfont: { color: '#aaa', size: 10 }
+  }], {
+    paper_bgcolor: '#0a0a1a', plot_bgcolor: '#0a0a1a',
+    font: { color: '#bbb', size: 11 },
+    title: { text: 'Skin Depth δ(E) by Material at E = ' + odState.E.toFixed(2) + ' eV (λ_air = ' + lamAir.toFixed(0) + ' nm)', font: { color: '#ccc', size: 12 } },
+    xaxis: { title: 'δ (nm, log scale)', gridcolor: '#1a1a2e', color: '#888', type: 'log', range: [0, 7], autorange: false },
+    yaxis: { title: '', gridcolor: '#1a1a2e', color: '#888', autorange: 'reversed' },
+    margin: { t: 45, b: 65, l: 60, r: 80 },
+    annotations: [{
+      x: lamAir, y: 0.5, xref: 'x', yref: 'paper',
+      text: 'λ_air = ' + lamAir.toFixed(0) + ' nm',
+      showarrow: true, arrowhead: 2, arrowsize: 1, arrowwidth: 1,
+      arrowcolor: '#f59e0b', ax: 40, ay: 0,
+      font: { color: '#f59e0b', size: 10 }
+    }]
+  }, { displayModeBar: false, responsive: true });
+};
+
+/* ─── 2. BREWSTER / FRESNEL ENGINE ─── */
+
+/* Fresnel amplitude reflection coefficients:
+   r_s = (n₁ cos θ₁ − n₂ cos θ₂)/(n₁ cos θ₁ + n₂ cos θ₂)   [s-pol, E ⟂ plane]
+   r_p = (n₂ cos θ₁ − n₁ cos θ₂)/(n₂ cos θ₁ + n₁ cos θ₂)   [p-pol, E ∥ plane]
+   R_s = |r_s|²,  R_p = |r_p|²
+   Brewster angle: tan θ_B = n₂/n₁   →   R_p(θ_B) = 0       */
+
+function _odComputeFresnel(theta1Deg, n1, n2){
+  var th1 = theta1Deg * Math.PI / 180;
+  var sin2 = (n1 / n2) * Math.sin(th1);
+  var th2 = 0, tir = false;
+  if (Math.abs(sin2) >= 1) { th2 = Math.PI / 2; tir = true; }
+  else th2 = Math.asin(sin2);
+  var c1 = Math.cos(th1), s1 = Math.sin(th1);
+  var c2 = Math.cos(th2);
+  var rs = (n1 * c1 - n2 * c2) / (n1 * c1 + n2 * c2);
+  var rp = (n2 * c1 - n1 * c2) / (n2 * c1 + n1 * c2);
+  if (tir) { rs = 1; rp = 1; }
+  var Rs = rs * rs, Rp = rp * rp;
+  /* Brewster angle from real part of n only (complex Brewster exists but too advanced) */
+  var thetaB = (n2 > 0) ? (Math.atan(n2 / n1) * 180 / Math.PI) : 0;
+  if (n1 > n2) thetaB = (Math.atan(n2 / n1) * 180 / Math.PI); /* still valid */
+  return { Rs: Rs, Rp: Rp, rs: rs, rp: rp, theta2: th2 * 180 / Math.PI, thetaB: thetaB, tir: tir };
+}
+
+window._odUpdateBrewsterReadout = function(){
+  var res = odComputeOptics(odState.mat, odState.E, odState.angle);
+  var nMaterial = res.n; /* n of material at current E */
+  var fres = _odComputeFresnel(odState.angle, 1.0, nMaterial);
+  var el;
+  if (el = document.getElementById('br-thetaB')) el.textContent = fres.thetaB.toFixed(1);
+  if (el = document.getElementById('br-Rs')) el.textContent = fres.Rs.toFixed(3);
+  if (el = document.getElementById('br-Rp')) el.textContent = fres.Rp.toFixed(3);
+  /* degree of polarization = (Rs - Rp)/(Rs + Rp), with clip 0→1 */
+  var denom = fres.Rs + fres.Rp;
+  var pol = (denom > 1e-12) ? Math.max(0, Math.min(1, (fres.Rs - fres.Rp) / denom)) : 0;
+  if (el = document.getElementById('br-pol')) el.textContent = (pol * 100).toFixed(1) + '%';
+};
+
+function _odDrawBrewsterCanvas(){
+  var cv = document.getElementById('brewster-canvas');
+  if (!cv) return;
+  var c = cv.getContext('2d');
+  var W = cv.width, H = cv.height;
+  c.clearRect(0, 0, W, H);
+
+  /* current material n(E) */
+  var res = odComputeOptics(odState.mat, odState.E, odState.angle);
+  var n2 = res.n;
+
+  /* draw R_s(θ) and R_p(θ) vs θ from 0 to 89° */
+  var pxPerDeg = (W - 80) / 90;
+  var hScale = H * 0.78;
+  var y0 = H - 40;
+
+  /* axes */
+  c.strokeStyle = '#334'; c.lineWidth = 1;
+  c.beginPath(); c.moveTo(40, y0); c.lineTo(W - 20, y0); c.stroke(); /* θ axis */
+  c.beginPath(); c.moveTo(40, y0); c.lineTo(40, 20); c.stroke(); /* R axis */
+  c.fillStyle = '#667'; c.font = '10px var(--font-mono)';
+  c.fillText('0°', 35, y0 + 14); c.fillText('90°', W - 28, y0 + 14);
+  c.fillText('R=1', 10, 26); c.fillText('R=0', 10, y0 + 4);
+
+  /* R_s curve in red */
+  c.beginPath(); c.strokeStyle = '#ff4d4d'; c.lineWidth = 2;
+  for (var d = 0; d <= 89; d += 0.5){
+    var f = _odComputeFresnel(d, 1.0, n2);
+    var x = 40 + d * pxPerDeg, y = y0 - f.Rs * hScale;
+    if (d === 0) c.moveTo(x, y); else c.lineTo(x, y);
+  }
+  c.stroke();
+
+  /* R_p curve in cyan */
+  c.beginPath(); c.strokeStyle = '#00f0ff'; c.lineWidth = 2;
+  for (var d = 0; d <= 89; d += 0.5){
+    var f = _odComputeFresnel(d, 1.0, n2);
+    var x = 40 + d * pxPerDeg, y = y0 - f.Rp * hScale;
+    if (d === 0) c.moveTo(x, y); else c.lineTo(x, y);
+  }
+  c.stroke();
+
+  /* Brewster angle — compute from real n only */
+  var fres0 = _odComputeFresnel(0, 1.0, n2);
+  var thetaB = fres0.thetaB;
+
+  /* Brewster angle dashed line */
+  c.strokeStyle = 'rgba(255,78,205,0.6)'; c.setLineDash([3, 4]); c.lineWidth = 1;
+  var xB = 40 + thetaB * pxPerDeg;
+  c.beginPath(); c.moveTo(xB, 20); c.lineTo(xB, y0); c.stroke();
+  c.setLineDash([]);
+  c.fillStyle = '#ff4ecd'; c.fillText('θ_B = ' + thetaB.toFixed(1) + '°', xB + 4, 32);
+
+  /* current θ₁ marker (white dot) */
+  var cur = _odComputeFresnel(odState.angle, 1.0, n2);
+  var xc = 40 + odState.angle * pxPerDeg;
+  var yc = y0 - cur.Rs * hScale;
+  c.fillStyle = '#fff';
+  c.beginPath(); c.arc(xc, yc, 5, 0, Math.PI * 2); c.fill();
+}
+
+function _odBuildBrewsterCurves(){
+  var th = [], Rs = [], Rp = [];
+  var res = odComputeOptics(odState.mat, odState.E, 0);
+  var n2 = res.n;
+  for (var d = 0; d <= 89; d += 0.5){
+    var f = _odComputeFresnel(d, 1.0, n2);
+    th.push(d); Rs.push(f.Rs); Rp.push(f.Rp);
+  }
+  return { theta: th, Rs: Rs, Rp: Rp, thetaB: _odComputeFresnel(0, 1.0, n2).thetaB };
+}
+
+window._odInitBrewsterPlot = function(){
+  if (typeof Plotly === 'undefined') return;
+  if (!document.getElementById('plot-brewster')) return; // element removed from restructured skeleton
+  var d = _odBuildBrewsterCurves();
+  Plotly.newPlot('plot-brewster', [
+    { x: d.theta, y: d.Rs, name: 'R_s(θ) · s-polarized', type: 'scatter', mode: 'lines',
+      line: { color: '#ff4d4d', width: 2 } },
+    { x: d.theta, y: d.Rp, name: 'R_p(θ) · p-polarized', type: 'scatter', mode: 'lines',
+      line: { color: '#00f0ff', width: 2 } }
+  ], {
+    paper_bgcolor: '#0a0a1a', plot_bgcolor: '#0a0a1a',
+    font: { color: '#bbb', size: 11 },
+    title: { text: 'Fresnel Reflectivity  ' + odState.mat + ' @ E=' + odState.E.toFixed(2) + ' eV, n=' + odComputeOptics(odState.mat, odState.E, 0).n.toFixed(2), font: { color: '#ccc', size: 12 } },
+    xaxis: { title: 'Incident angle θ₁ (°)', gridcolor: '#1a1a2e', color: '#888', range: [0, 90] },
+    yaxis: { title: 'Reflectivity R', gridcolor: '#1a1a2e', color: '#888', range: [0, 1.05] },
+    margin: { t: 40, b: 40, l: 52, r: 16 },
+    legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(10,10,26,0.7)', font: { size: 10 } },
+    shapes: [{
+      type: 'line',
+      line: { color: '#ff4ecd', width: 1.5, dash: 'dash' },
+      x0: d.thetaB, x1: d.thetaB, y0: 0, y1: 1.05
+    }, {
+      type: 'line',
+      line: { color: '#ffffff', width: 1.5, dash: 'dash' },
+      x0: odState.angle, x1: odState.angle, y0: 0, y1: 1.05
+    }],
+    annotations: [{
+      x: d.thetaB, y: 0.98, xref: 'x', yref: 'y',
+      text: 'θ_B', showarrow: false, font: { color: '#ff4ecd', size: 11 }
+    }]
+  }, { displayModeBar: false, responsive: true });
+};
+
+window._odUpdateBrewsterPlot = function(){
+  if (typeof Plotly === 'undefined' || !document.getElementById('plot-brewster')) return;
+  var d = _odBuildBrewsterCurves();
+  Plotly.react('plot-brewster', [
+    { x: d.theta, y: d.Rs, name: 'R_s(θ) · s-polarized', type: 'scatter', mode: 'lines',
+      line: { color: '#ff4d4d', width: 2 } },
+    { x: d.theta, y: d.Rp, name: 'R_p(θ) · p-polarized', type: 'scatter', mode: 'lines',
+      line: { color: '#00f0ff', width: 2 } }
+  ], {
+    paper_bgcolor: '#0a0a1a', plot_bgcolor: '#0a0a1a',
+    font: { color: '#bbb', size: 11 },
+    title: { text: 'Fresnel Reflectivity  ' + odState.mat + ' @ E=' + odState.E.toFixed(2) + ' eV, n=' + odComputeOptics(odState.mat, odState.E, 0).n.toFixed(2), font: { color: '#ccc', size: 12 } },
+    xaxis: { title: 'Incident angle θ₁ (°)', gridcolor: '#1a1a2e', color: '#888', range: [0, 90] },
+    yaxis: { title: 'Reflectivity R', gridcolor: '#1a1a2e', color: '#888', range: [0, 1.05] },
+    margin: { t: 40, b: 40, l: 52, r: 16 },
+    legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(10,10,26,0.7)', font: { size: 10 } },
+    shapes: [{
+      type: 'line',
+      line: { color: '#ff4ecd', width: 1.5, dash: 'dash' },
+      x0: d.thetaB, x1: d.thetaB, y0: 0, y1: 1.05
+    }, {
+      type: 'line',
+      line: { color: '#ffffff', width: 1.5, dash: 'dash' },
+      x0: odState.angle, x1: odState.angle, y0: 0, y1: 1.05
+    }],
+    annotations: [{
+      x: d.thetaB, y: 0.98, xref: 'x', yref: 'y',
+      text: 'θ_B', showarrow: false, font: { color: '#ff4ecd', size: 11 }
+    }]
+  }, { displayModeBar: false, responsive: true });
+};
+
+/* ─── 3. COLOUR RENDERING ENGINE (CIE 1931 XYZ → sRGB) ─── */
+
+/*   X = Σ_λ  R(λ)·I_D65(λ)·x̄(λ)
+     Y = Σ_λ  R(λ)·I_D65(λ)·ȳ(λ)       -- luminance [CIE 1931]
+     Z = Σ_λ  R(λ)·I_D65(λ)·z̄(λ)
+
+     sRGB linear:
+     R_lin =  3.2406·X − 1.5372·Y − 0.4986·Z   [IEC 61966-2-1 matrix]
+     G_lin = −0.9689·X + 1.8758·Y + 0.0415·Z
+     B_lin =  0.0557·X − 0.2040·Y + 1.0570·Z
+
+     Gamma correction:
+     R' = R_lin ≤ 0.0031308 ? 12.92·R_lin : 1.055·R_lin^(1/2.4) − 0.055   */
+
+function _odColorFromReflectivity(matName){
+  /* Build R(λ) sampled every 5 nm from 380–780 nm (81 points).
+     Use same odComputeOptics for each λ point. */
+  var X = 0, Y = 0, Z = 0;
+  var lambdaStart = 380, lambdaEnd = 780, step = 5;
+  var nPoints = (lambdaEnd - lambdaStart) / step + 1; /* = 81 */
+
+  for (var i = 0; i < nPoints; i++){
+    var lam = lambdaStart + i * step;
+    var E_eV = 1240.0 / lam;
+    if (E_eV < 0.01) continue;
+    var res = odComputeOptics(matName, E_eV, 0);
+    var Rlam = res.R; /* reflectivity at this λ under normal incidence */
+    var I = _D65_ILL[i];
+    var xb = _CIE_X[i], yb = _CIE_Y[i], zb = _CIE_Z[i];
+    X += Rlam * I * xb;
+    Y += Rlam * I * yb;
+    Z += Rlam * I * zb;
+  }
+
+  /* Normalise by the sum of Y for a perfect white reflector under D65 */
+  var Yn = 0;
+  for (var i = 0; i < nPoints; i++) Yn += _D65_ILL[i] * _CIE_Y[i];
+  if (Yn > 0) { X /= Yn; Y /= Yn; Z /= Yn; }
+
+  /* XYZ → linear sRGB (IEC 61966-2-1)
+     [ R_lin ]   [  3.2406  -1.5372  -0.4986 ] [ X ]
+     [ G_lin ] = [ -0.9689   1.8758   0.0415 ] [ Y ]
+     [ B_lin ]   [  0.0557  -0.2040   1.0570 ] [ Z ]   */
+  var Rlin =  3.2406 * X - 1.5372 * Y - 0.4986 * Z;
+  var Glin = -0.9689 * X + 1.8758 * Y + 0.0415 * Z;
+  var Blin =  0.0557 * X - 0.2040 * Y + 1.0570 * Z;
+
+  /* Gamma correction (sRGB transfer function) */
+  function gamma(v){
+    if (v <= 0.0031308) return 12.92 * v;
+    return 1.055 * Math.pow(v, 1.0 / 2.4) - 0.055;
+  }
+  var r = Math.max(0, Math.min(1, gamma(Rlin)));
+  var g = Math.max(0, Math.min(1, gamma(Glin)));
+  var b = Math.max(0, Math.min(1, gamma(Blin)));
+
+  /* find peak absorbed λ: λ where R(λ) is minimum */
+  var minR = 2, peakAbsorbLam = 0;
+  for (var i = 0; i < nPoints; i++){
+    var lam = lambdaStart + i * step;
+    var E_eV = 1240.0 / lam;
+    var res = odComputeOptics(matName, E_eV, 0);
+    if (res.R < minR) { minR = res.R; peakAbsorbLam = lam; }
+  }
+
+  return {
+    rgb: [Math.round(r*255), Math.round(g*255), Math.round(b*255)],
+    peakAbsorb: peakAbsorbLam
+  };
+}
+
+window._odUpdateColorSwatches = function(){
+  var c = _odColorFromReflectivity(odState.mat);
+  var rgbStr = 'rgb(' + c.rgb[0] + ',' + c.rgb[1] + ',' + c.rgb[2] + ')';
+  var sw1 = document.getElementById('spec-color-swatch');
+  if (sw1) { sw1.style.background = rgbStr; sw1.style.borderColor = 'rgba(255,255,255,0.3)'; }
+  var sw2 = document.getElementById('color-big-swatch');
+  if (sw2) { sw2.style.background = rgbStr; sw2.style.boxShadow = '0 0 20px ' + rgbStr.replace('rgb','rgba').replace(')',',0.15)'); }
+  var txt = document.getElementById('color-rgb-text');
+  if (txt) txt.textContent = 'RGB(' + c.rgb[0] + ', ' + c.rgb[1] + ', ' + c.rgb[2] + ')';
+  var pk = document.getElementById('color-absorb-peak');
+  if (pk) pk.textContent = c.peakAbsorb;
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT HOOK — call all new initialisers after existing ones
+   ═══════════════════════════════════════════════════════════════ */
+window._odInitNewSections = function(){
+  /* [Attenuation] resolve canvas context for skin-depth drawing then render */
+  _odSkinCanvas = document.getElementById('skin-canvas');
+  if (_odSkinCanvas) _odSkinCtx = _odSkinCanvas.getContext('2d');
+  if (typeof _odDrawSkinAtten === 'function') _odDrawSkinAtten();
+  if (typeof _odUpdateSkinReadout === 'function') _odUpdateSkinReadout();
+  if (typeof _odInitSkinPlot === 'function') _odInitSkinPlot();
+
+  /* [Color/Dispersion] swatch update — element-guarded inside the function */
+  if (typeof _odUpdateColorSwatches === 'function') _odUpdateColorSwatches();
+};
+
+window._odRefreshAllNewSections = function(){
+  /* Material-sync removed — each section owns its own state. */
+};
 
 })();
