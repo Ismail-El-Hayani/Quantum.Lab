@@ -10,6 +10,36 @@
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <link rel="stylesheet" href="../../shared_styles.css">
 <style>
+  /* ── Lab canonical layout ── */
+  .lab-layout { max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg); align-items:start; position:relative; z-index:1; }
+  @media (max-width:1000px) { .lab-layout { grid-template-columns:1fr; } }
+  .lab-main { min-width:0; position:relative; z-index:1; }
+  .lab-sidebar {
+    min-width:0; position:sticky; top:5rem; align-self:start;
+    max-height:calc(100vh - 6rem); overflow-y:auto; padding:1rem;
+    background:var(--bg-panel-alt); border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); z-index:10;
+  }
+  .lab-sidebar::-webkit-scrollbar { width:4px; }
+  .lab-sidebar::-webkit-scrollbar-track { background:transparent; }
+  .lab-sidebar::-webkit-scrollbar-thumb { background:var(--glass-border); border-radius:2px; }
+  .lab-sidebar .sidebar-card:last-child { margin-bottom:0; }
+  .macro-panel { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-top:1rem; }
+  .macro-panel:first-of-type { margin-top:0; }
+  .macro-panel h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
+  .sidebar-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-bottom:1rem; }
+  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
+
+  /* ── Tab system ── */
+  .tab-bar { display:flex; justify-content:center; gap:0.5rem; padding:0.6rem; background:rgba(0,0,0,0.35); backdrop-filter:blur(8px); border-bottom:1px solid var(--glass-border); margin-bottom:1.5rem; flex-wrap:wrap; }
+  .tab-btn { padding:0.5rem 1.2rem; border:1px solid var(--glass-border); border-radius:var(--radius-sm); background:var(--bg-elevated); color:var(--text-muted); font-family:var(--font-body); font-size:0.85rem; cursor:pointer; transition:all 0.2s; }
+  .tab-btn:hover { border-color:var(--accent-cyan); color:var(--accent-cyan); }
+  .tab-btn.active { border-color:var(--accent-cyan); background:rgba(0,240,255,0.08); color:var(--accent-cyan); font-weight:600; box-shadow:0 0 12px rgba(0,240,255,0.15); }
+
+  .tab-section { display:none; }
+  .tab-section.active { display:block; }
+
+  /* ── Module‑specific ── */
   .cond-canvas-wrap { width:100%; min-height:420px; background:var(--bg-deep); border-radius:12px; border:1px solid var(--glass-border); position:relative; overflow:hidden; margin-bottom:1rem; }
   #cond-canvas { display:block; width:100%; height:420px; }
   .cond-overlay { position:absolute; top:8px; left:12px; font-size:0.75rem; color:var(--text-dim); pointer-events:none; }
@@ -21,17 +51,6 @@
   .material-card.selected { border-color:var(--accent-purple); background:rgba(192,132,252,0.08); }
   .app-plot { min-height:260px; margin-top:1.5rem; }
 
-  /* Module 06 layout utilities */
-  .game-mode-bar { display:flex; justify-content:center; gap:0.5rem; padding:0.6rem; background:rgba(0,0,0,0.35); backdrop-filter:blur(8px); border-bottom:1px solid var(--glass-border); margin-bottom:1.5rem; flex-wrap:wrap; }
-  .game-layout { max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg); align-items:start; }
-  @media (max-width:1000px) { .game-layout { grid-template-columns:1fr; } }
-  .game-main { min-width:0; }
-  .game-sidebar { min-width:0; position:sticky; top:5rem; }
-  .macro-panel { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-top:1rem; }
-  .macro-panel:first-of-type { margin-top:0; }
-  .macro-panel h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
-  .sidebar-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-bottom:1rem; }
-  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
   .slider-group { margin-bottom:1rem; }
   .slider-group label { display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:0.3rem; }
   .slider-group input[type=range] { width:100%; }
@@ -43,8 +62,11 @@
   .readout-tile .readout-value { font-family:var(--font-mono); font-size:1.05rem; font-weight:700; }
   .readout-tile .readout-unit { font-size:0.65rem; color:var(--text-muted); }
   .unit-tag { display:inline-block; background:rgba(0,240,255,0.08); color:var(--accent-cyan); font-family:var(--font-mono); font-size:0.7rem; padding:0.15rem 0.4rem; border-radius:4px; margin-left:0.3rem; }
+  .toggle-row { display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.8rem; }
+  .toggle-btn { padding:0.3rem 0.6rem; border:1px solid var(--glass-border); border-radius:var(--radius-sm); background:var(--bg-elevated); color:var(--text-muted); font-family:var(--font-mono); font-size:0.75rem; cursor:pointer; transition:all 0.15s; }
+  .toggle-btn:hover { border-color:var(--accent-cyan); color:var(--accent-cyan); }
+  .toggle-btn.on { border-color:var(--accent-cyan); background:rgba(0,240,255,0.06); color:var(--accent-cyan); }
 
-  /* Story / Theory helpers (mirroring modules 01/03/04/05/06) */
   .theory-content { font-size:0.95rem; line-height:1.7; color:var(--text-main); }
   .theory-content p { margin-bottom:1rem; }
   .theory-content strong { color:var(--accent-cyan); font-weight:500; }
@@ -57,20 +79,21 @@
   .insight-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; }
   .insight-card .insight-title { margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright); }
 
-  .toggle-row { display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.8rem; }
-  .toggle-btn { padding:0.3rem 0.6rem; border:1px solid var(--glass-border); border-radius:var(--radius-sm); background:var(--bg-elevated); color:var(--text-muted); font-family:var(--font-mono); font-size:0.75rem; cursor:pointer; transition:all 0.15s; }
-  .toggle-btn:hover { border-color:var(--accent-cyan); color:var(--accent-cyan); }
-  .toggle-btn.on { border-color:var(--accent-cyan); background:rgba(0,240,255,0.06); color:var(--accent-cyan); }
+  /* Legacy puzzle/challenge styles kept for JS compat */
   .challenge-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
-  .draggable-target { cursor:grab; border:2px dashed var(--glass-border); border-radius:var(--radius-sm); padding:0.8rem; transition:all 0.2s; text-align:center; background:var(--bg-elevated); }
-  .draggable-target:hover { border-color:var(--accent-cyan); background:rgba(0,240,255,0.04); }
-  .drop-zone { border:2px dashed var(--glass-border); border-radius:var(--radius-sm); padding:1rem; min-height:60px; transition:all 0.2s; background:var(--bg-panel); }
-  .drop-zone.dragover { border-color:var(--accent-cyan); background:rgba(0,240,255,0.04); }
-  .drop-zone.correct { border-color:var(--accent-green); background:rgba(74,222,128,0.08); }
-  .drop-zone.wrong { border-color:var(--accent-red); background:rgba(255,68,68,0.08); }
-  .timer-bar { height:4px; background:var(--bg-elevated); border-radius:2px; overflow:hidden; margin-bottom:1rem; }
-  .timer-fill { height:100%; background:var(--accent-cyan); transition:width 1s linear; }
-  .timer-fill.urgent { background:var(--accent-red); }
+  .challenge-header { display:flex; align-items:center; gap:0.6rem; margin-bottom:0.6rem; }
+  .challenge-icon { width:2rem; height:2rem; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1rem; }
+  .challenge-title { font-size:0.95rem; font-weight:700; color:var(--text-bright); }
+  .challenge-difficulty { margin-left:auto; font-size:0.65rem; text-transform:uppercase; padding:0.2rem 0.5rem; border-radius:999px; font-weight:700; }
+  .challenge-difficulty.easy  { background:rgba(74,222,128,0.15); color:var(--accent-green); }
+  .challenge-difficulty.medium { background:rgba(255,213,79,0.15); color:#ffd54f; }
+  .challenge-difficulty.hard { background:rgba(255,68,68,0.15); color:var(--accent-red); }
+  .challenge-difficulty.master { background:rgba(192,132,252,0.15); color:var(--accent-purple); }
+  .challenge-desc { font-size:0.82rem; color:var(--text-dim); line-height:1.5; margin-bottom:0.6rem; }
+  .challenge-feedback { margin-top:0.8rem; padding:0.7rem; border-radius:var(--radius-sm); font-size:0.82rem; display:none; }
+  .challenge-feedback.success { background:rgba(74,222,128,0.12); color:var(--accent-green); border:1px solid rgba(74,222,128,0.3); }
+  .challenge-feedback.error { background:rgba(255,68,68,0.12); color:var(--accent-red); border:1px solid rgba(255,68,68,0.3); }
+  .challenge-feedback.hint { background:rgba(255,213,79,0.12); color:#ffd54f; border:1px solid rgba(255,213,79,0.3); }
 </style>
 </head>
 <body>
@@ -80,7 +103,7 @@
 <div class="orb orb-pink"></div>
 
 <nav class="game-nav">
-  <div class="nav-brand"><a href="../../index.html" style="text-decoration:none;color:inherit;"><span class="nav-logo">⚛</span> Physics Playground</a></div>
+  <div class="nav-brand"><a href="../../index.html" style="text-decoration:none;color:inherit;"><span class="nav-logo">⚛</span> Quantum Lab</a></div>
   <div class="nav-stats">
     <div class="stat-badge"><span class="stat-icon">🔌</span><span class="stat-value">Conductivity Lab</span></div>
     <div class="stat-badge"><span class="stat-icon">⭐</span><span class="stat-value" id="nav-xp">0 XP</span></div>
@@ -88,27 +111,24 @@
 </nav>
 
 <div class="game-hero" style="padding-bottom:0;">
-  <div class="level-badge">Module 07 · Level <span id="current-level">1</span> · Drude Engine</div>
+  <div class="lab-level">Module 07</div>
   <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Electrical Conductivity</span></h1>
   <p class="hero-desc">Drift, scatter, conduct. Watch electrons move through a crystal lattice under electric field.</p>
 </div>
 
-<div class="game-container">
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="overview">📖 Overview</button>
+  <button class="tab-btn" data-tab="theory">🎓 Theory</button>
+  <button class="tab-btn" data-tab="simulation">🔬 Simulation</button>
+</div>
 
-  <div class="game-mode-bar">
-    <button class="game-mode-btn active" id="mode-story" onclick="setGameMode('story')">📖 Story</button>
-    <button class="game-mode-btn" id="mode-theory" onclick="setGameMode('theory')">🎓 Theory</button>
-    <button class="game-mode-btn" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
-    <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">🎯 Challenges</button>
-    <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">🧩 Puzzles</button>
-  </div>
+<div id="lab-root">
 
-  <!-- ═══════════════ STORY ═══════════════ -->
-  <div class="mode-section" id="section-story" style="display:block;">
-    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
-      <div class="game-main">
-        <section class="macro-panel">
-          <h3>📖 The Story — Why Metals Conduct and Insulators Don't</h3>
+  <section id="tab-overview" class="tab-section active">
+    <div class="lab-layout">
+      <div class="lab-main">
+        <div class="macro-panel">
+          <h3>📖 Overview — Why Metals Conduct and Insulators Don't</h3>
           <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.6;margin-bottom:1rem;">
             Apply an electric field to a metal and electrons drift — slowly, against the random thermal
             motion — producing a current. The <strong style="color:var(--accent-cyan);">Drude model</strong>
@@ -146,7 +166,7 @@
             <div class="insight-card" style="grid-column:1/-1;">
               <div class="insight-title">🎮 How the Playground Lets You Feel It</div>
               <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
-                Use the <strong style="color:var(--accent-cyan);">Playground</strong> to watch electrons drift
+                Use the <strong style="color:var(--accent-cyan);">Simulation</strong> to watch electrons drift
                 through a lattice under an electric field. Tune <i>τ</i> (scattering time), <i>T</i>
                 (temperature), <i>n</i> (carrier density), and <i>E</i> (field strength). Yellow flashes mark
                 scattering events. The resistivity-vs-T plot shows the transition from impurity plateau to
@@ -155,35 +175,15 @@
               </p>
             </div>
           </div>
-        </section>
+        </div>
       </div>
-      <aside class="game-sidebar static">
-        <div class="sidebar-card">
-          <h4>🗺 Lab Navigator</h4>
-          <div id="module-nav-story"></div>
-        </div>
-        <div class="sidebar-card">
-          <h4>🏆 Your Badges</h4>
-          <div id="badge-list-story" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        </div>
-        <div class="sidebar-card">
-          <h4>📊 Progress</h4>
-          <div class="scoreboard">
-            <div class="score-cell"><div class="score-num" id="stat-challenges-story">0</div><div class="score-label">Challenges</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-puzzles-story">0</div><div class="score-label">Puzzles</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-xp-story">0</div><div class="score-label">Total XP</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-badges-story">0</div><div class="score-label">Badges</div></div>
-          </div>
-        </div>
-      </aside>
+      <aside class="lab-sidebar"></aside>
     </div>
-  </div>
-
-  <!-- ═══════════════ THEORY ═══════════════ -->
-  <div class="mode-section" id="section-theory" style="display:none;">
-    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
-      <div class="game-main">
-        <section class="macro-panel">
+  </section>
+  <section id="tab-theory" class="tab-section">
+    <div class="lab-layout">
+      <div class="lab-main">
+        <div class="macro-panel">
           <h3>🎓 Theory — Drude Model, Hall Effect, and Transport</h3>
           <div class="theory-content">
             <p>
@@ -197,6 +197,7 @@
             <p>
               where \(n\) is the carrier density and \(m^*\) the effective mass. The mean free path is
               \(\ell = v_F \tau\).
+
             </p>
           </div>
 
@@ -274,35 +275,16 @@
               </p>
             </div>
           </div>
-        </section>
+        </div>
       </div>
 
-      <aside class="game-sidebar static">
-        <div class="sidebar-card">
-          <h4>🗺 Lab Navigator</h4>
-          <div id="module-nav-theory"></div>
-        </div>
-        <div class="sidebar-card">
-          <h4>🏆 Your Badges</h4>
-          <div id="badge-list-theory" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        </div>
-        <div class="sidebar-card">
-          <h4>📊 Progress</h4>
-          <div class="scoreboard">
-            <div class="score-cell"><div class="score-num" id="stat-challenges-theory">0</div><div class="score-label">Challenges</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-puzzles-theory">0</div><div class="score-label">Puzzles</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-xp-theory">0</div><div class="score-label">Total XP</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-badges-theory">0</div><div class="score-label">Badges</div></div>
-          </div>
-        </div>
-      </aside>
+      <aside class="lab-sidebar"></aside>
     </div>
-  </div>
+  </section>
 
-  <!-- PLAYGROUND -->
-  <div class="mode-section" id="section-play" style="display:none;">
-    <div class="game-layout">
-      <div class="game-main">
+  <section id="tab-simulation" class="tab-section">
+    <div class="lab-layout sim-tab">
+      <div class="lab-main">
 
         <section class="macro-panel">
           <h3>🔬 Drude Electron Drift</h3>
@@ -460,8 +442,7 @@
 
       </div>
 
-      <!-- Right sidebar -->
-      <aside class="game-sidebar">
+      <aside class="lab-sidebar">
         <div class="sidebar-card">
           <h4>⚙ Quantum Controls</h4>
 
@@ -590,220 +571,85 @@
         </div>
       </aside>
     </div>
-  </div>
-
-  <!-- CHALLENGES -->
-  <div class="mode-section" id="section-challenge" style="display:none;">
-    <div class="game-layout">
-      <div class="game-main">
-
-        <section class="macro-panel">
-          <h3>🎮 Challenges</h3>
-          <p class="slider-desc" style="font-size:0.9rem; line-height:1.6; margin-bottom:1rem;">
-            Test your conductivity intuition. Solve all three challenges to unlock badges and XP.
-          </p>
-
-          <div class="insights">
-            <div class="insight-card">
-              <div class="challenge-header">
-                <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span>
-                <span class="challenge-title">I-V Curve Tracer</span>
-                <span class="challenge-difficulty easy">Easy</span>
-              </div>
-              <div class="challenge-desc">Identify electronic components from their I-V characteristics.</div>
-              <div class="challenge-reward">🏆 Reward: 50 XP · Combo bonus: +5 XP per streak</div>
-              <div class="timer-bar"><div class="timer-fill" id="iv-timer" style="width:100%"></div></div>
-              <div id="iv-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-              <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                <button class="btn" onclick="guessIVCurve('ohmic')">Ohmic resistor</button>
-                <button class="btn" onclick="guessIVCurve('diode')">p-n Diode</button>
-                <button class="btn" onclick="guessIVCurve('schottky')">Schottky</button>
-              </div>
-              <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;">
-                <strong>Score:</strong> <span id="iv-score">0</span> · <strong>Combo:</strong> <span id="iv-combo">0</span>
-              </div>
-              <div class="challenge-feedback" id="iv-feedback"></div>
-            </div>
-
-            <div class="insight-card">
-              <div class="challenge-header">
-                <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🧲</span>
-                <span class="challenge-title">Hall Effect Sign</span>
-                <span class="challenge-difficulty medium">Medium</span>
-              </div>
-              <div class="challenge-desc">Determine if the Hall voltage is positive or negative.</div>
-              <div class="challenge-reward">🏆 Reward: 60 XP · "Hall Detector" badge</div>
-              <div id="hall-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-              <div style="display:flex; gap:0.5rem;">
-                <button class="btn" onclick="guessHallSign('positive')">Positive V_H</button>
-                <button class="btn" onclick="guessHallSign('negative')">Negative V_H</button>
-              </div>
-              <div class="challenge-feedback" id="hall-feedback"></div>
-            </div>
-
-            <div class="insight-card">
-              <div class="challenge-header">
-                <span class="challenge-icon" style="background:rgba(74,222,128,0.12);">❄</span>
-                <span class="challenge-title">Superconductor Challenge</span>
-                <span class="challenge-difficulty hard">Hard</span>
-              </div>
-              <div class="challenge-desc">Is the material superconducting at 4 K?</div>
-              <div class="challenge-reward">🏆 Reward: 80 XP + "Superconductor" badge</div>
-              <div id="super-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-              <div style="display:flex; gap:0.5rem;">
-                <button class="btn" onclick="guessSuperConducting(true)">Superconducting</button>
-                <button class="btn" onclick="guessSuperConducting(false)">Normal</button>
-              </div>
-              <div class="challenge-feedback" id="super-feedback"></div>
-            </div>
-          </div>
-        </section>
-
-      </div>
-
-      <aside class="game-sidebar" style="position:static;">
-        <div class="sidebar-card">
-          <h4>🗺 Lab Navigator</h4>
-          <div id="module-nav-ch"></div>
-        </div>
-        <div class="sidebar-card">
-          <h4>🏆 Your Badges</h4>
-          <div id="badge-list-ch" style="font-size:0.8rem; color:var(--text-dim); line-height:1.6;">Complete challenges to earn badges!</div>
-        </div>
-        <div class="sidebar-card">
-          <h4>📊 Progress</h4>
-          <div class="scoreboard">
-            <div class="score-cell"><div class="score-num" id="stat-challenges-ch">0</div><div class="score-label">Challenges</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-puzzles-ch">0</div><div class="score-label">Puzzles</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-xp-ch">0</div><div class="score-label">Total XP</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-badges-ch">0</div><div class="score-label">Badges</div></div>
-          </div>
-        </div>
-      </aside>
-    </div>
-  </div>
-
-  <!-- PUZZLES -->
-  <div class="mode-section" id="section-puzzle" style="display:none;">
-    <div class="game-layout">
-      <div class="game-main">
-
-        <section class="macro-panel">
-          <h3>🧩 Puzzles</h3>
-          <p class="slider-desc" style="font-size:0.9rem; line-height:1.6; margin-bottom:1rem;">
-            Build formulas, match mechanisms, and classify systems. Drag-and-drop puzzles test the core physics of conductivity.
-          </p>
-
-          <div class="insights">
-            <div class="insight-card">
-              <div class="challenge-header">
-                <span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🔧</span>
-                <span class="challenge-title">Mean Free Path Builder</span>
-                <span class="challenge-difficulty medium">Medium</span>
-              </div>
-              <div class="challenge-desc">Match scattering mechanisms to their effects on resistivity.</div>
-              <div class="challenge-reward">🏆 Reward: 60 XP</div>
-              <div class="challenge-grid">
-                <div>
-                  <p style="font-size:0.85rem;color:var(--text-muted);">Mechanisms:</p>
-                  <div id="mfp-pool" style="display:flex;flex-wrap:wrap;gap:0.5rem;"></div>
-                </div>
-                <div>
-                  <p style="font-size:0.85rem;color:var(--text-muted);">Effects:</p>
-                  <div id="mfp-zones" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
-                </div>
-              </div>
-              <button class="btn" onclick="checkMFPBuilder()">✓ Verify</button>
-              <div class="challenge-feedback" id="mfp-feedback"></div>
-            </div>
-
-            <div class="insight-card">
-              <div class="challenge-header">
-                <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">📐</span>
-                <span class="challenge-title">Build σ = ne²τ/m*</span>
-                <span class="challenge-difficulty hard">Hard</span>
-              </div>
-              <div class="challenge-desc">Drag terms into the conductivity formula.</div>
-              <div class="challenge-reward">🏆 Reward: 80 XP</div>
-              <div id="sigma-target" style="font-size:1.5rem;margin:1rem 0;font-family:var(--font-mono);color:var(--text-main);"></div>
-              <div id="sigma-pool" style="display:flex;gap:0.5rem;flex-wrap:wrap;"></div>
-              <button class="btn" onclick="checkSigmaBuilder()">✓ Check Formula</button>
-              <div class="challenge-feedback" id="sigma-feedback"></div>
-            </div>
-
-            <div class="insight-card">
-              <div class="challenge-header">
-                <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🛡</span>
-                <span class="challenge-title">Wiedemann-Franz Detective</span>
-                <span class="challenge-difficulty master">Master</span>
-              </div>
-              <div class="challenge-desc">Does each system obey or violate the Wiedemann-Franz law?</div>
-              <div class="challenge-reward">🏆 Reward: 120 XP</div>
-              <div id="wf-list" style="margin-top:0.5rem;"></div>
-              <button class="btn" onclick="checkWFPuzzle()">✓ Check Classification</button>
-              <div class="challenge-feedback" id="wf-cond-feedback"></div>
-            </div>
-          </div>
-        </section>
-
-      </div>
-
-      <aside class="game-sidebar" style="position:static;">
-        <div class="sidebar-card">
-          <h4>🗺 Lab Navigator</h4>
-          <div id="module-nav-pz"></div>
-        </div>
-        <div class="sidebar-card">
-          <h4>🏆 Your Badges</h4>
-          <div id="badge-list-pz" style="font-size:0.8rem; color:var(--text-dim); line-height:1.6;">Complete challenges to earn badges!</div>
-        </div>
-        <div class="sidebar-card">
-          <h4>📊 Progress</h4>
-          <div class="scoreboard">
-            <div class="score-cell"><div class="score-num" id="stat-challenges-pz">0</div><div class="score-label">Challenges</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-puzzles-pz">0</div><div class="score-label">Puzzles</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-xp-pz">0</div><div class="score-label">Total XP</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-badges-pz">0</div><div class="score-label">Badges</div></div>
-          </div>
-        </div>
-      </aside>
-    </div>
-  </div>
+  </section>
 
 </div>
 
 <script src="../../shared_ui.js"></script>
-<script src="../../shared_games.js"></script>
+<script src="../../shared_lab.js"></script>
 <script src="../../shared_interactive.js"></script>
 <script src="cond_sim.js?v=6"></script>
 <script src="cond_apps_games.js?v=7"></script>
 <script src="../../shared_effects.js"></script>
 <script>
-function condHighlightMat(card) {
-  document.querySelectorAll('.material-card').forEach(function(b) { b.classList.remove('selected'); });
-  card.classList.add('selected');
-}
-document.addEventListener('DOMContentLoaded', function() {
-  // initConductivity() is deferred until Playground is actually visible
-  // to avoid building plots/canvas at 0×0 while section-play is display:none.
-  // The MutationObserver in cond_apps_games.js handles the first-visibility init.
-  var _condInited = false;
-  function _tryInitCond() {
-    if (_condInited) return;
-    var section = document.getElementById('section-play');
-    if (section && section.style.display !== 'none') {
-      _condInited = true;
-      if (typeof initConductivity === 'function') { initConductivity(); }
-      else { console.warn('[COND] initConductivity not loaded'); }
-    }
+(function() {
+  'use strict';
+  window._condInitDone = false;
+
+  window.setGameMode = function(mode) {
+    var map = { story:'overview', theory:'theory', play:'simulation' };
+    window.switchTab(map[mode] || 'overview');
+  };
+
+  if (!window.__GameState) window.__GameState = {
+    xp: function(){ return 0; },
+    addXP: function(){},
+    unlock: function(){},
+    hasAchievement: function(){ return false; },
+    get: function(){ return []; },
+    set: function(){},
+    getProgress: function(){ return 0; },
+    setProgress: function(){},
+    earnedBadges: { add: function(){}, has: function(){ return false; }, size: 0 },
+    save: function(){}
+  };
+  window.showXPFloat = function(){};
+  window.showAchievementPopup = function(){};
+  window.particleBurst = function(){};
+  window.celebrateCorrect = function(){ return { count:0, bonus:0 }; };
+  window.comboCheck = function(){ return { count:1, bonus:0 }; };
+  window.buildChallengePanel = function(){ return document.createElement('div'); };
+  window.showHint = function(){};
+  window.setModuleProgress = function(){};
+  window.updateNavXP = function(){};
+  window.updateNavBadges = function(){};
+
+  function condHighlightMat(card) {
+    document.querySelectorAll('.material-card').forEach(function(b) { b.classList.remove('selected'); });
+    card.classList.add('selected');
   }
-  // Try immediately (in case Playground is visible on load)
-  setTimeout(_tryInitCond, 100);
-  // Also observe section-play for when it becomes visible
-  var _condInitObs = new MutationObserver(function() { _tryInitCond(); });
-  var sp = document.getElementById('section-play');
-  if (sp) _condInitObs.observe(sp, { attributes: true });
-});
+  window.condHighlightMat = condHighlightMat;
+
+  window.initSimulation = function() {
+    if (!window._condInitDone) {
+      window._condInitDone = true;
+      if (typeof initConductivity === 'function') initConductivity();
+    } else {
+      if (typeof condUpdatePlots === 'function') condUpdatePlots();
+      if (typeof condUpdateReadout === 'function') condUpdateReadout();
+      if (typeof condResizeCanvas === 'function') condResizeCanvas();
+    }
+  };
+
+  var _origSwitchTab = window.switchTab;
+  window.switchTab = function(tab) {
+    if (_origSwitchTab) _origSwitchTab(tab);
+    if (tab === 'simulation') {
+      setTimeout(function() {
+        window.initSimulation();
+      }, 100);
+    }
+  };
+
+  (function() {
+    var btns = document.querySelectorAll('.tab-btn');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].onclick = function() {
+        window.switchTab(this.getAttribute('data-tab'));
+      };
+    }
+  })();
+})();
 </script>
 </body>
 </html>

@@ -281,7 +281,13 @@ function updateLiveTable() {
 function renderLattice() {
   const canvas = document.getElementById('lattice-canvas');
   if (!canvas) return;
-  const ctx = canvas.getContext('2d');
+  let ctx = canvas.getContext('2d');
+  if (!ctx) {
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+    ctx = canvas.getContext('2d');
+    if (!ctx) return;
+  }
   const w = canvas.width, h = canvas.height;
   ctx.clearRect(0, 0, w, h);
   const R = 4;
@@ -436,8 +442,13 @@ window.setEBDim = function(dim) {
   plotBandStructure(); plotDOS(); plotARPES(); updateLiveTable(); renderLattice();
 };
 
-window.setEBMaterial = setEBMaterial;
-window.initEB = initEB;
-window.state = state;
+window.setEBMaterial    = setEBMaterial;
+window.initEB          = initEB;
+window.plotBandStructure = plotBandStructure;
+window.plotDOS         = plotDOS;
+window.plotARPES       = plotARPES;
+window.renderLattice   = renderLattice;
+window.updateLiveTable = updateLiveTable;
+window.state           = state;
 initEB();
 setEBMaterial('Cu');

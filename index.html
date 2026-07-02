@@ -3,91 +3,102 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Physics Playground — Learn by Playing</title>
+<title>Quantum Lab</title>
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"
         integrity="sha384-Hl48Kq2HifOWdXEjMsKo6qxqvRLTYqIGbvlENBmkHAxZKIGCXv43H6W1jA671RzC"
         crossorigin="anonymous"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <link rel="stylesheet" href="shared_styles.css">
-<!-- Root-page styles not in shared CSS -->
 <style>
-  .game-container { max-width: 1400px; margin: 0 auto; padding: 0 var(--space-xl) var(--space-2xl); }
-  .section-header { margin-bottom: var(--space-xl); animation: fadeInUp 0.6s var(--ease-out) both; }
-  .section-header h2 { font-family: var(--font-display); font-size: 1.6rem; font-weight: 600; margin-bottom: 0.4rem; }
-  .section-header p  { color: var(--text-muted); font-size: 0.95rem; }
-  .section-icon { margin-right: 0.5rem; }
+  .lab-container { max-width: 1400px; margin: 0 auto; padding: 0 var(--space-xl) var(--space-2xl); }
 
-  .lab-grid {
+  .lab-topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: var(--space-md) var(--space-xl); border-bottom: 1px solid var(--glass-border);
+    background: var(--bg-page); position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  .lab-topbar-brand { font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
+  .lab-topbar-brand span { font-size: 1.3rem; }
+  .lab-topbar-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: var(--radius-pill); padding: 0.25rem 0.75rem; }
+
+  .lab-header { padding: var(--space-2xl) var(--space-xl) 1rem; }
+  .lab-header h1 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+  .lab-desc { color: var(--text-muted); font-size: 1rem; line-height: 1.6; }
+
+  .section-header { margin-bottom: var(--space-xl); }
+  .section-header h2 { font-family: var(--font-display); font-size: 1.4rem; font-weight: 600; margin-bottom: 0.3rem; }
+
+  .module-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: var(--space-lg);
   }
 
-  /* Lab glow blobs inside cards */
-  .lab-glow {
-    position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0.15;
-    transition: opacity 0.5s;
+  .module-card {
+    display: block;
+    background: var(--bg-panel);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s var(--ease-out);
+    position: relative; overflow: hidden;
   }
-  .lab-card:hover .lab-glow { opacity: 0.25; }
-  .lab-glow.qho      { background: radial-gradient(circle at 80% 20%, #00f0ff, transparent 60%); }
-  .lab-glow.hydrogen { background: radial-gradient(circle at 20% 80%, #c084fc, transparent 60%); }
-  .lab-glow.spin     { background: radial-gradient(circle at 50% 50%, #ff4ecd, transparent 60%); }
-  .lab-glow.kp       { background: radial-gradient(circle at 80% 80%, #facc15, transparent 60%); }
-  .lab-glow.bands    { background: radial-gradient(circle at 20% 20%, #4ade80, transparent 60%); }
-  .lab-glow.fermi    { background: radial-gradient(circle at 50% 80%, #fb923c, transparent 60%); }
-  .lab-glow.conduct { background: radial-gradient(circle at 80% 50%, #00f0ff, transparent 60%); }
-
-
-  .lab-content { position: relative; z-index: 1; display: flex; flex-direction: column; gap: var(--space-sm); }
-  .lab-badge {
-    align-self: flex-start;
-    background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
-    border-radius: var(--radius-pill); padding: 0.2rem 0.8rem;
+  .module-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(0,240,255,0.2);
+    box-shadow: 0 0 30px rgba(0,240,255,0.08);
   }
-  .lab-num { font-family: var(--font-mono); font-size: 0.75rem; font-weight: 600; color: var(--accent-cyan); }
-  .lab-info h3 { font-family: var(--font-display); font-size: 1.1rem; font-weight: 600; margin-bottom: 0.3rem; }
-  .lab-info p  { font-size: 0.85rem; color: var(--text-muted); line-height: 1.55; margin-bottom: var(--space-sm); }
+  .module-card.featured {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, rgba(0,240,255,0.05), rgba(192,132,252,0.05));
+    border-color: rgba(0,240,255,0.15);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1.5rem;
+    align-items: center;
+    padding: 1.5rem;
+  }
+  .module-card.featured .module-card-num {
+    width: 56px; height: 56px; font-size: 1.1rem;
+    background: var(--grad-hero); color: #fff; border: none;
+  }
+  .module-card.featured .module-card-title { font-size: 1.25rem; }
+  .module-card.featured .module-card-desc { font-size: 0.92rem; }
 
-  .lab-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: var(--space-sm); }
-  .chip {
-    font-size: 0.72rem; font-weight: 500; padding: 0.25rem 0.6rem;
+  .module-card-num {
+    font-family: var(--font-mono); font-size: 0.8rem; font-weight: 600;
+    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    border-radius: var(--radius-pill);
     background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
-    border-radius: var(--radius-pill); color: var(--text-muted);
-    transition: all 0.3s;
+    color: var(--accent-cyan); margin-bottom: 0.6rem;
   }
-  .lab-card:hover .chip { border-color: rgba(0,240,255,0.15); color: var(--text-main); }
+  .module-card-icon { font-size: 1.8rem; margin-bottom: 0.5rem; }
+  .module-card-title { font-family: var(--font-display); font-size: 1rem; font-weight: 600; margin-bottom: 0.3rem; }
+  .module-card-desc { font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; }
 
-  /* Progress ring */
-  .lab-progress-ring {
-    position: relative; width: 48px; height: 48px; align-self: flex-end; margin-top: auto;
-  }
-  .lab-progress-ring svg {
-    width: 100%; height: 100%; transform: rotate(-90deg);
-  }
-  .ring-bg  { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 3; }
-  .ring-fill { fill: none; stroke: url(#ringGrad); stroke-width: 3; stroke-linecap: round;
-    transition: stroke-dasharray 0.8s var(--ease-out);
-  }
-  .ring-text {
-    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-mono); font-size: 0.65rem; font-weight: 600; color: var(--accent-cyan);
-  }
-
-  /* Footer */
-  .game-footer {
+  .lab-footer {
     max-width: 1400px; margin: 0 auto; padding: var(--space-lg) var(--space-xl);
     border-top: 1px solid var(--glass-border);
-    display: flex; justify-content: space-between; align-items: center;
-    font-size: 0.8rem; color: var(--text-dim);
-    animation: fadeInUp 0.6s var(--ease-out) both;
-  }
-  .footer-badge {
-    background: rgba(0,240,255,0.06); border: 1px solid rgba(0,240,255,0.12);
-    border-radius: var(--radius-pill); padding: 0.25rem 0.8rem;
-    color: var(--accent-cyan); font-weight: 500; font-size: 0.75rem;
+    display: flex; justify-content: center; align-items: center;
+    font-size: 0.8rem; color: var(--text-dim); text-align: center;
   }
 
-  /* Spotlight gradient effect on cards (via JS in shared_effects) */
+  .module-jump {
+    display: flex; flex-wrap: wrap; gap: 0.35rem;
+    padding: var(--space-md) var(--space-xl) 0;
+    max-width: 1400px; margin: 0 auto;
+  }
+  .module-jump a {
+    font-family: var(--font-mono); font-size: 0.7rem; font-weight: 500;
+    padding: 0.25rem 0.55rem; border-radius: var(--radius-pill);
+    background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+    color: var(--text-muted); text-decoration: none; transition: all 0.2s;
+  }
+  .module-jump a:hover { background: rgba(0,240,255,0.08); border-color: rgba(0,240,255,0.2); color: var(--accent-cyan); }
+
   .spotlight {
     position: relative; overflow: hidden;
   }
@@ -99,10 +110,11 @@
   }
   .spotlight:hover::after { opacity: 1; }
 
-  /* Responsive */
   @media (max-width: 768px) {
-    .lab-grid { grid-template-columns: 1fr; }
-    .game-footer { flex-direction: column; gap: var(--space-sm); text-align: center; }
+    .module-grid { grid-template-columns: 1fr; }
+    .module-card.featured { grid-template-columns: 1fr; text-align: center; }
+    .module-card.featured .module-card-num { margin: 0 auto 0.6rem; }
+    .lab-topbar-label { display: none; }
   }
 </style>
 </head>
@@ -116,622 +128,191 @@
 <div class="orb orb-purple"></div>
 <div class="orb orb-pink"></div>
 
-<!-- SVG gradient def for progress rings -->
-<svg width="0" height="0" style="position:absolute;">
-  <defs>
-    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#00f0ff;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#c084fc;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-</svg>
-
-<!-- TOP NAVBAR -->
-<nav class="game-nav">
-  <div class="nav-brand"><span class="nav-logo">⚛</span> Physics Playground</div>
-  <div class="nav-stats">
-    <div class="stat-badge">
-      <span class="stat-icon">⭐</span>
-      <span class="stat-value" id="nav-xp">0 XP</span>
-    </div>
-    <div class="stat-badge" id="nav-badges" style="display:none">
-      <span class="stat-icon">🏆</span>
-      <span class="stat-value" id="nav-badges-text">0 badges</span>
-    </div>
-    <div class="stat-badge">
-      <span class="stat-icon">🔬</span>
-      <span class="stat-value" id="nav-explored">0/15 modules</span>
-    </div>
-  </div>
+<!-- TOPBAR -->
+<nav class="lab-topbar">
+  <div class="lab-topbar-brand"><span>⚛</span> Quantum Lab</div>
 </nav>
 
 <!-- HERO -->
-<div class="game-hero">
-  <div class="hero-left">
-    <div class="level-badge">Level <span id="hero-level">1</span> — Quantum Initiate</div>
-    <h1>Learn Physics by Playing</h1>
-    <p class="hero-desc">
-      No textbooks. No lectures. Drag electrons. Tune lasers. Freeze atoms.
-      <strong>Discover equations through experiments.</strong>
-      Each level is a physics puzzle waiting for you to solve.
+<header class="lab-header">
+  <div>
+    <h1 style="font-size:clamp(2rem, 4vw, 3rem);">Quantum Lab</h1>
+    <p class="lab-desc" style="max-width:600px;">
+      Explore crystals, bands, doping,
+      optics, lasers, magnetism, and thermal properties through live simulations.
     </p>
-    <div class="hero-stats">
-      <div class="hero-stat">
-        <div class="hero-stat-num">60+</div>
-        <div class="hero-stat-label">Challenges</div>
-      </div>
-      <div class="hero-stat">
-        <div class="hero-stat-num">15</div>
-        <div class="hero-stat-label">Laboratories</div>
-      </div>
-      <div class="hero-stat">
-        <div class="hero-stat-num">∞</div>
-        <div class="hero-stat-label">Experiments</div>
-      </div>
-    </div>
-    <div class="hero-xp-bar">
-      <div class="xp-label"><span>Next Level</span><span id="xp-text">0 / 100 XP</span></div>
-      <div class="xp-track"><div class="xp-fill" id="xp-bar" style="width:0%"></div></div>
-    </div>
   </div>
-  <div class="hero-right">
-    <div class="preview-card tilt-card" id="hero-preview">
-      <div class="preview-plot" id="preview-plot" style="height:260px;"></div>
-      <div class="preview-caption"><span class="live-dot"></span> Live simulation running — hover a lab to preview</div>
-    </div>
-  </div>
-</div>
+</header>
 
-<!-- STORY FLOW -->
-<div class="timeline reveal">
-  <div class="timeline-line"></div>
-  <div class="timeline-node active" data-module="00">
-    <div class="timeline-dot">0</div>
-    <div class="timeline-label">Crystal</div>
-  </div>
-  <div class="timeline-node" data-module="01">
-    <div class="timeline-dot">1</div>
-    <div class="timeline-label">Single Particle</div>
-  </div>
-  <div class="timeline-node" data-module="02">
-    <div class="timeline-dot">2</div>
-    <div class="timeline-label">Atomic Orbitals</div>
-  </div>
-  <div class="timeline-node" data-module="03">
-    <div class="timeline-dot">3</div>
-    <div class="timeline-label">Spin &amp; Measurement</div>
-  </div>
-  <div class="timeline-node" data-module="04">
-    <div class="timeline-dot">4</div>
-    <div class="timeline-label">Periodic Lattice</div>
-  </div>
-  <div class="timeline-node" data-module="05">
-    <div class="timeline-dot">5</div>
-    <div class="timeline-label">Bands &amp; States</div>
-  </div>
-  <div class="timeline-node" data-module="06">
-    <div class="timeline-dot">6</div>
-    <div class="timeline-label">Fermi Statistics</div>
-  </div>
-  <div class="timeline-node" data-module="07">
-    <div class="timeline-dot">7</div>
-    <div class="timeline-label">Transport</div>
-  </div>
-  <div class="timeline-node" data-module="08">
-    <div class="timeline-dot">8</div>
-    <div class="timeline-label">Supercond.</div>
-  </div>
-  <div class="timeline-node" data-module="09">
-    <div class="timeline-dot">9</div>
-    <div class="timeline-label">Intrinsic Semi</div>
-  </div>
-  <div class="timeline-node" data-module="10">
-    <div class="timeline-dot">10</div>
-    <div class="timeline-label">Doped Semi</div>
-  </div>
-  <div class="timeline-node" data-module="11">
-    <div class="timeline-dot">11</div>
-    <div class="timeline-label">Junctions</div>
-  </div>
-  <div class="timeline-node" data-module="12">
-    <div class="timeline-dot">12</div>
-    <div class="timeline-label">Optics</div>
-  </div>
-  <div class="timeline-node" data-module="13">
-    <div class="timeline-dot">13</div>
-    <div class="timeline-label">Lasers</div>
-  </div>
-  <div class="timeline-node" data-module="14">
-    <div class="timeline-dot">14</div>
-    <div class="timeline-label">Magnetism</div>
-  </div>
-  <div class="timeline-node" data-module="15">
-    <span class="node-num">15</span>
-    <span class="node-label">Thermal</span>
-  </div>
+<!-- MODULE JUMP -->
+<div class="module-jump">
+  <a href="#mod-00">00</a>
+  <a href="#mod-01">01</a>
+  <a href="#mod-02">02</a>
+  <a href="#mod-03">03</a>
+  <a href="#mod-04">04</a>
+  <a href="#mod-05">05</a>
+  <a href="#mod-06">06</a>
+  <a href="#mod-07">07</a>
+  <a href="#mod-08">08</a>
+  <a href="#mod-09">09</a>
+  <a href="#mod-10">10</a>
+  <a href="#mod-11">11</a>
+  <a href="#mod-12">12</a>
+  <a href="#mod-13">13</a>
+  <a href="#mod-14">14</a>
+  <a href="#mod-15">15</a>
 </div>
 
 <!-- MODULE CARDS -->
-<div class="game-container">
-  <div class="section-header reveal">
-    <h2><span class="section-icon">🔬</span> Choose Your Laboratory</h2>
-    <p>Each lab has experiments, challenges, and puzzles. Complete them to level up.</p>
+<div class="lab-container">
+  <div class="section-header">
+    <h2>Laboratory Modules</h2>
   </div>
 
-  <div class="lab-grid">
+  <div class="module-grid">
 
-    <!-- MODULE 00: FEATURED INTRO -->
-    <a href="modules/00_crystal_to_quantum/index.html" class="lab-card tilt-card spotlight reveal" data-module="00" style="grid-column: 1 / -1; background: linear-gradient(135deg, rgba(0,240,255,0.05), rgba(192,132,252,0.05));">
-      <div class="lab-glow qho"></div>
-      <div class="lab-content" style="display:grid; grid-template-columns: 1fr auto; gap: var(--space-lg); align-items: center;">
-        <div>
-          <div class="lab-badge"><span class="lab-num" style="background: var(--grad-hero); color: #fff;">START</span></div>
-          <div class="lab-info">
-            <h3 style="font-size: 1.4rem;">🚀 From Crystal to Quantum</h3>
-            <p>Zoom through a silicon crystal from 1 cm down to the quantum realm. Fire photons, watch electrons dance, and discover why solid-state physics matters.</p>
-            <div class="lab-chips">
-              <span class="chip">🔬 Three.js 3D</span>
-              <span class="chip">⚡ Photon Beam</span>
-              <span class="chip">🎯 Zoom Journey</span>
-            </div>
-          </div>
-        </div>
-        <div class="lab-progress-ring" style="width: 64px; height: 64px;">
-          <svg viewBox="0 0 36 36">
-            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="ring-fill" id="ring-00" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          </svg>
-          <span class="ring-text" id="pct-00">0%</span>
-        </div>
+    <!-- MODULE 00 - FEATURED -->
+    <a href="modules/00_crystal_to_quantum/index.html" class="module-card featured spotlight" id="mod-00">
+      <div class="module-card-num">00</div>
+      <div>
+        <div class="module-card-icon" style="font-size:2rem;">💎</div>
+        <div class="module-card-title">Crystal → Quantum</div>
+        <div class="module-card-desc">Zoom from a silicon crystal down to the quantum realm. Fire photons and watch electrons dance.</div>
       </div>
     </a>
 
     <!-- MODULE 01 -->
-    <a href="modules/01_qho/index.html" class="lab-card tilt-card spotlight reveal" data-module="01">
-      <div class="lab-glow qho"></div>
-      <div class="lab-content">
-        <div class="lab-badge"><span class="lab-num">01</span></div>
-        <div class="lab-info">
-          <h3>Quantum Harmonic Oscillator</h3>
-          <p>Drag energy levels. Build wavefunctions. Match the quantum pattern.</p>
-          <div class="lab-chips">
-            <span class="chip">🎮 Wave Puzzle</span>
-            <span class="chip">🎯 Energy Ladder</span>
-            <span class="chip">⚗️ Laser Tuner</span>
-          </div>
-        </div>
-        <div class="lab-progress-ring">
-          <svg viewBox="0 0 36 36">
-            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="ring-fill" id="ring-01" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          </svg>
-          <span class="ring-text" id="pct-01">0%</span>
-        </div>
-      </div>
+    <a href="modules/01_qho/index.html" class="module-card spotlight" id="mod-01">
+      <div class="module-card-num">01</div>
+      <div class="module-card-icon">〰️</div>
+      <div class="module-card-title">Quantum Harmonic Oscillator</div>
+      <div class="module-card-desc">Drag energy levels, build wavefunctions, and match the quantum pattern.</div>
     </a>
 
     <!-- MODULE 02 -->
-    <a href="modules/02_hydrogen/index.html" class="lab-card tilt-card spotlight reveal reveal-delay-1" data-module="02">
-      <div class="lab-glow hydrogen"></div>
-      <div class="lab-content">
-        <div class="lab-badge"><span class="lab-num">02</span></div>
-        <div class="lab-info">
-          <h3>Hydrogen Atom</h3>
-          <p>Build orbitals from quantum numbers. Solve spectral mysteries.</p>
-          <div class="lab-chips">
-            <span class="chip">🎮 Orbital Builder</span>
-            <span class="chip">🎯 Spectral Detective</span>
-            <span class="chip">⚗️ Electron Config</span>
-          </div>
-        </div>
-        <div class="lab-progress-ring">
-          <svg viewBox="0 0 36 36">
-            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="ring-fill" id="ring-02" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          </svg>
-          <span class="ring-text" id="pct-02">0%</span>
-        </div>
-      </div>
+    <a href="modules/02_hydrogen/index.html" class="module-card spotlight" id="mod-02">
+      <div class="module-card-num">02</div>
+      <div class="module-card-icon">⚛️</div>
+      <div class="module-card-title">Hydrogen Atom</div>
+      <div class="module-card-desc">Build orbitals from quantum numbers and solve spectral mysteries.</div>
     </a>
 
     <!-- MODULE 03 -->
-    <a href="modules/03_spin/index.html" class="lab-card tilt-card spotlight reveal reveal-delay-2" data-module="03">
-      <div class="lab-glow spin"></div>
-      <div class="lab-content">
-        <div class="lab-badge"><span class="lab-num">03</span></div>
-        <div class="lab-info">
-          <h3>Spin-1/2 &amp; Quantum Measurement</h3>
-          <p>Navigate the Bloch sphere. Predict measurement outcomes. Build quantum circuits.</p>
-          <div class="lab-chips">
-            <span class="chip">🎮 Bloch Navigator</span>
-            <span class="chip">🎯 Stern-Gerlach</span>
-            <span class="chip">⚗️ Gate Puzzle</span>
-          </div>
-        </div>
-        <div class="lab-progress-ring">
-          <svg viewBox="0 0 36 36">
-            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="ring-fill" id="ring-03" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          </svg>
-          <span class="ring-text" id="pct-03">0%</span>
-        </div>
-      </div>
+    <a href="modules/03_spin/index.html" class="module-card spotlight" id="mod-03">
+      <div class="module-card-num">03</div>
+      <div class="module-card-icon">🧲</div>
+      <div class="module-card-title">Spin &amp; Measurement</div>
+      <div class="module-card-desc">Navigate the Bloch sphere, predict measurement outcomes, and build quantum circuits.</div>
     </a>
 
     <!-- MODULE 04 -->
-    <a href="modules/04_kronig_penney/index.html" class="lab-card tilt-card spotlight reveal reveal-delay-3" data-module="04">
-      <div class="lab-glow kp"></div>
-      <div class="lab-content">
-        <div class="lab-badge"><span class="lab-num">04</span></div>
-        <div class="lab-info">
-          <h3>Kronig-Penney Model</h3>
-          <p>Design a crystal. Watch the bandgap open. Engineer your material.</p>
-          <div class="lab-chips">
-            <span class="chip">🎮 Crystal Designer</span>
-            <span class="chip">🎯 Bandgap Builder</span>
-            <span class="chip">⚗️ Wave Packet</span>
-          </div>
-        </div>
-        <div class="lab-progress-ring">
-          <svg viewBox="0 0 36 36">
-            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="ring-fill" id="ring-04" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          </svg>
-          <span class="ring-text" id="pct-04">0%</span>
-        </div>
-      </div>
+    <a href="modules/04_kronig_penney/index.html" class="module-card spotlight" id="mod-04">
+      <div class="module-card-num">04</div>
+      <div class="module-card-icon">📐</div>
+      <div class="module-card-title">Kronig-Penney Model</div>
+      <div class="module-card-desc">Design a crystal, watch the bandgap open, and engineer your material.</div>
     </a>
 
     <!-- MODULE 05 -->
-    <a href="modules/05_energy_bands/index.html" class="lab-card tilt-card spotlight reveal reveal-delay-4" data-module="05">
-      <div class="lab-glow bands"></div>
-      <div class="lab-content">
-        <div class="lab-badge"><span class="lab-num">05</span></div>
-        <div class="lab-info">
-          <h3>Energy Bands &amp; Density of States</h3>
-          <p>Hunt the Fermi level. Design materials. Explore dimensions.</p>
-          <div class="lab-chips">
-            <span class="chip">🎮 Fermi Hunter</span>
-            <span class="chip">🎯 Material Designer</span>
-            <span class="chip">⚗️ Dimension Explorer</span>
-          </div>
-        </div>
-        <div class="lab-progress-ring">
-          <svg viewBox="0 0 36 36">
-            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="ring-fill" id="ring-05" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          </svg>
-          <span class="ring-text" id="pct-05">0%</span>
-        </div>
-      </div>
+    <a href="modules/05_energy_bands/index.html" class="module-card spotlight" id="mod-05">
+      <div class="module-card-num">05</div>
+      <div class="module-card-icon">📊</div>
+      <div class="module-card-title">Energy Bands &amp; Density of States</div>
+      <div class="module-card-desc">Hunt the Fermi level, design materials, and explore dimensions.</div>
     </a>
 
     <!-- MODULE 06 -->
-    <a href="modules/06_fermi_surface/index.html" class="lab-card tilt-card spotlight reveal reveal-delay-5" data-module="06">
-      <div class="lab-glow fermi"></div>
-      <div class="lab-content">
-        <div class="lab-badge"><span class="lab-num">06</span></div>
-        <div class="lab-info">
-          <h3>Fermi Surface &amp; Temperature</h3>
-          <p>Freeze metals. Smear Fermi surfaces. Race against temperature.</p>
-          <div class="lab-chips">
-            <span class="chip">🎮 Temperature Race</span>
-            <span class="chip">🎯 3D Fermi Explorer</span>
-            <span class="chip">⚗️ Metal Detector</span>
-          </div>
-        </div>
-        <div class="lab-progress-ring">
-          <svg viewBox="0 0 36 36">
-            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="ring-fill" id="ring-06" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          </svg>
-          <span class="ring-text" id="pct-06">0%</span>
-        </div>
-      </div>
+    <a href="modules/06_fermi_surface/index.html" class="module-card spotlight" id="mod-06">
+      <div class="module-card-num">06</div>
+      <div class="module-card-icon">🌐</div>
+      <div class="module-card-title">Fermi Surface &amp; Temperature</div>
+      <div class="module-card-desc">Freeze metals, smear Fermi surfaces, and race against temperature.</div>
     </a>
 
     <!-- MODULE 07 -->
-    <a href="modules/07_conductivity/index.html" class="lab-card tilt-card spotlight reveal" data-module="07">
-      <div class="lab-glow conduct"></div>
-      <div class="lab-content">
-        <div class="lab-badge"><span class="lab-num">07</span></div>
-        <div class="lab-info">
-          <h3>Electrical Conductivity</h3>
-          <p>Build circuits. Race electrons. Make a superconductor.</p>
-          <div class="lab-chips">
-            <span class="chip">🎮 Circuit Builder</span>
-            <span class="chip">🎯 Drift Race</span>
-            <span class="chip">⚗️ Superconductor Quest</span>
-          </div>
-        </div>
-        <div class="lab-progress-ring">
-          <svg viewBox="0 0 36 36">
-            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="ring-fill" id="ring-07" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          </svg>
-          <span class="ring-text" id="pct-07">0%</span>
-        </div>
-      </div>
+    <a href="modules/07_conductivity/index.html" class="module-card spotlight" id="mod-07">
+      <div class="module-card-num">07</div>
+      <div class="module-card-icon">⚡</div>
+      <div class="module-card-title">Electrical Conductivity</div>
+      <div class="module-card-desc">Build circuits, race electrons, and push toward superconductivity.</div>
     </a>
 
     <!-- MODULE 08 -->
-    <a href="modules/08_superconductivity/index.html" class="lab-card tilt-card spotlight reveal" data-module="08">
-      <div class="lab-glow qho"></div>
-      <div class="lab-content">
-        <div class="lab-badge"><span class="lab-num">08</span></div>
-        <div class="lab-info">
-          <h3>Superconductivity</h3>
-          <p>Zero resistance below Tc. Meissner effect. BCS gap and d-wave symmetry.</p>
-          <div class="lab-chips">
-            <span class="chip">🎯 Tc Estimator</span>
-            <span class="chip">🧩 Isotope Puzzle</span>
-            <span class="chip">🔬 Gap Lab</span>
-          </div>
-        </div>
-        <div class="lab-progress-ring">
-          <svg viewBox="0 0 36 36">
-            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="ring-fill" id="ring-08" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          </svg>
-          <span class="ring-text" id="pct-08">0%</span>
-        </div>
-      </div>
+    <a href="modules/08_superconductivity/index.html" class="module-card spotlight" id="mod-08">
+      <div class="module-card-num">08</div>
+      <div class="module-card-icon">❄️</div>
+      <div class="module-card-title">Superconductivity</div>
+      <div class="module-card-desc">Zero resistance below T<sub>c</sub>, Meissner effect, and the BCS gap.</div>
     </a>
 
     <!-- MODULE 09 -->
-    <a href="modules/09_intrinsic_semiconductors/index.html" class="lab-card tilt-card spotlight reveal" data-module="09">
-      <div class="lab-glow hydrogen"></div>
-      <div class="lab-content">
-        <div class="lab-badge"><span class="lab-num">09</span></div>
-        <div class="lab-info">
-          <h3>Intrinsic Semiconductors</h3>
-          <p>Tuning temperature, Eg, and effective mass. Track ni, EF, and conductivity.</p>
-          <div class="lab-chips">
-            <span class="chip">🎯 ni Estimator</span>
-            <span class="chip">🧩 Build Eg Formula</span>
-            <span class="chip">🔬 Conductivity Lab</span>
-          </div>
-        </div>
-        <div class="lab-progress-ring">
-          <svg viewBox="0 0 36 36">
-            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="ring-fill" id="ring-09" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          </svg>
-          <span class="ring-text" id="pct-09">0%</span>
-        </div>
-      </div>
+    <a href="modules/09_intrinsic_semiconductors/index.html" class="module-card spotlight" id="mod-09">
+      <div class="module-card-num">09</div>
+      <div class="module-card-icon">🔶</div>
+      <div class="module-card-title">Intrinsic Semiconductors</div>
+      <div class="module-card-desc">Tune temperature, bandgap, and effective mass to track conductivity.</div>
     </a>
 
     <!-- MODULE 10 -->
-    <a href="modules/10_doped_semiconductors/index.html" class="lab-card tilt-card spotlight reveal" data-module="10">
-      <div class="lab-glow spin"></div>
-      <div class="lab-content">
-        <div class="lab-badge"><span class="lab-num">10</span></div>
-        <div class="lab-info">
-          <h3>Doped Semiconductors</h3>
-          <p>Impurities shift EF, dominate carrier density, and switch type (n or p).</p>
-          <div class="lab-chips">
-            <span class="chip">🎯 Doping Quiz</span>
-            <span class="chip">🧩 Compensated Builder</span>
-            <span class="chip">🔬 Mobility Lab</span>
-          </div>
-        </div>
-        <div class="lab-progress-ring">
-          <svg viewBox="0 0 36 36">
-            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="ring-fill" id="ring-10" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          </svg>
-          <span class="ring-text" id="pct-10">0%</span>
-        </div>
-      </div>
+    <a href="modules/10_doped_semiconductors/index.html" class="module-card spotlight" id="mod-10">
+      <div class="module-card-num">10</div>
+      <div class="module-card-icon">🔷</div>
+      <div class="module-card-title">Doped Semiconductors</div>
+      <div class="module-card-desc">Impurities shift the Fermi level and switch carrier type from n to p.</div>
     </a>
 
     <!-- MODULE 11 -->
-    <a href="modules/11_junctions_devices/index.html" class="lab-card tilt-card spotlight reveal" data-module="11">
-      <div class="lab-glow kp"></div>
-      <div class="lab-content">
-        <div class="lab-badge"><span class="lab-num">11</span></div>
-        <div class="lab-info">
-          <h3>Junctions &amp; Devices</h3>
-          <p>From p-n junction IV to solar cells and LEDs. Device physics in action.</p>
-          <div class="lab-chips">
-            <span class="chip">🎯 IV Tracer</span>
-            <span class="chip">🧩 Solar Quiz</span>
-            <span class="chip">🔬 LED Lab</span>
-          </div>
-        </div>
-        <div class="lab-progress-ring">
-          <svg viewBox="0 0 36 36">
-            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="ring-fill" id="ring-11" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          </svg>
-          <span class="ring-text" id="pct-11">0%</span>
-        </div>
-      </div>
+    <a href="modules/11_junctions_devices/index.html" class="module-card spotlight" id="mod-11">
+      <div class="module-card-num">11</div>
+      <div class="module-card-icon">🔌</div>
+      <div class="module-card-title">Junctions &amp; Devices</div>
+      <div class="module-card-desc">From p-n junction I–V curves to solar cells and LEDs.</div>
     </a>
 
     <!-- MODULE 12 -->
-    <a href="modules/12_optics_dispersion/index.html" class="lab-card tilt-card spotlight reveal" data-module="12">
-      <div class="lab-glow bands"></div>
-      <div class="lab-content">
-        <div class="lab-badge"><span class="lab-num">12</span></div>
-        <div class="lab-info">
-          <h3>Optics &amp; Dispersion</h3>
-          <p>Complex refractive index, thin-film Airy interference, Fresnel coefficients, Brewster angle, and double-slit partial coherence.</p>
-          <div class="lab-chips">
-            <span class="chip">&#127919; 3D Photon Playground</span>
-            <span class="chip">&#129513; Material Response Puzzle</span>
-            <span class="chip">&#128640; Thin Film Airy</span>
-            <span class="chip">&#127939; Double-Slit Coherence</span>
-          </div>
-        </div>
-        <div class="lab-progress-ring">
-          <svg viewBox="0 0 36 36">
-            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="ring-fill" id="ring-12" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          </svg>
-          <span class="ring-text" id="pct-12">0%</span>
-        </div>
-      </div>
+    <a href="modules/12_optics_dispersion/index.html" class="module-card spotlight" id="mod-12">
+      <div class="module-card-num">12</div>
+      <div class="module-card-icon">💡</div>
+      <div class="module-card-title">Optics &amp; Dispersion</div>
+      <div class="module-card-desc">Complex refractive index, thin-film interference, and double-slit coherence.</div>
     </a>
 
     <!-- MODULE 13 -->
-    <a href="modules/13_laser_physics/index.html" class="lab-card tilt-card spotlight reveal" data-module="13">
-      <div class="lab-glow fermi"></div>
-      <div class="lab-content">
-        <div class="lab-badge"><span class="lab-num">13</span></div>
-        <div class="lab-info">
-          <h3>Laser Physics</h3>
-          <p>Stimulated emission, population inversion, cavity modes, telecom lasers.</p>
-          <div class="lab-chips">
-            <span class="chip">🎯 Direct/Indirect</span>
-            <span class="chip">🧩 Stimulated vs Spontaneous</span>
-            <span class="chip">🔬 Cavity Designer</span>
-          </div>
-        </div>
-        <div class="lab-progress-ring">
-          <svg viewBox="0 0 36 36">
-            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="ring-fill" id="ring-13" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          </svg>
-          <span class="ring-text" id="pct-13">0%</span>
-        </div>
-      </div>
+    <a href="modules/13_laser_physics/index.html" class="module-card spotlight" id="mod-13">
+      <div class="module-card-num">13</div>
+      <div class="module-card-icon">🔦</div>
+      <div class="module-card-title">Laser Physics</div>
+      <div class="module-card-desc">Stimulated emission, population inversion, and cavity mode design.</div>
     </a>
 
     <!-- MODULE 14 -->
-    <a href="modules/14_magnetism/index.html" class="lab-card tilt-card spotlight reveal" data-module="14">
-      <div class="lab-glow conduct"></div>
-      <div class="lab-content">
-        <div class="lab-badge"><span class="lab-num">14</span></div>
-        <div class="lab-info">
-          <h3>Magnetism</h3>
-          <p>Dia-, para-, ferromagnetism. Curie–Weiss, Ising lattice, hysteresis, and GMR.</p>
-          <div class="lab-chips">
-            <span class="chip">🧲 Ising Lattice</span>
-            <span class="chip">🔄 Hysteresis</span>
-            <span class="chip">🧩 Ordering Match</span>
-          </div>
-        </div>
-        <div class="lab-progress-ring">
-          <svg viewBox="0 0 36 36">
-            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="ring-fill" id="ring-14" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          </svg>
-          <span class="ring-text" id="pct-14">0%</span>
-        </div>
-      </div>
+    <a href="modules/14_magnetism/index.html" class="module-card spotlight" id="mod-14">
+      <div class="module-card-num">14</div>
+      <div class="module-card-icon">🧿</div>
+      <div class="module-card-title">Magnetism</div>
+      <div class="module-card-desc">Dia-, para-, ferromagnetism. Curie–Weiss, Ising lattice, and hysteresis.</div>
     </a>
 
     <!-- MODULE 15 -->
-    <a href="modules/15_thermal_properties/index.html" class="lab-card tilt-card spotlight reveal" data-module="15">
-      <div class="lab-glow qho"></div>
-      <div class="lab-content">
-        <div class="lab-badge"><span class="lab-num">15</span></div>
-        <div class="lab-info">
-          <h3>Thermal Properties</h3>
-          <p>Debye T³, electronic γT, Wiedemann-Franz, and thermal expansion.</p>
-          <div class="lab-chips">
-            <span class="chip">🎯 Metal or Insulator</span>
-            <span class="chip">🧩 Cv Builder</span>
-            <span class="chip">🔬 Heat Capacity Lab</span>
-          </div>
-        </div>
-        <div class="lab-progress-ring">
-          <svg viewBox="0 0 36 36">
-            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="ring-fill" id="ring-15" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          </svg>
-          <span class="ring-text" id="pct-15">0%</span>
-    </div>
-    </div>
+    <a href="modules/15_thermal_properties/index.html" class="module-card spotlight" id="mod-15">
+      <div class="module-card-num">15</div>
+      <div class="module-card-icon">🔥</div>
+      <div class="module-card-title">Thermal Properties</div>
+      <div class="module-card-desc">Debye T<sup>3</sup> law, electronic heat capacity, and Wiedemann-Franz.</div>
     </a>
 
   </div>
 </div>
 
-<footer class="game-footer reveal">
-  <div class="footer-left"><span>⚛ Physics Playground</span> · Built for Atomic Physics &amp; Solid State · Nano Master</div>
-  <div class="footer-right"><span class="footer-badge">🎮 Game Mode</span></div>
+<!-- FOOTER -->
+<footer class="lab-footer">
+  <span>⚛ Quantum Lab</span>
 </footer>
 
 <!-- SCRIPTS -->
-<script src="shared_ui.js"></script>
-<script src="shared_games.js"></script>
+<script src="shared_lab.js"></script>
 <script src="shared_effects.js"></script>
-<script>
-(function() {
-  'use strict';
-
-  // ── Preview plot ──
-  var t = Array.from({length:200}, function(_,i){ return i/20; });
-  var y = t.map(function(ti){ return Math.sin(ti) * Math.exp(-ti*0.1); });
-  Plotly.newPlot('preview-plot', [
-    { x: t, y: y, mode: 'lines',
-      line: { color: '#00f0ff', width: 2.5, shape: 'spline' },
-      fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.06)'
-    }
-  ], {
-    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
-    xaxis: { showgrid: false, zeroline: false, showticklabels: false },
-    yaxis: { showgrid: false, zeroline: false, showticklabels: false, range: [-1.2, 1.2] },
-    margin: { l: 0, r: 0, t: 0, b: 0 },
-    showlegend: false,
-    dragmode: false
-  }, { responsive: true, displayModeBar: false });
-
-  // ── Load progress & animate counts ──
-  var explored = 0, totalXP = 0;
-  for (var m = 0; m <= 15; m++) {
-    var pad = m < 10 ? '0' + m : m;
-    var pct = __GameState.getProgress ? __GameState.getProgress(m) : 0;
-    var ring = document.getElementById('ring-' + pad);
-    if (ring) ring.setAttribute('stroke-dasharray', pct + ', 100');
-    var pctEl = document.getElementById('pct-' + pad);
-    if (pctEl) pctEl.textContent = pct + '%';
-    if (pct > 0) explored++;
-  }
-  totalXP = __GameState.xp ? __GameState.xp() : 0;
-  document.getElementById('nav-xp').textContent = totalXP + ' XP';
-  document.getElementById('nav-explored').textContent = explored + '/15 modules';
-
-  // XP bar
-  var levelFn = __GameState.level;
-  var level = (typeof levelFn === 'function') ? levelFn() : (__GameState.level || 1);
-  var xpInLevel = totalXP - ((level-1)*100);
-  var pctXP = Math.min(Math.max(xpInLevel, 0), 100);
-  document.getElementById('xp-bar').style.width = pctXP + '%';
-  document.getElementById('xp-text').textContent = xpInLevel + ' / 100 XP';
-  document.getElementById('hero-level').textContent = level;
-
-  // ── Preview on hover ──
-  document.querySelectorAll('.lab-card').forEach(function(card) {
-    card.addEventListener('mouseenter', function() {
-      var mod = Number.parseInt(card.dataset.module) || 1;
-      var waveData = [];
-      for (var i = 0; i < 200; i++) {
-        var ti = i / 30, baseFreq = 0.5 + mod * 0.3;
-        waveData.push(Math.sin(baseFreq * ti) * Math.cos(2*ti) * Math.exp(-ti*0.08));
-      }
-      Plotly.animate('preview-plot', {
-        data: [{ y: waveData }]
-      }, { transition: { duration: 500 }, frame: { duration: 500 } });
-    });
-  });
-
-  // ── Timeline node click scroll ──
-  document.querySelectorAll('.timeline-node').forEach(function(node) {
-    node.addEventListener('click', function() {
-      var mod = node.dataset.module;
-      var card = document.querySelector('.lab-card[data-module="' + mod + '"]');
-      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-  });
-
-})();
-</script>
-
-<!-- UNIVERSE BACKGROUND ENGINE -->
 <script src="assets/universe-bg.js"></script>
 <script>UniverseBG.init();</script>
 

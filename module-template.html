@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module XX — Name — Quantum Lab</title>
+
+  <!--
+    ═══════════════════════════════════════════════════════════════
+    DEPENDENCIES — SCRIPT INCLUDE ORDER (MANDATORY)
+    ═══════════════════════════════════════════════════════════════
+
+    The order below is CRITICAL and must be followed exactly:
+
+      1. Plotly (local copy from modules/01_qho/)
+      2. MathJax from CDN with defer
+      3. shared_styles.css (at root)
+
+    ── Scripts (loaded at end of <body>) must follow this order:
+      1. shared_ui.js
+      2. shared_lab.js
+      3. shared_effects.js
+      4. shared_interactive.js
+      5. Module-specific simulation JS
+      6. Module-specific app JS
+      7. Module-specific inline <script> for init functions
+
+    DO NOT include shared_games.js — gamification has been removed
+    from the codebase (see shared_styles.css — no game-* classes).
+    ═══════════════════════════════════════════════════════════════
+  -->
+
+  <script src="../../modules/01_qho/plotly-2.27.0.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <link rel="stylesheet" href="../../shared_styles.css">
+
+  <style>
+    /* ── Module-specific styles only ── */
+    /*
+      Keep these to a minimum. Layout, tabs, sidebar are all in shared CSS.
+      Use shared classes: .content-card, .viz-card, .insight-card, .exercise-card,
+      .physics-note, .equation-box, etc.
+
+      NOTE: .content-card is the NEW name for what used to be .macro-panel.
+      Both class names can coexist on the same element during migration,
+      but new code should use .content-card. The old name is kept only for
+      backward compatibility during incremental refactoring.
+    */
+    .my-plot-box { background: var(--bg-elevated); border-radius: var(--radius-sm); padding: 0.6rem; }
+    .my-canvas { width: 100%; height: 300px; background: var(--bg-deep); border-radius: var(--radius-sm); }
+    /* Use container queries or @media for responsive plot sizes */
+  </style>
+</head>
+<!--
+  data-module="XX" is REQUIRED.
+  shared_lab.js uses this attribute to:
+    - Highlight the correct module in the Lab Navigator sidebar
+    - Set the selected option in the module-jump <select>
+  data-tab controls which tab is active on page load.
+-->
+<body data-module="XX" data-tab="overview">
+
+  <!-- ===== LAB TOPBAR ===== -->
+  <nav class="lab-topbar">
+    <div class="nav-brand">
+      <span class="nav-logo">⚛</span>
+      Quantum Lab
+    </div>
+    <div class="nav-stats">
+      <select id="module-jump" class="stat-badge" style="background:var(--bg-elevated);border:1px solid var(--glass-border);border-radius:var(--radius-pill);padding:0.3rem 0.8rem;font-size:0.82rem;color:var(--text-muted);">
+        <option>Jump to module...</option>
+      </select>
+    </div>
+  </nav>
+
+  <!-- ===== LAB HEADER ===== -->
+  <header class="lab-header" style="padding-bottom:0.5rem;">
+    <div>
+      <div class="lab-level">Module XX · Level N · Badge Name</div>
+      <h1>Module Display Title</h1>
+      <p class="lab-desc">Brief description of what this module covers.</p>
+    </div>
+  </header>
+
+  <!-- ===== TAB BAR (replaces old game-mode-bar) ===== -->
+  <!--
+    NOTE: The old game-mode-bar and all game-* classes are REMOVED from
+    shared_styles.css. Do NOT use them. Use .tab-bar and .tab-btn instead.
+  -->
+  <div class="tab-bar" role="tablist">
+    <button class="tab-btn active" data-tab="overview" role="tab">📋 Overview</button>
+    <button class="tab-btn" data-tab="theory" role="tab">📖 Theory</button>
+    <button class="tab-btn" data-tab="simulation" role="tab">🔬 Simulation</button>
+    <button class="tab-btn" data-tab="exercises" role="tab">✍️ Exercises</button>
+  </div>
+
+  <!-- ===== MAIN LAYOUT ===== -->
+  <div class="lab-layout">
+    <main class="lab-main">
+
+      <!-- ─── OVERVIEW TAB ─── -->
+      <section id="tab-overview" class="tab-section active">
+        <div class="content-card">
+          <!--
+            .content-card is the new unified name for what was previously
+            .macro-panel. Both classes can coexist on the same element for
+            incremental migration, but all new code should use .content-card.
+          -->
+          <h3>📖 Narrative Title</h3>
+          <p>Overview / Story content goes here.</p>
+        </div>
+        <!-- Optional: insights grid -->
+        <div class="insights">
+          <div class="insight-card">
+            <div class="insight-title">Topic 1</div>
+            <p>Description...</p>
+          </div>
+          <div class="insight-card">
+            <div class="insight-title">Topic 2</div>
+            <p>Description...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─── THEORY TAB ─── -->
+      <section id="tab-theory" class="tab-section">
+        <div class="content-card">
+          <h3>📚 Theory</h3>
+          <p>Physics content with equations...</p>
+        </div>
+        <!-- Physics notes with details/summary for collapsible sections -->
+        <div class="physics-note">
+          <details open>
+            <summary>Topic 1</summary>
+            <div class="note-body">
+              <p>Explanation...</p>
+              <div class="equation-box">$$E = \hbar\omega$$</div>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <!-- ─── SIMULATION TAB ─── -->
+      <section id="tab-simulation" class="tab-section">
+        <div class="content-card">
+          <h3>🔬 Simulation</h3>
+          <!-- Plots, canvases, controls go here -->
+          <div class="viz-card">
+            <div id="plot-main" class="plot-container" style="min-height:300px;"></div>
+          </div>
+
+          <!--
+            Sub-tab bars are OPTIONAL. Only include if this module needs
+            multiple sub-views within the Simulation tab (e.g. different
+            visualisation modes). If not needed, remove the sub-tab bar
+            and all sub-tab-content blocks.
+          -->
+          <div class="sub-tab-bar">
+            <button class="sub-tab-btn active" data-subtab="view1">View 1</button>
+            <button class="sub-tab-btn" data-subtab="view2">View 2</button>
+          </div>
+          <div class="sub-tab-content active" id="sub-view1">
+            <p>Sub-view 1 content...</p>
+          </div>
+          <div class="sub-tab-content" id="sub-view2">
+            <p>Sub-view 2 content...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─── EXERCISES TAB ─── -->
+      <section id="tab-exercises" class="tab-section">
+        <div class="content-card">
+          <h3>✍️ Exercises</h3>
+          <!--
+            Challenges have been renamed to Problems / Exercises.
+            Use .exercise-card instead of .challenge-card or .puzzle-card.
+          -->
+          <div class="exercise-card">
+            <div class="exercise-title">Problem 1</div>
+            <div class="exercise-desc">Description...</div>
+            <div class="exercise-controls" id="ex-1-controls"></div>
+            <div class="exercise-feedback" id="ex-1-feedback"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="lab-sidebar">
+
+      <!-- Lab Navigator (auto-populated by shared_lab.js) -->
+      <div class="sidebar-card">
+        <h4>🗺 Lab Navigator</h4>
+        <div id="lab-navigator"></div>
+      </div>
+
+      <!-- Simulation Controls (populated by shared_lab.js if sliderConfig exists) -->
+      <div class="sidebar-card" id="sim-controls-card">
+        <h4>⚙ Controls</h4>
+        <div id="sim-controls">
+          <p style="font-size:0.78rem;color:var(--text-dim);">Select the Simulation tab to interact.</p>
+        </div>
+      </div>
+
+      <!-- Live Readout -->
+      <div class="sidebar-card" id="sim-readout-card">
+        <h4>📊 Live Readout</h4>
+        <div id="sim-readout">
+          <div class="dash-row"><span class="dash-label">Parameter</span><span class="dash-val" id="readout-val">—</span></div>
+        </div>
+      </div>
+
+    </aside>
+  </div>
+
+  <!-- ===== SHARED SCRIPTS ===== -->
+  <!--
+    ═══════════════════════════════════════════════════════════════
+    SCRIPT INCLUDE ORDER — DO NOT CHANGE
+    ═══════════════════════════════════════════════════════════════
+
+    The following order is mandatory across all modules:
+
+    1. shared_ui.js         — UI utilities (SliderGroup, etc.)
+    2. shared_lab.js        — Tab switching, navigator, module jump
+    3. shared_effects.js    — Particle effects, animations
+    4. shared_interactive.js— Drag-and-drop, click interactions
+    5. Module simulation JS — xx_sim.js (module-specific simulation logic)
+    6. Module app JS        — xx_apps.js (module-specific application logic)
+    7. Inline <script>      — Tab init functions (window.initSimulation, etc.)
+
+    shared_games.js is INTENTIONALLY NOT included — gamification
+    features have been removed from the codebase.
+    ═══════════════════════════════════════════════════════════════
+  -->
+  <script src="../../shared_ui.js"></script>
+  <script src="../../shared_lab.js"></script>
+  <script src="../../shared_effects.js"></script>
+  <script src="../../shared_interactive.js"></script>
+
+  <!-- Module-specific simulation JS -->
+  <script src="../../modules/XX_slug/xx_sim.js"></script>
+  <script src="../../modules/XX_slug/xx_apps.js"></script>
+
+  <!-- Module-specific initialization -->
+  <script>
+    (function() {
+      'use strict';
+      // Tab-specific initialization
+      window.initSimulation = function() {
+        // Build plots, start simulation loop
+      };
+      window.initExercises = function() {
+        // Initialize exercise problems
+      };
+    })();
+  </script>
+</body>
+</html>

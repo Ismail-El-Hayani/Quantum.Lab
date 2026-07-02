@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   shared_effects.js  —  Ambient Interactions & Modern FX
+   shared_effects.js  —  Quantum Lab · Ambient Interactions & FX
    Cursor glow · Scroll reveals · Magnetic buttons · 3D card tilt
    ═══════════════════════════════════════════════════════════════ */
 

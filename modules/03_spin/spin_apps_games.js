@@ -14,7 +14,6 @@ function sin2(x) { return Math.pow(Math.sin(x), 2); }
 
 // ============ MODULE GAME STATE ============
 var SpinGame = {
-  playgroundReady: false,
   ch1: { active: false, timer: null, timeLeft: 60, targetTheta: 60, attempts: 0, solved: false },
   ch2: { active: false, timer: null, timeLeft: 90, targetB: 1.0, userFreq: 28, solved: false },
   ch3: { active: false, qIndex: 0, score: 0, solved: false },
@@ -25,8 +24,6 @@ var SpinGame = {
 
 // ============ PLAYGROUND ============
 function initPlayground() {
-  if (SpinGame.playgroundReady) return;
-  SpinGame.playgroundReady = true;
 
   // Sync sliders with spin_sim.js state if elements exist
   var thSlider = document.getElementById('slider-theta');
@@ -42,9 +39,12 @@ function initPlayground() {
     if (vph) vph.textContent = phSlider.value + '°';
   }
 
-  // If spin_sim.js initSpin hasn't run yet, trigger it
-  if (typeof initSpin === 'function' && document.getElementById('plot-bloch')) {
-    try { initSpin(); } catch(e) { console.log('spin_sim init:', e); }
+  // Plot the Bloch sphere and components if the container is visible
+  var plotEl = document.getElementById('plot-bloch');
+  if (plotEl && plotEl.offsetParent !== null) {
+    if (typeof plotBlochSphere === 'function') plotBlochSphere();
+    if (typeof plotSpinComponents === 'function') plotSpinComponents();
+    if (typeof updateLiveTable === 'function') updateLiveTable();
   }
 
   // First exploration bonus
@@ -735,8 +735,10 @@ function initPuzzles() {
 function initSpinGames() {
   initPlayground();
   updateNavXP();
-  if (document.getElementById('section-challenge').style.display !== 'none') initChallenges();
-  if (document.getElementById('section-puzzle').style.display !== 'none') initPuzzles();
+  var ch = document.getElementById('section-challenge');
+  if (ch && ch.style.display !== 'none') initChallenges();
+  var pz = document.getElementById('section-puzzle');
+  if (pz && pz.style.display !== 'none') initPuzzles();
 }
 
 if (document.readyState !== 'loading') {

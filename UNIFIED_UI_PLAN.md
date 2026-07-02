@@ -562,3 +562,123 @@ This ensures the plan always reflects reality — next session you can open this
 6. Continue in phases as outlined above
 
 **Note to implementer:** Always test after each module refactor. Open the module in a browser, switch all 4 tabs, verify the simulation still runs, check console for errors. Do not batch-edit all 16 modules at once — the risk of breaking something is too high.
+
+---
+## ✅ Completed: 2026-06-28 — Phase 1.1: Audit JS sim files for game deps
+- **Files changed:** read-only audit
+- **Status check:** 20 JS files identified with game dependencies ✓ | 14 setGameMode overrides found ✓ | 12 files use __GameState ✓ | 0 JS refs to game-hero/game-main/game-sidebar ✓
+- **Notes:** Critical finding — `.game-container` referenced in 2 JS files (shared_games.js:205, kp_sim.js:617), `.game-mode-btn` in 4 JS files. `showHint` and `setModuleProgress` are dead code (defined but never called). `is_apps_games.js` has its own `celebrateCorrect` definition.
+
+---
+## ✅ Completed: 2026-06-28 — Phase 1.2: Rewrite shared_styles.css
+- **Files changed:** shared_styles.css (701 lines)
+- **Status check:** All game classes removed ✓ | Tab system added (tab-bar, tab-btn, tab-section) ✓ | Game->Lab renaming done (lab-topbar, lab-header, lab-layout, lab-main, lab-sidebar) ✓ | Braces balanced ✓
+- **Notes:** Removed: `.game-mode-btn`, `.game-mode-bar`, `.level-badge`, `.scoreboard/*`, `.hero-xp-bar/*`, `.badge-unlock/*`, `.particle-canvas`, `@keyframes shimmer`, `@keyframes badgeSlideIn`. Renamed: `.game-nav→.lab-topbar`, `.game-hero→.lab-header`, `.game-layout→.lab-layout`, `.game-main→.lab-main`, `.game-sidebar→.lab-sidebar`. Added: `.tab-bar`, `.tab-btn`, `.tab-section`, `.lab-level`, `.lab-root`. Keep: CSS variables, aurora, orbs, buttons, sliders, drag-drop, keyframes, nav-links.
+
+---
+## ✅ Completed: 2026-06-28 — Phase 1.3: Create shared_lab.js
+- **Files changed:** shared_lab.js (185 lines, new file)
+- **Status check:** switchTab works ✓ | populateNavigator builds links ✓ | initLabTabs wires click handlers ✓ | auto-init on DOMContentLoaded ✓ | No localStorage ✓ | No innerHTML ✓
+- **Notes:** Replaces shared_games.js entirely. Functions: `switchTab(tabId)`, `populateNavigator(currentModule)`, `initLabTabs(defaultTab)`, `initModuleControls()`, `buildModuleJump(currentModule)`. Auto-detects module from `data-module` on body. Module jump select uses slug-based paths.
+
+---
+## ✅ Completed: 2026-06-28 — Phase 1.4: Rewrite shared_effects.js
+- **Files changed:** shared_effects.js (176 lines, header comment only)
+- **Status check:** All effects preserved ✓ | Header updated to "Quantum Lab" ✓ | No game references ✓ | .reveal class CSS unchanged ✓
+- **Notes:** Minimal change — file was already clean. Only updated the header comment. All .reveal, .tilt-card, cursor glow, typeWriter, animateCount, spotlight, scroll progress bar preserved exactly.
+
+---
+## ✅ Completed: 2026-06-28 — Phase 2: Migrate Module 02 (Hydrogen Atom)
+- **Files changed:** modules/02_hydrogen/index.html
+- **Status check:** Tags balanced ✓ | Compatibility shim added ✓ | 4 tabs working ✓ | Underline tabs removed ✓ | Per-mode sidebars removed ✓
+- **Notes:** Module 02 had unique underline-style `.tabs`/`.tab-btn` that were removed and replaced with the unified `.tab-bar`. Hydrogen also had `.side-panel` instead of `.game-sidebar` in playground mode — converted to standard `.lab-sidebar`. Challenge+Puzzle merged into Exercises tab. Includes Three.js importmap (pre-existing, not affected by changes).
+
+---
+## ✅ Completed: 2026-06-28 — Phase 2: Migrate Module 03 (Spin)
+- **Files changed:** modules/03_spin/index.html (594→498 lines)
+- **Status check:** Tags balanced ✓ | JS syntax OK ✓ | Compatibility shim ✓ | All element IDs preserved ✓
+- **Notes:** Standard migration. 498 lines down from 594. All plot IDs (plot-bloch, plot-components), slider IDs (slider-theta, slider-phi), and live readout IDs preserved.
+
+---
+## ✅ Completed: 2026-06-28 — Phase 2: Migrate Module 04 (Kronig-Penney)
+- **Files changed:** modules/04_kronig_penney/index.html
+- **Status check:** Tags balanced ✓ | JS syntax OK ✓ | Compatibility shim ✓ | Canvas element preserved ✓
+- **Notes:** Module 04 has its own `setGameMode` overrides in `kp_sim.js` and `kp_wavepacket.js` — the compatibility shim aliases `setGameMode` to `switchTab` so they work without modification. Wave Packet sub-tab preserved in Simulation tab.
+
+---
+## ✅ Completed: 2026-06-28 — Phase 3: Migrate Modules 09-15 (Intrinsic, Doped, Junctions, Optics, Laser, Magnetism, Thermal)
+- **Files changed:** modules/09-15 each index.html
+- **Status check:** All game classes removed ✓ | shared_games.js removed ✓ | lab-topbar + tab-bar present ✓ | Single sidebar with navigator/controls/readout ✓ | Compatibility shim added ✓
+- **Notes:** Module 12 (Optics) had sub-tabs for Snell/Fresnel/Thin Film — preserved inside Simulation tab. Module 13 (Laser) had conditional sidebar (lp-side-cavity/gain/ll) — preserved with backward compat. Module 15 (Thermal) had canvas lattice sim — preserved. All modules 01-15 now follow the unified template.
+
+---
+## ⏳ Pending: Phase 4 — Module 00 + Periodic Table + Hub Redesign
+- Module 00: Refactor to unified template while keeping Three.js experience
+- shared_periodic.js: Create element database + periodic table UI
+- Root index.html: Professional lab hub (remove XP, badges, game language)
+- Estimated effort: ~3 days
+- **Files changed:** modules/01_qho/index.html (1019→833 lines)
+- **Status check:** 31/31 assertions pass ✓ | 0 console errors ✓ | All 4 tabs work ✓ | Sidebar with navigator/controls/readout ✓ | Compatibility shim in place for game apps JS ✓ | Tag balance OK ✓
+- **Notes:** Major reduction from 1019 to 833 lines. Removed: `.game-mode-bar`, `.scoreboard`, `.level-badge`, `shared_games.js`, XP/reward text. Added: tab-bar, lab-* classes, shared_lab.js, compatibility shim. The shim aliases `setGameMode`→`switchTab` and stubs all `__GameState`/`celebrateCorrect`/etc. so existing `qho_apps_games.js` doesn't crash. Challenge+Puzzle sections merged into Exercises tab. Per-mode sidebars eliminated — single sidebar shared across all tabs.
+- **Files changed:** module-template.html (261 lines, new file)
+- **Status check:** 4 tabs (overview/theory/simulation/exercises) ✓ | Sidebar with navigator/controls/readout ✓ | Script include order documented ✓ | HTML comments for migration notes ✓
+- **Notes:** Reference template only — not a working page. Documents all required conventions: `data-module="XX"` on body, correct script include order, `.content-card` replaces `.macro-panel`, sub-tab bars are optional, no `shared_games.js`.
+
+---
+
+## ✅ Completed: 2026-06-28 — Phase 4: Critical Audit (15 modules read-only test)
+- **Files changed:** (read-only, no changes)
+- **Status check:** 15/15 PASS — all modules have 0 console errors/warnings/404s ✓
+  - 31 structural checks per module (data-module, lab-topbar, 4 tabs, lab-sidebar, navigator populated, sim-controls/sim-readout, shared_games.js removed, shim present, no remaining game-* classes) ✓
+  - Module 14 minor issue: hidden `<div>` stubs with `badge-list*` and `nav-xp` (display:none JS-compat placeholders) — harmless, not cleaned to avoid touching `mag_apps_games.js` ✓
+  - Navigator correctly populated with 16 module links in every module ✓
+- **Notes:** All 15 refactored modules verified working in browser. Ready for Phase 4.
+
+## ✅ Completed: 2026-06-28 — Phase 4: shared_periodic.js (Periodic Table + Material Database)
+- **Files changed:** shared_periodic.js (57146 bytes, new file)
+- **Status check:**
+  - `ELEMENT_DATA`: All 118 elements with solid-state properties (symbol, name, Z, group, period, block, classification, atomic mass, density, melting point, thermal conductivity, bandgap, electron affinity, electronegativity, common oxidation states, valence electrons, family group) ✓
+  - `MATERIAL_DATA`: 18 key semiconductor/electronic materials with component elements, full property set, and description ✓
+  - `PeriodicTable()` renderer: 18-column CSS grid, block color coding (s/p/d/f), hover tooltips, f-block positioning with gap markers, onSelect callback, highlightZ ✓
+  - `showElementDetail()`: Property panel with dynamically computed stats, material list, "Load in Simulator" button ✓
+  - Fully static — zero API calls, zero dependencies ✓
+- **Notes:** The "Load in Simulator" button has an `onclick` placeholder that needs Module 00 simulation integration (out of scope for this phase).
+
+## ✅ Completed: 2026-06-28 — Phase 4: Module 00 (Crystal to Quantum) Refactor
+- **Files changed:** modules/00_crystal_to_quantum/index.html (628→1117 lines)
+- **Status check:**
+  - Unified lab-topbar with module-jump dropdown ✓
+  - 4 tabs: Overview, Theory, Simulation, Exercises ✓
+  - Three.js canvas preserved in full-width Simulation tab (no sidebar — unique layout) ✓
+  - Overview/Theory/Exercises use standard sidebar layout ✓
+  - Exercises tab with 4 crystal→quantum challenges (crystal planes, unit cells, electron density, quantum wells) ✓
+  - Compatibility shim for legacy code ✓
+  - All 8 inline scripts pass JS syntax audit ✓
+  - Tag balance: 111/111 divs, 8/8 scripts, 4/4 sections, 1/1 style — all balanced ✓
+  - `.lab-topbar` present at line 303 ✓
+- **Notes:** Module 00 is the only module with a full-width Simulation tab (no sidebar) to preserve the immersive Three.js experience. The `.cq-overlay` panels render with `position:absolute` inside the tab section.
+
+## ✅ Completed: 2026-06-28 — Phase 4: Root Hub (index.html) Rewrite
+- **Files changed:** index.html (rewritten)
+- **Status check:**
+  - Professional lab hub layout with unified lab-topbar ✓
+  - Simplified hero section (no timeline, no XP, no badges, no scoreboards) ✓
+  - 16-module card grid (4×4) with consistent cards ✓
+  - Includes shared_lab.js, shared_effects.js, assets/universe-bg.js ✓
+  - No shared_games.js ✓
+  - All 6 inline scripts pass JS syntax audit ✓
+  - Tag balance: 75/75 divs, 6/6 scripts — all balanced ✓
+  - `.lab-topbar` present at lines 132-134 ✓
+- **Notes:** Module cards link to each module's index.html. Future enhancement could add category dividers or search/filter.
+
+---
+
+## ? All Phases Complete — Project in Stable State
+- All 16 modules (00–15) follow the unified template with 4 tabs (Overview, Theory, Simulation, Exercises).
+- `shared_periodic.js` (57 KB) provides a fully static periodic table + material database ready for integration.
+- Root hub (index.html) is a clean professional lab landing page.
+- Server at `http://localhost:8123/` serves all modules.
+- **Optional follow-ups:**
+  1. Clean Module 14's hidden gamification stub elements by editing `mag_apps_games.js` to remove `badge-list*` / `nav-xp` references.
+  2. Wire "Load in Simulator" button in `shared_periodic.js` → Module 00 simulation pipeline.
+  3. Add category dividers or search/filter to hub index.html.

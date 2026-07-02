@@ -1054,10 +1054,11 @@ function setPlayMode(mode) {
     if (btn) btn.classList.toggle('active', m === mode);
     if (view) view.style.display = (m === mode ? '' : 'none');
   });
-  // Show/hide sidebar controls
+  // Show/hide sidebar controls + readout tiles based on sub-tab scope
   document.querySelectorAll('.pg-control-scope').forEach(function(el) {
     var show = el.classList.contains('scope-global');
-    if (mode === 'meissner' && el.classList.contains('scope-meissner')) show = true;
+    if (mode === 'meissner' && (el.classList.contains('scope-field') || el.classList.contains('scope-meissner'))) show = true;
+    if (mode === 'gap' && (el.classList.contains('scope-field') || el.classList.contains('scope-gap'))) show = true;
     el.style.display = show ? '' : 'none';
   });
   // Resize / resume the active visualization
@@ -1066,12 +1067,18 @@ function setPlayMode(mode) {
     if (mode === 'meissner' && typeof _meissnerResize === 'function') _meissnerResize();
     if (mode === 'gap') {
       if (typeof _gapResize === 'function') _gapResize();
-      // Resize Plotly plots
-      ['plot-gap-temp','plot-magnetization','plot-penetration'].forEach(function(pid) {
-        var el = document.getElementById(pid);
-        if (el && el.data && typeof Plotly !== 'undefined') {
-          try { Plotly.Plots.resize(el); } catch(e) {}
-        }
+      // (Re)render Plotly plots — they may have been skipped during init
+      // because _plot() bails on hidden containers (offsetParent === null).
+      requestAnimationFrame(function() {
+        if (typeof plotGapVsTemp === 'function') plotGapVsTemp();
+        if (typeof plotMagnetization === 'function') plotMagnetization();
+        if (typeof plotPenetration === 'function') plotPenetration();
+        ['plot-gap-temp','plot-magnetization','plot-penetration'].forEach(function(pid) {
+          var el = document.getElementById(pid);
+          if (el && el.data && typeof Plotly !== 'undefined') {
+            try { Plotly.Plots.resize(el); } catch(e) {}
+          }
+        });
       });
     }
   });

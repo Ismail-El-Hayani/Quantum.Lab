@@ -794,6 +794,14 @@ function initConductivity() {
   }, 400);
 }
 
+function condDestroyCanvas() {
+  if (COND_CANVAS.raf) { cancelAnimationFrame(COND_CANVAS.raf); COND_CANVAS.raf = null; }
+  COND_CANVAS.running = false;
+  COND_CANVAS.c = null;
+  COND_CANVAS.ctx = null;
+}
+window.condDestroyCanvas = condDestroyCanvas;
+
 window.initConductivity = initConductivity;
 window.condSetMaterial = condSetMaterial;
 window.condTogglePhonons = condTogglePhonons;
@@ -802,3 +810,13 @@ window.condToggleMFP = condToggleMFP;
 window.condToggleDriftOnly = condToggleDriftOnly;
 window.condPauseAnimation = condPauseAnimation;
 window.condResumeAnimation = condResumeAnimation;
+window.condResizeCanvas = condResizeCanvas;
+window.condPlotDrift = condPlotDrift;
+window.condPlotRhoT = condPlotRhoT;
+window.condPlotIV = condPlotIV;
+window.condPlotMFP = condPlotMFP;
+window.condPlotHall = condPlotHall;
+window.condPlotIoffe = condPlotIoffe;
+window.condPlotWiedemann = condPlotWiedemann;
+window.condUpdatePlots = condUpdatePlots;
+window.condUpdateReadout = condUpdateReadout;

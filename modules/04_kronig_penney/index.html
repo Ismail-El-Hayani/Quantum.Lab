@@ -10,58 +10,107 @@
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <link rel="stylesheet" href="../../shared_styles.css">
 <style>
-  .challenge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  .puzzle-board { display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.5rem; padding: 1rem; background: var(--bg-panel); border-radius: var(--radius-sm); }
-  .energy-slot { aspect-ratio: 1; border: 2px dashed var(--glass-border); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-dim); transition: all 0.2s; }
-  .energy-slot.occupied { border-style: solid; border-color: var(--accent-cyan); background: rgba(0,240,255,0.06); color: var(--accent-cyan); }
-  .energy-particle { width: 36px; height: 36px; border-radius: 50%; background: radial-gradient(circle, var(--accent-cyan), var(--accent-purple)); box-shadow: 0 0 12px rgba(0,240,255,0.4); cursor: grab; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 0.7rem; font-weight: 700; }
-  .energy-particle:active { cursor: grabbing; }
-  .target-wave { border: 2px solid var(--glass-border); border-radius: var(--radius-sm); padding: 0.8rem; background: var(--bg-elevated); }
-  .target-wave.correct { border-color: var(--accent-green); box-shadow: 0 0 16px rgba(74,222,128,0.15); }
-  .draggable-target { cursor: pointer; border: 2px dashed var(--glass-border); border-radius: var(--radius-sm); padding: 1rem; transition: all 0.2s; text-align: center; }
-  .draggable-target:hover { border-color: var(--accent-cyan); background: rgba(0,240,255,0.04); }
-  .draggable-target.selected { border-color: var(--accent-purple); background: rgba(192,132,252,0.08); }
-  .timer-bar { height: 4px; background: var(--bg-elevated); border-radius: 2px; overflow: hidden; margin-bottom: 1rem; }
-  .timer-fill { height: 100%; background: var(--accent-cyan); transition: width 1s linear; }
-  .timer-fill.urgent { background: var(--accent-red); }
-  .crystal-lattice { display: flex; align-items: flex-end; gap: 2px; height: 80px; padding: 0.5rem; background: var(--bg-elevated); border-radius: var(--radius-sm); border: 1px solid var(--glass-border); justify-content: center; }
-  .barrier-block { width: 24px; background: var(--accent-pink); opacity: 0.8; border-radius: 2px 2px 0 0; transition: height 0.2s; }
-  .well-block { width: 24px; background: var(--accent-cyan); opacity: 0.3; border-radius: 2px 2px 0 0; }
-  .bloch-anim { width: 100%; height: 200px; background: var(--bg-elevated); border-radius: var(--radius-sm); border: 1px solid var(--glass-border); position: relative; overflow: hidden; }
-  .bloch-particle { width: 14px; height: 14px; border-radius: 50%; background: radial-gradient(circle, var(--accent-cyan), var(--accent-purple)); box-shadow: 0 0 12px rgba(0,240,255,0.6); position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); }
-  .lattice-line { position: absolute; top: 50%; left: 5%; right: 5%; height: 2px; background: var(--glass-border); }
-  .gap-target { font-family: var(--font-mono); font-size: 2rem; color: var(--accent-yellow); text-align: center; padding: 1rem; }
-  .equation-drop-zone { border: 2px dashed var(--glass-border); border-radius: var(--radius-sm); min-height: 48px; display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-size: 0.85rem; transition: all 0.2s; margin: 0.25rem; padding: 0.5rem; }
-  .equation-drop-zone.correct { border-color: var(--accent-green); background: rgba(74,222,128,0.06); color: var(--accent-green); }
-  .equation-drop-zone.wrong { border-color: var(--accent-red); background: rgba(255,68,68,0.06); color: var(--accent-red); }
-  .term-chip { display: inline-block; padding: 0.35rem 0.7rem; border-radius: 6px; background: var(--bg-elevated); border: 1px solid var(--glass-border); color: var(--text-main); font-family: var(--font-mono); font-size: 0.78rem; cursor: grab; margin: 0.25rem; }
-  .term-chip:active { cursor: grabbing; }
-  .bragg-canvas { width: 100%; height: 220px; background: var(--bg-elevated); border-radius: var(--radius-sm); border: 1px solid var(--glass-border); position: relative; overflow: hidden; }
-  .bragg-ray { position: absolute; height: 2px; background: var(--accent-cyan); box-shadow: 0 0 6px var(--accent-cyan); transform-origin: left center; }
-  .bragg-atom { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: var(--accent-pink); box-shadow: 0 0 8px var(--accent-pink); }
-  .answer-input { background: var(--bg-deep); border: 1px solid var(--glass-border); border-radius: 6px; padding: 0.5rem 0.8rem; color: var(--text-main); font-family: var(--font-mono); font-size: 0.85rem; width: 140px; }
-  .unit-tag { display:inline-block; background:rgba(0,240,255,0.08); color:var(--accent-cyan); font-family:var(--font-mono); font-size:0.7rem; padding:0.15rem 0.4rem; border-radius:4px; margin-left:0.3rem; }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  :root {
+    --border-subtle:#2a2a3a;
+    --border-accent:#3a3a55;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--font-body);background:var(--bg-deep);color:var(--text-main);min-height:100vh;overflow-x:hidden}
+  a{color:var(--accent-cyan);text-decoration:none}
+  a:hover{text-decoration:underline}
 
-  /* ─── Module 12-style layout utilities (not in shared_styles.css) ─── */
-  .mode-bar { display:flex; gap:0.5rem; justify-content:center; padding:0.6rem 1rem; position:sticky; top:52px; z-index:10; background:rgba(0,0,0,0.35); backdrop-filter:blur(8px); }
-  .game-mode-btn { background:transparent; border:1px solid var(--glass-border); color:var(--text-dim); padding:0.5rem 1.2rem; border-radius:var(--radius-sm); cursor:pointer; font-family:var(--font-mono); font-size:0.82rem; transition:all 0.2s; }
-  .game-mode-btn:hover { border-color:var(--accent-cyan); color:var(--text-main); }
-  .game-mode-btn.active { background:rgba(0,240,255,0.1); border-color:var(--accent-cyan); color:var(--accent-cyan); box-shadow:0 0 12px rgba(0,240,255,0.15); }
-  .macro-panel { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-top:1rem; }
-  .macro-panel h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
-  .pg-section { scroll-margin-top:70px; }
+  /* Lab layout */
+  .lab-layout {
+    max-width:1600px;
+    margin:0 auto;
+    padding:0;
+    display:grid;
+    grid-template-columns:1fr 340px;
+    gap:var(--space-lg);
+    align-items:start;
+    position:relative;
+    z-index:1;
+  }
+  @media (max-width:1000px) { .lab-layout { grid-template-columns:1fr; } }
+
+  .lab-layout:not(.sim-tab) .lab-sidebar { display:none; }
+  .lab-layout:not(.sim-tab) { grid-template-columns:1fr; max-width:960px; margin:0 auto; }
+  .lab-layout.sim-tab { max-width:1400px; margin:0 auto; }
+  .lab-layout.sim-tab .lab-main {
+    padding:0 1rem;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .lab-layout.sim-tab .lab-main > * { width:100%; max-width:960px; }
+
+  .lab-main { min-width:0; position:relative; z-index:1; container-type:inline-size; container-name:playMain; }
+
+  .lab-sidebar {
+    min-width:0;
+    position:sticky;
+    top:5rem;
+    align-self:start;
+    max-height:calc(100vh - 6rem);
+    overflow-y:auto;
+    padding:1rem;
+    background:var(--bg-panel-alt);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-lg);
+    z-index:10;
+  }
+  .lab-sidebar::-webkit-scrollbar { width:4px; }
+  .lab-sidebar::-webkit-scrollbar-thumb { background:var(--glass-border); border-radius:2px; }
+  .lab-sidebar.static { position:static; max-height:none; overflow-y:visible; }
+
+  .sidebar-card {
+    background:rgba(16,16,28,0.55);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+    margin-bottom:1rem;
+  }
+  .sidebar-card:last-child { margin-bottom:0; }
+  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
+
+  .content-card {
+    background:var(--bg-panel);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+    margin-top:1rem;
+  }
+  .content-card:first-of-type { margin-top:0; }
+  .content-card h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
+  .content-card p{font-size:0.95rem;line-height:1.7;color:var(--text-main);margin-bottom:1rem}
+
+  .insights{display:grid;grid-template-columns:1fr;gap:1rem;margin-top:1rem}
+  @media(min-width:900px){.insights{grid-template-columns:1fr 1fr}}
+  .insight-card{background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1.2rem}
+  .insight-card .insight-title{margin:0 0 0.6rem;font-size:1rem;font-weight:600;color:var(--text-bright)}
+  .insight-card p{font-size:0.9rem;line-height:1.6;color:var(--text-dim);margin-bottom:0}
+  .insight-card a{color:var(--accent-cyan)}
+
+  .hero-desc{font-size:1.1rem;color:var(--text-muted);max-width:700px;line-height:1.6;margin-bottom:1.5rem}
+
+  .btn{padding:0.6rem 1.2rem;border-radius:8px;border:1px solid var(--glass-border);background:var(--bg-elevated);color:var(--text-muted);font-size:0.85rem;font-weight:500;cursor:pointer;transition:all .15s;font-family:inherit}
+  .btn:hover{border-color:var(--accent-cyan);color:var(--text-main)}
+  .btn.active{background:rgba(0,240,255,0.12);border-color:var(--accent-cyan);color:var(--accent-cyan)}
+  .btn:disabled{opacity:0.5;cursor:not-allowed}
+  .btn-group{display:flex;gap:0.5rem;flex-wrap:wrap}
+
   .slider-group { margin-bottom:1rem; }
   .slider-group label { display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:0.3rem; }
   .slider-group input[type=range] { width:100%; }
   .slider-value { font-family:var(--font-mono); color:var(--accent-cyan); font-weight:700; }
   .slider-desc { font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; }
-  .sidebar-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-bottom:1rem; }
-  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
-  .insights { display:grid; grid-template-columns:1fr; gap:1rem; margin-top:1rem; }
-  @media (min-width:900px) { .insights { grid-template-columns:1fr 1fr; } }
-  .insight-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; }
-  .insight-card .insight-title { margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright); }
-  /* Story / Theory helpers (mirroring modules 01/03) */
+
+  .control-row{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+  .control-label{font-size:0.9rem;color:var(--text-muted);min-width:130px}
+  .control-value{font-family:var(--font-mono);font-size:0.85rem;color:var(--accent-cyan);min-width:80px;text-align:right}
+
   .theory-content { font-size:0.95rem; line-height:1.7; color:var(--text-main); }
   .theory-content p { margin-bottom:1rem; }
   .theory-content strong { color:var(--accent-cyan); font-weight:500; }
@@ -70,6 +119,31 @@
   .insight-callout { background:linear-gradient(90deg, rgba(0,240,255,0.08), transparent); border-left:3px solid var(--accent-cyan); padding:1rem 1.2rem; border-radius:0 8px 8px 0; margin:1rem 0; font-size:0.92rem; color:var(--text-main); }
   .insight-callout .label { font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent-cyan); font-weight:600; margin-bottom:0.4rem; }
 
+  .section-divider{height:1px;background:linear-gradient(90deg,transparent,var(--glass-border),transparent);margin:2rem 0}
+  .unit-tag { display:inline-block; background:rgba(0,240,255,0.08); color:var(--accent-cyan); font-family:var(--font-mono); font-size:0.7rem; padding:0.15rem 0.4rem; border-radius:4px; margin-left:0.3rem; }
+
+  /* Mode bar (sub-tabs within simulation) */
+  .mode-bar { display:flex; gap:0.5rem; justify-content:center; padding:0.6rem 1rem; position:sticky; top:52px; z-index:10; background:rgba(0,0,0,0.35); backdrop-filter:blur(8px); }
+  .game-mode-btn { background:transparent; border:1px solid var(--glass-border); color:var(--text-dim); padding:0.5rem 1.2rem; border-radius:var(--radius-sm); cursor:pointer; font-family:var(--font-mono); font-size:0.82rem; transition:all 0.2s; }
+  .game-mode-btn:hover { border-color:var(--accent-cyan); color:var(--text-main); }
+  .game-mode-btn.active { background:rgba(0,240,255,0.1); border-color:var(--accent-cyan); color:var(--accent-cyan); box-shadow:0 0 12px rgba(0,240,255,0.15); }
+
+  .plot-container{min-height:320px;height:360px;background:var(--bg-deep);border-radius:var(--radius-md);overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .plot-container>.js-plotly-plot,.plot-container>div{width:100%!important;height:100%!important}
+  .plot-caption{font-size:0.8rem;color:var(--text-dim);text-align:center;margin-top:0.5rem}
+  .plot-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:0.75rem;margin-top:0.6rem;font-size:0.78rem;color:var(--text-dim)}
+  .legend-item{display:inline-flex;align-items:center;gap:0.35rem}
+  .legend-swatch{display:inline-block;width:12px;height:12px;border-radius:2px}
+
+  .content-card h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
+  .content-card p{font-size:0.95rem;line-height:1.7;color:var(--text-main);margin-bottom:1rem}
+
+  .live-indicator{display:inline-flex;align-items:center;gap:0.4rem;font-size:0.75rem;color:var(--accent-green);font-family:var(--font-mono)}
+  .live-indicator::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent-green);animation:blink 1s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+
+  .highlight-num{font-family:var(--font-mono);color:var(--accent-cyan);font-size:0.9rem}
+  .highlight-pink{font-family:var(--font-mono);color:var(--accent-pink);font-size:0.9rem}
 </style>
 </head>
 <body>
@@ -78,101 +152,90 @@
 <div class="orb orb-purple"></div>
 <div class="orb orb-pink"></div>
 
-<nav class="game-nav">
-  <div class="nav-brand"><a href="../../index.html" style="text-decoration:none;color:inherit;"><span class="nav-logo">⚛</span> Physics Playground</a></div>
+<nav class="lab-topbar">
+  <div class="nav-brand"><a href="../../index.html" style="text-decoration:none;color:inherit;"><span class="nav-logo">⚛</span> Quantum Lab</a></div>
   <div class="nav-stats">
-    <div class="stat-badge"><span class="stat-icon">📐</span><span class="stat-value">Kronig-Penney Lab</span></div>
-    <div class="stat-badge"><span class="stat-icon">⭐</span><span class="stat-value" id="nav-xp">0 XP</span></div>
+    <select id="module-jump" class="stat-badge" style="background:var(--bg-elevated);border:1px solid var(--glass-border);border-radius:var(--radius-pill);padding:0.3rem 0.8rem;font-size:0.82rem;color:var(--text-muted);cursor:pointer;">
+      <option value="">Jump to module...</option>
+      <option value="00_crystal_to_quantum">00 — Crystal to Quantum</option>
+      <option value="01_qho">01 — Quantum Harmonic Oscillator</option>
+      <option value="02_hydrogen">02 — Hydrogen Atom</option>
+      <option value="03_spin">03 — Spin &amp; Magnetic Resonance</option>
+      <option value="04_kronig_penney">04 — Kronig-Penney Model</option>
+      <option value="05_energy_bands">05 — Energy Bands</option>
+      <option value="06_fermi_surface">06 — Fermi Surface</option>
+      <option value="07_conductivity">07 — Conductivity</option>
+      <option value="08_superconductivity">08 — Superconductivity</option>
+      <option value="09_intrinsic_semiconductors">09 — Intrinsic Semiconductors</option>
+      <option value="10_doped_semiconductors">10 — Doped Semiconductors</option>
+      <option value="11_junctions_devices">11 — Junctions &amp; Devices</option>
+      <option value="12_optics_dispersion">12 — Optics &amp; Dispersion</option>
+      <option value="13_laser_physics">13 — Laser Physics</option>
+      <option value="14_magnetism">14 — Magnetism</option>
+      <option value="15_thermal_properties">15 — Thermal Properties</option>
+    </select>
   </div>
 </nav>
 
-<div class="game-container">
+<div class="lab-root">
 
-  <div class="game-hero" style="padding-bottom:0;">
-    <div class="level-badge">Module 04 · Level <span id="current-level">1</span> · Band Structure Initiate</div>
-    <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-purple),var(--accent-pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">From Atoms to Bands</span></h1>
-    <p class="hero-desc">A single atom has discrete levels. Bring 10²³ atoms together and they blur into bands. Tune V₀ and b to sculpt bandgaps, and explore 1D tunneling leakage.</p>
+  <header class="lab-header" style="padding-bottom:0.5rem;">
+    <div>
+      <div class="lab-level">Module 04</div>
+      <h1>From Atoms to Bands</h1>
+      <p class="hero-desc">
+        A single atom has discrete levels. Bring 10²³ atoms together and they blur into bands. Tune V₀ and b to sculpt bandgaps, and explore 1D tunneling leakage.
+      </p>
+      <div class="live-indicator">Live simulation running</div>
+    </div>
+  </header>
+
+  <div class="tab-bar" role="tablist">
+    <button class="tab-btn active" data-tab="overview" role="tab">📋 Overview</button>
+    <button class="tab-btn" data-tab="theory" role="tab">📖 Theory</button>
+    <button class="tab-btn" data-tab="simulation" role="tab">🔬 Simulation</button>
   </div>
 
-  <div class="game-mode-bar">
-    <button class="game-mode-btn active" id="mode-story" onclick="setGameMode('story')">
-      <span class="mode-icon">📖</span> Story
-    </button>
-    <button class="game-mode-btn" id="mode-theory" onclick="setGameMode('theory')">
-      <span class="mode-icon">🎓</span> Theory
-    </button>
-    <button class="game-mode-btn" id="mode-play" onclick="setGameMode('play')">
-      <span class="mode-icon">🔬</span> Playground
-    </button>
-    <button class="game-mode-btn" id="mode-wavepacket" onclick="setGameMode('wavepacket')">
-      <span class="mode-icon">🌊</span> Wave Packet
-    </button>
-    <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">
-      <span class="mode-icon">🎯</span> Challenges
-    </button>
-    <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">
-      <span class="mode-icon">🧩</span> Puzzles
-    </button>
-  </div>
-
-    <!-- ═══════════════ STORY ═══════════════ -->
-  <div class="mode-section" id="section-story" style="display:block;">
-    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
-      <div class="game-main">
-        <section class="macro-panel">
+    <!-- ═══════════════ OVERVIEW ═══════════════ -->
+  <section id="tab-overview" class="tab-section active">
+    <div class="lab-layout">
+      <main class="lab-main">
+        <div class="content-card">
           <h3>📖 The Story — From Isolated Atoms to Solid Bands</h3>
-          <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.6;margin-bottom:1rem;">
+          <p>
             Imagine a single atom. Its electron energies are sharp, discrete levels. Now bring two atoms close together: each level splits into two. Bring in ten, a hundred, ten billion of them, arranged in a perfect lattice, and the discrete lines blur into broad <strong style="color:var(--accent-cyan);">energy bands</strong> separated by <strong style="color:var(--accent-cyan);">bandgaps</strong>. This is the Kronig-Penney model in words — the simplest picture of why solids are conductors, semiconductors, or insulators.
           </p>
           <div class="insights">
             <div class="insight-card">
               <div class="insight-title">🧩 Historical Context</div>
-              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+              <p>
                 In 1931 Kronig and Penney proposed a one-dimensional periodic square-well potential to explain how electrons behave in a crystal. It became the textbook bridge between the free-electron model of metals and the tight-binding picture of atoms glued together by shared electrons. Bloch's theorem, proven in 1928, gave the rigorous reason: in a periodic potential, wavefunctions are modulated plane waves.
               </p>
             </div>
             <div class="insight-card">
               <div class="insight-title">🔬 Why It Surprised Physicists</div>
-              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+              <p>
                 A free electron can have any energy. Put it in a periodic lattice and something strange happens: certain energies simply disappear. The allowed states collect into bands, and between them are forbidden gaps. This is not a property of the electron alone; it is a collective effect of the lattice. It is the origin of the semiconductor revolution: silicon's 1.1 eV gap is what makes transistors possible.
               </p>
             </div>
             <div class="insight-card" style="grid-column:1/-1;">
               <div class="insight-title">🎮 How the Playground Lets You Feel It</div>
-              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
-                Use the <strong style="color:var(--accent-cyan);">Playground</strong> to tune V₀ and b/a. Watch the periodic potential sharpen, the single-barrier tunneling amplitude shrink, and the E(k) bands split apart. Increase the barrier height or thickness: bands narrow and gaps widen, pushing the model toward an insulator. Reduce them: bands broaden and overlap, approaching a metal.
+              <p>
+                Use the <strong>Simulation</strong> tab to tune V₀ and b/a. Watch the periodic potential sharpen, the single-barrier tunneling amplitude shrink, and the E(k) bands split apart. Increase the barrier height or thickness: bands narrow and gaps widen, pushing the model toward an insulator. Reduce them: bands broaden and overlap, approaching a metal.
               </p>
             </div>
           </div>
-        </section>
-      </div>
-      <aside class="game-sidebar static">
-        <div class="sidebar-card">
-          <h4>🗺 Lab Navigator</h4>
-          <div id="module-nav-story"></div>
         </div>
-        <div class="sidebar-card">
-          <h4>🏆 Your Badges</h4>
-          <div id="badge-list-story" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        </div>
-        <div class="sidebar-card">
-          <h4>📊 Progress</h4>
-          <div class="scoreboard">
-            <div class="score-cell"><div class="score-num" id="stat-challenges-story">0</div><div class="score-label">Challenges</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-puzzles-story">0</div><div class="score-label">Puzzles</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-xp-story">0</div><div class="score-label">Total XP</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-badges-story">0</div><div class="score-label">Badges</div></div>
-          </div>
-        </div>
-      </aside>
+      </main>
+      <aside class="lab-sidebar"></aside>
     </div>
-  </div>
+  </section>
 
   <!-- ═══════════════ THEORY ═══════════════ -->
-  <div class="mode-section" id="section-theory" style="display:none;">
-    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
-      <div class="game-main">
-        <section class="macro-panel">
+  <section id="tab-theory" class="tab-section">
+    <div class="lab-layout">
+      <main class="lab-main">
+        <div class="content-card">
           <h3>🎓 Theory — Bands from a Periodic Potential</h3>
           <div class="theory-content">
             <p>
@@ -183,7 +246,7 @@
           <div class="insights">
             <div class="insight-card" style="grid-column:1/-1;">
               <div class="insight-title">1. The Kronig-Penney Transcendental Equation</div>
-              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+              <p>
                 For E &lt; V₀ the right-hand side is:
               </p>
               <div class="equation-box">
@@ -194,102 +257,81 @@
 
             <div class="insight-card" style="grid-column:1/-1;">
               <div class="insight-title">2. Bloch's Theorem</div>
-              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+              <p>
                 Because the potential is periodic, every eigenstate can be written as a plane wave times a cell-periodic function:
               </p>
               <div class="equation-box">
                 $$\psi_k(x) = e^{ikx} u_k(x), \qquad u_k(x+a) = u_k(x)$$
               </div>
-              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+              <p>
                 The crystal momentum k is defined modulo the reciprocal lattice: k and k + 2π/a label the same state. This is why the bands can be folded into the first Brillouin zone [−π/a, +π/a] in the reduced-zone scheme.
               </p>
             </div>
 
             <div class="insight-card" style="grid-column:1/-1;">
               <div class="insight-title">3. Bandgaps at Bragg Planes</div>
-              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+              <p>
                 Gaps open whenever the free-electron parabola would cross a Bragg reflection condition. In 1D this happens at:
               </p>
               <div class="equation-box">
                 $$k = \frac{n\pi}{a}, \qquad n = \pm 1, \pm 2, \dots$$
               </div>
-              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+              <p>
                 At these points two waves traveling in opposite directions Bragg-reflect and mix, splitting the degeneracy and opening a gap proportional to the Fourier component of the potential.
               </p>
             </div>
 
             <div class="insight-card" style="grid-column:1/-1;">
               <div class="insight-title">4. Effective Mass</div>
-              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+              <p>
                 Near a band minimum the dispersion is approximately parabolic. Comparing E(k) ≈ E₀ + ℏ²k²/(2m*) with the curvature of the computed band gives:
               </p>
               <div class="equation-box">
                 $$m^* = \hbar^2 \left(\frac{\partial^2 E}{\partial k^2}\right)^{-1}$$
               </div>
-              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+              <p>
                 The live readout reports m*/m₀ at the valence-band top and conduction-band bottom. Narrow bands have small curvature → large effective mass; wide bands have light effective mass.
               </p>
             </div>
 
             <div class="insight-card" style="grid-column:1/-1;">
               <div class="insight-title">5. Tunneling and the Origin of Bands</div>
-              <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+              <p>
                 The <strong>single-barrier tunneling</strong> view shows an electron leaking through a classically forbidden region. In a periodic lattice this leakage is repeated every cell. Strong leakage (low V₀, thin b) makes atomic orbitals overlap → broad bands. Weak leakage isolates the atoms → narrow bands that look like discrete levels. The gaps are energies where the repeated reflections interfere destructively and no traveling state can exist.
               </p>
             </div>
           </div>
-        </section>
-      </div>
-
-      <aside class="game-sidebar static">
-        <div class="sidebar-card">
-          <h4>🗺 Lab Navigator</h4>
-          <div id="module-nav-theory"></div>
         </div>
-        <div class="sidebar-card">
-          <h4>🏆 Your Badges</h4>
-          <div id="badge-list-theory" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        </div>
-        <div class="sidebar-card">
-          <h4>📊 Progress</h4>
-          <div class="scoreboard">
-            <div class="score-cell"><div class="score-num" id="stat-challenges-theory">0</div><div class="score-label">Challenges</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-puzzles-theory">0</div><div class="score-label">Puzzles</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-xp-theory">0</div><div class="score-label">Total XP</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-badges-theory">0</div><div class="score-label">Badges</div></div>
-          </div>
-        </div>
-      </aside>
+      </main>
+      <aside class="lab-sidebar"></aside>
     </div>
-  </div>
+  </section>
 
-  <!-- ═══════════════ PLAYGROUND ═══════════════ -->
-  <div class="mode-section" id="section-play" style="display:none;">
-    <!-- ═══════════════════════════════════════════════════════════════
-         PLAYGROUND HEADER
-         ═══════════════════════════════════════════════════════════════ -->
-    <section class="macro-panel">
+  <!-- ═══════════════ SIMULATION ═══════════════ -->
+  <section id="tab-simulation" class="tab-section">
+    <div class="lab-layout">
+      <main class="lab-main">
+
+    <div class="content-card">
       <h3>🔬 Band Structure Sandbox</h3>
-      <p class="slider-desc" style="font-size:0.9rem; margin-bottom:1rem;">
+      <p style="font-size:0.9rem;line-height:1.6;margin-bottom:1rem;">
         Tune the periodic potential <i>V(x)</i> and watch how the allowed electron energies organize into
         <strong>bands</strong> and <strong>bandgaps</strong>. Adjust the barrier height <i>V₀</i> and the barrier
         thickness <i>b/a</i> to see how they sculpt the band structure — the fundamental model behind every
         semiconductor device.
       </p>
 
-      <!-- Mode tabs -->
+      <!-- Sub-tabs -->
       <div class="game-mode-bar mode-bar" style="margin-bottom:0.6rem;">
         <button class="game-mode-btn active" id="pg-mode-potential" onclick="setPlayMode('potential')">⚡ Periodic Potential</button>
         <button class="game-mode-btn" id="pg-mode-tunneling" onclick="setPlayMode('tunneling')">🔑 Single-Barrier Tunneling</button>
         <button class="game-mode-btn" id="pg-mode-bands" onclick="setPlayMode('bands')">📈 E(k) Band Structure</button>
+        <button class="game-mode-btn" id="pg-mode-wavepacket" onclick="setPlayMode('wavepacket')">🌊 Wave Packet</button>
       </div>
-    </section>
-
-    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
-      <div class="game-main">
+    </div>
 
         <!-- Potential view -->
-        <div id="pg-view-potential">
+        <div id="pg-view-potential" class="content-card">
           <section class="macro-panel pg-section">
             <h3>Periodic Potential V(x)</h3>
             <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
@@ -315,7 +357,7 @@
         </div>
 
         <!-- Tunneling view -->
-        <div id="pg-view-tunneling" style="display:none;">
+        <div id="pg-view-tunneling" class="content-card" style="display:none;">
           <section class="macro-panel pg-section">
             <h3>Single-Barrier Tunneling</h3>
             <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
@@ -341,7 +383,7 @@
         </div>
 
         <!-- Bands view -->
-        <div id="pg-view-bands" style="display:none;">
+        <div id="pg-view-bands" class="content-card" style="display:none;">
           <section class="macro-panel pg-section">
             <h3>E(k) Band Structure</h3>
             <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
@@ -366,8 +408,37 @@
           </section>
         </div>
 
+        <!-- Wave Packet view -->
+        <div id="pg-view-wavepacket" class="content-card" style="display:none;">
+          <section class="macro-panel pg-section">
+            <h3>🌊 Wave-Packet Scattering</h3>
+            <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
+              A localized Gaussian wave packet hits one or more barriers in real time.
+              Watch it split into reflected and transmitted components, observe the standing-wave interference fringes,
+              and measure the non-zero probability inside a classically forbidden barrier.
+              The evolution uses the Strang split-operator FFT with absorbing boundary conditions.
+            </p>
+            <div class="viz-card" style="padding:0; overflow:hidden;">
+              <canvas id="wp-canvas" style="display:block; width:100%; image-rendering:pixelated;"></canvas>
+            </div>
+            <div style="display:flex; justify-content:center; gap:1.5rem; flex-wrap:wrap; font-size:0.78rem; color:var(--text-dim); margin-top:0.6rem;">
+              <span><span style="display:inline-block; width:14px; height:4px; background:#c084fc; vertical-align:middle; margin-right:4px;"></span><b>V(x)</b> Barrier potential</span>
+              <span><span style="display:inline-block; width:14px; height:4px; background:#d946ef; vertical-align:middle; margin-right:4px;"></span><b>|ψ|²</b> Probability density</span>
+              <span><span style="display:inline-block; width:14px; height:4px; background:#5555ff; vertical-align:middle; margin-right:4px;"></span>→<span style="display:inline-block; width:14px; height:4px; background:#ff3333; vertical-align:middle; margin-right:4px;"></span><b>Re(ψ)</b> Phase (blue −, red +)</span>
+              <span><span style="display:inline-block; width:14px; height:4px; background:#fbbf24; opacity:0.5; vertical-align:middle; margin-right:4px;"></span><b>Forbidden</b> <i>E &lt; V₀</i> region</span>
+              <span>⏱ <i>t</i> = <span id="wp-time">0.00</span></span>
+            </div>
+            <div style="display:flex; justify-content:center; gap:0.8rem; margin-top:0.8rem;">
+              <button class="btn" id="wp-btn-play">▶ Evolve</button>
+              <button class="btn" id="wp-btn-pause">⏸ Pause</button>
+              <button class="btn" id="wp-btn-reset">↺ Reset</button>
+            </div>
+          </section>
+        </div>
+
         <!-- Physics insight card -->
-        <div class="insights" style="margin-top:1rem;">
+        <div class="content-card" style="margin-top:1rem;">
+        <div class="insights">
           <div class="insight-card">
             <div class="insight-title">✨ From Single Barrier to Bloch Bands</div>
             <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.7;">
@@ -403,27 +474,28 @@
       <!-- ═══════════════════════════════════════════════════════════════
            SIDEBAR: Controls + Live Readout
            ═══════════════════════════════════════════════════════════════ -->
-      <aside class="game-sidebar">
+      </main>
+      <aside class="lab-sidebar">
         <div class="sidebar-card" id="pg-controls-panel">
           <h4>⚙ Controls</h4>
 
           <!-- Global controls: V0, b/a, a -->
           <div class="pg-control-scope scope-global slider-group" style="margin-bottom:1rem;">
-            <label>Barrier height V₀</label>
+            <label for="slider-v0">Barrier height V₀</label>
             <span class="slider-value" id="val-v0">5.0 <span class="unit-tag">ℏ²/ma²</span></span>
             <input type="range" id="slider-v0" min="0.5" max="50" value="5" step="0.5">
             <div class="slider-desc">Potential energy inside each barrier. Higher V₀ widens gaps and narrows bands.</div>
           </div>
 
           <div class="pg-control-scope scope-global slider-group" style="margin-bottom:1rem;">
-            <label>Barrier width b/a</label>
+            <label for="slider-b">Barrier width b/a</label>
             <span class="slider-value" id="val-b">0.20</span>
             <input type="range" id="slider-b" min="0.05" max="0.40" value="0.20" step="0.01">
             <div class="slider-desc">Fraction of the lattice period occupied by the barrier. Larger b/a → stronger confinement and larger bandgaps.</div>
           </div>
 
           <div class="pg-control-scope scope-global slider-group" style="margin-bottom:1rem;">
-            <label>Lattice constant a</label>
+            <label for="slider-a">Lattice constant a</label>
             <span class="slider-value" id="val-a">1.0 <span class="unit-tag">a</span></span>
             <input type="range" id="slider-a" min="0.5" max="3.0" value="1.0" step="0.1">
             <div class="slider-desc">Period of the repeating potential. Sets the Brillouin-zone boundary π/a and rescales the x-axis.</div>
@@ -431,7 +503,7 @@
 
           <!-- Tunneling-only control: E -->
           <div class="pg-control-scope scope-tunneling slider-group" style="margin-bottom:1rem;">
-            <label>Electron Energy E</label>
+            <label for="slider-e">Electron Energy E</label>
             <span class="slider-value" id="val-e">2.0 <span class="unit-tag">ℏ²/ma²</span></span>
             <input type="range" id="slider-e" min="0.1" max="60" value="2.0" step="0.1">
             <div class="slider-desc">Energy of the electron probing the single barrier (tunneling view). E &lt; V₀ → decay; E &gt; V₀ → transmission.</div>
@@ -445,6 +517,67 @@
             </div>
             <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem; line-height:1.5;">
               <b>Reduced:</b> fold all bands into [−π/a, +π/a].<br><b>Extended:</b> draw bands in their natural k regions.
+            </p>
+          </div>
+
+          <!-- Wave packet controls -->
+          <div class="pg-control-scope scope-wavepacket slider-group" style="margin-bottom:1rem;">
+            <label for="wp-slider-v0">Barrier height V₀</label>
+            <span class="slider-value" id="wp-val-v0">5.00</span>
+            <input type="range" id="wp-slider-v0" min="0.5" max="15" value="5" step="0.5">
+            <div class="slider-desc">Energy where classical block starts.</div>
+          </div>
+
+          <div class="pg-control-scope scope-wavepacket slider-group" style="margin-bottom:1rem;">
+            <label for="wp-slider-width">Barrier width</label>
+            <span class="slider-value" id="wp-val-width">2.00</span>
+            <input type="range" id="wp-slider-width" min="0.5" max="6" value="2" step="0.1">
+            <div class="slider-desc">Wider barriers suppress tunneling exponentially.</div>
+          </div>
+
+          <div class="pg-control-scope scope-wavepacket slider-group" style="margin-bottom:1rem;">
+            <label for="wp-slider-count">Barrier count</label>
+            <span class="slider-value" id="wp-val-count">1</span>
+            <input type="range" id="wp-slider-count" min="1" max="7" value="1" step="1">
+            <div class="slider-desc">Number of identical barriers. At 2+ observe resonant transmission.</div>
+          </div>
+
+          <div class="pg-control-scope scope-wavepacket slider-group" style="margin-bottom:1rem;">
+            <label for="wp-slider-spacing">Barrier spacing</label>
+            <span class="slider-value" id="wp-val-spacing">4.00</span>
+            <input type="range" id="wp-slider-spacing" min="2.0" max="10" value="4" step="0.2">
+            <div class="slider-desc">Center-to-center distance. Small spacing merges barriers.</div>
+          </div>
+
+          <div class="pg-control-scope scope-wavepacket slider-group" style="margin-bottom:1rem;">
+            <label for="wp-slider-k0">Initial momentum k₀</label>
+            <span class="slider-value" id="wp-val-k0">3.00</span>
+            <input type="range" id="wp-slider-k0" min="0.5" max="8" value="3" step="0.1">
+            <div class="slider-desc">Packet energy E = k₀²/2 = <span id="wp-energy">4.50</span>.</div>
+          </div>
+
+          <div class="pg-control-scope scope-wavepacket slider-group" style="margin-bottom:1rem;">
+            <label for="wp-slider-sigma">Packet width σ</label>
+            <span class="slider-value" id="wp-val-sigma">1.20</span>
+            <input type="range" id="wp-slider-sigma" min="0.4" max="3.0" value="1.2" step="0.1">
+            <div class="slider-desc">Smaller σ means broader momentum spread.</div>
+          </div>
+
+          <div class="pg-control-scope scope-wavepacket slider-group" style="margin-bottom:1rem;">
+            <label for="wp-slider-dt">Time step dt</label>
+            <span class="slider-value" id="wp-val-dt">0.0010</span>
+            <input type="range" id="wp-slider-dt" min="0.0002" max="0.005" value="0.001" step="0.0001">
+            <div class="slider-desc">Smaller = slower, but more stable.</div>
+          </div>
+
+          <div class="pg-control-scope scope-wavepacket" style="margin-bottom:0.3rem;">
+            <div class="btn-group" style="margin-bottom:0.3rem;">
+              <button class="btn active wp-shape-btn" data-shape="semicircle">Semicircle</button>
+              <button class="btn wp-shape-btn" data-shape="square">Square</button>
+              <button class="btn wp-shape-btn" data-shape="gaussian">Gaussian</button>
+            </div>
+            <p style="font-size:0.75rem; color:var(--text-dim); margin-top:0.3rem;">
+              <b>Semicircle:</b> smooth. <b>Square:</b> sharp edges. <b>Gaussian:</b> realistic.
             </p>
           </div>
         </div>
@@ -491,208 +624,8 @@
           </p>
         </div>
 
-        <!-- Lab Navigator / Badges / Progress -->
-        <div class="sidebar-card">
-          <h4>🗺 Lab Navigator</h4>
-          <div id="module-nav"></div>
-        </div>
-
-        <div class="sidebar-card">
-          <h4>🏆 Your Badges</h4>
-          <div id="badge-list" style="font-size:0.8rem; color:var(--text-dim); line-height:1.6;">
-            Complete challenges to earn badges!
-          </div>
-        </div>
-
-        <div class="sidebar-card">
-          <h4>📊 Progress</h4>
-          <div class="scoreboard">
-            <div class="score-cell">
-              <div class="score-num" id="stat-challenges">0</div>
-              <div class="score-label">Challenges</div>
-            </div>
-            <div class="score-cell">
-              <div class="score-num" id="stat-puzzles">0</div>
-              <div class="score-label">Puzzles</div>
-            </div>
-            <div class="score-cell">
-              <div class="score-num" id="stat-xp">0</div>
-              <div class="score-label">Total XP</div>
-            </div>
-            <div class="score-cell">
-              <div class="score-num" id="stat-badges">0</div>
-              <div class="score-label">Badges</div>
-            </div>
-          </div>
-        </div>
-      </aside>
-    </div>
-  </div>
-
-  <!-- ===== WAVE PACKET SCATTERING MODE ===== -->
-  <div class="mode-section" id="section-wavepacket" style="display:none;">
-    <section class="macro-panel">
-      <h3>🌊 Wave-Packet Scattering</h3>
-      <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
-        A localized Gaussian wave packet hits one or more barriers in real time.
-        Watch it split into reflected and transmitted components, observe the standing-wave interference fringes on the incident side,
-        and measure the non-zero probability inside a classically forbidden barrier.
-        The evolution uses the Strang split-operator FFT (exact kinetic step in Fourier space, exact potential half-step)
-        with absorbing boundary conditions to suppress wrap-around artifacts.
-      </p>
-    </section>
-
-    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
-      <div class="game-main">
-        <section class="macro-panel pg-section">
-          <h3>Real-Time Scattering Canvas</h3>
-          <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
-            The canvas shows a <b>Gaussian wave packet</b> evolving under the time-dependent Schrödinger equation
-            (split-operator FFT, <i>N = 1024</i>). Use the <i>Barrier count</i> slider to switch between a single barrier
-            and a <b>periodic array</b> of up to 7 identical barriers. The packet splits into reflected and transmitted parts —
-            observe how multiple barriers create resonant transmission peaks (Fabry-Pérot) and standing waves inside the wells.
-          </p>
-
-          <div class="viz-card" style="padding:0; overflow:hidden;">
-            <canvas id="wp-canvas" style="display:block; width:100%; image-rendering:pixelated;"></canvas>
-          </div>
-
-          <div style="display:flex; justify-content:center; gap:1.5rem; flex-wrap:wrap; font-size:0.78rem; color:var(--text-dim); margin-top:0.6rem;">
-            <span><span style="display:inline-block; width:14px; height:4px; background:#c084fc; vertical-align:middle; margin-right:4px;"></span><b>V(x)</b> Barrier potential</span>
-            <span><span style="display:inline-block; width:14px; height:4px; background:#d946ef; vertical-align:middle; margin-right:4px;"></span><b>|ψ|²</b> Probability density</span>
-            <span><span style="display:inline-block; width:14px; height:4px; background:#5555ff; vertical-align:middle; margin-right:4px;"></span>→<span style="display:inline-block; width:14px; height:4px; background:#ff3333; vertical-align:middle; margin-right:4px;"></span><b>Re(ψ)</b> Phase (blue −, red +)</span>
-            <span><span style="display:inline-block; width:14px; height:4px; background:#fbbf24; opacity:0.5; vertical-align:middle; margin-right:4px;"></span><b>Forbidden</b> <i>E &lt; V₀</i> region</span>
-            <span>⏱ <i>t</i> = <span id="wp-time">0.00</span></span>
-          </div>
-
-          <p style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:0.5rem; line-height:1.5;">
-            <b>Figure 4.</b> Probability density |<i>ψ(x,t)</i>|² overlaid on the potential profile.
-            Use the controls to vary the barrier geometry, packet momentum, and barrier shape.
-          </p>
-
-          <div style="display:flex; justify-content:center; gap:0.8rem; margin-top:0.8rem;">
-            <button class="btn" id="wp-btn-play">▶ Evolve</button>
-            <button class="btn" id="wp-btn-pause">⏸ Pause</button>
-            <button class="btn" id="wp-btn-reset">↺ Reset</button>
-          </div>
-        </section>
-
-        <div class="insights" style="margin-top:1rem;">
-          <div class="insight-card">
-            <div class="insight-title">✨ Key Observations</div>
-            <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.7;">
-              <b class="text-cyan">Reflection &amp; Interference:</b> When the packet reaches the barrier, a portion bounces back.
-              This reflected wave superposes with the still-arriving incident wave, producing <b>standing interference fringes</b> on the left
-              (blue-red oscillations). The fringe spacing is <i>λ/2</i>, directly revealing the packet’s de Broglie wavelength.
-              <span style="color:var(--text-dim)">Notice how the fringes grow sharper as the packet width σ increases (narrower momentum spread).</span>
-            </p>
-            <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.7; margin-top:0.6rem;">
-              <b class="text-purple">Transmission:</b> Part of the packet carries past the barrier.
-              If <span style="color:var(--accent-cyan)">E &gt; V₀</span>, transmission is classical — the wave simply climbs over.
-              If <span style="color:var(--accent-cyan)">E &lt; V₀</span> but the barrier is thin, transmission is purely <b>quantum tunneling</b>.
-              The transmitted packet appears delayed and broadened because high-momentum components tunnel more easily than low-momentum ones —
-              this is <b>filtering in <i>k</i>-space</b>.
-            </p>
-            <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.7; margin-top:0.6rem;">
-              <b class="text-yellow">Forbidden Leakage:</b> When <span style="color:var(--accent-yellow)">E &lt; V₀</span>, the barrier region is shaded pale yellow.
-              Classically, no particle can exist here. Yet <b>|ψ|² &gt; 0</b> inside — the tunneling amplitude.
-              The probability readout <i>P(barrier)</i> quantifies this “forbidden” population.
-              In a periodic lattice, this same leakage, repeated cell after cell, is what <b>creates energy bands and bandgaps</b>.
-            </p>
-            <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.7; margin-top:0.6rem;">
-              <b>Multiple barriers:</b> Increase <i>Barrier count</i> to 3+ and watch the packet rattle between barriers like a photon in a Fabry-Pérot cavity.
-              At certain spacings (when cavity width ≈ integer × <i>λ/2</i>) you’ll see dramatically enhanced transmission —
-              a precursor to the formation of <b>Bloch bands</b> in a periodic lattice.
-              Reduce <i>Barrier spacing</i> until barriers overlap — the system approaches the single-barrier Kronig-Penney limit.
-            </p>
-          </div>
-
-          <div class="insight-card">
-            <div class="insight-title">🧮 Evolution Equation</div>
-            <div class="equation-box" style="font-size:0.78rem;">
-              $$
-              i\hbar\,\partial_t\psi = \Bigl[-\frac{\hbar^2}{2m}\frac{\partial^2}{\partial x^2} + V(x)\Bigr]\psi
-              \qquad\text{with}\qquad
-              \psi(x,0)=\Bigl(\frac{1}{2\pi\sigma^2}\Bigr)^{\!1/4}\exp\!\Bigl[-\frac{(x-x_0)^2}{4\sigma^2}+ik_0x\Bigr]
-              $$
-            </div>
-            <p style="font-size:0.8rem; color:var(--text-dim); line-height:1.6; margin-top:0.5rem;">
-              <b>Semicircle:</b> smooth, physical barrier (no artificial high-<i>k</i> scattering).
-              <b>Square:</b> sharp discontinuities produce extra Fourier components and unphysical ripples.
-              <b>Gaussian:</b> the most realistic smoothly varying potential.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <aside class="game-sidebar">
-        <div class="sidebar-card">
-          <h4>⚙ Packet Controls</h4>
-
-          <div class="slider-group" style="margin-bottom:1rem;">
-            <label>Barrier height V₀</label>
-            <span class="slider-value" id="wp-val-v0">5.00</span>
-            <input type="range" id="wp-slider-v0" min="0.5" max="15" value="5" step="0.5">
-            <div class="slider-desc">Energy where classical block starts.</div>
-          </div>
-
-          <div class="slider-group" style="margin-bottom:1rem;">
-            <label>Barrier width</label>
-            <span class="slider-value" id="wp-val-width">2.00</span>
-            <input type="range" id="wp-slider-width" min="0.5" max="6" value="2" step="0.1">
-            <div class="slider-desc">Wider barriers suppress tunneling exponentially. For E &lt; V₀, the decay length is <i>1/κ = ℏ/√(2m(V₀−E))</i>.</div>
-          </div>
-
-          <div class="slider-group" style="margin-bottom:1rem;">
-            <label>Barrier count</label>
-            <span class="slider-value" id="wp-val-count">1</span>
-            <input type="range" id="wp-slider-count" min="1" max="7" value="1" step="1">
-            <div class="slider-desc">Number of identical barriers around x = 0. At 2+ barriers you can observe multiple reflections and Fabry-Pérot resonant transmission.</div>
-          </div>
-
-          <div class="slider-group" style="margin-bottom:1rem;">
-            <label>Barrier spacing</label>
-            <span class="slider-value" id="wp-val-spacing">4.00</span>
-            <input type="range" id="wp-slider-spacing" min="2.0" max="10" value="4" step="0.2">
-            <div class="slider-desc">Center-to-center distance. Small spacing merges barriers; large spacing creates resonant cavities. For a periodic array this is the lattice constant.</div>
-          </div>
-
-          <div class="slider-group" style="margin-bottom:1rem;">
-            <label>Initial momentum k₀</label>
-            <span class="slider-value" id="wp-val-k0">3.00</span>
-            <input type="range" id="wp-slider-k0" min="0.5" max="8" value="3" step="0.1">
-            <div class="slider-desc">Packet energy E = k₀²/2 = <span id="wp-energy">4.50</span>.</div>
-          </div>
-
-          <div class="slider-group" style="margin-bottom:1rem;">
-            <label>Packet width σ</label>
-            <span class="slider-value" id="wp-val-sigma">1.20</span>
-            <input type="range" id="wp-slider-sigma" min="0.4" max="3.0" value="1.2" step="0.1">
-            <div class="slider-desc">Spatial spread of the Gaussian. Smaller σ means broader momentum spread and faster dispersion.</div>
-          </div>
-
-          <div class="slider-group" style="margin-bottom:1rem;">
-            <label>Time step dt</label>
-            <span class="slider-value" id="wp-val-dt">0.0010</span>
-            <input type="range" id="wp-slider-dt" min="0.0002" max="0.005" value="0.001" step="0.0001">
-            <div class="slider-desc">Smaller = slower, but numerically more stable.</div>
-          </div>
-
-          <div class="btn-group" style="margin-bottom:0.3rem;">
-            <button class="btn active wp-shape-btn" data-shape="semicircle">Semicircle</button>
-            <button class="btn wp-shape-btn" data-shape="square">Square</button>
-            <button class="btn wp-shape-btn" data-shape="gaussian">Gaussian</button>
-          </div>
-          <p style="font-size:0.75rem; color:var(--text-dim); line-height:1.5; margin-top:0.3rem;">
-            <b>Semicircle:</b> smooth &amp; physical.
-            <b>Square:</b> sharp edges → extra Fourier ripples.
-            <b>Gaussian:</b> most realistic smooth potential.
-          </p>
-        </div>
-
-        <div class="sidebar-card">
+        <div class="pg-control-scope scope-wavepacket sidebar-card">
           <h4>📊 Probability Readout</h4>
-
           <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.8rem;">
             <div style="flex:1 1 90px; background:var(--bg-deep); padding:8px 10px; border-radius:6px; border:1px solid var(--glass-border); text-align:center;">
               <div style="font-size:0.65rem; color:var(--text-dim); text-transform:uppercase;">🟦 Left P</div>
@@ -707,307 +640,116 @@
               <div class="highlight-num" id="wp-p-right" style="font-family:var(--font-mono); color:var(--accent-green); font-size:1.05rem; font-weight:700;">—</div>
             </div>
           </div>
-
           <p style="font-size:0.75rem; color:var(--text-dim); line-height:1.5;">
-            Integrals of |<i>ψ</i>|² over each region. Before boundary damping, they sum to ~1.0;
-            after damping, the total decreases as probability is absorbed at the edges.
-            <span style="color:var(--accent-yellow)">P(barrier) &gt; 0</span> when <i>E &lt; V₀</i> is direct tunneling evidence.
+            Integrals of |<i>ψ</i>|² over each region. <span style="color:var(--accent-yellow)">P(barrier) &gt; 0</span> when <i>E &lt; V₀</i> is direct tunneling evidence.
           </p>
         </div>
+
       </aside>
     </div>
-  </div>
-
-  <div class="mode-section" id="section-challenge" style="display:none;">
-    <section class="macro-panel">
-      <h3>🎯 Challenges</h3>
-      <p class="slider-desc" style="font-size:0.9rem; line-height:1.6; margin-bottom:1rem;">
-        Test your band-structure intuition. Tune V₀ and b/a to engineer specific bandgaps, compute Bloch oscillation frequencies, and predict gaps from the nearly-free electron model.
-      </p>
-
-      <div class="insights">
-        <div class="insight-card">
-    <!-- CHALLENGE 1: Crystal Designer -->
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(0,212,255,0.12);">🎮</span>
-        <span class="challenge-title">Challenge 1: Crystal Designer</span>
-        <span class="challenge-difficulty easy">Easy</span>
-      </div>
-      <div class="challenge-desc">
-        The client needs a crystal with a specific first bandgap. Tune V₀ and b/a to match the target gap below.
-        You have 60 seconds per round. Correct match earns 50 XP + combo bonus.
-      </div>
-      <div class="challenge-reward">🏆 Reward: 50 XP · Combo bonus: +5 XP per streak</div>
-      <div class="timer-bar"><div class="timer-fill" id="timer-1" style="width:100%"></div></div>
-      <div class="challenge-grid">
-        <div>
-          <div class="target-wave">
-            <div class="gap-target">Target gap: <span id="cd-target-gap">—</span></div>
-            <!-- plot-crystal-designer viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Crystal Designer · Unit Cell</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Custom barrier height and width to engineer band structure.</p>
-  <div class="plot-container" id="plot-crystal-designer" style="height:240px;"></div>
-</div>
-
-            <p style="text-align:center;font-size:0.8rem;color:var(--text-dim);margin-top:0.3rem;">Live E(k) — watch the gap change as you tune sliders</p>
-          </div>
-        </div>
-        <div>
-          <div class="challenge-panel" style="margin-bottom:0.5rem;">
-            <div style="margin-bottom:1rem;">
-              <div class="control-row"><span class="control-label">V₀</span><span class="control-value" id="val-cd-v0">5.0</span></div>
-              <input type="range" id="slider-cd-v0" min="0.5" max="50" value="5" step="0.5">
-            </div>
-            <div style="margin-bottom:1rem;">
-              <div class="control-row"><span class="control-label">b/a</span><span class="control-value" id="val-cd-b">0.20</span></div>
-              <input type="range" id="slider-cd-b" min="0.05" max="0.40" value="0.20" step="0.01">
-            </div>
-            <div class="crystal-lattice" id="crystal-lattice"></div>
-            <p style="text-align:center;font-size:0.75rem;color:var(--text-dim);margin-top:0.5rem;">Pink = barrier, Cyan = well</p>
-          </div>
-        </div>
-      </div>
-      <div style="display:flex; align-items:center; gap:1.5rem; margin-top:1rem;">
-        <div style="font-size:0.85rem;color:var(--text-muted);">
-          <strong>Current gap:</strong> <span id="cd-current-gap">—</span> · 
-          <strong>Score:</strong> <span id="cd-score">0</span> · 
-          <strong>Combo:</strong> <span id="cd-combo">0</span>
-        </div>
-        <button class="btn" onclick="checkCrystalDesign()">✓ Check Design</button>
-        <button class="btn" onclick="skipCrystalDesign()">⏭ Skip (–10 XP)</button>
-      </div>
-      <div class="challenge-feedback" id="cd-feedback"></div>
-    </div>
-        </div>
-
-        <div class="insight-card">
-    <!-- CHALLENGE 2: Bloch Oscillation -->
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(255,64,129,0.12);">🎯</span>
-        <span class="challenge-title">Challenge 2: Bloch Oscillation Race</span>
-        <span class="challenge-difficulty medium">Medium</span>
-      </div>
-      <div class="challenge-desc">
-        An electron in a periodic lattice under electric field E oscillates with Bloch frequency ω_B = eEa/ℏ.
-        Given E-field and lattice constant, calculate ω_B (in THz) and T_B = 2π/ω_B (in ps).
-      </div>
-      <div class="challenge-reward">🏆 Reward: 75 XP · Hint cost: –5 XP</div>
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; margin-top:1rem;">
-        <div>
-          <div class="bloch-anim" id="bloch-anim">
-            <div class="lattice-line"></div>
-            <div class="bloch-particle" id="bloch-particle"></div>
-          </div>
-          <p style="text-align:center;font-size:0.75rem;color:var(--text-dim);margin-top:0.5rem;">Electron oscillating in lattice under E-field</p>
-        </div>
-        <div>
-          <div class="challenge-panel" style="margin-bottom:0.5rem;">
-            <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:1rem;">
-              <strong>E = <span id="bo-E">1.0</span> × 10⁵ V/m</strong><br>
-              <strong>a = <span id="bo-a">0.5</span> nm</strong><br>
-              e = 1.6×10⁻¹⁹ C, ℏ = 1.055×10⁻³⁴ J·s
-            </p>
-            <div style="margin-bottom:0.8rem;">
-              <label style="font-size:0.8rem;color:var(--text-dim);">ω_B (THz):</label>
-              <input type="number" class="answer-input" id="bo-omega" step="0.01" placeholder="e.g. 1.52">
-            </div>
-            <div style="margin-bottom:0.8rem;">
-              <label style="font-size:0.8rem;color:var(--text-dim);">T_B (ps):</label>
-              <input type="number" class="answer-input" id="bo-T" step="0.01" placeholder="e.g. 4.14">
-            </div>
-            <div class="btn-group">
-              <button class="btn" onclick="checkBlochOscillation()">✓ Submit</button>
-              <button class="btn" onclick="showBlochHint()">💡 Hint</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="challenge-feedback" id="bo-feedback"></div>
-    </div>
-        </div>
-
-        <div class="insight-card">
-    <!-- CHALLENGE 3: Bandgap Estimation -->
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(105,240,174,0.12);">🏎</span>
-        <span class="challenge-title">Challenge 3: Bandgap Estimation</span>
-        <span class="challenge-difficulty hard">Hard</span>
-      </div>
-      <div class="challenge-desc">
-        In the <strong style="color:var(--accent-cyan)">nearly-free electron</strong> limit (small V₀), the first bandgap at the zone boundary is approximately 2|V_G| where V_G is the Fourier component of the potential.
-        For a square-well periodic potential, the first Fourier coefficient is V_G ≈ (V₀/π) sin(πb/a). Predict the gap!
-      </div>
-      <div class="challenge-reward">🏆 Reward: 100 XP + "Bandgap Architect" badge</div>
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
-        <div>
-          <p style="font-size:0.9rem;color:var(--text-main);margin-bottom:1rem;">
-            <strong>V₀ = <span id="be-v0">2.0</span> ℏ²/ma²</strong><br>
-            <strong>b/a = <span id="be-b">0.15</span></strong><br><br>
-            The nearly-free approximation gives:<br>
-            E_gap ≈ 2|V_G| = (2V₀/π) |sin(πb/a)|
-          </p>
-          <div style="margin-bottom:0.8rem;">
-            <label style="font-size:0.8rem;color:var(--text-dim);">Predicted gap (ℏ²/ma²):</label>
-            <input type="number" class="answer-input" id="be-gap" step="0.01" placeholder="e.g. 0.38">
-          </div>
-          <div class="btn-group">
-            <button class="btn" onclick="checkBandgapEstimation()">✓ Submit</button>
-            <button class="btn" onclick="newBandgapRound()">🔄 New Problem</button>
-          </div>
-        </div>
-        <div>
-          <!-- plot-bandgap-est viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Bandgap Estimator</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Empirical bandgap from Kronig-Penney vs free-electron parabola.</p>
-  <div class="plot-container" id="plot-bandgap-est" style="height:240px;"></div>
-</div>
-
-          <p style="text-align:center;font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">Actual band structure for these parameters</p>
-        </div>
-      </div>
-      <div id="be-feedback" class="challenge-feedback"></div>
-    </div>
-        </div>
-      </div>
-    </section>
-  </div>
-
-  <div class="mode-section" id="section-puzzle" style="display:none;">
-    <section class="macro-panel">
-      <h3>🧩 Puzzles</h3>
-      <p class="slider-desc" style="font-size:0.9rem; line-height:1.6; margin-bottom:1rem;">
-        Assemble the key equations of band theory: tight-binding dispersion, the Kronig-Penney transcendental equation, and Bragg reflection conditions.
-      </p>
-
-      <div class="insights">
-        <div class="insight-card">
-    <!-- PUZZLE 1: Tight-Binding Chain -->
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(179,136,255,0.12);">🧩</span>
-        <span class="challenge-title">Puzzle 1: Tight-Binding Chain</span>
-        <span class="challenge-difficulty medium">Medium</span>
-      </div>
-      <div class="challenge-desc">
-        Assemble the nearest-neighbor tight-binding model: E(k) = E₀ − 2t cos(ka).
-        Drag the correct parameter chips into the equation slots below.
-      </div>
-      <div class="challenge-reward">🏆 Reward: 60 XP</div>
-      <div style="text-align:center; font-family:var(--font-mono); font-size:1.1rem; color:var(--text-main); margin:1.5rem 0;">
-        E(k) = <span id="tb-slot-0" class="equation-drop-zone" style="display:inline-block; min-width:80px;">?</span>
-        − 2 <span id="tb-slot-1" class="equation-drop-zone" style="display:inline-block; min-width:80px;">?</span>
-        cos(<span id="tb-slot-2" class="equation-drop-zone" style="display:inline-block; min-width:80px;">?</span>)
-      </div>
-      <div style="display:flex; justify-content:center; flex-wrap:wrap; gap:0.5rem; margin:1rem 0;" id="tb-pool">
-        <div class="term-chip" draggable="true" data-val="ka">ka</div>
-        <div class="term-chip" draggable="true" data-val="E0">E₀</div>
-        <div class="term-chip" draggable="true" data-val="t">t</div>
-        <div class="term-chip" draggable="true" data-val="V0">V₀</div>
-        <div class="term-chip" draggable="true" data-val="a">a</div>
-        <div class="term-chip" draggable="true" data-val="pi">π</div>
-      </div>
-      <div id="tb-feedback" class="challenge-feedback"></div>
-      <button class="btn" onclick="checkTightBinding()">✓ Verify Equation</button>
-      <button class="btn" onclick="resetTightBinding()">↺ Reset</button>
-    </div>
-        </div>
-
-        <div class="insight-card">
-    <!-- PUZZLE 2: K-P Equation Assembly -->
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(0,212,255,0.12);">🧩</span>
-        <span class="challenge-title">Puzzle 2: K-P Equation Assembly</span>
-        <span class="challenge-difficulty hard">Hard</span>
-      </div>
-      <div class="challenge-desc">
-        Drop the correct Kronig-Penney terms into place. The transcendental equation relates cos(ka) to the RHS.
-      </div>
-      <div class="challenge-reward">🏆 Reward: 80 XP + "Crystal Engineer" badge</div>
-      <div style="text-align:center; font-family:var(--font-mono); font-size:1rem; color:var(--text-main); margin:1.5rem 0; line-height:2.2;">
-        <span id="kp-slot-0" class="equation-drop-zone" style="display:inline-block; min-width:100px;">?</span> (ka) =
-        <span id="kp-slot-1" class="equation-drop-zone" style="display:inline-block; min-width:120px;">?</span> (αw)
-        <span id="kp-slot-2" class="equation-drop-zone" style="display:inline-block; min-width:120px;">?</span> (βb) +
-        <span id="kp-slot-3" class="equation-drop-zone" style="display:inline-block; min-width:160px;">?</span>
-      </div>
-      <div style="display:flex; justify-content:center; flex-wrap:wrap; gap:0.5rem; margin:1rem 0;" id="kp-pool">
-        <div class="term-chip" draggable="true" data-val="cos">cos</div>
-        <div class="term-chip" draggable="true" data-val="cosh">cosh</div>
-        <div class="term-chip" draggable="true" data-val="sinh">sinh</div>
-        <div class="term-chip" draggable="true" data-val="sin">sin</div>
-        <div class="term-chip" draggable="true" data-val="rhs1">(β²−α²)/(2αβ) · sin(αw)sinh(βb)</div>
-        <div class="term-chip" draggable="true" data-val="rhs2">(β²+α²)/(2αβ) · sin(αw)sin(βb)</div>
-        <div class="term-chip" draggable="true" data-val="rhs3">(β²−α²)/(2αβ) · cos(αw)cosh(βb)</div>
-      </div>
-      <div id="kp-feedback" class="challenge-feedback"></div>
-      <button class="btn" onclick="checkKPAssembly()">✓ Verify Equation</button>
-      <button class="btn" onclick="resetKPAssembly()">↺ Reset</button>
-    </div>
-        </div>
-
-        <div class="insight-card">
-    <!-- PUZZLE 3: Bragg Reflection -->
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(255,64,129,0.12);">🧩</span>
-        <span class="challenge-title">Puzzle 3: Bragg Reflection Matcher</span>
-        <span class="challenge-difficulty master">Master</span>
-      </div>
-      <div class="challenge-desc">
-        Match the wavevector k to the Bragg condition nλ = 2d (i.e., k = nπ/a). The lattice constant a is shown below.
-        Select the reflection order n that satisfies Bragg for the given k.
-      </div>
-      <div class="challenge-reward">🏆 Reward: 120 XP + "Bragg Master" badge</div>
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
-        <div>
-          <div class="bragg-canvas" id="bragg-canvas"></div>
-          <p style="text-align:center;font-size:0.75rem;color:var(--text-dim);margin-top:0.5rem;">Incident wave (cyan) reflects at atomic planes (pink)</p>
-        </div>
-        <div>
-          <div class="challenge-panel" style="margin-bottom:0.5rem;">
-            <p style="font-size:0.9rem;color:var(--text-main);margin-bottom:1rem;">
-              <strong>Lattice constant a = <span id="bragg-a">0.5</span> nm</strong><br>
-              <strong>Given k = <span id="bragg-k">2π</span> nm⁻¹</strong><br><br>
-              Bragg condition: nλ = 2a, where λ = 2π/k<br>
-              Which integer n satisfies the condition?
-            </p>
-            <div id="bragg-options" style="display:flex; flex-wrap:wrap; gap:0.5rem;"></div>
-          </div>
-        </div>
-      </div>
-      <div id="bragg-feedback" class="challenge-feedback"></div>
-      <button class="btn" onclick="checkBragg()">✓ Check Answer</button>
-      <button class="btn" onclick="newBraggRound()">🔄 New Round</button>
-    </div>
-        </div>
-      </div>
-    </section>
-  </div>
+  </section>
 
 </div>
 
 <script src="../../shared_ui.js"></script>
 <script src="../../shared_games.js"></script>
 <script src="../../shared_interactive.js"></script>
-<!-- kp_sim wraps setGameMode, so it must load BEFORE kp_wavepacket -->
-  <script src="kp_sim.js?v=14"></script>
+<script src="kp_sim.js?v=14"></script>
 <script src="kp_wavepacket_embed.js?v=2"></script>
 <script src="kp_wavepacket.js?v=3"></script>
-  <script src="kp_apps_games.js?v=4"></script>
+<script src="kp_apps_games.js?v=4"></script>
 <script src="../../shared_effects.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  var tabBtns = document.querySelectorAll('.tab-btn');
+  tabBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      window.switchTab(this.getAttribute('data-tab'));
+    });
+  });
+
+  var jump = document.getElementById('module-jump');
+  if (jump) {
+    jump.addEventListener('change', function() {
+      var val = this.value;
+      if (val) window.location.href = '../../modules/' + val + '/index.html';
+    });
+  }
+
   setTimeout(function() {
-    if (typeof initKP === 'function') initKP();
     if (typeof initWavePacket === 'function') initWavePacket();
+    // switchTab will call initKP on first sim tab click
   }, 60);
 });
+
+var _kpInitDone = false;
+
+window.switchTab = function(tabId) {
+  document.querySelectorAll('.tab-section').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  var section = document.getElementById('tab-' + tabId);
+  if (section) section.classList.add('active');
+  var btn = document.querySelector('.tab-btn[data-tab="' + tabId + '"]');
+  if (btn) btn.classList.add('active');
+
+  var simLayout = document.querySelector('#tab-simulation .lab-layout');
+  if (simLayout) {
+    simLayout.classList.toggle('sim-tab', tabId === 'simulation');
+  }
+
+  if (tabId === 'simulation') {
+    requestAnimationFrame(function() {
+      if (!_kpInitDone) {
+        _kpInitDone = true;
+        if (typeof initKP === 'function') initKP();
+        // initKP checks for old #section-play which no longer exists;
+        // force render here since the sim tab is now visible.
+        if (typeof updateAll === 'function') updateAll();
+        return;
+      }
+      document.querySelectorAll('.plot-container').forEach(function(el) {
+        void el.clientWidth;
+        void el.clientHeight;
+        if (typeof Plotly !== 'undefined' && el.querySelector('.js-plotly-plot')) {
+          Plotly.Plots.resize(el);
+        }
+      });
+    });
+  }
+};
+
+var playMode = 'potential';
+window.setPlayMode = function(mode) {
+  playMode = mode;
+  document.querySelectorAll('.game-mode-btn').forEach(function(b) { b.classList.remove('active'); });
+  var btn = document.getElementById('pg-mode-' + mode);
+  if (btn) btn.classList.add('active');
+
+  var views = ['potential', 'tunneling', 'bands', 'wavepacket'];
+  views.forEach(function(v) {
+    var el = document.getElementById('pg-view-' + v);
+    if (el) el.style.display = (v === mode ? 'block' : 'none');
+  });
+
+  // Show/hide scope-specific controls
+  var isKP = ['potential', 'tunneling', 'bands'].indexOf(mode) >= 0;
+  document.querySelectorAll('.pg-control-scope').forEach(function(el) {
+    var scopes = el.className.match(/scope-(\w+)/g);
+    if (scopes) {
+      var show = false;
+      if (isKP) {
+        show = scopes.indexOf('scope-global') >= 0 || scopes.indexOf('scope-' + mode) >= 0;
+      } else {
+        show = scopes.indexOf('scope-' + mode) >= 0;
+      }
+      el.style.display = show ? '' : 'none';
+    }
+  });
+
+  // Render the newly visible plot
+  if (typeof updateAll === 'function') updateAll();
+};
 </script>
 
 </body>

@@ -10,7 +10,256 @@
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <link rel="stylesheet" href="../../shared_styles.css">
 <style>
-  /* ── Existing Module 08 component styles ── */
+  /* === Module canonical layout === */
+  .lab-layout {
+    max-width:1600px;
+    margin:0 auto;
+    padding:0;
+    display:grid;
+    grid-template-columns:1fr 340px;
+    gap:var(--space-lg);
+    align-items:start;
+    position:relative;
+    z-index:1;
+  }
+  @media (max-width:1000px) { .lab-layout { grid-template-columns:1fr; } }
+
+  .lab-main { min-width:0; position:relative; z-index:1; container-type:inline-size; container-name:playMain; }
+  /* Sidebar only in simulation tab */
+  .lab-layout:not(.sim-tab) .lab-sidebar { display:none; }
+  .lab-layout:not(.sim-tab) { grid-template-columns:1fr; max-width:960px; }
+
+  .lab-sidebar {
+    min-width:0;
+    position:sticky;
+    top:5rem;
+    align-self:start;
+    max-height:calc(100vh - 6rem);
+    overflow-y:auto;
+    padding:1rem;
+    background:var(--bg-panel-alt);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-lg);
+    z-index:10;
+  }
+  .lab-sidebar::-webkit-scrollbar { width:4px; }
+  .lab-sidebar::-webkit-scrollbar-thumb { background:var(--glass-border); border-radius:2px; }
+  .lab-sidebar.static { position:static; max-height:none; overflow-y:visible; }
+
+  .sidebar-card {
+    background:rgba(16,16,28,0.55);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+    margin-bottom:1rem;
+  }
+  .sidebar-card:last-child { margin-bottom:0; }
+  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
+
+  .content-card {
+    background:var(--bg-panel);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+    margin-top:1rem;
+  }
+  .content-card:first-of-type { margin-top:0; }
+  .content-card h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
+
+  .insights {
+    display:grid;
+    grid-template-columns:1fr;
+    gap:1rem;
+    margin-top:1rem;
+  }
+  @media (min-width:900px) { .insights { grid-template-columns:1fr 1fr; } }
+
+  .insight-card {
+    background:var(--bg-panel);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+  }
+  .insight-card .insight-title { margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright); }
+
+  .viz-card {
+    background:var(--bg-elevated);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-sm);
+    padding:0.8rem;
+    margin-bottom:1rem;
+  }
+  .viz-card:last-child { margin-bottom:0; }
+  .viz-card h4 { margin:0 0 0.4rem; font-size:0.9rem; color:var(--text-bright); }
+
+  .slider-group { margin-bottom:1rem; }
+  .slider-group label { display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:0.3rem; }
+  .slider-group input[type=range], .slider-group select { width:100%; }
+  .slider-value { font-family:var(--font-mono); color:var(--accent-cyan); font-weight:700; }
+  .slider-desc { font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; }
+
+  .dash-row {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0.35rem 0;
+    border-bottom:1px solid rgba(255,255,255,0.04);
+  }
+  .dash-row:last-child { border-bottom:none; }
+  .dash-label { font-size:0.78rem; color:var(--text-dim); }
+  .dash-val { font-family:var(--font-mono); font-size:0.82rem; color:var(--text-main); min-width:90px; text-align:right; }
+
+  /* === Equation styling === */
+  .equation-box {
+    background:rgba(0,0,0,0.18);
+    border:1px solid var(--glass-border);
+    border-left:3px solid var(--accent-cyan);
+    border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+    padding:0.8rem 1rem;
+    font-size:0.85rem;
+    color:var(--text-main);
+    line-height:1.7;
+    overflow-x:auto;
+    margin-top:0.8rem;
+  }
+  .mjx-chtml { font-size:105% !important; }
+
+  /* === Module-specific cards === */
+  .plot-grid {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:1rem;
+  }
+  @container playMain (max-width:650px) { .plot-grid { grid-template-columns:1fr; } }
+  @media (max-width:1000px) { .plot-grid { grid-template-columns:1fr; } }
+
+  .plot-box {
+    background:var(--bg-elevated);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-sm);
+    padding:0.6rem;
+    min-width:0;
+    overflow:hidden;
+  }
+  .plot-box.full { grid-column:1 / -1; }
+  .plot-box-label {
+    font-family:var(--font-mono);
+    font-size:0.65rem;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:var(--accent-cyan);
+    margin-bottom:0.4rem;
+    padding-bottom:0.3rem;
+    border-bottom:1px solid var(--glass-border);
+  }
+
+  .plot-desc {
+    margin-top:1rem;
+    padding:0.8rem 1rem;
+    background:rgba(0,0,0,0.2);
+    border-left:3px solid var(--accent-cyan);
+    border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+    font-size:0.82rem;
+    color:var(--text-muted);
+    line-height:1.6;
+  }
+
+  .legend-row {
+    display:flex;
+    flex-wrap:wrap;
+    gap:0.4rem 0.85rem;
+    font-size:0.66rem;
+    color:var(--text-muted);
+    margin-top:0.5rem;
+  }
+  .legend-row span { display:inline-flex; align-items:center; gap:0.3rem; }
+  .legend-dot {
+    width:7px; height:7px;
+    border-radius:50%;
+    display:inline-block; flex-shrink:0;
+  }
+  .dot-cyan   { background:#00f0ff; box-shadow:0 0 4px #00f0ff; }
+  .dot-pink   { background:#ff4ecd; box-shadow:0 0 4px #ff4ecd; }
+  .dot-gold   { background:#ffd54f; box-shadow:0 0 4px #ffd54f; }
+  .dot-green  { background:#4ade80; box-shadow:0 0 4px #4ade80; }
+  .dot-purple { background:#c084fc; box-shadow:0 0 4px #c084fc; }
+
+  .mode-btn-group { display:flex; gap:0.5rem; margin:0.75rem 0; }
+  .mode-btn-group button { flex:1; }
+
+  .plot-container {
+    width:100%;
+    min-height:240px;
+    background:var(--bg-panel);
+    border-radius:var(--radius-sm);
+    overflow:hidden;
+  }
+
+  /* Legacy puzzle/challenge styles kept for JS compat */
+  .challenge-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  .puzzle-board { display:grid; grid-template-columns:repeat(6, 1fr); gap:0.5rem; padding:1rem; background:var(--bg-panel); border-radius:var(--radius-sm); }
+  .energy-slot { aspect-ratio:1; border:2px dashed var(--glass-border); border-radius:8px; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:0.85rem; color:var(--text-dim); transition:all 0.2s; }
+  .energy-slot.occupied { border-style:solid; border-color:var(--accent-cyan); background:rgba(0,240,255,0.06); color:var(--accent-cyan); }
+  .energy-particle { width:36px; height:36px; border-radius:50%; background:radial-gradient(circle, var(--accent-cyan), var(--accent-purple)); box-shadow:0 0 12px rgba(0,240,255,0.4); cursor:grab; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-size:0.7rem; font-weight:700; }
+  .energy-particle:active { cursor:grabbing; }
+  .target-wave { border:2px solid var(--glass-border); border-radius:var(--radius-sm); padding:0.8rem; background:var(--bg-elevated); }
+  .target-wave.correct { border-color:var(--accent-green); box-shadow:0 0 16px rgba(74,222,128,0.15); }
+  .draggable-target { cursor:pointer; border:2px dashed var(--glass-border); border-radius:var(--radius-sm); padding:1rem; transition:all 0.2s; text-align:center; }
+  .draggable-target:hover { border-color:var(--accent-cyan); background:rgba(0,240,255,0.04); }
+  .draggable-target.selected { border-color:var(--accent-purple); background:rgba(192,132,252,0.08); }
+  .timer-bar { height:4px; background:var(--bg-elevated); border-radius:2px; overflow:hidden; margin-bottom:1rem; }
+  .timer-fill { height:100%; background:var(--accent-cyan); transition:width 1s linear; }
+  .timer-fill.urgent { background:var(--accent-red); }
+  .laser-cannon { display:flex; align-items:center; gap:1rem; padding:1rem; background:var(--bg-elevated); border-radius:var(--radius-sm); border:1px solid var(--glass-border); }
+  .laser-beam { flex:1; height:4px; background:linear-gradient(90deg, var(--accent-pink), var(--accent-cyan)); border-radius:2px; position:relative; overflow:hidden; }
+  .laser-pulse { position:absolute; width:20px; height:100%; background:#fff; border-radius:50%; filter:blur(2px); animation:laserFly 2s infinite linear; }
+  @keyframes laserFly { from { left:-20px; } to { left:100%; } }
+  .atom-target { width:60px; height:60px; border-radius:50%; border:2px solid var(--glass-border); display:flex; align-items:center; justify-content:center; font-size:1.5rem; }
+  .atom-target.excited { border-color:var(--accent-pink); box-shadow:0 0 20px rgba(255,78,205,0.3); animation:pulse 0.5s infinite alternate; }
+  @keyframes pulse { from { transform:scale(1); } to { transform:scale(1.1); } }
+
+  .challenge-panel {
+    background:var(--bg-panel);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+    margin-top:1rem;
+  }
+  .challenge-panel:first-of-type { margin-top:0; }
+  .challenge-header { display:flex; align-items:center; gap:0.6rem; margin-bottom:0.6rem; }
+  .challenge-icon { width:2rem; height:2rem; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1rem; }
+  .challenge-title { font-size:0.95rem; font-weight:700; color:var(--text-bright); }
+  .challenge-difficulty { margin-left:auto; font-size:0.65rem; text-transform:uppercase; padding:0.2rem 0.5rem; border-radius:999px; font-weight:700; }
+  .challenge-difficulty.easy  { background:rgba(74,222,128,0.15); color:var(--accent-green); }
+  .challenge-difficulty.medium { background:rgba(255,213,79,0.15); color:#ffd54f; }
+  .challenge-difficulty.hard { background:rgba(255,68,68,0.15); color:var(--accent-red); }
+  .challenge-difficulty.master { background:rgba(192,132,252,0.15); color:var(--accent-purple); }
+  .challenge-desc { font-size:0.82rem; color:var(--text-dim); line-height:1.5; margin-bottom:0.6rem; }
+  .challenge-feedback { margin-top:0.8rem; padding:0.7rem; border-radius:var(--radius-sm); font-size:0.82rem; display:none; }
+  .challenge-feedback.success { background:rgba(74,222,128,0.12); color:var(--accent-green); border:1px solid rgba(74,222,128,0.3); }
+  .challenge-feedback.error { background:rgba(255,68,68,0.12); color:var(--accent-red); border:1px solid rgba(255,68,68,0.3); }
+  .challenge-feedback.hint { background:rgba(255,213,79,0.12); color:#ffd54f; border:1px solid rgba(255,213,79,0.3); }
+
+  .drop-zone {
+    border:2px dashed var(--glass-border);
+    border-radius:var(--radius-sm);
+    padding:1rem;
+    text-align:center;
+    font-size:0.8rem;
+    color:var(--text-dim);
+    transition:all 0.2s;
+  }
+  .drop-zone.dragover { border-color:var(--accent-cyan); background:rgba(0,240,255,0.06); }
+  .drop-zone.correct { border-color:var(--accent-green); background:rgba(74,222,128,0.08); }
+
+  .control-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.3rem; }
+  .control-label { font-size:0.8rem; color:var(--text-dim); }
+  .control-value { font-family:var(--font-mono); font-size:0.85rem; color:var(--accent-cyan); font-weight:700; }
+  .btn-group { display:flex; gap:0.5rem; }
+  .btn-group button { flex:1; }
+
+  /* ── Module 08 component styles ── */
   .challenge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   .draggable-target { cursor: grab; border: 2px dashed var(--glass-border); border-radius: var(--radius-sm); padding: 0.8rem; transition: all 0.2s; text-align: center; background: var(--bg-elevated); }
   .draggable-target:hover { border-color: var(--accent-cyan); background: rgba(0,240,255,0.04); }
@@ -28,7 +277,7 @@
   .tc-badge { display: inline-block; padding: 0.3rem 0.6rem; border-radius: 6px; background: rgba(74,222,128,0.1); border: 1px solid var(--accent-green); color: var(--accent-green); font-family: var(--font-mono); font-size: 0.85rem; }
   .normal-badge { display: inline-block; padding: 0.3rem 0.6rem; border-radius: 6px; background: rgba(255,68,68,0.1); border: 1px solid var(--accent-red); color: var(--accent-red); font-family: var(--font-mono); font-size: 0.85rem; }
 
-  /* ── Viz grid / cards (moved from inline playground style) ── */
+  /* ── Viz grid / cards ── */
   .viz-grid { display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:1rem; }
   .viz-card { background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); overflow:hidden; }
   .viz-canvas { width:100%; height:180px; display:block; background:var(--bg-elevated); }
@@ -46,22 +295,7 @@
   .dot-red { background:#ff5555; }
   .dot-green { background:#00ff88; }
 
-  /* ── Layout helpers (mirroring modules 04/05/06/07) ── */
-  .game-mode-bar { display:flex; justify-content:center; gap:0.5rem; padding:0.6rem; background:rgba(0,0,0,0.35); backdrop-filter:blur(8px); border-bottom:1px solid var(--glass-border); margin-bottom:1.5rem; flex-wrap:wrap; }
-  .game-layout { max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg); align-items:start; }
-  @media (max-width:1000px) { .game-layout { grid-template-columns:1fr; } }
-  .game-main { min-width:0; }
-  .game-sidebar { min-width:0; position:sticky; top:5rem; }
-  .macro-panel { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-top:1rem; }
-  .macro-panel:first-of-type { margin-top:0; }
-  .macro-panel h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
-  .sidebar-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-bottom:1rem; }
-  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
-  .slider-group { margin-bottom:1rem; }
-  .slider-group label { display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:0.3rem; }
-  .slider-group input[type=range] { width:100%; }
-  .slider-value { font-family:var(--font-mono); color:var(--accent-cyan); font-weight:700; }
-  .slider-desc { font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; }
+  /* ── Readout helpers ── */
   .readout-row { display:flex; flex-wrap:wrap; gap:0.5rem; }
   .readout-tile { flex:1 1 90px; background:var(--bg-deep); padding:8px 10px; border-radius:6px; border:1px solid var(--glass-border); text-align:center; }
   .readout-tile .readout-label { font-size:0.65rem; color:var(--text-dim); text-transform:uppercase; }
@@ -73,58 +307,56 @@
   .theory-content { font-size:0.95rem; line-height:1.7; color:var(--text-main); }
   .theory-content p { margin-bottom:1rem; }
   .theory-content strong { color:var(--accent-cyan); font-weight:500; }
-  .equation-box { background:var(--bg-deep); border:1px solid var(--glass-border); border-radius:10px; padding:1rem 1.2rem; margin:1rem 0; font-size:0.85rem; overflow-x:auto; color:var(--text-main); }
-  .equation-box .mjx-chtml { font-size:1.1em !important; }
   .insight-callout { background:linear-gradient(90deg, rgba(0,240,255,0.08), transparent); border-left:3px solid var(--accent-cyan); padding:1rem 1.2rem; border-radius:0 8px 8px 0; margin:1rem 0; font-size:0.92rem; color:var(--text-main); }
   .insight-callout .label { font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent-cyan); font-weight:600; margin-bottom:0.4rem; }
-  .insights { display:grid; grid-template-columns:1fr; gap:1rem; margin-top:1rem; }
-  @media (min-width:900px) { .insights { grid-template-columns:1fr 1fr; } }
-  .insight-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; }
-  .insight-card .insight-title { margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright); }
 
-  /* ── Playground sub-tab / selective control helpers ── */
+  /* ── Sub-tab control helpers ── */
   .pg-control-scope { margin-bottom:0.8rem; }
   .pg-section { margin-top:1rem; }
   .mode-bar { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1rem; justify-content:center; }
-  .mode-bar .game-mode-btn { padding:0.4rem 0.9rem; font-size:0.82rem; }
+  .mode-bar .btn { padding:0.4rem 0.9rem; font-size:0.82rem; }
 </style>
 </head>
-<body>
+<body data-module="08" data-tab="overview">
 
 <!-- AMBIENT ORBS -->
 <div class="orb orb-cyan"></div>
 <div class="orb orb-purple"></div>
 <div class="orb orb-pink"></div>
 
-<nav class="game-nav">
-  <div class="nav-brand"><a href="../../index.html" style="text-decoration:none;color:inherit;"><span class="nav-logo">⚛</span> Physics Playground</a></div>
+<nav class="lab-topbar">
+  <div class="nav-brand"><a href="../../index.html" style="text-decoration:none;color:inherit;"><span class="nav-logo">⚛</span> Quantum Lab</a></div>
   <div class="nav-stats">
-    <div class="stat-badge"><span class="stat-icon">❄</span><span class="stat-value">Superconductivity Lab</span></div>
-    <div class="stat-badge"><span class="stat-icon">⭐</span><span class="stat-value" id="nav-xp">0 XP</span></div>
+    <select id="module-jump" class="stat-badge" style="background:var(--bg-elevated);border:1px solid var(--glass-border);border-radius:var(--radius-pill);padding:0.3rem 0.8rem;font-size:0.82rem;color:var(--text-muted);">
+      <option>Jump to module...</option>
+    </select>
   </div>
 </nav>
 
-<div class="game-hero" style="padding-bottom:0;">
-  <div class="level-badge">Module 08 · Level <span id="current-level">1</span> · Quantum Phase Master</div>
-  <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Superconductivity</span></h1>
-  <p class="hero-desc">Zero resistance. Perfect diamagnetism. Cooper pairs. Explore the quantum state that defies classical intuition.</p>
-</div>
+<div class="lab-root">
 
-<div class="game-container">
+  <header class="lab-header" style="padding-bottom:0.5rem;">
+    <div>
+      <div class="lab-level">Module 08 · Level 1 · Quantum Phase Master</div>
+      <h1>Superconductivity</h1>
+      <p class="lab-desc">
+        Zero resistance. Perfect diamagnetism. Cooper pairs. Explore the quantum state that defies classical intuition.
+      </p>
+    </div>
+  </header>
 
-  <div class="game-mode-bar">
-    <button class="game-mode-btn active" id="mode-story" onclick="setGameMode('story')">📖 Story</button>
-    <button class="game-mode-btn" id="mode-theory" onclick="setGameMode('theory')">🎓 Theory</button>
-    <button class="game-mode-btn" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
-    <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">🎯 Challenges</button>
-    <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">🧩 Puzzles</button>
+  <div class="tab-bar" role="tablist">
+    <button class="tab-btn active" data-tab="overview" role="tab">📋 Overview</button>
+    <button class="tab-btn" data-tab="theory" role="tab">📖 Theory</button>
+    <button class="tab-btn" data-tab="simulation" role="tab">🔬 Simulation</button>
   </div>
 
-  <!-- ═══════════════ STORY ═══════════════ -->
-  <div class="mode-section" id="section-story" style="display:block;">
-    <div class="game-layout">
-      <div class="game-main">
-        <section class="macro-panel">
+  <div class="lab-layout">
+    <main class="lab-main">
+
+      <!-- ═══════════════ OVERVIEW TAB ═══════════════ -->
+      <section id="tab-overview" class="tab-section active">
+        <div class="content-card">
           <h3>📖 The Story — When Resistance Vanishes and Fields Are Expelled</h3>
           <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.6;margin-bottom:1rem;">
             In 1911, <strong style="color:var(--accent-cyan);">Heike Kamerlingh Onnes</strong> cooled mercury to 4.2 K and
@@ -186,36 +418,12 @@
               </p>
             </div>
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
 
-      <aside class="game-sidebar static">
-        <div class="sidebar-card">
-          <h4>🗺 Lab Navigator</h4>
-          <div id="module-nav-story"></div>
-        </div>
-        <div class="sidebar-card">
-          <h4>🏆 Your Badges</h4>
-          <div id="badge-list-story" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        </div>
-        <div class="sidebar-card">
-          <h4>📊 Progress</h4>
-          <div class="scoreboard">
-            <div class="score-cell"><div class="score-num" id="stat-challenges-story">0</div><div class="score-label">Challenges</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-puzzles-story">0</div><div class="score-label">Puzzles</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-xp-story">0</div><div class="score-label">Total XP</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-badges-story">0</div><div class="score-label">Badges</div></div>
-          </div>
-        </div>
-      </aside>
-    </div>
-  </div>
-
-  <!-- ═══════════════ THEORY ═══════════════ -->
-  <div class="mode-section" id="section-theory" style="display:none;">
-    <div class="game-layout">
-      <div class="game-main">
-        <section class="macro-panel">
+      <!-- ═══════════════ THEORY TAB ═══════════════ -->
+      <section id="tab-theory" class="tab-section">
+        <div class="content-card">
           <h3>🎓 Theory — BCS Theory, Meissner Effect, and London Equations</h3>
           <div class="theory-content">
             <p>
@@ -326,53 +534,29 @@
               </p>
             </div>
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
 
-      <aside class="game-sidebar static">
-        <div class="sidebar-card">
-          <h4>🗺 Lab Navigator</h4>
-          <div id="module-nav-theory"></div>
-        </div>
-        <div class="sidebar-card">
-          <h4>🏆 Your Badges</h4>
-          <div id="badge-list-theory" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        </div>
-        <div class="sidebar-card">
-          <h4>📊 Progress</h4>
-          <div class="scoreboard">
-            <div class="score-cell"><div class="score-num" id="stat-challenges-theory">0</div><div class="score-label">Challenges</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-puzzles-theory">0</div><div class="score-label">Puzzles</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-xp-theory">0</div><div class="score-label">Total XP</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-badges-theory">0</div><div class="score-label">Badges</div></div>
+      <!-- ═══════════════ SIMULATION TAB ═══════════════ -->
+      <section id="tab-simulation" class="tab-section">
+
+        <div class="content-card">
+          <h3>🔬 Superconductivity Sandbox</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.6;">
+            Tune temperature and applied field, pick a material, and watch the superconducting state emerge or collapse.
+            Switch sub-tabs to focus on Cooper pairs, the Meissner effect, or the energy gap and transport curves.
+          </p>
+          <div class="mode-bar">
+            <button class="btn active" id="pg-mode-cooper" onclick="setPlayMode('cooper')">⚛ Cooper Pairs</button>
+            <button class="btn" id="pg-mode-meissner" onclick="setPlayMode('meissner')">🧲 Meissner Effect</button>
+            <button class="btn" id="pg-mode-gap" onclick="setPlayMode('gap')">📈 Energy Gap &amp; Plots</button>
           </div>
         </div>
-      </aside>
-    </div>
-  </div>
-
-  <!-- ═══════════════ PLAYGROUND ═══════════════ -->
-  <div class="mode-section" id="section-play" style="display:none;">
-    <section class="macro-panel">
-      <h3>🔬 Superconductivity Sandbox</h3>
-      <p class="slider-desc" style="font-size:0.9rem;line-height:1.6;margin-bottom:1rem;">
-        Tune temperature and applied field, pick a material, and watch the superconducting state emerge or collapse.
-        Switch sub-tabs to focus on Cooper pairs, the Meissner effect, or the energy gap and transport curves.
-      </p>
-      <div class="mode-bar">
-        <button class="game-mode-btn active" id="pg-mode-cooper" onclick="setPlayMode('cooper')">⚛ Cooper Pairs</button>
-        <button class="game-mode-btn" id="pg-mode-meissner" onclick="setPlayMode('meissner')">🧲 Meissner Effect</button>
-        <button class="game-mode-btn" id="pg-mode-gap" onclick="setPlayMode('gap')">📈 Energy Gap &amp; Plots</button>
-      </div>
-    </section>
-
-    <div class="game-layout">
-      <div class="game-main">
 
         <!-- ── Sub-tab: Cooper Pairs ── -->
-        <section class="macro-panel pg-section" id="pg-view-cooper">
+        <div class="content-card pg-section" id="pg-view-cooper">
           <h3>Cooper Pair Formation</h3>
-          <p class="slider-desc" style="font-size:0.85rem;margin-bottom:1rem;line-height:1.55;">
+          <p style="font-size:0.85rem;margin-bottom:1rem;line-height:1.55;color:var(--text-dim);">
             Below <i>T<sub>c</sub></i>, two electrons in the lattice exchange a phonon: Electron 1 pulls positive ions
             inward, creating a wake of positive charge that attracts Electron 2, binding them into a Cooper pair that
             moves through the lattice without resistance.
@@ -394,12 +578,12 @@
             The pairing interaction is weak (~meV) but the condensate of all pairs is rigid and phase-coherent, giving
             zero resistance and the Josephson effect.
           </p>
-        </section>
+        </div>
 
         <!-- ── Sub-tab: Meissner Effect ── -->
-        <section class="macro-panel pg-section" id="pg-view-meissner" style="display:none;">
+        <div class="content-card pg-section" id="pg-view-meissner" style="display:none;">
           <h3>Meissner Effect</h3>
-          <p class="slider-desc" style="font-size:0.85rem;margin-bottom:1rem;line-height:1.55;">
+          <p style="font-size:0.85rem;margin-bottom:1rem;line-height:1.55;color:var(--text-dim);">
             Cooled below <i>T<sub>c</sub></i> in a magnetic field, a superconductor expels all magnetic flux —
             <i>B = 0</i> inside the bulk. Shielding supercurrents circulate at the surface within the London penetration
             depth <i>λ<sub>L</sub></i>. Apply a field with the H slider to watch the expulsion.
@@ -420,12 +604,12 @@
             Above <i>H<sub>c</sub></i> (Type I) or <i>H<sub>c2</sub></i> (Type II) the superconducting state is destroyed
             and flux penetrates fully.
           </p>
-        </section>
+        </div>
 
         <!-- ── Sub-tab: Energy Gap & Plots ── -->
-        <section class="macro-panel pg-section" id="pg-view-gap" style="display:none;">
+        <div class="content-card pg-section" id="pg-view-gap" style="display:none;">
           <h3>Energy Gap &amp; Transport Plots</h3>
-          <p class="slider-desc" style="font-size:0.85rem;margin-bottom:1rem;line-height:1.55;">
+          <p style="font-size:0.85rem;margin-bottom:1rem;line-height:1.55;color:var(--text-dim);">
             Below <i>T<sub>c</sub></i> a forbidden energy gap <i>2Δ</i> opens symmetrically around the Fermi level
             <i>E<sub>F</sub></i>. No single-particle states exist inside the gap. The BCS, magnetization, and London
             penetration curves show how the gap, susceptibility, and field profile evolve with temperature.
@@ -476,24 +660,25 @@
               </p>
             </div>
           </div>
-        </section>
+        </div>
 
-      </div>
+      </section>
 
-      <!-- ── Playground sidebar ── -->
-      <aside class="game-sidebar">
-        <div class="sidebar-card">
-          <h4>⚙ Controls</h4>
+    </main>
 
-          <div class="pg-control-scope scope-global">
-            <div class="slider-group">
+    <aside class="lab-sidebar">
+      <div class="sidebar-card" id="sim-controls-card">
+        <h4>⚙ Controls</h4>
+        <div id="sim-controls">
+          <div id="ctrl-1d">
+            <div class="slider-group pg-control-scope scope-global">
               <label>Temperature T <span class="unit-tag">K</span></label>
               <span class="slider-value" id="val-T-sc">4.0</span>
               <input type="range" id="slider-T-sc" min="0.1" max="15" value="4.0" step="0.1">
               <div class="slider-desc">Below T<sub>c</sub>: superconducting gap opens. Above T<sub>c</sub>: normal metal.</div>
             </div>
 
-            <div class="slider-group">
+            <div class="slider-group pg-control-scope scope-global">
               <label>Material T<sub>c</sub></label>
               <span class="slider-value" id="val-Tc">9.2</span><span class="unit-tag">K</span>
               <select id="select-material-sc" style="width:100%;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.4rem;border-radius:6px;font-family:var(--font-mono);margin-top:0.3rem;">
@@ -505,200 +690,58 @@
               </select>
               <div class="slider-desc">Pick a superconductor to set its critical temperature.</div>
             </div>
-          </div>
 
-          <div class="pg-control-scope scope-meissner" style="display:none;">
-            <div class="slider-group">
-              <label>Applied field H <span class="unit-tag">T</span></label>
-              <span class="slider-value" id="val-H">0.0</span>
-              <input type="range" id="slider-H" min="0" max="0.2" value="0" step="0.01">
-              <div class="slider-desc">Raises the external field; above H<sub>c</sub> the Meissner state collapses.</div>
+            <div class="pg-control-scope scope-field" id="ctrl-meissner">
+              <div class="slider-group">
+                <label>Applied field H <span class="unit-tag">T</span></label>
+                <span class="slider-value" id="val-H">0.0</span>
+                <input type="range" id="slider-H" min="0" max="0.2" value="0" step="0.01">
+                <div class="slider-desc">Raises the external field; above H<sub>c</sub> the Meissner state collapses.</div>
+              </div>
             </div>
           </div>
         </div>
-
-        <div class="sidebar-card">
-          <h4>📊 Live Readout</h4>
+      </div>
+      <div class="sidebar-card" id="sim-readout-card">
+        <h4>📊 Live Readout</h4>
+        <div id="sim-readout">
           <div class="readout-row">
-            <div class="readout-tile">
-              <div class="readout-label">Gap Δ(0)</div>
-              <div class="readout-value" id="live-gap" style="color:var(--accent-cyan);">1.76</div>
-              <div class="readout-unit">meV</div>
-            </div>
-            <div class="readout-tile">
-              <div class="readout-label">Δ(T)/Δ(0)</div>
-              <div class="readout-value" id="live-gap-ratio" style="color:var(--accent-pink);">1.00</div>
-              <div class="readout-unit">ratio</div>
-            </div>
-            <div class="readout-tile">
+            <div class="readout-tile pg-control-scope scope-global">
               <div class="readout-label">State</div>
               <div class="readout-value" id="live-state" style="font-size:0.8rem;"><span class="tc-badge">SC</span></div>
               <div class="readout-unit">phase</div>
             </div>
-            <div class="readout-tile">
+            <div class="readout-tile pg-control-scope scope-gap">
+              <div class="readout-label">Gap Δ(0)</div>
+              <div class="readout-value" id="live-gap" style="color:var(--accent-cyan);">1.76</div>
+              <div class="readout-unit">meV</div>
+            </div>
+            <div class="readout-tile pg-control-scope scope-gap">
+              <div class="readout-label">Δ(T)/Δ(0)</div>
+              <div class="readout-value" id="live-gap-ratio" style="color:var(--accent-pink);">1.00</div>
+              <div class="readout-unit">ratio</div>
+            </div>
+            <div class="readout-tile pg-control-scope scope-meissner">
               <div class="readout-label">Penetration λ<sub>L</sub></div>
               <div class="readout-value" id="live-lambda" style="color:var(--accent-cyan);">40</div>
               <div class="readout-unit">nm</div>
             </div>
-            <div class="readout-tile">
+            <div class="readout-tile pg-control-scope scope-meissner">
               <div class="readout-label">Susceptibility χ</div>
               <div class="readout-value" id="live-chi" style="color:var(--accent-pink);">-1.0</div>
               <div class="readout-unit">SI</div>
             </div>
           </div>
         </div>
-
-        <div class="sidebar-card">
-          <h4>🗺 Lab Navigator</h4>
-          <div id="module-nav"></div>
-        </div>
-
-        <div class="sidebar-card">
-          <h4>🏆 Your Badges</h4>
-          <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        </div>
-
-        <div class="sidebar-card">
-          <h4>📊 Progress</h4>
-          <div class="scoreboard">
-            <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
-          </div>
-        </div>
-      </aside>
-    </div>
-  </div>
-
-  <!-- ═══════════════ CHALLENGES ═══════════════ -->
-  <div class="mode-section" id="section-challenge" style="display:none;">
-    <section class="macro-panel">
-      <h3>🎯 Challenges</h3>
-      <p class="slider-desc" style="font-size:0.9rem;line-height:1.6;margin-bottom:1rem;">
-        Test your superconductivity intuition. Solve all three challenges to unlock badges and XP. Beat the timer in the
-        Critical Temperature Matcher for combo bonuses.
-      </p>
-
-      <div class="insights">
-        <div class="insight-card">
-          <div class="challenge-header">
-            <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span>
-            <span class="challenge-title">Challenge 1: Critical Temperature Matcher</span>
-            <span class="challenge-difficulty easy">Easy</span>
-          </div>
-          <div class="challenge-desc">A superconductor is described. Is it superconducting at the given temperature?</div>
-          <div class="challenge-reward">🏆 Reward: 50 XP · Combo bonus: +5 XP per streak</div>
-          <div class="timer-bar"><div class="timer-fill" id="tc-timer" style="width:100%"></div></div>
-          <div id="tc-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-          <div style="display:flex; gap:0.5rem;">
-            <button class="btn" onclick="guessSCState(true)">Superconducting</button>
-            <button class="btn" onclick="guessSCState(false)">Normal</button>
-          </div>
-          <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;">
-            <strong>Score:</strong> <span id="tc-score">0</span> · <strong>Combo:</strong> <span id="tc-combo">0</span>
-          </div>
-          <div class="challenge-feedback" id="tc-feedback"></div>
-        </div>
-
-        <div class="insight-card">
-          <div class="challenge-header">
-            <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🧲</span>
-            <span class="challenge-title">Challenge 2: Type I or Type II?</span>
-            <span class="challenge-difficulty medium">Medium</span>
-          </div>
-          <div class="challenge-desc">Identify whether the described behavior matches Type I or Type II superconductivity.</div>
-          <div class="challenge-reward">🏆 Reward: 60 XP · "Phase Detective" badge</div>
-          <div id="type-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-          <div style="display:flex; gap:0.5rem;">
-            <button class="btn" onclick="guessType('I')">Type I</button>
-            <button class="btn" onclick="guessType('II')">Type II</button>
-          </div>
-          <div class="challenge-feedback" id="type-feedback"></div>
-        </div>
-
-        <div class="insight-card">
-          <div class="challenge-header">
-            <span class="challenge-icon" style="background:rgba(74,222,128,0.12);">⚖</span>
-            <span class="challenge-title">Challenge 3: Isotope Effect Calculator</span>
-            <span class="challenge-difficulty hard">Hard</span>
-          </div>
-          <div class="challenge-desc">Given isotopic mass ratio M₁/M₂, predict the ratio of critical temperatures Tc₁/Tc₂.</div>
-          <div class="challenge-reward">🏆 Reward: 80 XP + "Isotope Hunter" badge</div>
-          <div id="iso-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-          <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-            <input type="number" id="iso-answer" placeholder="Tc₁/Tc₂" step="0.01" style="width:120px;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
-            <button class="btn" onclick="checkIsotopeAnswer()">Submit</button>
-          </div>
-          <div class="challenge-feedback" id="iso-feedback"></div>
-        </div>
       </div>
-    </section>
-  </div>
-
-  <!-- ═══════════════ PUZZLES ═══════════════ -->
-  <div class="mode-section" id="section-puzzle" style="display:none;">
-    <section class="macro-panel">
-      <h3>🧩 Puzzles</h3>
-      <p class="slider-desc" style="font-size:0.9rem;line-height:1.6;margin-bottom:1rem;">
-        Build the BCS interaction, predict the critical field, and distinguish true Meissner expulsion from mere zero
-        resistance. Drag-and-drop and classification puzzles test the core physics of superconductivity.
-      </p>
-
-      <div class="insights">
-        <div class="insight-card">
-          <div class="challenge-header">
-            <span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🔧</span>
-            <span class="challenge-title">Puzzle 1: Cooper Pair Builder</span>
-            <span class="challenge-difficulty medium">Medium</span>
-          </div>
-          <div class="challenge-desc">Assemble the BCS interaction: two electrons exchange a phonon to form a bound Cooper pair.</div>
-          <div class="challenge-reward">🏆 Reward: 60 XP</div>
-          <div style="margin:1rem 0;">
-            <p style="font-size:0.85rem;color:var(--text-muted);">Drag components into the interaction sequence:</p>
-            <div id="cooper-pool" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0.5rem 0;"></div>
-          </div>
-          <div id="cooper-zones" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin:0.5rem 0;"></div>
-          <button class="btn" onclick="checkCooperBuilder()">✓ Verify Pair</button>
-          <div class="challenge-feedback" id="cooper-feedback"></div>
-        </div>
-
-        <div class="insight-card">
-          <div class="challenge-header">
-            <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">📐</span>
-            <span class="challenge-title">Puzzle 2: Critical Field Predictor</span>
-            <span class="challenge-difficulty hard">Hard</span>
-          </div>
-          <div class="challenge-desc">Calculate Hc(T) using the given H₀ and Tc at a target temperature.</div>
-          <div class="challenge-reward">🏆 Reward: 80 XP</div>
-          <div id="hc-puzzle-text" style="font-size:1rem;margin:1rem 0;font-family:var(--font-mono);"></div>
-          <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-            <input type="number" id="hc-answer" placeholder="Hc(T) in T" step="0.001" style="width:160px;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
-            <button class="btn" onclick="checkHCPuzzle()">Submit</button>
-          </div>
-          <div class="challenge-feedback" id="hc-feedback"></div>
-        </div>
-
-        <div class="insight-card">
-          <div class="challenge-header">
-            <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🛡</span>
-            <span class="challenge-title">Puzzle 3: Meissner vs Perfect Conductor</span>
-            <span class="challenge-difficulty master">Master</span>
-          </div>
-          <div class="challenge-desc">Classify each scenario: true superconductor (Meissner) or merely zero-resistance perfect conductor?</div>
-          <div class="challenge-reward">🏆 Reward: 120 XP</div>
-          <div id="meissner-list" style="margin-top:0.5rem;"></div>
-          <button class="btn" onclick="checkMeissnerPuzzle()">✓ Check Classification</button>
-          <div class="challenge-feedback" id="meissner-feedback"></div>
-        </div>
-      </div>
-    </section>
+    </aside>
   </div>
 
 </div>
 
+<!-- ═══════════════ EXTERNAL SCRIPTS ═══════════════ -->
 <script src="../../shared_ui.js"></script>
-<script src="../../shared_games.js"></script>
+<script src="../../shared_lab.js"></script>
 <script src="../../shared_interactive.js"></script>
 <script type="importmap">
 {
@@ -718,7 +761,69 @@ window.THREE = ThreeGlobal;
 window.dispatchEvent(new Event('three-ready'));
 </script>
 <script src="sc_sim.js?v=6"></script>
-<script src="sc_apps_games.js?v=5"></script>
 <script src="../../shared_effects.js"></script>
+<script>
+(function() {
+  'use strict';
+  // Sidebar lives outside tab sections — toggle layout class via switchTab
+  var _origSwitch = window.switchTab;
+  window.switchTab = function(tabId) {
+    if (typeof _origSwitch === 'function') _origSwitch(tabId);
+    var layout = document.querySelector('.lab-layout');
+    if (layout) layout.classList.toggle('sim-tab', tabId === 'simulation');
+  };
+  // Init sidebar state from current tab
+  (function() {
+    var tab = document.body.getAttribute('data-tab') || 'overview';
+    var layout = document.querySelector('.lab-layout');
+    if (layout) layout.classList.toggle('sim-tab', tab === 'simulation');
+  })();
+  // Compatibility shim: alias old game functions to new lab functions
+  window.setGameMode = function(mode) {
+    var map = { story:'overview', theory:'theory', play:'simulation', challenge:'exercises', puzzle:'exercises' };
+    window.switchTab(map[mode] || 'overview');
+    // Pause all canvas animations when leaving Playground
+    if (mode !== 'play') {
+      if (typeof cooperAnimId !== 'undefined' && cooperAnimId) { cancelAnimationFrame(cooperAnimId); cooperAnimId = null; }
+      if (typeof meissnerAnimId !== 'undefined' && meissnerAnimId) { cancelAnimationFrame(meissnerAnimId); meissnerAnimId = null; }
+      if (typeof gapAnimId !== 'undefined' && gapAnimId) { cancelAnimationFrame(gapAnimId); gapAnimId = null; }
+    }
+  };
+  // Stub gamification functions so any legacy references don't crash
+  if (!window.__GameState) window.__GameState = {
+    xp: function(){ return 0; },
+    addXP: function(){},
+    unlock: function(){},
+    hasAchievement: function(){ return false; },
+    get: function(){ return []; },
+    set: function(){},
+    getProgress: function(){ return 0; },
+    setProgress: function(){},
+    earnedBadges: { add: function(){}, has: function(){ return false; }, size: 0 },
+    save: function(){}
+  };
+  window._GameState = window.__GameState;
+  window.showXPFloat = function(){};
+  window.showAchievementPopup = function(){};
+  window.particleBurst = function(){};
+  window.celebrateCorrect = function(){ return { count:0, bonus:0 }; };
+  window.comboCheck = function(){ return { count:1, bonus:0 }; };
+  window.buildChallengePanel = function(){ return document.createElement('div'); };
+  window.showHint = function(){};
+  window.setModuleProgress = function(){};
+  window.updateNavXP = function(){};
+  window.updateNavBadges = function(){};
+  // Tab-specific init hooks
+  window.initSimulation = function() {
+    if (typeof initSuperconductivityV2 === 'function') {
+      if (_scInited) {
+        setPlayMode(_scActiveSubTab);
+      } else {
+        initSuperconductivityV2();
+      }
+    }
+  };
+})();
+</script>
 </body>
 </html>

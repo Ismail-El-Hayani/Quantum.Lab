@@ -191,16 +191,28 @@ function updateEnergyPlot() {
   }
   const minRelevant = Math.min(...relevantLevels);
   const maxRelevant = Math.max(...relevantLevels);
-  const spread = state.mode === 'coherent' ? 3 * Math.sqrt(maxRelevant - 0.5) + 1 : 2;
+  const spread = state.mode === 'coherent' ? 3 * Math.sqrt(maxRelevant - 0.5) + 2 : 2;
   const maxN = Math.max(10, Math.ceil(maxRelevant + spread));
   const yMax = Math.max(maxRelevant + spread, 4);
   const yMin = -0.5;
   const levels = [];
+  const nBar2 = state.alpha_re*state.alpha_re + state.alpha_im*state.alpha_im;
   for (let k = 0; k <= maxN; k++) {
-    const active = (state.mode === 'eigenstate' && k === state.n) ||
-                   (state.mode === 'superposition' && (k === state.n || k === state.m)) ||
-                   (state.mode === 'coherent' && Math.abs(k + 0.5 - (state.alpha_re*state.alpha_re + state.alpha_im*state.alpha_im + 0.5)) < 0.5);
-    levels.push({ x: [0, 1], y: [k + 0.5, k + 0.5], mode: 'lines', line: { color: active ? '#00f0ff' : '#2a2a3a', width: active ? 3 : 1 }, showlegend: false });
+    let active = false, intensity = 1;
+    if (state.mode === 'eigenstate') {
+      active = k === state.n;
+    } else if (state.mode === 'superposition') {
+      active = k === state.n || k === state.m;
+    } else if (state.mode === 'coherent') {
+      // Poisson distribution P(k) = e^{-n̄} n̄^k / k! — highlight and weight bars
+      const pk = Math.exp(-nBar2) * Math.pow(nBar2, k) / factorial(k);
+      active = pk > 0.01;
+      intensity = Math.min(1, pk * 10);
+    }
+    const col = active ? (state.mode === 'coherent'
+      ? 'rgba(0,240,255,' + intensity.toFixed(2) + ')'
+      : '#00f0ff') : '#2a2a3a';
+    levels.push({ x: [0, 1], y: [k + 0.5, k + 0.5], mode: 'lines', line: { color: col, width: active ? 3 : 1 }, showlegend: false });
   }
   _plot('plot-energy', levels, {
     title: { text: 'Energy eigenvalues Eₙ = ℏω(n + ½) — golden spacing', font: { size: 13, color: '#e0e0f0' } },
@@ -215,7 +227,7 @@ function updateEnergyPlot() {
 
 function updateClassicalPlot(E) {
   const t = state.time * state.omega;
-  const A = Math.sqrt(2 * E / state.omega);
+  const A = Math.sqrt(2 * E);  // amplitude in oscillator-length units (√(ℏ/mω))
   const xCl = A * Math.cos(t);
   const xArr = makeX();
   let xQuantum, labelQuantum;
@@ -275,7 +287,7 @@ function updateWigner() {
     }
   } else {
     state.trajectory = [];
-    W = wignerFunction(n, m, xG, pG);
+    W = wignerFunction(n, m, xG, pG, state.time * state.omega);
   }
   const traces = [{ x: xG, y: pG, z: W, type: 'heatmap', colorscale: [[0, '#0a051a'], [0.2, '#1a0a3a'], [0.5, 'rgba(0,0,0,0)'], [0.8, '#00d4ff'], [1, '#fff']], zmid: 0, colorbar: { title: 'W(x,p)' } }];
   if (state.mode === 'coherent' && state.trajectory.length > 1) {
@@ -294,9 +306,10 @@ function updateWigner() {
   });
 }
 
-function wignerFunction(n, m, xGrid, pGrid) {
+function wignerFunction(n, m, xGrid, pGrid, time) {
   const Nx = xGrid.length, Np = pGrid.length;
   const W = new Array(Nx);
+  const tPhase = (typeof time === 'number') ? Math.cos((n - m) * time) : 1;
   for (let i = 0; i < Nx; i++) {
     W[i] = new Float64Array(Np);
     for (let j = 0; j < Np; j++) {
@@ -308,7 +321,7 @@ function wignerFunction(n, m, xGrid, pGrid) {
       if (m !== n) {
         const phase = Math.cos((n - m) * Math.atan2(p, x));
         const Lnm = assocLaguerre(Math.min(n,m), Math.abs(n-m), 2 * r2);
-        Wcross = (2 / Math.PI) * Math.pow(r2, Math.abs(n-m)/2) * Lnm * Math.exp(-r2) * phase;
+        Wcross = (2 / Math.PI) * Math.pow(r2, Math.abs(n-m)/2) * Lnm * Math.exp(-r2) * phase * tPhase;
         if ((n + m) % 2 === 1) Wcross *= -1;
       }
       W[i][j] = 0.5 * (Wnn + Wmm + Wcross);

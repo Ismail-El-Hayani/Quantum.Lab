@@ -8,6 +8,119 @@
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <link rel="stylesheet" href="../../shared_styles.css">
 <style>
+  /* === Module canonical layout === */
+  .lab-layout {
+    max-width:1600px;
+    margin:0 auto;
+    padding:0;
+    display:grid;
+    grid-template-columns:1fr 340px;
+    gap:var(--space-lg);
+    align-items:start;
+    position:relative;
+    z-index:1;
+  }
+  @media (max-width:1000px) { .lab-layout { grid-template-columns:1fr; } }
+
+  .lab-main { min-width:0; position:relative; z-index:1; container-type:inline-size; container-name:playMain; }
+
+  .lab-sidebar {
+    min-width:0;
+    position:sticky;
+    top:5rem;
+    align-self:start;
+    max-height:calc(100vh - 6rem);
+    overflow-y:auto;
+    padding:1rem;
+    background:var(--bg-panel-alt);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-lg);
+    z-index:10;
+  }
+  .lab-sidebar::-webkit-scrollbar { width:4px; }
+  .lab-sidebar::-webkit-scrollbar-thumb { background:var(--glass-border); border-radius:2px; }
+  .lab-sidebar.static { position:static; max-height:none; overflow-y:visible; }
+
+  .sidebar-card {
+    background:rgba(16,16,28,0.55);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+    margin-bottom:1rem;
+  }
+  .sidebar-card:last-child { margin-bottom:0; }
+  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
+
+  .content-card {
+    background:var(--bg-panel);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+    margin-top:1rem;
+  }
+  .content-card:first-of-type { margin-top:0; }
+  .content-card h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
+
+  .insights {
+    display:grid;
+    grid-template-columns:1fr;
+    gap:1rem;
+    margin-top:1rem;
+  }
+  @media (min-width:900px) { .insights { grid-template-columns:1fr 1fr; } }
+
+  .insight-card {
+    background:var(--bg-panel);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+  }
+  .insight-card .insight-title { margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright); }
+
+  .viz-card {
+    background:var(--bg-elevated);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-sm);
+    padding:0.8rem;
+    margin-bottom:1rem;
+  }
+  .viz-card:last-child { margin-bottom:0; }
+  .viz-card h4 { margin:0 0 0.4rem; font-size:0.9rem; color:var(--text-bright); }
+
+  .slider-group { margin-bottom:1rem; }
+  .slider-group label { display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:0.3rem; }
+  .slider-group input[type=range], .slider-group select { width:100%; }
+  .slider-value { font-family:var(--font-mono); color:var(--accent-cyan); font-weight:700; }
+  .slider-desc { font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; }
+
+  .dash-row {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0.35rem 0;
+    border-bottom:1px solid rgba(255,255,255,0.04);
+  }
+  .dash-row:last-child { border-bottom:none; }
+  .dash-label { font-size:0.78rem; color:var(--text-dim); }
+  .dash-val { font-family:var(--font-mono); font-size:0.82rem; color:var(--text-main); min-width:90px; text-align:right; }
+
+  /* === Equation styling === */
+  .equation-box {
+    background:rgba(0,0,0,0.18);
+    border:1px solid var(--glass-border);
+    border-left:3px solid var(--accent-cyan);
+    border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+    padding:0.8rem 1rem;
+    font-size:0.85rem;
+    color:var(--text-main);
+    line-height:1.7;
+    overflow-x:auto;
+    margin-top:0.8rem;
+  }
+  .mjx-chtml { font-size:105% !important; }
+
+  /* === Module-specific styles === */
   .fs-canvas-wrap { width:100%; min-height:420px; background:var(--bg-deep); border-radius:12px; border:1px solid var(--glass-border); position:relative; overflow:hidden; margin-bottom:1rem; }
   #fs-canvas { display:block; width:100%; height:420px; }
   .fs-overlay { position:absolute; top:8px; left:12px; font-size:0.75rem; color:var(--text-dim); pointer-events:none; }
@@ -19,22 +132,90 @@
   .material-card.selected { border-color: var(--accent-purple); background: rgba(192,132,252,0.08); }
   .app-plot { min-height:260px; margin-top:1.5rem; }
 
-  /* ─── Module 05-style layout utilities ─── */
-  .game-mode-bar { display:flex; justify-content:center; gap:0.5rem; padding:0.6rem; background:rgba(0,0,0,0.35); backdrop-filter:blur(8px); border-bottom:1px solid var(--glass-border); margin-bottom:1.5rem; flex-wrap:wrap; }
-  .game-layout { max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg); align-items:start; }
-  @media (max-width:1000px) { .game-layout { grid-template-columns:1fr; } }
-  .game-main { min-width:0; }
-  .game-sidebar { min-width:0; position:sticky; top:5rem; }
-  .macro-panel { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-top:1rem; }
-  .macro-panel:first-of-type { margin-top:0; }
-  .macro-panel h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
-  .sidebar-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-bottom:1rem; }
-  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
-  .slider-group { margin-bottom:1rem; }
-  .slider-group label { display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:0.3rem; }
-  .slider-group input[type=range] { width:100%; }
-  .slider-value { font-family:var(--font-mono); color:var(--accent-cyan); font-weight:700; }
-  .slider-desc { font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; }
+  .theory-content { font-size:0.95rem; line-height:1.7; color:var(--text-main); }
+  .theory-content p { margin-bottom:1rem; }
+  .theory-content strong { color:var(--accent-cyan); font-weight:500; }
+
+  .insight-callout { background:linear-gradient(90deg, rgba(0,240,255,0.08), transparent); border-left:3px solid var(--accent-cyan); padding:1rem 1.2rem; border-radius:0 8px 8px 0; margin:1rem 0; font-size:0.92rem; color:var(--text-main); }
+  .insight-callout .label { font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent-cyan); font-weight:600; margin-bottom:0.4rem; }
+
+  .plot-grid {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:1rem;
+  }
+  @container playMain (max-width:650px) { .plot-grid { grid-template-columns:1fr; } }
+  @media (max-width:1000px) { .plot-grid { grid-template-columns:1fr; } }
+
+  .plot-box {
+    background:var(--bg-elevated);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-sm);
+    padding:0.6rem;
+    min-width:0;
+    overflow:hidden;
+  }
+  .plot-box.full { grid-column:1 / -1; }
+  .plot-box-label {
+    font-family:var(--font-mono);
+    font-size:0.65rem;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:var(--accent-cyan);
+    margin-bottom:0.4rem;
+    padding-bottom:0.3rem;
+    border-bottom:1px solid var(--glass-border);
+  }
+
+  .plot-desc {
+    margin-top:1rem;
+    padding:0.8rem 1rem;
+    background:rgba(0,0,0,0.2);
+    border-left:3px solid var(--accent-cyan);
+    border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+    font-size:0.82rem;
+    color:var(--text-muted);
+    line-height:1.6;
+  }
+
+  .legend-row {
+    display:flex;
+    flex-wrap:wrap;
+    gap:0.4rem 0.85rem;
+    font-size:0.66rem;
+    color:var(--text-muted);
+    margin-top:0.5rem;
+  }
+  .legend-row span { display:inline-flex; align-items:center; gap:0.3rem; }
+  .legend-dot {
+    width:7px; height:7px;
+    border-radius:50%;
+    display:inline-block; flex-shrink:0;
+  }
+  .dot-cyan   { background:#00f0ff; box-shadow:0 0 4px #00f0ff; }
+  .dot-pink   { background:#ff4ecd; box-shadow:0 0 4px #ff4ecd; }
+  .dot-gold   { background:#ffd54f; box-shadow:0 0 4px #ffd54f; }
+  .dot-green  { background:#4ade80; box-shadow:0 0 4px #4ade80; }
+  .dot-purple { background:#c084fc; box-shadow:0 0 4px #c084fc; }
+
+  .mode-btn-group { display:flex; gap:0.5rem; margin:0.75rem 0; }
+  .mode-btn-group button { flex:1; }
+
+  .plot-container {
+    width:100%;
+    height:300px;
+    background:var(--bg-panel);
+    border-radius:var(--radius-sm);
+    overflow:hidden;
+  }
+
+  /* ─── Tab-based lab-layout rules ─── */
+  .lab-layout:not(.sim-tab) .lab-sidebar { display:none; }
+  .lab-layout:not(.sim-tab) { grid-template-columns:1fr; max-width:960px; margin:0 auto; }
+  .lab-layout.sim-tab { max-width:1400px; margin:0 auto; }
+  .lab-layout.sim-tab .lab-main { padding:0 1rem; display:flex; flex-direction:column; }
+  .lab-layout.sim-tab .lab-main > .content-card { width:100%; max-width:960px; align-self:center; }
+
   .readout-row { display:flex; flex-wrap:wrap; gap:0.5rem; }
   .readout-tile { flex:1 1 90px; background:var(--bg-deep); padding:8px 10px; border-radius:6px; border:1px solid var(--glass-border); text-align:center; }
   .readout-tile .readout-label { font-size:0.65rem; color:var(--text-dim); text-transform:uppercase; }
@@ -42,20 +223,8 @@
   .readout-tile .readout-unit { font-size:0.65rem; color:var(--text-muted); }
   .unit-tag { display:inline-block; background:rgba(0,240,255,0.08); color:var(--accent-cyan); font-family:var(--font-mono); font-size:0.7rem; padding:0.15rem 0.4rem; border-radius:4px; margin-left:0.3rem; }
 
-  /* Story / Theory helpers (mirroring modules 01/03/04/05) */
-  .theory-content { font-size:0.95rem; line-height:1.7; color:var(--text-main); }
-  .theory-content p { margin-bottom:1rem; }
-  .theory-content strong { color:var(--accent-cyan); font-weight:500; }
-  .equation-box { background:var(--bg-deep); border:1px solid var(--glass-border); border-radius:10px; padding:1rem 1.2rem; margin:1rem 0; font-size:0.85rem; overflow-x:auto; color:var(--text-main); }
-  .equation-box .mjx-chtml { font-size:1.1em !important; }
-  .insight-callout { background:linear-gradient(90deg, rgba(0,240,255,0.08), transparent); border-left:3px solid var(--accent-cyan); padding:1rem 1.2rem; border-radius:0 8px 8px 0; margin:1rem 0; font-size:0.92rem; color:var(--text-main); }
-  .insight-callout .label { font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent-cyan); font-weight:600; margin-bottom:0.4rem; }
-  .insights { display:grid; grid-template-columns:1fr; gap:1rem; margin-top:1rem; }
-  @media (min-width:900px) { .insights { grid-template-columns:1fr 1fr; } }
-  .insight-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; }
-  .insight-card .insight-title { margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright); }
-
-  .challenge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  /* Legacy puzzle/challenge styles kept for JS compat */
+  .challenge-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
   .draggable-target { cursor: grab; border: 2px dashed var(--glass-border); border-radius: var(--radius-sm); padding: 0.8rem; transition: all 0.2s; text-align: center; background: var(--bg-elevated); }
   .draggable-target:hover { border-color: var(--accent-cyan); background: rgba(0,240,255,0.04); }
   .drop-zone { border: 2px dashed var(--glass-border); border-radius: var(--radius-sm); padding: 1rem; min-height: 60px; transition: all 0.2s; background: var(--bg-panel); }
@@ -65,43 +234,88 @@
   .timer-bar { height: 4px; background: var(--bg-elevated); border-radius: 2px; overflow: hidden; margin-bottom: 1rem; }
   .timer-fill { height: 100%; background: var(--accent-cyan); transition: width 1s linear; }
   .timer-fill.urgent { background: var(--accent-red); }
+
+  .challenge-panel {
+    background:var(--bg-panel);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+    margin-top:1rem;
+  }
+  .challenge-panel:first-of-type { margin-top:0; }
+  .challenge-header { display:flex; align-items:center; gap:0.6rem; margin-bottom:0.6rem; }
+  .challenge-icon { width:2rem; height:2rem; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1rem; }
+  .challenge-title { font-size:0.95rem; font-weight:700; color:var(--text-bright); }
+  .challenge-difficulty { margin-left:auto; font-size:0.65rem; text-transform:uppercase; padding:0.2rem 0.5rem; border-radius:999px; font-weight:700; }
+  .challenge-difficulty.easy  { background:rgba(74,222,128,0.15); color:var(--accent-green); }
+  .challenge-difficulty.medium { background:rgba(255,213,79,0.15); color:#ffd54f; }
+  .challenge-difficulty.hard { background:rgba(255,68,68,0.15); color:var(--accent-red); }
+  .challenge-difficulty.master { background:rgba(192,132,252,0.15); color:var(--accent-purple); }
+  .challenge-desc { font-size:0.82rem; color:var(--text-dim); line-height:1.5; margin-bottom:0.6rem; }
+  .challenge-feedback { margin-top:0.8rem; padding:0.7rem; border-radius:var(--radius-sm); font-size:0.82rem; display:none; }
+  .challenge-feedback.success { background:rgba(74,222,128,0.12); color:var(--accent-green); border:1px solid rgba(74,222,128,0.3); }
+  .challenge-feedback.error { background:rgba(255,68,68,0.12); color:var(--accent-red); border:1px solid rgba(255,68,68,0.3); }
+  .challenge-feedback.hint { background:rgba(255,213,79,0.12); color:#ffd54f; border:1px solid rgba(255,213,79,0.3); }
+
+  .control-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.3rem; }
+  .control-label { font-size:0.8rem; color:var(--text-dim); }
+  .control-value { font-family:var(--font-mono); font-size:0.85rem; color:var(--accent-cyan); font-weight:700; }
+  .btn-group { display:flex; gap:0.5rem; }
+  .btn-group button { flex:1; }
 </style>
 </head>
-<body>
+<body data-module="06" data-tab="overview">
 
 <div class="orb orb-cyan"></div>
 <div class="orb orb-purple"></div>
 <div class="orb orb-pink"></div>
 
-<nav class="game-nav">
-  <div class="nav-brand"><a href="../../index.html" style="text-decoration:none;color:inherit;"><span class="nav-logo">⚛</span> Physics Playground</a></div>
+<nav class="lab-topbar">
+  <div class="nav-brand"><a href="../../index.html" style="text-decoration:none;color:inherit;"><span class="nav-logo">⚛</span> Quantum Lab</a></div>
   <div class="nav-stats">
-    <div class="stat-badge"><span class="stat-icon">🎯</span><span class="stat-value">Fermi Lab</span></div>
-    <div class="stat-badge"><span class="stat-icon">⭐</span><span class="stat-value" id="nav-xp">0 XP</span></div>
+    <select id="module-jump" class="stat-badge" style="background:var(--bg-elevated);border:1px solid var(--glass-border);border-radius:var(--radius-pill);padding:0.3rem 0.8rem;font-size:0.82rem;color:var(--text-muted);cursor:pointer;">
+      <option value="">Jump to module...</option>
+      <option value="00_crystal_to_quantum">00 — Crystal to Quantum</option>
+      <option value="01_qho">01 — Quantum Harmonic Oscillator</option>
+      <option value="02_hydrogen">02 — Hydrogen Atom</option>
+      <option value="03_spin">03 — Spin &amp; Magnetic Resonance</option>
+      <option value="04_kronig_penney">04 — Kronig-Penney Model</option>
+      <option value="05_energy_bands">05 — Energy Bands</option>
+      <option value="06_fermi_surface">06 — Fermi Surface</option>
+      <option value="07_conductivity">07 — Conductivity</option>
+      <option value="08_superconductivity">08 — Superconductivity</option>
+      <option value="09_intrinsic_semiconductors">09 — Intrinsic Semiconductors</option>
+      <option value="10_doped_semiconductors">10 — Doped Semiconductors</option>
+      <option value="11_junctions_devices">11 — Junctions &amp; Devices</option>
+      <option value="12_optics_dispersion">12 — Optics &amp; Dispersion</option>
+      <option value="13_laser_physics">13 — Laser Physics</option>
+      <option value="14_magnetism">14 — Magnetism</option>
+      <option value="15_thermal_properties">15 — Thermal Properties</option>
+    </select>
   </div>
 </nav>
 
-<div class="game-hero" style="padding-bottom:0;">
-  <div class="level-badge">Module 06 · Level <span id="current-level">1</span> · Fermi Hunter</div>
-  <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Fermi Surface & Statistics</span></h1>
-  <p class="hero-desc">Electrons near the Fermi surface carry all the heat and current. Explore thermal smearing, k-space occupation, and material-dependent Fermi surfaces.</p>
-</div>
+<div class="lab-root">
 
-<div class="game-container">
+  <header class="lab-header" style="padding-bottom:0.5rem;">
+    <div>
+      <div class="lab-level">Module 06</div>
+      <h1>Fermi Surface &amp; Statistics</h1>
+      <p class="hero-desc">Electrons near the Fermi surface carry all the heat and current. Explore thermal smearing, k-space occupation, and material-dependent Fermi surfaces.</p>
+    </div>
+  </header>
 
-  <div class="game-mode-bar">
-    <button class="game-mode-btn active" id="mode-story" onclick="setGameMode('story')">📖 Story</button>
-    <button class="game-mode-btn" id="mode-theory" onclick="setGameMode('theory')">🎓 Theory</button>
-    <button class="game-mode-btn" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
-    <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">🎯 Challenges</button>
-    <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">🧩 Puzzles</button>
+  <div class="tab-bar" role="tablist">
+    <button class="tab-btn active" data-tab="overview" role="tab">📋 Overview</button>
+    <button class="tab-btn" data-tab="theory" role="tab">📖 Theory</button>
+    <button class="tab-btn" data-tab="simulation" role="tab">🔬 Simulation</button>
   </div>
 
-  <!-- ═══════════════ STORY ═══════════════ -->
-  <div class="mode-section" id="section-story" style="display:block;">
-    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
-      <div class="game-main">
-        <section class="macro-panel">
+  <!-- ═══════════════ OVERVIEW ═══════════════ -->
+  <section id="tab-overview" class="tab-section active">
+    <div class="lab-layout">
+      <main class="lab-main">
+        <div class="content-card">
           <h3>📖 The Story — The Fermi Surface and Why It Matters</h3>
           <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.6;margin-bottom:1rem;">
             In a metal, electrons fill up energy states from the bottom, two per state (spin up and down),
@@ -147,35 +361,17 @@
               </p>
             </div>
           </div>
-        </section>
-      </div>
-      <aside class="game-sidebar static">
-        <div class="sidebar-card">
-          <h4>🗺 Lab Navigator</h4>
-          <div id="module-nav-story"></div>
         </div>
-        <div class="sidebar-card">
-          <h4>🏆 Your Badges</h4>
-          <div id="badge-list-story" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        </div>
-        <div class="sidebar-card">
-          <h4>📊 Progress</h4>
-          <div class="scoreboard">
-            <div class="score-cell"><div class="score-num" id="stat-challenges-story">0</div><div class="score-label">Challenges</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-puzzles-story">0</div><div class="score-label">Puzzles</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-xp-story">0</div><div class="score-label">Total XP</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-badges-story">0</div><div class="score-label">Badges</div></div>
-          </div>
-        </div>
-      </aside>
+      </main>
+      <aside class="lab-sidebar"></aside>
     </div>
-  </div>
+  </section>
 
   <!-- ═══════════════ THEORY ═══════════════ -->
-  <div class="mode-section" id="section-theory" style="display:none;">
-    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
-      <div class="game-main">
-        <section class="macro-panel">
+  <section id="tab-theory" class="tab-section">
+    <div class="lab-layout">
+      <main class="lab-main">
+        <div class="content-card">
           <h3>🎓 Theory — Fermi-Dirac Statistics and the Fermi Surface</h3>
           <div class="theory-content">
             <p>
@@ -266,49 +462,30 @@
               </p>
             </div>
           </div>
-        </section>
-      </div>
-
-      <aside class="game-sidebar static">
-        <div class="sidebar-card">
-          <h4>🗺 Lab Navigator</h4>
-          <div id="module-nav-theory"></div>
         </div>
-        <div class="sidebar-card">
-          <h4>🏆 Your Badges</h4>
-          <div id="badge-list-theory" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        </div>
-        <div class="sidebar-card">
-          <h4>📊 Progress</h4>
-          <div class="scoreboard">
-            <div class="score-cell"><div class="score-num" id="stat-challenges-theory">0</div><div class="score-label">Challenges</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-puzzles-theory">0</div><div class="score-label">Puzzles</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-xp-theory">0</div><div class="score-label">Total XP</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-badges-theory">0</div><div class="score-label">Badges</div></div>
-          </div>
-        </div>
-      </aside>
+      </main>
+      <aside class="lab-sidebar"></aside>
     </div>
-  </div>
+  </section>
 
-  <!-- PLAYGROUND -->
-  <div class="mode-section" id="section-play" style="display:none;">
-    <div class="game-layout">
-      <div class="game-main">
+  <!-- ═══════════════ SIMULATION ═══════════════ -->
+  <section id="tab-simulation" class="tab-section">
+    <div class="lab-layout sim-tab">
+      <main class="lab-main">
 
-        <section class="macro-panel">
+        <div class="content-card">
           <h3>🔬 Fermi-Dirac Spectrometer</h3>
-          <p class="slider-desc" style="font-size:0.9rem; line-height:1.6;">
+          <p style="font-size:0.9rem; color:var(--text-dim);line-height:1.6;">
             Explore how <b>Fermi-Dirac statistics</b> govern electron occupation in k-space.
             The canvas shows a 2D slice of momentum space: each dot is a state, coloured by
             occupation probability <i>f(E)</i>. Only electrons within ~<i>k<sub>B</sub>T</i> of the
             Fermi surface can be thermally excited.
           </p>
-        </section>
+        </div>
 
-        <section class="macro-panel">
+        <div class="content-card">
           <h3>💎 Material Presets</h3>
-          <p class="slider-desc" style="font-size:0.85rem; margin-bottom:0.8rem; line-height:1.55;">
+          <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:0.8rem; line-height:1.55;">
             Pick a metal preset to load its Fermi energy and crystal structure.
             The slider and live readout update automatically.
           </p>
@@ -338,12 +515,12 @@
               <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">BCC · 5.3 eV</div>
             </div>
           </div>
-        </section>
+        </div>
 
         <!-- CANVAS PRIMARY VISUAL -->
-        <section class="macro-panel pg-section">
+        <div class="content-card">
           <h3>🌌 k-Space Occupation & Fermi Surface</h3>
-          <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
+          <p style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55; color:var(--text-dim);">
             Each dot is a momentum state <i>(k<sub>x</sub>, k<sub>y</sub>)</i>. Colour encodes Fermi-Dirac occupation
             <i>f(E)</i>. At <i>T = 0</i> the circle is razor-sharp: every state inside <i>k<sub>F</sub></i> is filled,
             every state outside is empty. At finite <i>T</i>, only electrons within ~<i>k<sub>B</sub>T</i> of the
@@ -365,49 +542,49 @@
               <span class="fs-legend-item"><span style="display:inline-block;width:10px;height:3px;background:rgba(255,255,255,0.15);"></span> BZ boundary</span>
             </div>
           </div>
-        </section>
+        </div>
 
         <!-- FERMI-DIRAC PLOTS -->
-        <section class="macro-panel pg-section">
+        <div class="content-card">
           <h3>📈 Fermi-Dirac Statistics</h3>
-          <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
+          <p style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55; color:var(--text-dim);">
             The distribution <i>f(E)</i> controls which states are occupied. The derivative
             <i>−∂f/∂E</i> is a thermal broadening kernel that picks out the active states near <i>E<sub>F</sub></i>.
           </p>
 
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
-            <div class="viz-card">
-              <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Fermi-Dirac f(E)</h4>
+          <div class="plot-grid">
+            <div class="plot-box">
+              <div class="plot-box-label">Fermi-Dirac f(E)</div>
               <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Occupation probability: f(E) = [1 + exp((E − E<sub>F</sub>)/(k<sub>B</sub>T))]<sup>−1</sup>.</p>
-              <div class="plot-container" id="plot-fd" style="min-height:360px;"></div>
+              <div class="plot-container" id="plot-fd"></div>
               <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;line-height:1.5;">
                 At T = 0, f(E) is a perfect step: every state below E<sub>F</sub> is filled, every state above is empty. At finite T the edge is smoothed over an energy window ~k<sub>B</sub>T. Yellow dashed = T = 0 step; dotted magenta = Maxwell-Boltzmann classical limit.
               </p>
             </div>
-            <div class="viz-card">
-              <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Derivative ∂f/∂E</h4>
+            <div class="plot-box">
+              <div class="plot-box-label">Derivative ∂f/∂E</div>
               <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Thermal broadening kernel. Width ≈ 3.5 k<sub>B</sub>T around E<sub>F</sub>.</p>
-              <div class="plot-container" id="plot-dfdE" style="min-height:260px;"></div>
+              <div class="plot-container" id="plot-dfdE"></div>
               <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;line-height:1.5;">
                 −∂f/∂E is a thermal-broadened delta function centred on μ. Its total area is conserved (equals 1), but its width grows with T because more states become thermally accessible. Only electrons inside this window respond to external perturbations.
               </p>
             </div>
           </div>
 
-          <div class="viz-card" style="margin-top:1rem;">
-            <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Occupation Number n(E)</h4>
+          <div class="plot-box full" style="margin-top:1rem; background:var(--bg-elevated); border:1px solid var(--glass-border); border-radius:var(--radius-sm); padding:0.6rem;">
+            <div class="plot-box-label">Occupation Number n(E)</div>
             <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Electron occupancy near E<sub>F</sub>. Smears out as temperature rises.</p>
-            <div class="plot-container" id="plot-occ" style="min-height:320px;"></div>
-              <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;line-height:1.5;">
-                2D k-space occupation map. Colour = f(E). At T = 0 the boundary between occupied (cyan) and empty (dark) states is the Fermi surface. At finite T the edge becomes fuzzy because states just above k<sub>F</sub> acquire partial occupation.
-              </p>
+            <div class="plot-container" id="plot-occ" style="height:400px;"></div>
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;line-height:1.5;">
+              2D k-space occupation map. Colour = f(E). At T = 0 the boundary between occupied (cyan) and empty (dark) states is the Fermi surface. At finite T the edge becomes fuzzy because states just above k<sub>F</sub> acquire partial occupation.
+            </p>
           </div>
-        </section>
+        </div>
 
         <!-- APPLICATIONS -->
-        <section class="macro-panel pg-section">
+        <div class="content-card">
           <h3>⚙ Applications & Extensions</h3>
-          <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
+          <p style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55; color:var(--text-dim);">
             Real consequences of Fermi-Dirac statistics in materials.
           </p>
           <div class="insights">
@@ -445,10 +622,10 @@
               </p>
             </div>
           </div>
-        </section>
+        </div>
 
         <!-- PHYSICAL INSIGHTS -->
-        <section class="macro-panel pg-section">
+        <div class="content-card">
           <h3>💡 Physical Insights</h3>
           <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-bottom:0.8rem;">
             The Fermi-Dirac distribution <strong>f(E) = [exp((E−μ)/k<sub>B</sub>T) + 1]<sup>−1</sup></strong> is the cornerstone of electron behaviour in solids. At absolute zero it is a perfect step function: all states below E<sub>F</sub> are filled, all above are empty. This Pauli blocking is why metals have Pauli paramagnetism, a specific heat proportional to T, and thermal conductivities carried almost entirely by electrons.
@@ -459,24 +636,22 @@
           <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
             The Wiedemann-Franz law <strong>κ/(σT) = L = (π<sup>2</sup>/3)(k<sub>B</sub>/e)<sup>2</sup></strong> = 2.44×10<sup>−8</sup> WΩ/K<sup>2</sup> holds because both charge and heat are carried by the same quasiparticles near E<sub>F</sub>. A Lorenz number close to this universal value is a fingerprint of Fermi-liquid behaviour. In semiconductors phonons carry heat while electrons carry charge, so L is violated.
           </p>
-        </section>
+        </div>
 
-      </div>
-
-      <!-- Right sidebar -->
-      <aside class="game-sidebar">
-        <div class="sidebar-card">
-          <h4>⚙ Quantum Controls</h4>
-
+      </main>
+      <aside class="lab-sidebar">
+        <div class="sidebar-card" id="sim-controls-card">
+        <h4>⚙ Controls</h4>
+        <div id="sim-controls">
           <div class="slider-group">
-            <label>Fermi energy E<sub>F</sub> <span class="unit-tag">eV</span></label>
+            <label for="slider-EF">Fermi energy E<sub>F</sub> <span class="unit-tag">eV</span></label>
             <span class="slider-value" id="val-EF">5.0</span>
             <input type="range" id="slider-EF" min="1" max="15" value="5.0" step="0.1">
             <div class="slider-desc">Sets the radius of the filled Fermi sphere in k-space.</div>
           </div>
 
           <div class="slider-group">
-            <label>Temperature T <span class="unit-tag">K</span></label>
+            <label for="slider-T">Temperature T <span class="unit-tag">K</span></label>
             <span class="slider-value" id="val-T">300</span>
             <input type="range" id="slider-T" min="1" max="5000" value="300" step="10">
             <div class="slider-desc">Controls thermal smearing of the Fermi edge.</div>
@@ -490,9 +665,10 @@
             At T = 0, f(E) is a sharp step at E<sub>F</sub>. Only states below E<sub>F</sub> are occupied. As T rises, electrons within ~k<sub>B</sub>T of E<sub>F</sub> are thermally excited into empty states above. The Canvas visualises this directly: cyan dots = occupied, pink glow = thermal shell, white dashed = k<sub>F</sub> circle.
           </p>
         </div>
-
-        <div class="sidebar-card">
-          <h4>📊 Live Readout</h4>
+      </div>
+      <div class="sidebar-card" id="sim-readout-card">
+        <h4>📊 Live Readout</h4>
+        <div id="sim-readout">
 
           <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:0.6rem;">
             <div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;">
@@ -551,160 +727,82 @@
             </div>
           </div>
         </div>
-
-        <div class="sidebar-card">
-          <h4>🗺 Lab Navigator</h4>
-          <div id="module-nav"></div>
-        </div>
-
-        <div class="sidebar-card">
-          <h4>🏆 Your Badges</h4>
-          <div id="badge-list" style="font-size:0.8rem; color:var(--text-dim); line-height:1.6;">Complete challenges to earn badges!</div>
-        </div>
-
-        <div class="sidebar-card">
-          <h4>📊 Progress</h4>
-          <div class="scoreboard">
-            <div class="score-cell">
-              <div class="score-num" id="stat-challenges">0</div>
-              <div class="score-label">Challenges</div>
-            </div>
-            <div class="score-cell">
-              <div class="score-num" id="stat-puzzles">0</div>
-              <div class="score-label">Puzzles</div>
-            </div>
-            <div class="score-cell">
-              <div class="score-num" id="stat-xp">0</div>
-              <div class="score-label">Total XP</div>
-            </div>
-            <div class="score-cell">
-              <div class="score-num" id="stat-badges">0</div>
-              <div class="score-label">Badges</div>
-            </div>
-          </div>
-        </div>
-      </aside>
-    </div>
+      </div>
+    </aside>
   </div>
-
-  <!-- CHALLENGES -->
-  <div class="mode-section" id="section-challenge" style="display:none;">
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🌡</span>
-        <span class="challenge-title">Challenge 1: Temperature Race</span>
-        <span class="challenge-difficulty easy">Easy</span>
-      </div>
-      <div class="challenge-desc">Slide the temperature until the chemical potential μ matches the target value.</div>
-      <div class="challenge-reward">🏆 Reward: 50 XP · Combo bonus: +5 XP per streak</div>
-      <div class="timer-bar"><div class="timer-fill" id="temp-race-timer" style="width:100%"></div></div>
-      <div id="temp-race-target" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <div class="control-row">
-        <span class="control-label">T (guess)</span>
-        <span class="control-value" id="val-temp-race">300</span><span class="unit-tag">K</span>
-      </div>
-      <input type="range" id="slider-temp-race" min="10" max="5000" value="300" step="10" style="width:100%;">
-      <button class="btn" onclick="guessTempRace()" style="margin-top:1rem;">✓ Match μ</button>
-      <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;"><strong>Score:</strong> <span id="temp-race-score">0</span> · <strong>Combo:</strong> <span id="temp-race-combo">0</span></div>
-      <div class="challenge-feedback" id="temp-race-feedback"></div>
-    </div>
-
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🎯</span>
-        <span class="challenge-title">Challenge 2: Debye Theta Detector</span>
-        <span class="challenge-difficulty medium">Medium</span>
-      </div>
-      <div class="challenge-desc">The Debye temperature θ_D sets where phonon heat capacity transitions from T³ to constant. Guess θ_D for copper.</div>
-      <div class="challenge-reward">🏆 Reward: 75 XP · "Fermi Hunter" badge</div>
-      <div style="display:flex; gap:1rem; align-items:center; margin-top:1rem;">
-        <input type="number" id="debye-guess" placeholder="θ_D (K)" style="background:var(--bg-elevated);border:1px solid var(--glass-border);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);width:120px;">
-        <button class="btn" onclick="checkDebyeGuess()">✓ Submit</button>
-      </div>
-      <div class="challenge-feedback" id="debye-feedback"></div>
-    </div>
-
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(74,222,128,0.12);">⚡</span>
-        <span class="challenge-title">Challenge 3: Heavy Fermion Signature</span>
-        <span class="challenge-difficulty hard">Hard</span>
-      </div>
-      <div class="challenge-desc">Heavy fermion materials have enormous effective mass m*. How does their heat capacity behave at low T?</div>
-      <div class="challenge-reward">🏆 Reward: 100 XP + "Heavy Fermion" badge</div>
-      <div class="btn-group" style="margin-top:1rem;">
-        <button class="btn" onclick="checkHeavyFermion('linear')">C ∝ T with large coefficient</button>
-        <button class="btn" onclick="checkHeavyFermion('exp')">C ∝ e<sup>−Δ/kT</sup></button>
-        <button class="btn" onclick="checkHeavyFermion('const')">C = constant</button>
-      </div>
-      <div class="challenge-feedback" id="heavy-feedback"></div>
-    </div>
-  </div>
-
-  <!-- PUZZLES -->
-  <div class="mode-section" id="section-puzzle" style="display:none;">
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(192,132,252,0.12);">⚙</span>
-        <span class="challenge-title">Puzzle 1: Landau Level Counting</span>
-        <span class="challenge-difficulty medium">Medium</span>
-      </div>
-      <div class="challenge-desc">In a magnetic field, electrons quantize into Landau levels. How many electrons can each level hold?</div>
-      <div class="challenge-reward">🏆 Reward: 80 XP</div>
-      <div class="control-row">
-        <span class="control-label">Magnetic field B</span>
-        <span class="control-value" id="val-landau-B">1.0</span><span class="unit-tag">T</span>
-      </div>
-      <input type="range" id="slider-landau-B" min="0.1" max="10" value="1" step="0.1">
-      <div id="landau-list" style="margin-top:1rem;"></div>
-      <button class="btn" onclick="checkLandauPuzzle()">✓ Check Levels</button>
-      <div class="challenge-feedback" id="landau-feedback"></div>
-    </div>
-
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🔄</span>
-        <span class="challenge-title">Puzzle 2: Fermi-Dirac vs Maxwell-Boltzmann</span>
-        <span class="challenge-difficulty easy">Easy</span>
-      </div>
-      <div class="challenge-desc">Drag each physical system to its correct statistics.</div>
-      <div class="challenge-reward">🏆 Reward: 60 XP</div>
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:0.5rem;">
-        <div>
-          <p style="font-size:0.85rem;color:var(--text-muted);">Systems:</p>
-          <div id="fdmb-pool" style="display:flex;flex-wrap:wrap;gap:0.5rem;"></div>
-        </div>
-        <div id="fdmb-zones" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
-      </div>
-      <button class="btn" onclick="checkFDvsMB()">✓ Verify</button>
-      <div class="challenge-feedback" id="fdmb-feedback"></div>
-    </div>
-
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🛡</span>
-        <span class="challenge-title">Puzzle 3: Wiedemann-Franz Law</span>
-        <span class="challenge-difficulty hard">Hard</span>
-      </div>
-      <div class="challenge-desc">Does the Wiedemann-Franz law κ/(σT) = L hold for all materials? Select the correct answer.</div>
-      <div class="challenge-reward">🏆 Reward: 100 XP · "W-F Guardian" badge</div>
-      <div class="btn-group" style="margin-top:1rem;">
-        <button class="btn" onclick="document.getElementById('wf-guess').value='all';checkWiedemannFranz()">Yes, universally for all materials</button>
-        <button class="btn" onclick="document.getElementById('wf-guess').value='metals';checkWiedemannFranz()">Yes, for metals only (Fermi liquids)</button>
-        <button class="btn" onclick="document.getElementById('wf-guess').value='no';checkWiedemannFranz()">No, never true</button>
-      </div>
-      <input type="hidden" id="wf-guess">
-      <div class="challenge-feedback" id="wf-feedback"></div>
-    </div>
-  </div>
+</section>
 
 </div>
 
 <script src="../../shared_ui.js"></script>
-<script src="../../shared_games.js"></script>
+<script src="../../shared_lab.js"></script>
 <script src="../../shared_interactive.js"></script>
+<script src="../../shared_effects.js"></script>
 <script src="fs_sim.js?v=2"></script>
 <script src="fs_apps_games.js?v=3"></script>
-<script src="../../shared_effects.js"></script>
+<script>
+(function() {
+  'use strict';
+  window._fsInitDone = false;
+
+  window.setGameMode = function(mode) {
+    var map = { story:'overview', theory:'theory', play:'simulation' };
+    window.switchTab(map[mode] || 'overview');
+  };
+
+  if (!window.__GameState) window.__GameState = {
+    xp: function(){ return 0; },
+    addXP: function(){},
+    unlock: function(){},
+    hasAchievement: function(){ return false; },
+    get: function(){ return []; },
+    set: function(){},
+    getProgress: function(){ return 0; },
+    setProgress: function(){},
+    earnedBadges: { add: function(){}, has: function(){ return false; }, size: 0 },
+    save: function(){}
+  };
+  window.showXPFloat = function(){};
+  window.showAchievementPopup = function(){};
+  window.particleBurst = function(){};
+  window.celebrateCorrect = function(){ return { count:0, bonus:0 }; };
+  window.comboCheck = function(){ return { count:1, bonus:0 }; };
+  window.buildChallengePanel = function(){ return document.createElement('div'); };
+  window.showHint = function(){};
+  window.setModuleProgress = function(){};
+  window.updateNavXP = function(){};
+  window.updateNavBadges = function(){};
+
+  window.initSimulation = function() {
+    if (!window._fsInitDone) {
+      window._fsInitDone = true;
+      if (typeof initFS === 'function') initFS();
+    } else {
+      if (typeof fsUpdateAll === 'function') fsUpdateAll();
+      if (typeof fsCondResizeCanvas === 'function') fsCondResizeCanvas();
+    }
+  };
+
+  var _origSwitchTab = window.switchTab;
+  window.switchTab = function(tab) {
+    if (_origSwitchTab) _origSwitchTab(tab);
+    if (tab === 'simulation') {
+      setTimeout(function() {
+        window.initSimulation();
+      }, 100);
+    }
+  };
+
+  // Rewire tab buttons to call the overridden switchTab
+  (function() {
+    var btns = document.querySelectorAll('.tab-btn');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].onclick = function() {
+        window.switchTab(this.getAttribute('data-tab'));
+      };
+    }
+  })();
+})();
+</script>
 </body>
 </html>

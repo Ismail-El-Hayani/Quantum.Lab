@@ -10,60 +10,250 @@
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <link rel="stylesheet" href="../../shared_styles.css">
 <style>
-  .challenge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  /* === Module canonical layout === */
+  .lab-layout {
+    max-width:1600px;
+    margin:0 auto;
+    padding:0;
+    display:grid;
+    grid-template-columns:1fr 340px;
+    gap:var(--space-lg);
+    align-items:start;
+    position:relative;
+    z-index:1;
+  }
+  @media (max-width:1000px) { .lab-layout { grid-template-columns:1fr; } }
+
+  .lab-main { min-width:0; position:relative; z-index:1; container-type:inline-size; container-name:playMain; }
+
+  .lab-sidebar {
+    min-width:0;
+    position:sticky;
+    top:5rem;
+    align-self:start;
+    max-height:calc(100vh - 6rem);
+    overflow-y:auto;
+    padding:1rem;
+    background:var(--bg-panel-alt);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-lg);
+    z-index:10;
+  }
+  .lab-sidebar::-webkit-scrollbar { width:4px; }
+  .lab-sidebar::-webkit-scrollbar-thumb { background:var(--glass-border); border-radius:2px; }
+  .lab-sidebar.static { position:static; max-height:none; overflow-y:visible; }
+
+  .sidebar-card {
+    background:rgba(16,16,28,0.55);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+    margin-bottom:1rem;
+  }
+  .sidebar-card:last-child { margin-bottom:0; }
+  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
+
+  .content-card {
+    background:var(--bg-panel);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+    margin-top:1rem;
+  }
+  .content-card:first-of-type { margin-top:0; }
+  .content-card h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
+
+  .insights {
+    display:grid;
+    grid-template-columns:1fr;
+    gap:1rem;
+    margin-top:1rem;
+  }
+  @media (min-width:900px) { .insights { grid-template-columns:1fr 1fr; } }
+
+  .insight-card {
+    background:var(--bg-panel);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+  }
+  .insight-card .insight-title { margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright); }
+
+  .viz-card {
+    background:var(--bg-elevated);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-sm);
+    padding:0.8rem;
+    margin-bottom:1rem;
+  }
+  .viz-card:last-child { margin-bottom:0; }
+  .viz-card h4 { margin:0 0 0.4rem; font-size:0.9rem; color:var(--text-bright); }
+
+  .slider-group { margin-bottom:1rem; }
+  .slider-group label { display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:0.3rem; }
+  .slider-group input[type=range], .slider-group select { width:100%; }
+  .slider-value { font-family:var(--font-mono); color:var(--accent-cyan); font-weight:700; }
+  .slider-desc { font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; }
+
+  .dash-row {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0.35rem 0;
+    border-bottom:1px solid rgba(255,255,255,0.04);
+  }
+  .dash-row:last-child { border-bottom:none; }
+  .dash-label { font-size:0.78rem; color:var(--text-dim); }
+  .dash-val { font-family:var(--font-mono); font-size:0.82rem; color:var(--text-main); min-width:90px; text-align:right; }
+
+  .plot-grid {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:1rem;
+  }
+  @container playMain (max-width:650px) { .plot-grid { grid-template-columns:1fr; } }
+  @media (max-width:1000px) { .plot-grid { grid-template-columns:1fr; } }
+
+  .plot-box {
+    background:var(--bg-elevated);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-sm);
+    padding:0.6rem;
+    min-width:0;
+    overflow:hidden;
+  }
+  .plot-box.full { grid-column:1 / -1; }
+  .plot-box-label {
+    font-family:var(--font-mono);
+    font-size:0.65rem;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:var(--accent-cyan);
+    margin-bottom:0.4rem;
+    padding-bottom:0.3rem;
+    border-bottom:1px solid var(--glass-border);
+  }
+
+  .legend-row {
+    display:flex;
+    flex-wrap:wrap;
+    gap:0.4rem 0.85rem;
+    font-size:0.66rem;
+    color:var(--text-muted);
+    margin-top:0.5rem;
+  }
+  .legend-row span { display:inline-flex; align-items:center; gap:0.3rem; }
+  .legend-dot {
+    width:7px; height:7px;
+    border-radius:50%;
+    display:inline-block; flex-shrink:0;
+  }
+  .dot-cyan   { background:#00f0ff; box-shadow:0 0 4px #00f0ff; }
+  .dot-pink   { background:#ff4ecd; box-shadow:0 0 4px #ff4ecd; }
+  .dot-gold   { background:#ffd54f; box-shadow:0 0 4px #ffd54f; }
+  .dot-green  { background:#4ade80; box-shadow:0 0 4px #4ade80; }
+  .dot-purple { background:#c084fc; box-shadow:0 0 4px #c084fc; }
+
+  .mode-btn-group { display:flex; gap:0.5rem; margin:0.75rem 0; }
+  .mode-btn-group button { flex:1; }
+
+  .plot-container {
+    width:100%;
+    height:350px;
+    background:var(--bg-panel);
+    border-radius:var(--radius-sm);
+    overflow:hidden;
+  }
+
+  .sim-desc {
+    font-size:0.85rem; margin-bottom:1rem; line-height:1.55; color:var(--text-dim);
+  }
+  .legend-bar {
+    display:flex; justify-content:center; gap:1.5rem; flex-wrap:wrap;
+    font-size:0.78rem; color:var(--text-dim); margin-top:0.6rem;
+  }
+  .fig-caption {
+    font-size:0.75rem; color:var(--text-muted); text-align:center;
+    margin-top:0.5rem; line-height:1.5;
+  }
+
+  /* === Equation styling === */
+  .equation-box {
+    background:rgba(0,0,0,0.18);
+    border:1px solid var(--glass-border);
+    border-left:3px solid var(--accent-cyan);
+    border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+    padding:0.8rem 1rem;
+    font-size:0.85rem;
+    color:var(--text-main);
+    line-height:1.7;
+    overflow-x:auto;
+    margin-top:0.8rem;
+  }
+  .mjx-chtml { font-size:105% !important; }
+
+  /* === Legacy puzzle/challenge styles kept for JS compat === */
+  .challenge-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
   .draggable-target { cursor: grab; border: 2px dashed var(--glass-border); border-radius: var(--radius-sm); padding: 0.8rem; transition: all 0.2s; text-align: center; background: var(--bg-elevated); }
   .draggable-target:hover { border-color: var(--accent-cyan); background: rgba(0,240,255,0.04); }
   .drop-zone { border: 2px dashed var(--glass-border); border-radius: var(--radius-sm); padding: 1rem; min-height: 60px; transition: all 0.2s; background: var(--bg-panel); }
   .drop-zone.dragover { border-color: var(--accent-cyan); background: rgba(0,240,255,0.04); }
   .drop-zone.correct { border-color: var(--accent-green); background: rgba(74,222,128,0.08); }
   .drop-zone.wrong { border-color: var(--accent-red); background: rgba(255,68,68,0.08); }
+  .drop-zone.dragover { border-color: var(--accent-cyan); background: rgba(0,240,255,0.06); }
   .timer-bar { height: 4px; background: var(--bg-elevated); border-radius: 2px; overflow: hidden; margin-bottom: 1rem; }
   .timer-fill { height: 100%; background: var(--accent-cyan); transition: width 1s linear; }
   .timer-fill.urgent { background: var(--accent-red); }
+
+  .challenge-panel {
+    background:var(--bg-panel);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+    margin-top:1rem;
+  }
+  .challenge-panel:first-of-type { margin-top:0; }
+  .challenge-header { display:flex; align-items:center; gap:0.6rem; margin-bottom:0.6rem; }
+  .challenge-icon { width:2rem; height:2rem; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1rem; }
+  .challenge-title { font-size:0.95rem; font-weight:700; color:var(--text-bright); }
+  .challenge-difficulty { margin-left:auto; font-size:0.65rem; text-transform:uppercase; padding:0.2rem 0.5rem; border-radius:999px; font-weight:700; }
+  .challenge-difficulty.easy  { background:rgba(74,222,128,0.15); color:var(--accent-green); }
+  .challenge-difficulty.medium { background:rgba(255,213,79,0.15); color:#ffd54f; }
+  .challenge-difficulty.hard { background:rgba(255,68,68,0.15); color:var(--accent-red); }
+  .challenge-difficulty.master { background:rgba(192,132,252,0.15); color:var(--accent-purple); }
+  .challenge-desc { font-size:0.82rem; color:var(--text-dim); line-height:1.5; margin-bottom:0.6rem; }
+  .challenge-feedback { margin-top:0.8rem; padding:0.7rem; border-radius:var(--radius-sm); font-size:0.82rem; display:none; }
+  .challenge-feedback.success { background:rgba(74,222,128,0.12); color:var(--accent-green); border:1px solid rgba(74,222,128,0.3); }
+  .challenge-feedback.error { background:rgba(255,68,68,0.12); color:var(--accent-red); border:1px solid rgba(255,68,68,0.3); }
+  .challenge-feedback.hint { background:rgba(255,213,79,0.12); color:#ffd54f; border:1px solid rgba(255,213,79,0.3); }
+
+  .control-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.3rem; }
+  .control-label { font-size:0.8rem; color:var(--text-dim); }
+  .control-value { font-family:var(--font-mono); font-size:0.85rem; color:var(--accent-cyan); font-weight:700; }
+  .btn-group { display:flex; gap:0.5rem; }
+  .btn-group button { flex:1; }
+
+  /* ─── Hero: single-column since no preview card ─── */
+  .lab-header { display:block; grid-template-columns:none; }
+  .hero-desc{font-size:1.1rem;color:var(--text-muted);max-width:700px;line-height:1.6;margin-bottom:1.5rem}
+
+  /* ─── Hide sidebar simulation controls on non-simulation tabs ─── */
+  body[data-tab]:not([data-tab="simulation"]) #sim-controls-card,
+  body[data-tab]:not([data-tab="simulation"]) #sim-readout-card {
+    display: none;
+  }
+
+  /* ─── Module 05 specific styles ─── */
   .dim-btn { padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--bg-elevated); color: var(--text-dim); cursor: pointer; font-family: var(--font-mono); font-size: 0.8rem; }
   .dim-btn.active { border-color: var(--accent-cyan); color: var(--accent-cyan); background: rgba(0,240,255,0.08); }
   .material-card { padding: 1rem; background: var(--bg-elevated); border-radius: var(--radius-sm); border: 1px solid var(--glass-border); text-align: center; cursor: pointer; transition: all 0.2s; }
   .material-card:hover { border-color: var(--accent-cyan); }
   .material-card.selected { border-color: var(--accent-purple); background: rgba(192,132,252,0.08); }
 
-  /* ─── Module 12-style layout utilities ─── */
-  .game-mode-bar { display:flex; justify-content:center; gap:0.5rem; padding:0.6rem; background:rgba(0,0,0,0.35); backdrop-filter:blur(8px); border-bottom:1px solid var(--glass-border); margin-bottom:1.5rem; flex-wrap:wrap; }
-  .macro-panel { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-top:1rem; }
-  .macro-panel h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
-  .game-layout { max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg); align-items:start; }
-  @media (max-width:1000px) { .game-layout { grid-template-columns:1fr; } }
-  .game-main { min-width:0; }
-  .game-sidebar { min-width:0; position:sticky; top:5rem; }
-  .sidebar-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-bottom:1rem; }
-  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
-  .slider-group { margin-bottom:1rem; }
-  .slider-group label { display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:0.3rem; }
-  .slider-group input[type=range] { width:100%; }
-  .slider-value { font-family:var(--font-mono); color:var(--accent-cyan); font-weight:700; }
-  .slider-desc { font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; }
-  .insights { display:grid; grid-template-columns:1fr; gap:1rem; margin-top:1rem; }
-  @media (min-width:900px) { .insights { grid-template-columns:1fr 1fr; } }
-  .insight-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; }
-  .insight-card .insight-title { margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright); }
-  .readout-row { display:flex; flex-wrap:wrap; gap:0.5rem; }
-  .readout-tile { flex:1 1 90px; background:var(--bg-deep); padding:8px 10px; border-radius:6px; border:1px solid var(--glass-border); text-align:center; }
-  .readout-tile .readout-label { font-size:0.65rem; color:var(--text-dim); text-transform:uppercase; }
-  .readout-tile .readout-value { font-family:var(--font-mono); font-size:1.05rem; font-weight:700; }
-  .readout-tile .readout-unit { font-size:0.65rem; color:var(--text-muted); }
-  .unit-tag { display:inline-block; background:rgba(0,240,255,0.08); color:var(--accent-cyan); font-family:var(--font-mono); font-size:0.7rem; padding:0.15rem 0.4rem; border-radius:4px; margin-left:0.3rem; }
-
-  /* Story / Theory helpers (mirroring modules 01/03/04) */
-  .theory-content { font-size:0.95rem; line-height:1.7; color:var(--text-main); }
-  .theory-content p { margin-bottom:1rem; }
-  .theory-content strong { color:var(--accent-cyan); font-weight:500; }
-  .equation-box { background:var(--bg-deep); border:1px solid var(--glass-border); border-radius:10px; padding:1rem 1.2rem; margin:1rem 0; font-size:0.85rem; overflow-x:auto; color:var(--text-main); }
-  .equation-box .mjx-chtml { font-size:1.1em !important; }
-  .insight-callout { background:linear-gradient(90deg, rgba(0,240,255,0.08), transparent); border-left:3px solid var(--accent-cyan); padding:1rem 1.2rem; border-radius:0 8px 8px 0; margin:1rem 0; font-size:0.92rem; color:var(--text-main); }
-  .insight-callout .label { font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent-cyan); font-weight:600; margin-bottom:0.4rem; }
-
   .viz-hub {
     display: grid;
-    grid-template-columns: 300px 1fr;
+    grid-template-columns: 360px 1fr;
     gap: 1rem;
     background: rgba(10, 10, 20, 0.6);
     border-radius: 15px;
@@ -71,16 +261,27 @@
     padding: 1rem;
     margin-bottom: 1.5rem;
   }
+  @media (max-width:800px) { .viz-hub { grid-template-columns:1fr; } }
   .lattice-canvas-container {
     background: radial-gradient(circle, #1a1a2e 0%, #0a0a14 100%);
     border-radius: 12px;
     border: 1px solid rgba(0, 240, 255, 0.2);
     position: relative;
     overflow: hidden;
-    height: 350px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .lattice-canvas-container canvas {
+    display: block;
   }
   .band-plot-container {
-    height: 350px;
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+  }
+  .band-plot-container #plot-band-structure {
+    flex: 1; min-height: 0;
   }
   .hub-label {
     position: absolute;
@@ -93,43 +294,89 @@
     pointer-events: none;
     z-index: 10;
   }
+  .band-plot-container .hub-label {
+    position: static;
+    margin-bottom: 0.3rem;
+  }
+
+  .readout-row { display:flex; flex-wrap:wrap; gap:0.5rem; }
+  .readout-tile { flex:1 1 90px; background:var(--bg-deep); padding:8px 10px; border-radius:6px; border:1px solid var(--glass-border); text-align:center; }
+  .readout-tile .readout-label { font-size:0.65rem; color:var(--text-dim); text-transform:uppercase; }
+  .readout-tile .readout-value { font-family:var(--font-mono); font-size:1.05rem; font-weight:700; }
+  .readout-tile .readout-unit { font-size:0.65rem; color:var(--text-muted); }
+  .unit-tag { display:inline-block; background:rgba(0,240,255,0.08); color:var(--accent-cyan); font-family:var(--font-mono); font-size:0.7rem; padding:0.15rem 0.4rem; border-radius:4px; margin-left:0.3rem; }
+
+  .theory-content { font-size:0.95rem; line-height:1.7; color:var(--text-main); }
+  .theory-content p { margin-bottom:1rem; }
+  .theory-content strong { color:var(--accent-cyan); font-weight:500; }
+  .insight-callout { background:linear-gradient(90deg, rgba(0,240,255,0.08), transparent); border-left:3px solid var(--accent-cyan); padding:1rem 1.2rem; border-radius:0 8px 8px 0; margin:1rem 0; font-size:0.92rem; color:var(--text-main); }
+  .insight-callout .label { font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent-cyan); font-weight:600; margin-bottom:0.4rem; }
+
+  .tab-bar { display:flex; justify-content:center; gap:0.5rem; padding:0.6rem; background:rgba(0,0,0,0.35); backdrop-filter:blur(8px); border-bottom:1px solid var(--glass-border); margin-bottom:1.5rem; flex-wrap:wrap; }
+  .tab-btn { padding:0.5rem 1.2rem; border-radius:var(--radius-pill); border:1px solid var(--glass-border); background:transparent; color:var(--text-dim); cursor:pointer; font-family:var(--font-mono); font-size:0.82rem; transition:all 0.2s; }
+  .tab-btn:hover { border-color:var(--accent-cyan); color:var(--text-bright); }
+  .tab-btn.active { background:rgba(0,240,255,0.1); border-color:var(--accent-cyan); color:var(--accent-cyan); }
+
+  /* ─── Tab-based lab-layout rules ─── */
+  .lab-layout:not(.sim-tab) .lab-sidebar { display:none; }
+  .lab-layout:not(.sim-tab) { grid-template-columns:1fr; max-width:960px; margin:0 auto; }
+  .lab-layout.sim-tab { max-width:1400px; margin:0 auto; }
+  .lab-layout.sim-tab .lab-main { padding:0 1rem; display:flex; flex-direction:column; }
+  .lab-layout.sim-tab .lab-main > .content-card { width:100%; max-width:960px; align-self:center; }
 </style>
 </head>
-<body>
+<body data-module="05" data-tab="overview">
 
 <div class="orb orb-cyan"></div>
 <div class="orb orb-purple"></div>
 <div class="orb orb-pink"></div>
 
-<nav class="game-nav">
-  <div class="nav-brand"><a href="../../index.html" style="text-decoration:none;color:inherit;"><span class="nav-logo">⚛</span> Physics Playground</a></div>
+<nav class="lab-topbar">
+  <div class="nav-brand"><a href="../../index.html" style="text-decoration:none;color:inherit;"><span class="nav-logo">⚛</span> Quantum Lab</a></div>
   <div class="nav-stats">
-    <div class="stat-badge"><span class="stat-icon">⚗</span><span class="stat-value">Bands Lab</span></div>
-    <div class="stat-badge"><span class="stat-icon">⭐</span><span class="stat-value" id="nav-xp">0 XP</span></div>
+    <select id="module-jump" class="stat-badge" style="background:var(--bg-elevated);border:1px solid var(--glass-border);border-radius:var(--radius-pill);padding:0.3rem 0.8rem;font-size:0.82rem;color:var(--text-muted);cursor:pointer;">
+      <option value="">Jump to module...</option>
+      <option value="00_crystal_to_quantum">00 — Crystal to Quantum</option>
+      <option value="01_qho">01 — Quantum Harmonic Oscillator</option>
+      <option value="02_hydrogen">02 — Hydrogen Atom</option>
+      <option value="03_spin">03 — Spin &amp; Magnetic Resonance</option>
+      <option value="04_kronig_penney">04 — Kronig-Penney Model</option>
+      <option value="05_energy_bands">05 — Energy Bands</option>
+      <option value="06_fermi_surface">06 — Fermi Surface</option>
+      <option value="07_conductivity">07 — Conductivity</option>
+      <option value="08_superconductivity">08 — Superconductivity</option>
+      <option value="09_intrinsic_semiconductors">09 — Intrinsic Semiconductors</option>
+      <option value="10_doped_semiconductors">10 — Doped Semiconductors</option>
+      <option value="11_junctions_devices">11 — Junctions &amp; Devices</option>
+      <option value="12_optics_dispersion">12 — Optics &amp; Dispersion</option>
+      <option value="13_laser_physics">13 — Laser Physics</option>
+      <option value="14_magnetism">14 — Magnetism</option>
+      <option value="15_thermal_properties">15 — Thermal Properties</option>
+    </select>
   </div>
 </nav>
 
-<div class="game-hero" style="padding-bottom:0;">
-  <div class="level-badge">Module 05 · Level <span id="current-level">1</span> · Material Tuner</div>
-  <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Energy Bands & DOS</span></h1>
-  <p class="hero-desc">From 3D Bulk to Carbon Allotropes. See how structural confinement reshapes the electronic state.</p>
-</div>
+<div class="lab-root">
 
-<div class="game-container">
+  <header class="lab-header" style="padding-bottom:0.5rem;">
+    <div>
+      <div class="lab-level">Module 05</div>
+      <h1>Energy Bands &amp; DOS</h1>
+      <p class="hero-desc">From 3D Bulk to Carbon Allotropes. See how structural confinement reshapes the electronic state.</p>
+    </div>
+  </header>
 
-  <div class="game-mode-bar">
-    <button class="game-mode-btn active" id="mode-story" onclick="setGameMode('story')">📖 Story</button>
-    <button class="game-mode-btn" id="mode-theory" onclick="setGameMode('theory')">🎓 Theory</button>
-    <button class="game-mode-btn" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
-    <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">🎯 Challenges</button>
-    <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">🧩 Puzzles</button>
+  <div class="tab-bar" role="tablist">
+    <button class="tab-btn active" data-tab="overview" role="tab">📋 Overview</button>
+    <button class="tab-btn" data-tab="theory" role="tab">📖 Theory</button>
+    <button class="tab-btn" data-tab="simulation" role="tab">🔬 Simulation</button>
   </div>
 
-  <!-- ═══════════════ STORY ═══════════════ -->
-  <div class="mode-section" id="section-story" style="display:block;">
-    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
-      <div class="game-main">
-        <section class="macro-panel">
+  <!-- ═══════════════ OVERVIEW ═══════════════ -->
+  <section id="tab-overview" class="tab-section active">
+    <div class="lab-layout">
+      <main class="lab-main">
+        <div class="content-card">
           <h3>📖 The Story — From Atoms to Bands to Materials</h3>
           <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.6;margin-bottom:1rem;">
             A single atom has sharp energy levels. Bring atoms together in a crystal and those levels
@@ -176,35 +423,17 @@
               </p>
             </div>
           </div>
-        </section>
-      </div>
-      <aside class="game-sidebar static">
-        <div class="sidebar-card">
-          <h4>🗺 Lab Navigator</h4>
-          <div id="module-nav-story"></div>
         </div>
-        <div class="sidebar-card">
-          <h4>🏆 Your Badges</h4>
-          <div id="badge-list-story" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        </div>
-        <div class="sidebar-card">
-          <h4>📊 Progress</h4>
-          <div class="scoreboard">
-            <div class="score-cell"><div class="score-num" id="stat-challenges-story">0</div><div class="score-label">Challenges</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-puzzles-story">0</div><div class="score-label">Puzzles</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-xp-story">0</div><div class="score-label">Total XP</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-badges-story">0</div><div class="score-label">Badges</div></div>
-          </div>
-        </div>
-      </aside>
+      </main>
+      <aside class="lab-sidebar"></aside>
     </div>
-  </div>
+  </section>
 
   <!-- ═══════════════ THEORY ═══════════════ -->
-  <div class="mode-section" id="section-theory" style="display:none;">
-    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
-      <div class="game-main">
-        <section class="macro-panel">
+  <section id="tab-theory" class="tab-section">
+    <div class="lab-layout">
+      <main class="lab-main">
+        <div class="content-card">
           <h3>🎓 Theory — Tight-Binding, DOS, and Dimensionality</h3>
           <div class="theory-content">
             <p>
@@ -294,53 +523,33 @@
               </p>
             </div>
           </div>
-        </section>
-      </div>
-
-      <aside class="game-sidebar static">
-        <div class="sidebar-card">
-          <h4>🗺 Lab Navigator</h4>
-          <div id="module-nav-theory"></div>
         </div>
-        <div class="sidebar-card">
-          <h4>🏆 Your Badges</h4>
-          <div id="badge-list-theory" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        </div>
-        <div class="sidebar-card">
-          <h4>📊 Progress</h4>
-          <div class="scoreboard">
-            <div class="score-cell"><div class="score-num" id="stat-challenges-theory">0</div><div class="score-label">Challenges</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-puzzles-theory">0</div><div class="score-label">Puzzles</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-xp-theory">0</div><div class="score-label">Total XP</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-badges-theory">0</div><div class="score-label">Badges</div></div>
-          </div>
-        </div>
-      </aside>
+      </main>
+      <aside class="lab-sidebar"></aside>
     </div>
-  </div>
+  </section>
 
-  <div class="mode-section" id="section-play" style="display:none;">
-    <div class="game-layout" style="max-width:1600px; margin:0 auto; padding:0; display:grid; grid-template-columns:1fr 340px; gap:var(--space-lg);">
-      <div class="game-main">
-
-        <section class="macro-panel">
+  <!-- ═══════════════ SIMULATION ═══════════════ -->
+  <section id="tab-simulation" class="tab-section">
+    <div class="lab-layout">
+      <main class="lab-main">
+        <div class="content-card">
           <h3>🔬 Quantum State Spectrometer</h3>
-          <p class="slider-desc" style="font-size:0.9rem; line-height:1.6;">
+          <p style="font-size:0.9rem; line-height:1.6; color:var(--text-dim);">
             Explore how <b>crystal symmetry</b> determines the <b>electronic dispersion</b> <i>E(k)</i>,
             and how that dispersion produces the <b>Density of States</b> <i>g(E)</i>.
             Switch between 3D bulk, 2D layers, 1D wires and Dirac cones to see how confinement reshapes the electronic states.
           </p>
-        </section>
+        </div>
 
-        <section class="macro-panel">
+        <div class="content-card">
           <h3>💎 Material Presets</h3>
-          <p class="slider-desc" style="font-size:0.85rem; margin-bottom:0.8rem; line-height:1.55;">
+          <p class="sim-desc" style="margin-bottom:0.8rem;">
             Pick a starting material to load realistic tight-binding parameters.
             Selecting <b>Graphene</b> reveals the carbon allotropes (graphite, nanotube, fullerene)
             and hides the bulk-crystal structures.
           </p>
 
-          <!-- Bulk crystals -->
           <div style="margin-bottom:1.1rem;">
             <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:0.5rem;">Bulk Crystals</div>
             <div class="challenge-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));">
@@ -363,7 +572,6 @@
             </div>
           </div>
 
-          <!-- Carbon allotropes (shown only when Graphene is selected) -->
           <div id="carbon-subsection" style="display:none; margin-bottom:1.1rem;">
             <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:0.5rem;">Carbon Allotropes</div>
             <div class="challenge-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));">
@@ -382,7 +590,6 @@
             </div>
           </div>
 
-          <!-- Dimension selector (contents controlled by selected material) -->
           <div id="dim-bar" style="display:flex; gap:0.5rem; margin-top:1rem; flex-wrap:wrap;">
             <button class="dim-btn" id="dim-3d" data-mode="3D" data-default-label="3D (Bulk)" onclick="setEBDim('3D')">3D (Bulk)</button>
             <button class="dim-btn" id="dim-2d" data-mode="2D" data-default-label="2D (Layer)" onclick="setEBDim('2D')">2D (Layer)</button>
@@ -390,12 +597,11 @@
             <button class="dim-btn" id="dim-0d" data-mode="0D" data-default-label="0D (Dot)" onclick="setEBDim('0D')">0D (Dot)</button>
             <button class="dim-btn" id="dim-dirac" data-mode="graphene" data-default-label="Dirac (Graphene)" onclick="setEBDim('graphene')">Dirac (Graphene)</button>
           </div>
-        </section>
+        </div>
 
-        <!-- Structure + Dispersion -->
-        <section class="macro-panel pg-section">
+        <div class="content-card">
           <h3>Structure Σ &amp; Dispersion E(k)</h3>
-          <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
+          <p class="sim-desc">
             The lattice view shows the real-space arrangement of atoms and bonds;
             the dispersion plot shows the allowed energy as a function of crystal momentum <i>k</i>.
             Lower dimensionality removes allowed <i>k</i>-states and changes the shape of the bands.
@@ -408,65 +614,63 @@
             </div>
             <div class="band-plot-container">
               <div class="hub-label">Dispersion E(k)</div>
-              <div id="plot-band-structure" style="height:100%; width:100%;"></div>
+              <div id="plot-band-structure" style="width:100%;"></div>
             </div>
           </div>
 
-          <div style="display:flex; justify-content:center; gap:1.5rem; flex-wrap:wrap; font-size:0.78rem; color:var(--text-dim); margin-top:0.6rem;">
+          <div class="legend-bar">
             <span><span style="display:inline-block; width:12px; height:3px; background:#00f0ff; vertical-align:middle; margin-right:4px;"></span><b>Valence Band</b></span>
             <span><span style="display:inline-block; width:12px; height:3px; background:#c084fc; vertical-align:middle; margin-right:4px;"></span><b>Conduction Band</b></span>
             <span><span style="display:inline-block; width:12px; height:3px; background:#fbbf24; vertical-align:middle; margin-right:4px;"></span><b>Bandgap</b> forbidden region</span>
             <span><span style="display:inline-block; width:12px; height:3px; background:#ff4ecd; vertical-align:middle; margin-right:4px;"></span><b>Fermi level</b> <i>E_F</i></span>
           </div>
 
-          <p style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:0.5rem; line-height:1.5;">
+          <p class="fig-caption">
             <b>Figure 1.</b> Tight-binding band structure for the selected dimensionality and material.
             The gap size distinguishes metals, semiconductors, and insulators.
           </p>
-        </section>
+        </div>
 
-        <!-- DOS + ARPES -->
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
-          <section class="macro-panel pg-section">
+        <div class="plot-grid">
+          <div class="content-card">
             <h3>Density of States g(E)</h3>
-            <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
+            <p class="sim-desc">
               Number of electronic states per unit energy. In 3D <i>g(E) ∝ √E</i> near a parabolic band edge;
               in 2D it is step-like; in 1D it diverges as Van-Hove singularities at sub-band edges.
             </p>
             <div class="viz-card">
-              <div class="plot-container" id="plot-dos-playground" style="min-height:350px;"></div>
+              <div class="plot-container" id="plot-dos-playground"></div>
             </div>
-            <div style="display:flex; justify-content:center; gap:1.5rem; flex-wrap:wrap; font-size:0.78rem; color:var(--text-dim); margin-top:0.6rem;">
+            <div class="legend-bar">
               <span><span style="display:inline-block; width:12px; height:3px; background:#00f0ff; vertical-align:middle; margin-right:4px;"></span><b>g(E)</b> total DOS</span>
               <span><span style="display:inline-block; width:12px; height:3px; background:#fbbf24; vertical-align:middle; margin-right:4px;"></span><b>Gap</b> no states</span>
               <span><span style="display:inline-block; width:12px; height:3px; background:#ff4ecd; vertical-align:middle; margin-right:4px;"></span><b>E_F</b> Fermi level</span>
             </div>
-            <p style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:0.5rem; line-height:1.5;">
+            <p class="fig-caption">
               <b>Figure 2.</b> DOS profile. The shape reveals dimensionality; the gap reveals metal vs semiconductor vs insulator.
             </p>
-          </section>
+          </div>
 
-          <section class="macro-panel pg-section">
+          <div class="content-card">
             <h3>ARPES Intensity Map</h3>
-            <p class="slider-desc" style="font-size:0.85rem; margin-bottom:1rem; line-height:1.55;">
+            <p class="sim-desc">
               Angle-resolved photoemission intensity <i>I(E,θ)</i> for the <b>occupied</b> states (<i>E &lt; E_F</i>).
               Bright lines trace the band dispersion; the Fermi surface appears where bands cross <i>E_F</i>.
             </p>
             <div class="viz-card">
-              <div class="plot-container" id="plot-arpes-main" style="min-height:350px;"></div>
+              <div class="plot-container" id="plot-arpes-main"></div>
             </div>
-            <div style="display:flex; justify-content:center; gap:1.5rem; flex-wrap:wrap; font-size:0.78rem; color:var(--text-dim); margin-top:0.6rem;">
+            <div class="legend-bar">
               <span><span style="display:inline-block; width:12px; height:3px; background:#c084fc; vertical-align:middle; margin-right:4px;"></span><b>Occupied bands</b> <i>E &lt; E_F</i></span>
               <span><span style="display:inline-block; width:12px; height:3px; background:#ff4ecd; vertical-align:middle; margin-right:4px;"></span><b>E_F</b> cutoff</span>
               <span><span style="display:inline-block; width:12px; height:3px; background:rgba(255,255,255,0.2); vertical-align:middle; margin-right:4px;"></span><b>Unoccupied</b> shadow region</span>
             </div>
-            <p style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:0.5rem; line-height:1.5;">
+            <p class="fig-caption">
               <b>Figure 3.</b> Photoemission map. Only states below the Fermi level can emit electrons.
             </p>
-          </section>
+          </div>
         </div>
 
-        <!-- Lab Notes -->
         <div class="insights" style="margin-top:1rem;">
           <div class="insight-card">
             <div class="insight-title">📖 Lab Notes: Dimensionality &amp; DOS</div>
@@ -483,235 +687,149 @@
             </p>
           </div>
         </div>
-      </div>
+      </main>
+      <aside class="lab-sidebar">
+        <div class="sidebar-card" id="sim-controls-card">
+          <h4>⚙ Controls</h4>
+          <div id="sim-controls">
+            <div id="ctrl-1d">
+              <div class="slider-group">
+                <label for="slider-t">Hopping <i>t</i> <span class="unit-tag">eV</span></label>
+                <span class="slider-value" id="val-t">1.0</span>
+                <input type="range" id="slider-t" min="0.1" max="3" value="1.0" step="0.1">
+                <div class="slider-desc">Nearest-neighbour hopping amplitude. Larger <i>t</i> widens the band.</div>
+              </div>
 
-      <!-- Right sidebar -->
-      <aside class="game-sidebar">
-        <div class="sidebar-card">
-          <h4>⚙ Quantum Controls</h4>
+              <div class="slider-group">
+                <label for="slider-gap">Gap <i>E_g</i> <span class="unit-tag">eV</span></label>
+                <span class="slider-value" id="val-gap">0.0</span>
+                <input type="range" id="slider-gap" min="0" max="6" value="0" step="0.1">
+                <div class="slider-desc">On-site potential difference between atoms. Non-zero values open a bandgap.</div>
+              </div>
 
-          <div class="slider-group" style="margin-bottom:1rem;">
-            <label>Hopping <i>t</i> <span class="unit-tag">eV</span></label>
-            <span class="slider-value" id="val-t">1.0</span>
-            <input type="range" id="slider-t" min="0.1" max="3" value="1.0" step="0.1">
-            <div class="slider-desc">Nearest-neighbour hopping amplitude. Larger <i>t</i> widens the band.</div>
-          </div>
-
-          <div class="slider-group" style="margin-bottom:1rem;">
-            <label>Gap <i>E_g</i> <span class="unit-tag">eV</span></label>
-            <span class="slider-value" id="val-gap">0.0</span>
-            <input type="range" id="slider-gap" min="0" max="6" value="0" step="0.1">
-            <div class="slider-desc">On-site potential difference between atoms. Non-zero values open a bandgap.</div>
-          </div>
-
-          <div class="slider-group" style="margin-bottom:1rem;">
-            <label>Offset <i>ε</i> <span class="unit-tag">eV</span></label>
-            <span class="slider-value" id="val-eps">0.0</span>
-            <input type="range" id="slider-eps" min="-2" max="2" value="0" step="0.1">
-            <div class="slider-desc">Rigid shift of the whole band structure up or down in energy.</div>
+              <div class="slider-group">
+                <label for="slider-eps">Offset <i>ε</i> <span class="unit-tag">eV</span></label>
+                <span class="slider-value" id="val-eps">0.0</span>
+                <input type="range" id="slider-eps" min="-2" max="2" value="0" step="0.1">
+                <div class="slider-desc">Rigid shift of the whole band structure up or down in energy.</div>
+              </div>
+            </div>
           </div>
         </div>
-
-        <div class="sidebar-card">
+        <div class="sidebar-card" id="sim-readout-card">
           <h4>📊 Live Readout</h4>
-
-          <div class="readout-row">
-            <div class="readout-tile">
-              <div class="readout-label">Material</div>
-              <div class="readout-value" id="live-material" style="color:var(--accent-cyan);">Copper</div>
+          <div id="sim-readout">
+            <div class="readout-row">
+              <div class="readout-tile">
+                <div class="readout-label">Material</div>
+                <div class="readout-value" id="live-material" style="color:var(--accent-cyan);">Copper</div>
+              </div>
+              <div class="readout-tile">
+                <div class="readout-label">Symmetry</div>
+                <div class="readout-value" id="live-dim" style="color:var(--accent-cyan);">3D</div>
+              </div>
+              <div class="readout-tile">
+                <div class="readout-label">Hopping <i>t</i></div>
+                <div class="readout-value" id="live-t" style="color:var(--text-bright);">1.0 eV</div>
+              </div>
+              <div class="readout-tile">
+                <div class="readout-label">Bandgap <i>E_g</i></div>
+                <div class="readout-value" id="live-gap" style="color:var(--accent-purple);">0.00 eV</div>
+              </div>
+              <div class="readout-tile">
+                <div class="readout-label">Bandwidth</div>
+                <div class="readout-value" id="live-bw" style="color:var(--text-bright);">4.0 eV</div>
+              </div>
             </div>
-            <div class="readout-tile">
-              <div class="readout-label">Symmetry</div>
-              <div class="readout-value" id="live-dim" style="color:var(--accent-cyan);">3D</div>
-            </div>
-            <div class="readout-tile">
-              <div class="readout-label">Hopping <i>t</i></div>
-              <div class="readout-value" id="live-t" style="color:var(--text-bright);">1.0 eV</div>
-            </div>
-            <div class="readout-tile">
-              <div class="readout-label">Bandgap <i>E_g</i></div>
-              <div class="readout-value" id="live-gap" style="color:var(--accent-purple);">0.00 eV</div>
-            </div>
-            <div class="readout-tile">
-              <div class="readout-label">Bandwidth</div>
-              <div class="readout-value" id="live-bw" style="color:var(--text-bright);">4.0 eV</div>
-            </div>
-          </div>
-
-          <p style="font-size:0.75rem; color:var(--text-dim); line-height:1.5; margin-top:0.6rem;">
-            Values update automatically when you change material, dimensionality, or sliders.
-          </p>
-        </div>
-
-        <div class="sidebar-card">
-          <h4>🗺 Lab Navigator</h4>
-          <div id="module-nav"></div>
-        </div>
-
-        <div class="sidebar-card">
-          <h4>🏆 Your Badges</h4>
-          <div id="badge-list" style="font-size:0.8rem; color:var(--text-dim); line-height:1.6;">Complete challenges to earn badges!</div>
-        </div>
-
-        <div class="sidebar-card">
-          <h4>📊 Progress</h4>
-          <div class="scoreboard">
-            <div class="score-cell">
-              <div class="score-num" id="stat-challenges">0</div>
-              <div class="score-label">Challenges</div>
-            </div>
-            <div class="score-cell">
-              <div class="score-num" id="stat-puzzles">0</div>
-              <div class="score-label">Puzzles</div>
-            </div>
-            <div class="score-cell">
-              <div class="score-num" id="stat-xp">0</div>
-              <div class="score-label">Total XP</div>
-            </div>
-            <div class="score-cell">
-              <div class="score-num" id="stat-badges">0</div>
-              <div class="score-label">Badges</div>
-            </div>
+            <p style="font-size:0.75rem; color:var(--text-dim); line-height:1.5; margin-top:0.6rem;">
+              Values update automatically when you change material, dimensionality, or sliders.
+            </p>
           </div>
         </div>
       </aside>
     </div>
-  </div>
+  </section>
 
-  <!-- Challenges and Puzzles -->
-  <div class="mode-section" id="section-challenge" style="display:none;">
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🎮</span>
-        <span class="challenge-title">Challenge 1: Fermi Level Hunter</span>
-        <span class="challenge-difficulty easy">Easy</span>
-      </div>
-      <div class="challenge-desc">Given carrier density and material type, identify whether it is n-type, p-type, intrinsic, metal, or insulator.</div>
-      <div class="challenge-reward">🏆 Reward: 50 XP · Combo bonus: +5 XP per streak</div>
-      <div class="timer-bar"><div class="timer-fill" id="fermi-timer" style="width:100%"></div></div>
-      <div id="fermi-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-        <button class="btn" onclick="guessFermiType('n-type')">n-type</button>
-        <button class="btn" onclick="guessFermiType('p-type')">p-type</button>
-        <button class="btn" onclick="guessFermiType('intrinsic')">Intrinsic</button>
-        <button class="btn" onclick="guessFermiType('metal')">Metal</button>
-        <button class="btn" onclick="guessFermiType('insulator')">Insulator</button>
-      </div>
-      <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;"><strong style="color:var(--text-main)">Score:</strong> <span id="fermi-score">0</span> · <strong style="color:var(--text-main)">Combo:</strong> <span id="fermi-combo">0</span></div>
-      <div class="challenge-feedback" id="fermi-feedback"></div>
-    </div>
-
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🎯</span>
-        <span class="challenge-title">Challenge 2: Effective Mass from Curvature</span>
-        <span class="challenge-difficulty medium">Medium</span>
-      </div>
-      <div class="challenge-desc">At the bottom of a tight-binding band, m* = ℏ²/(2ta²). Given hopping t = <span id="effmass-t">1.0</span> eV and lattice constant a = 0.5 nm, what is m* (in units of mₑ)?</div>
-      <div class="challenge-reward">🏆 Reward: 75 XP · "DOS Explorer" badge</div>
-      <!-- plot-effmass viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Effective Mass m*(k)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">m* = ℏ²/(d²E/dk²). Light near band centre, heavy at edges.</p>
-  <div class="plot-container" id="plot-effmass" style="height:260px;"></div>
 </div>
 
-      <div style="display:flex; gap:1rem; align-items:center; margin-top:1rem;">
-        <input type="number" id="effmass-guess" step="0.01" placeholder="m* / mₑ" style="background:var(--bg-elevated);border:1px solid var(--glass-border);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);width:120px;">
-        <button class="btn" onclick="checkEffectiveMass()">✓ Submit</button>
-      </div>
-      <div class="challenge-feedback" id="effmass-feedback"></div>
-    </div>
-
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(74,222,128,0.12);">🏎</span>
-        <span class="challenge-title">Challenge 3: Bandgap Material Detector</span>
-        <span class="challenge-difficulty medium">Medium</span>
-      </div>
-      <div class="challenge-desc">Given a material name, classify it as metal, semiconductor, or insulator based on its bandgap.</div>
-      <div class="challenge-reward">🏆 Reward: 60 XP · "Graphene Disciple" badge</div>
-      <div id="gap-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-      <div style="display:flex; gap:0.5rem;">
-        <button class="btn" onclick="guessBandgapCat('metal')">Metal</button>
-        <button class="btn" onclick="guessBandgapCat('semiconductor')">Semiconductor</button>
-        <button class="btn" onclick="guessBandgapCat('insulator')">Insulator</button>
-      </div>
-      <div class="challenge-feedback" id="gap-feedback"></div>
-    </div>
-  </div>
-
-  <div class="mode-section" id="section-puzzle" style="display:none;">
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(192,132,252,0.12);">🧩</span>
-        <span class="challenge-title">Puzzle 1: Doping Level Slider</span>
-        <span class="challenge-difficulty easy">Easy</span>
-      </div>
-      <div class="challenge-desc">Set the carrier density to achieve the target doping type. Watch E_F shift!</div>
-      <div class="challenge-reward">🏆 Reward: 60 XP</div>
-      <div style="font-size:1rem;margin-bottom:1rem;">Target: <strong id="doping-target-type">n-type</strong></div>
-        <div class="control-row">
-          <span class="control-label">Carrier density n</span>
-          <span class="control-value" id="val-doping">1.0e22</span><span class="unit-tag">m⁻³</span>
-        </div>
-        <input type="range" id="slider-doping" min="15" max="29" value="22" step="0.1" style="width:100%;">
-        <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted); margin-top:0.2rem;">
-          <span>10¹⁵</span><span>10²² (intrinsic)</span><span>10²⁹</span>
-        </div>
-      <!-- plot-doping viz-card -->
-<div class="viz-card" style="background:var(--bg-panel);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;">
-  <h4 style="font-size:0.95rem;color:var(--text-bright);margin:0 0 0.3rem;">Doping Dependence σ(T)</h4>
-  <p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">Intrinsic → lightly-doped → degenerate: three conductivity regimes.</p>
-  <div class="plot-container" id="plot-doping" style="height:220px; margin-top:1rem;"></div>
-</div>
-
-      <button class="btn" onclick="checkDopingSlider()">✓ Check Doping</button>
-      <div class="challenge-feedback" id="doping-feedback"></div>
-    </div>
-
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(0,240,255,0.12);">🧩</span>
-        <span class="challenge-title">Puzzle 2: DOS Integral Matching</span>
-        <span class="challenge-difficulty hard">Hard</span>
-      </div>
-      <div class="challenge-desc">Drag each integral expression to what it computes physically.</div>
-      <div class="challenge-reward">🏆 Reward: 100 XP</div>
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:0.5rem;">
-        <div>
-          <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem;">Expressions (drag to right):</p>
-          <div id="integral-pool" style="display:flex;flex-wrap:wrap;gap:0.5rem;"></div>
-        </div>
-        <div>
-          <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem;">Physical quantities:</p>
-          <div id="integral-targets" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
-        </div>
-      </div>
-      <button class="btn" onclick="checkIntegralPuzzle()">✓ Verify Matching</button>
-      <div class="challenge-feedback" id="integral-feedback"></div>
-    </div>
-
-    <div class="challenge-panel">
-      <div class="challenge-header">
-        <span class="challenge-icon" style="background:rgba(255,78,205,0.12);">🧩</span>
-        <span class="challenge-title">Puzzle 3: Dirac Cone vs Parabolic</span>
-        <span class="challenge-difficulty master">Master</span>
-      </div>
-      <div class="challenge-desc">Classify each material's dispersion as parabolic (massive) or conical (Dirac/massless).</div>
-      <div class="challenge-reward">🏆 Reward: 120 XP · "Dirac Master" badge</div>
-      <div id="dirac-list" style="margin-top:0.5rem;"></div>
-      <button class="btn" onclick="checkDiracPuzzle()">✓ Check Classification</button>
-      <div class="challenge-feedback" id="dirac-feedback"></div>
-    </div>
-  </div>
-</div>
-
+<!-- ═══════════════ EXTERNAL SCRIPTS ═══════════════ -->
 <script src="../../shared_ui.js"></script>
-<script src="../../shared_games.js"></script>
+<script src="../../shared_lab.js"></script>
 <script src="../../shared_interactive.js"></script>
-<script src="eb_sim.js?v=7"></script>
-<script src="eb_apps_games.js?v=8"></script>
 <script src="../../shared_effects.js"></script>
+<script src="eb_sim.js?v=9"></script>
+<script src="eb_apps_games.js?v=9"></script>
+<script>
+// Defer canvas init until tab is visible
+const simTab = document.getElementById('tab-simulation');
+if (simTab) {
+  const observer = new MutationObserver((mutations) => {
+    if (simTab.classList.contains('active') && simTab.offsetParent !== null) {
+      observer.disconnect();
+      if (typeof window.initLatticeCanvas === 'function') {
+        window.initLatticeCanvas();
+        window.renderLattice();
+      }
+    }
+  });
+  observer.observe(simTab, { attributes: true, attributeFilter: ['class'] });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.tab-btn').forEach(function(btn) {
+    var clone = btn.cloneNode(true);
+    btn.parentNode.replaceChild(clone, btn);
+    clone.addEventListener('click', function() {
+      window.switchTab(this.getAttribute('data-tab'));
+    });
+  });
+
+  var jump = document.getElementById('module-jump');
+  if (jump) {
+    jump.addEventListener('change', function() {
+      var val = this.value;
+      if (val) window.location.href = '../../modules/' + val + '/index.html';
+    });
+  }
+
+  // Bypass offsetParent check for our plot containers so they render on tab switch
+  if (typeof _plot === 'function') {
+    var _origPlot = _plot;
+    window._plot = function(id, traces, lay, cfg) {
+      var el = document.getElementById(id);
+      if (!el || typeof Plotly === 'undefined') return;
+      Plotly.react(id, traces, lay, cfg || {responsive: true, displayModeBar: false});
+    };
+  }
+});
+
+window.switchTab = function(tabId) {
+  document.querySelectorAll('.tab-section').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  var section = document.getElementById('tab-' + tabId);
+  if (section) section.classList.add('active');
+  var btn = document.querySelector('.tab-btn[data-tab="' + tabId + '"]');
+  if (btn) btn.classList.add('active');
+
+  var simLayout = document.querySelector('#tab-simulation .lab-layout');
+  if (simLayout) {
+    simLayout.classList.toggle('sim-tab', tabId === 'simulation');
+  }
+
+  if (tabId === 'simulation') {
+    requestAnimationFrame(function() {
+      void document.querySelector('#tab-simulation .lab-main').clientWidth;
+      void document.querySelector('#tab-simulation .lab-main').clientHeight;
+      if (typeof window.plotBandStructure === 'function') {
+        window.plotBandStructure();
+        window.plotDOS();
+        window.plotARPES();
+        window.renderLattice();
+        window.updateLiveTable();
+      }
+    });
+  }
+};
+</script>
 </body>
 </html>

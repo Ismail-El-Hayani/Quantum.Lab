@@ -120,6 +120,10 @@ function plotBlochSphere() {
   const sy = expectationSigmaY(a);
   const sz = expectationSigmaZ(a);
 
+  const el = document.getElementById('plot-bloch');
+  if (!el || typeof Plotly === 'undefined') return;
+  void el.clientWidth;
+
   // Draw sphere wireframe (latitude/longitude circles)
   const sphereTraces = [];
 
@@ -184,7 +188,7 @@ function plotBlochSphere() {
     type: 'scatter3d', showlegend: false, hoverinfo: 'skip'
   });
 
-  _plot('plot-bloch', sphereTraces, {
+  Plotly.react(el, sphereTraces, {
     autosize: true,
     margin: { t: 0, r: 0, b: 0, l: 0 },
     paper_bgcolor: 'rgba(0,0,0,0)',
@@ -207,7 +211,11 @@ function plotSpinComponents() {
   const sy = expectationSigmaY(a);
   const sz = expectationSigmaZ(a);
 
-  _plot('plot-components', [
+  const el = document.getElementById('plot-components');
+  if (!el || typeof Plotly === 'undefined') return;
+  void el.clientWidth;
+
+  Plotly.react(el, [
     { x: ['⟨Sx⟩', '⟨Sy⟩', '⟨Sz⟩'], y: [sx, sy, sz],
       type: 'bar',
       marker: { color: ['#ff4ecd', '#4ade80', '#c084fc'] },
@@ -253,40 +261,57 @@ function updateLiveTable() {
 function animateLoop() {
   if (!state.animating) return;
 
-  /* Physics-correct precession scaled for comfortable visual speed.
-     f = g·28.024·B  (GHz).  One full rotation every ~1.5 s at B = 1 T. */
-  const f_GHz = 2.0023 * 28.024 * 1.0;
-  const dt = 0.016;                     // ~60 FPS frame time in ns
-  const dPhi = 2 * Math.PI * f_GHz * dt * 0.001 * 0.60 * state.speedFactor;  // 0.60 base, × speedFactor
-  state.phi += dPhi;
-  if (state.phi > 2 * Math.PI) state.phi -= 2 * Math.PI;
+  state.animTime = (state.animTime || 0) + 0.016;
 
-  // Sync the φ slider and readout so the user sees continuous motion.
-  // Keep state.phi0 unchanged — that is the Reset anchor set on Play.
+  /* Correct Rabi + Larmor dynamics: a resonant transverse drive (Rabi)
+     plus static field along z (Larmor precession).
+     
+     Starting from initial Bloch vector (sx0,sy0,sz0), the evolution is:
+     1. Rotate around x by Ω_R·t  (Rabi nutation)
+     2. Rotate around z by ω₀·t   (Larmor precession) */
+
+  const sx0 = Math.sin(state.theta0) * Math.cos(state.phi0);
+  const sy0 = Math.sin(state.theta0) * Math.sin(state.phi0);
+  const sz0 = Math.cos(state.theta0);
+
+  const omegaL = 2.0 * state.speedFactor;
+  const omegaR = 1.5 * state.speedFactor;
+  const t = state.animTime;
+
+  // Rotate around x by Ω_R·t (Rabi)
+  const sxR = sx0;
+  const syR = sy0 * Math.cos(omegaR * t) + sz0 * Math.sin(omegaR * t);
+  const szR = -sy0 * Math.sin(omegaR * t) + sz0 * Math.cos(omegaR * t);
+
+  // Rotate around z by ω₀·t (Larmor)
+  const sx = sxR * Math.cos(omegaL * t) - syR * Math.sin(omegaL * t);
+  const sy = sxR * Math.sin(omegaL * t) + syR * Math.cos(omegaL * t);
+  const sz = szR;
+
+  // Reconstruct state.theta, state.phi from evolved vector
+  state.theta = Math.acos(Math.max(-1, Math.min(1, sz)));
+  const xyLen = Math.sqrt(sx * sx + sy * sy);
+  state.phi = xyLen > 1e-10 ? Math.atan2(sy, sx) : state.phi0;
+  if (state.phi < 0) state.phi += 2 * Math.PI;
+
+  // Sync both sliders
+  const thetaDeg = state.theta * 180 / Math.PI;
+  const sliderTh = document.getElementById('slider-theta');
+  const valTh = document.getElementById('val-theta');
+  if (sliderTh) sliderTh.value = thetaDeg.toFixed(0);
+  if (valTh) valTh.textContent = thetaDeg.toFixed(0) + '°';
+
   const phiDeg = state.phi * 180 / Math.PI;
   const sliderPhi = document.getElementById('slider-phi');
   const valPhi = document.getElementById('val-phi');
   if (sliderPhi) sliderPhi.value = phiDeg.toFixed(0);
   if (valPhi) valPhi.textContent = phiDeg.toFixed(0) + '°';
 
-  const a = getAmplitudes(state.theta, state.phi);
-  const sx = expectationSigmaX(a);
-  const sy = expectationSigmaY(a);
-  const sz = expectationSigmaZ(a);
-
-  /* Fast path: restyle only the arrow trace (index 2) instead of
-     rebuilding the entire Bloch sphere with Plotly.react(). */
-  if (typeof Plotly !== 'undefined') {
-    Plotly.restyle('plot-bloch', {
-      x: [[0, sx]],
-      y: [[0, sy]],
-      z: [[0, sz]]
-    }, [2]);
-  }
-
-  /* Throttle expensive updates — bar chart + live table every 5th frame. */
+  /* Throttle expensive updates — Bloch sphere + bar chart + live table
+     every 3rd frame to keep ~20 FPS responsive update. */
   state.frameCount = (state.frameCount || 0) + 1;
-  if (state.frameCount % 5 === 0) {
+  if (state.frameCount % 3 === 0) {
+    plotBlochSphere();
     plotSpinComponents();
     updateLiveTable();
   }
@@ -341,7 +366,9 @@ function initSpin() {
   if (btnPlay) {
     btnPlay.addEventListener('click', function() {
       if (state.animating) return;
-      state.phi0 = state.phi;   // snapshot start-of-run for Reset
+      state.phi0 = state.phi;
+      state.theta0 = state.theta;
+      state.animTime = 0;
       state.animating = true;
       setAnimUI(true);
       animateLoop();
@@ -362,7 +389,13 @@ function initSpin() {
       state.animating = false;
       cancelAnimationFrame(state.animFrame);
       state.phi = state.phi0;
+      state.theta = state.theta0;
+      state.animTime = 0;
       setAnimUI(false);
+      var thSlider = document.getElementById('slider-theta');
+      if (thSlider) thSlider.value = Math.round(state.theta * 180 / Math.PI);
+      var vth = document.getElementById('val-theta');
+      if (vth) vth.textContent = Math.round(state.theta * 180 / Math.PI) + '°';
       var phSlider = document.getElementById('slider-phi');
       if (phSlider) phSlider.value = Math.round(state.phi * 180 / Math.PI);
       var vph = document.getElementById('val-phi');

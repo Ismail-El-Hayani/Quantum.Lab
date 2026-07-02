@@ -47,8 +47,9 @@ function idealDiodeI(V,T,I0,n){ return I0*(Math.exp(V/(n*kB_eV*T))-1); }
 
 /* safe Plotly */
 function jdLayout(title,xt,yt,extra){
-  var base={margin:{t:25,r:10,b:45,l:55},paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',
+  var base={margin:{t:40,r:10,b:55,l:65},paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',
     font:{family:'sans-serif',color:'#8080a0',size:11},
+    title: title ? { text: title, font: { size: 13, color: '#e0e0ff' } } : undefined,
     xaxis:{title:xt,color:'#505070',gridcolor:'#1a1a28',zerolinecolor:'#2a2a3a'},
     yaxis:{title:yt,color:'#505070',gridcolor:'#1a1a28',zerolinecolor:'#2a2a3a'},
     legend:{x:0.02,y:0.98,bgcolor:'rgba(10,10,15,0.8)',bordercolor:'#2a2a3a',borderwidth:1},hovermode:'x unified'};
@@ -959,8 +960,8 @@ function renderJDCanvas(){
 function startJDCanvasLoop(){
   if(jdCanvasAnim) cancelAnimationFrame(jdCanvasAnim);
   (function loop(){
-    // Pause animation when Playground section is hidden
-    var pg = document.getElementById('section-play');
+    // Pause animation when Simulation tab is hidden
+    var pg = document.getElementById('tab-simulation');
     if (!pg || pg.style.display === 'none') {
       jdCanvasAnim = requestAnimationFrame(loop);
       return;
@@ -981,7 +982,7 @@ function plotDiodeIV(){
     {x:Vf,y:If,mode:'lines',name:'Dark I(V)',line:{color:'#00f0ff',width:2}},
     {x:Vr,y:Ir,mode:'lines',name:'Reverse I(V)',line:{color:'#ff4ecd',width:2}},
     {x:Vsc,y:Isc,mode:'lines',name:'Irradiated I(V)',line:{color:'#ffd54f',width:2,dash:'dash'}}
-  ],jdLayout(null,'Voltage (V)','Current I (A)',{
+  ],jdLayout('PN Diode I-V Characteristic','Voltage (V)','Current I (A)',{
     shapes:[{type:'line',x0:0,x1:0,y0:-1e-6,y1:1e-6,line:{color:'#8080a0',width:1,dash:'dot'}}]
   }),{responsive:true,displayModeBar:false});
 }
@@ -997,7 +998,7 @@ function plotZenerIV(){
   }
   _plot('plot-zener-iv',[
     {x:V,y:I,mode:'lines',name:'Zener I(V)',line:{color:'#ff4ecd',width:2.5},fill:'tozeroy',fillcolor:'rgba(255,78,205,0.06)'}
-  ],jdLayout(null,'Voltage V (V)','Current I (A)',{
+  ],jdLayout('Zener Diode I-V Characteristic','Voltage V (V)','Current I (A)',{
     shapes:[{type:'line',x0:0,x1:0,y0:-1,y1:1,line:{color:'#8080a0',width:1,dash:'dot'}}],
     annotations:[{x:-0.7,y:-0.04,text:'Breakdown knee',font:{color:'#ffd54f',size:10},showarrow:false}]
   }),{responsive:true,displayModeBar:false});
@@ -1014,7 +1015,7 @@ function plotTunnelIV(){
   }
   _plot('plot-tunnel-iv',[
     {x:V,y:I,mode:'lines',name:'Tunnel I(V)',line:{color:'#00f0ff',width:2.5},fill:'tozeroy',fillcolor:'rgba(0,240,255,0.06)'}
-  ],jdLayout(null,'Voltage V (V)','Current I (A)',{
+  ],jdLayout('Tunnel Diode I-V Characteristic','Voltage V (V)','Current I (A)',{
     shapes:[{type:'line',x0:0,x1:0,y0:-1e-5,y1:5e-5,line:{color:'#8080a0',width:1,dash:'dot'}}],
     annotations:[
       {x:0.12,y:5e-5,text:'Peak',font:{color:'#00f0ff',size:10},showarrow:true,arrowhead:2,ax:20,ay:-20},
@@ -1049,7 +1050,7 @@ function plotMOSFETIV(){
     return {x:Vd,y:Id,mode:'lines',name:'Vg='+Vg.toFixed(2)+'V',line:{color:colors[col],width:2}};
   });
   var yt=(JD.device==='pmos')?'I_DS (p-MOS)':'I_DS (n-MOS)';
-  _plot(cid,traces,jdLayout(null,'V_DS (V)',yt+' (A)',{
+  _plot(cid,traces,jdLayout('MOSFET Output I-V (Vg sweep)','V_DS (V)',yt+' (A)',{
     shapes:[{type:'line',x0:0,x1:0,y0:-1,y1:5,line:{color:'#8080a0',width:1,dash:'dot'}}]
   }),{responsive:true,displayModeBar:false});
 }
@@ -1071,7 +1072,7 @@ function plotTransfer(){
   }
   _plot(cid,[
     {x:Vg,y:Id,mode:'lines',name:'Transfer',line:{color:'#ffd54f',width:2.5},fill:'tozeroy',fillcolor:'rgba(255,213,79,0.06)'}
-  ],jdLayout(null,'V_GS (V)','I_DS (A)',{shapes:[{type:'line',x0:Vth,x1:Vth,y0:0,y1:Math.max.apply(null,Id),line:{color:'#ff4ecd',width:1,dash:'dot'}}]}),{responsive:true,displayModeBar:false});
+  ],jdLayout('MOSFET Transfer Characteristic','V_GS (V)','I_DS (A)',{shapes:[{type:'line',x0:Vth,x1:Vth,y0:0,y1:Math.max.apply(null,Id),line:{color:'#ff4ecd',width:1,dash:'dot'}}]}),{responsive:true,displayModeBar:false});
 }
 
 /* ========================= DEPLETION PLOT ========================= */
@@ -1098,7 +1099,7 @@ function plotDepletion(){
   _plot(cid,[
     {x:x,y:Ec,mode:'lines',name:'E_C',line:{color:'#ff4ecd',width:2}},
     {x:x,y:Ev,mode:'lines',name:'E_V',line:{color:'#4ade80',width:2}}
-  ],jdLayout(null,'Position x (nm)','Energy (eV)'),{responsive:true,displayModeBar:false});
+  ],jdLayout('Depletion Region Band Diagram','Position x (nm)','Energy (eV)'),{responsive:true,displayModeBar:false});
 }
 
 /* ========================= DEVICE SWITCHING / RENDER ========================= */

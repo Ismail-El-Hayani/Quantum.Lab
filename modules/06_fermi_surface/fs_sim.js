@@ -386,7 +386,20 @@ function initFS() {
   setFSMaterial('Free');
 }
 window.initFS = initFS;
+window.fsPlotFD = fsPlotFD;
+window.fsPlotdFdE = fsPlotdFdE;
+window.fsPlotOccupation = fsPlotOccupation;
+window.fsPlotPauli = fsPlotPauli;
+window.fsPlotThermionic = fsPlotThermionic;
+window.fsPlotWhiteDwarf = fsPlotWhiteDwarf;
+window.fsUpdateLiveTable = fsUpdateLiveTable;
+window.fsUpdateAll = fsUpdateAll;
+window.fsCondResizeCanvas = fsCondResizeCanvas;
 
+// Only auto-init if sim tab is already visible (avoid 0-size plots on page load)
 document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(initFS, 300);
+  var simTab = document.getElementById('tab-simulation');
+  if (simTab && simTab.classList.contains('active')) {
+    setTimeout(initFS, 300);
+  }
 });

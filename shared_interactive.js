@@ -1,5 +1,5 @@
 /**
- * shared_interactive.js — Interactive utilities for Physics Playground
+ * shared_interactive.js — Interactive utilities for Quantum Lab
  * Drag handlers, real-time parameter linking, experiment builder, live console
  */
 
@@ -177,51 +177,7 @@ ExperimentRecorder.prototype.toQueryString = function() {
   return encodeURIComponent(JSON.stringify(this.steps));
 };
 
-// ===== MATCHING GAME ENGINE =====
-// Generic engine for "match the pattern" games
-function MatchingGame(opts) {
-  this.opts = opts;
-  this.attempts = 0;
-  this.score = 0;
-  this.timer = null;
-  this.timeLeft = opts.timeLimit || 60;
-}
-MatchingGame.prototype.start = function() {
-  this.attempts = 0;
-  this.score = 0;
-  this.timeLeft = this.opts.timeLimit || 60;
-  this.render(this.opts.generateLevel(1));
-  this.startTimer();
-};
-MatchingGame.prototype.startTimer = function() {
-  var self = this;
-  this.timer = setInterval(function() {
-    self.timeLeft--;
-    if (self.opts.onTimer) self.opts.onTimer(self.timeLeft);
-    if (self.timeLeft <= 0) self.gameOver();
-  }, 1000);
-};
-MatchingGame.prototype.checkAnswer = function(answer) {
-  this.attempts++;
-  var correct = this.opts.validate(answer);
-  if (correct) {
-    this.score += Math.max(100 - this.attempts * 5 + this.timeLeft, 10);
-    if (this.opts.onCorrect) this.opts.onCorrect(this.score, this.attempts);
-    this.nextLevel();
-  } else {
-    if (this.opts.onWrong) this.opts.onWrong(answer, this.attempts);
-  }
-};
-MatchingGame.prototype.nextLevel = function() {
-  if (this.opts.onNextLevel) this.opts.onNextLevel();
-};
-MatchingGame.prototype.gameOver = function() {
-  clearInterval(this.timer);
-  if (this.opts.onGameOver) this.opts.onGameOver(this.score, this.attempts);
-};
-MatchingGame.prototype.stop = function() {
-  clearInterval(this.timer);
-};
+// ===== (MatchingGame removed — superseded by compatibility shim) =====
 
 // ===== PHYSICS ANIMATION PLAYER =====
 // Plays a pre-computed physics animation frame by frame
@@ -279,14 +235,7 @@ function ParameterLocker(sliderGroup, lockedParams, challengeCb) {
   };
 }
 
-// ===== LEVEL PROGRESSION =====
-var LevelProgression = {
-  levels: {},
-  setCurrent: function(module, level) { this.levels[module] = level; },
-  getCurrent: function(module) { return this.levels[module] || 1; },
-  advance: function(module) { this.levels[module] = (this.levels[module] || 1) + 1; },
-  reset: function(module) { this.levels[module] = 1; }
-};
+// ===== (LevelProgression removed — superseded by compatibility shim) =====
 
 // ===== SHARED MATH UTILITIES =====
 function linspace(a, b, n) {

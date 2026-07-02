@@ -185,7 +185,8 @@ function plotSusceptibility() {
   }
   _plotMAG('plot-susceptibility', traces, magLayout('Magnetic Susceptibility χ(T)', 'Temperature (K)', 'χ', {
     yaxis: { range: [-0.01, ymax] },
-    annotations: anns
+    annotations: anns,
+    shapes: [{ type: 'line', x0: magState.T, x1: magState.T, y0: -0.01, y1: ymax, line: { color: '#facc15', width: 2, dash: 'dot' } }]
   }), PLOT_CFG);
 }
 
@@ -200,7 +201,8 @@ function plotMagnetizationCurve() {
   }
   _plotMAG('plot-M-T', [
     { x: T, y: M, mode: 'lines', name: 'M(T)/Ms', line: { color: '#00f0ff', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.06)' },
-    { x: [tc, tc], y: [0, 1], mode: 'lines', line: { color: '#facc15', width: 1.5, dash: 'dash' }, showlegend: false, hoverinfo: 'skip' }
+    { x: [tc, tc], y: [0, 1], mode: 'lines', line: { color: '#facc15', width: 1.5, dash: 'dash' }, showlegend: false, hoverinfo: 'skip' },
+    { x: [magState.T, magState.T], y: [0, 1], mode: 'lines', line: { color: '#ff4ecd', width: 2, dash: 'dot' }, name: 'Current T', showlegend: false, hoverinfo: 'skip' }
   ], magLayout('Magnetization M(T)', 'Temperature (K)', 'M / M_s', {
     annotations: [
       { x: tc + 30, y: 0.5, text: 'Curie temp Tc', font: { color: '#ffd54f', size: 10 }, showarrow: false },
@@ -430,7 +432,8 @@ function plotLandauGM() {
   ], magLayout('Landau Free Energy G(M)', 'M (arb.)', 'G(M) (arb.)', {
     yaxis: { range: [-0.6, 1.2] },
     annotations: [
-      { x: 0, y: 0.05, text: T < Tc ? 'Unstable max' : 'Global min', font: { color: '#ff4ecd', size: 9 }, showarrow: false }
+      { x: 0, y: 0.05, text: T < Tc ? 'Unstable max' : 'Global min', font: { color: '#ff4ecd', size: 9 }, showarrow: false },
+      { x: 0.8, y: 1.0, text: T < Tc ? 'T < Tc (double well)' : 'T > Tc (single min)', font: { color: '#facc15', size: 10 }, showarrow: false }
     ]
   }), PLOT_CFG);
 }

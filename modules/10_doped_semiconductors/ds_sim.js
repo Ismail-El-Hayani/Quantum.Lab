@@ -69,7 +69,8 @@ function conductivity(T, n, p, mat) {
 const PLOT_CFG = { responsive: true, displayModeBar: false };
 function dsLayout(title, xtitle, ytitle, extra) {
   const base = {
-    margin: { t: 25, r: 10, b: 45, l: 55 },
+    margin: { t: 40, r: 10, b: 55, l: 65 },
+    title: title ? { text: title, font: { size: 13, color: '#e0e0ff' } } : undefined,
     paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
     font: { family: 'JetBrains Mono, monospace', color: '#8080a0', size: 11 },
     xaxis: { title: xtitle, color: '#505070', gridcolor: '#1a1a28', zerolinecolor: '#2a2a3a' },
@@ -106,7 +107,7 @@ function plotFermiShift() {
     { x: T, y: Ev, mode: 'lines', name: 'Ev', line: { color: '#4ade80', width: 2, dash: 'dash' } },
     { x: T, y: Ef, mode: 'lines', name: 'EF (doped)', line: { color: '#00f0ff', width: 2.5 }, fill: 'tonexty', fillcolor: 'rgba(0,240,255,0.06)' },
     { x: T, y: Ef0, mode: 'lines', name: 'EF (intrinsic)', line: { color: '#ffd54f', width: 1.5, dash: 'dot' } }
-  ], dsLayout(null, 'Temperature (K)', 'Energy above Ev (eV)'), PLOT_CFG);
+  ], dsLayout('Fermi Level Shift vs Temperature', 'Temperature (K)', 'Energy above Ev (eV)'), PLOT_CFG);
 }
 
 function plotCarrierTemp() {
@@ -123,7 +124,7 @@ function plotCarrierTemp() {
     { x: T, y: n, mode: 'lines', name: 'n (electrons)', line: { color: '#00f0ff', width: 2 } },
     { x: T, y: p, mode: 'lines', name: 'p (holes)', line: { color: '#ff4ecd', width: 2 } },
     { x: T, y: ni_arr, mode: 'lines', name: 'ni', line: { color: '#ffd54f', width: 1.5, dash: 'dot' } }
-  ], dsLayout(null, 'Temperature (K)', 'Carrier density (cm⁻³)', { yaxis: { type: 'log', title: 'Carrier density (cm⁻³)' } }), PLOT_CFG);
+  ], dsLayout('Carrier Density vs Temperature', 'Temperature (K)', 'Carrier density (cm⁻³)', { yaxis: { type: 'log', title: 'Carrier density (cm⁻³)' } }), PLOT_CFG);
 }
 
 function plotConductivityDoped() {
@@ -136,7 +137,7 @@ function plotConductivityDoped() {
   }
   _plot('plot-conductivity-doped', [
     { x: T, y: sigma, mode: 'lines', name: '\u03c3(T)', line: { color: '#00f0ff', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.06)' }
-  ], dsLayout(null, 'Temperature (K)', 'Conductivity (S/cm)'), PLOT_CFG);
+  ], dsLayout('Doped Conductivity vs Temperature', 'Temperature (K)', 'Conductivity (S/cm)'), PLOT_CFG);
 }
 
 /* ---- Animated band diagram on canvas ---- */
@@ -144,8 +145,8 @@ var __DS_bandActive = false;
 function drawBandDiagram() {
   var canvas = document.getElementById('band-canvas-ds');
   if (!canvas) return;
-  // Pause when Playground or the Band sub-tab is hidden
-  var pg = document.getElementById('section-play');
+  // Pause when Simulation tab or the Band sub-tab is hidden
+  var pg = document.getElementById('tab-simulation');
   var sub = document.getElementById('sub-band');
   if (!pg || pg.style.display === 'none' || !sub || sub.style.display === 'none') {
     __DS_bandActive = false;
@@ -165,6 +166,22 @@ function drawBandDiagram() {
   // Background
   ctx.fillStyle = '#0a0a14';
   ctx.fillRect(0, 0, w, h);
+
+  // Title + axis labels
+  ctx.fillStyle = '#e0e0ff';
+  ctx.font = 'bold 13px JetBrains Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('Band Diagram — ' + mat.name + '  (T = ' + dsState.T + ' K)', w / 2, 18);
+  ctx.font = '11px JetBrains Mono, monospace';
+  ctx.fillStyle = '#8080a0';
+  ctx.save();
+  ctx.translate(14, h / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Energy (eV)', 0, 0);
+  ctx.restore();
+  ctx.textAlign = 'center';
+  ctx.fillText('Position →', w / 2, h - 6);
+  ctx.textAlign = 'left';
 
   // Bands
   var pad = 40;

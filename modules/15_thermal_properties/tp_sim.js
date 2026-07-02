@@ -12,7 +12,8 @@ var h = 6.626e-34;
 
 function tpLayout(title, xtitle, ytitle, extra) {
   return Object.assign({
-    margin: { t: 25, r: 10, b: 45, l: 55 },
+    margin: { t: title ? 40 : 25, r: 10, b: 55, l: 65 },
+    title: title ? { text: title, font: { size: 13, color: '#e0e0ff' } } : undefined,
     paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
     font: { family: 'JetBrains Mono, monospace', color: '#8080a0', size: 11 },
     xaxis: { title: xtitle, color: '#505070', gridcolor: '#1a1a28', zerolinecolor: '#2a2a3a' },
@@ -34,7 +35,7 @@ var _tpPlotDirty = { cv: true, kappa: true };
 var _tpPlotBuilt = { cv: false, kappa: false };
 
 function getActiveTPSubTab() {
-  var active = document.querySelector('#section-play .subtab-content.active');
+  var active = document.querySelector('#tab-simulation .subtab-content.active');
   return active ? active.id.replace('subtab-', '') : 'cv';
 }
 
@@ -113,7 +114,7 @@ function plotCv() {
     { x: T, y: cvDulong, mode: 'lines', name: '3R (Dulong-Petit)', line: { color: '#4ade80', width: 1.5, dash: 'dash' } },
     { x: [tpState.T, tpState.T], y: [0, Math.max.apply(null, cvTotal)], mode: 'lines',
       line: { color: '#facc15', width: 2, dash: 'dot' }, showlegend: false, hoverinfo: 'skip' }
-  ], tpLayout(null, 'Temperature (K)', 'Cv (J/mol·K)', {
+  ], tpLayout('Heat Capacity Cv(T)', 'Temperature (K)', 'Cv (J/mol·K)', {
     annotations: [
       { x: tpState.thetaD, y: 3 * R_gas * 0.95, text: 'θD = ' + tpState.thetaD + ' K', font: { color: '#ffd54f', size: 10 }, showarrow: false }
     ]
@@ -133,7 +134,7 @@ function plotThermalConductivity() {
   _plot('plot-kappa', [
     { x: T, y: kappaPh, mode: 'lines', name: 'κphonon', line: { color: '#00f0ff', width: 2 }, fill: 'tozeroy', fillcolor: 'rgba(0,240,255,0.04)' },
     { x: T, y: kappaEl, mode: 'lines', name: 'κelectron (WF)', line: { color: '#ffd54f', width: 2 } }
-  ], tpLayout(null, 'Temperature (K)', 'κ (W/m·K)'), PLOT_CFG);
+  ], tpLayout('Thermal Conductivity κ(T)', 'Temperature (K)', 'κ (W/m·K)'), PLOT_CFG);
   _tpPlotBuilt.kappa = true;
   _tpPlotDirty.kappa = false;
 }

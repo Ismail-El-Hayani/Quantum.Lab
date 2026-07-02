@@ -9,6 +9,77 @@
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <link rel="stylesheet" href="../../shared_styles.css">
 <style>
+  .lab-layout {
+    max-width:1100px;
+    margin:0 auto;
+    padding:0;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:var(--space-lg);
+    align-items:start;
+    position:relative;
+    z-index:1;
+  }
+  .lab-layout.sim-tab { grid-template-columns:1fr 340px; max-width:1600px; }
+  .lab-layout:not(.sim-tab) .lab-sidebar { display:none; }
+  @media (max-width:1000px) { .lab-layout.sim-tab { grid-template-columns:1fr; } }
+
+  .lab-main { min-width:0; position:relative; z-index:1; container-type:inline-size; container-name:playMain; }
+
+  .lab-sidebar {
+    min-width:0;
+    position:sticky;
+    top:5rem;
+    align-self:start;
+    max-height:calc(100vh - 6rem);
+    overflow-y:auto;
+    padding:1rem;
+    background:var(--bg-panel-alt);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-lg);
+    z-index:10;
+  }
+  .lab-sidebar::-webkit-scrollbar { width:4px; }
+  .lab-sidebar::-webkit-scrollbar-thumb { background:var(--glass-border); border-radius:2px; }
+  .lab-sidebar.static { position:static; max-height:none; overflow-y:visible; }
+
+  .sidebar-card {
+    background:rgba(16,16,28,0.55);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+    margin-bottom:1rem;
+  }
+  .sidebar-card:last-child { margin-bottom:0; }
+  .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
+
+  .content-card {
+    background:var(--bg-panel);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+    margin-top:1rem;
+  }
+  .content-card:first-of-type { margin-top:0; }
+  .content-card h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
+
+  .insights {
+    display:grid;
+    grid-template-columns:1fr;
+    gap:1rem;
+    margin-top:1rem;
+  }
+  @media (min-width:900px) { .insights { grid-template-columns:1fr 1fr; } }
+
+  .insight-card {
+    background:var(--bg-panel);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+  }
+  .insight-card .insight-title { margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright); }
+
   .timer-bar { height:4px; background:var(--bg-elevated); border-radius:2px; overflow:hidden; margin-bottom:1rem; }
   .timer-fill { height:100%; background:var(--accent-cyan); transition:width 1s linear; }
   .draggable-target { cursor:grab; border:2px dashed var(--glass-border); border-radius:var(--radius-sm); padding:0.5rem 0.8rem; background:var(--bg-elevated); display:inline-block; transition:all 0.2s; }
@@ -30,10 +101,6 @@
   .gauge-label { font-size:0.75rem; color:var(--text-dim); margin-bottom:0.3rem; }
   .gauge-track { height:8px; background:var(--bg-elevated); border-radius:4px; overflow:hidden; }
   .gauge-fill { height:100%; width:0%; background:linear-gradient(90deg, var(--accent-cyan), var(--accent-pink)); transition:width 0.3s ease; }
-  .macro-panel { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-top:1rem; }
-  .macro-panel:first-of-type { margin-top:0; }
-  .macro-panel h3 { margin:0 0 0.6rem; font-size:1.05rem; color:var(--text-bright); }
-  .sidebar-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; margin-bottom:1rem; }
   .sidebar-card h4 { margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-bright); }
   .slider-group { margin-bottom:1rem; }
   .slider-group label { display:block; font-size:0.82rem; color:var(--text-dim); margin-bottom:0.3rem; }
@@ -47,7 +114,6 @@
   .insights { display:grid; grid-template-columns:1fr; gap:1rem; margin-top:1rem; }
   @media (min-width:768px) { .insights { grid-template-columns:1fr 1fr; } }
   .insight-card { background:var(--bg-panel); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:1rem; }
-  .insight-card h4 { margin:0 0 0.5rem; font-size:0.95rem; color:var(--text-bright); }
   .insight-card p { font-size:0.88rem; color:var(--text-muted); line-height:1.55; margin:0.4rem 0; }
   .insight-card .insight-title { font-size:0.95rem; color:var(--text-bright); margin-bottom:0.5rem; }
 
@@ -58,19 +124,6 @@
   .physics-note { margin-bottom:0.6rem; }
   .physics-note summary { font-size:0.9rem; color:var(--accent-cyan); cursor:pointer; font-weight:600; }
   .physics-note .note-body { font-size:0.85rem; color:var(--text-muted); line-height:1.6; margin-top:0.4rem; }
-
-  .game-container[data-active-mode="story"] .game-hero .hero-desc,
-  .game-container[data-active-mode="challenge"] .game-hero .hero-desc,
-  .game-container[data-active-mode="puzzle"] .game-hero .hero-desc { display:none; }
-  .game-container[data-active-mode="story"] .game-mode-bar,
-  .game-container[data-active-mode="challenge"] .game-mode-bar,
-  .game-container[data-active-mode="puzzle"] .game-mode-bar { margin-top:0.4rem; margin-bottom:0.4rem; }
-  .game-container[data-active-mode="story"] .game-hero,
-  .game-container[data-active-mode="challenge"] .game-hero,
-  .game-container[data-active-mode="puzzle"] .game-hero { padding-bottom:0.4rem; }
-  .game-container[data-active-mode="story"] .game-hero h1,
-  .game-container[data-active-mode="challenge"] .game-hero h1,
-  .game-container[data-active-mode="puzzle"] .game-hero h1 { font-size:1.5rem !important; margin-bottom:0; }
 
   .sub-mode-bar { display:flex; justify-content:center; gap:0.4rem; flex-wrap:wrap; margin:0 0 1rem; padding:0.3rem; background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:999px; }
   .sub-mode-btn { appearance:none; border:1px solid transparent; background:transparent; color:var(--text-dim); font-family:inherit; font-size:0.75rem; padding:0.35rem 0.85rem; border-radius:999px; cursor:pointer; transition:all 0.2s; }
@@ -85,6 +138,10 @@
   .readout-table td { color:var(--text-bright); font-family:var(--font-mono); }
   .ctrl-panel { border-left:3px solid var(--accent-cyan); }
   .ctrl-panel h4 { background:linear-gradient(135deg, var(--accent-cyan), var(--accent-pink)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .preset-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:0.4rem; }
+  .preset-btn { padding:0.4rem; border-radius:var(--radius-md); border:1px solid var(--glass-border); background:var(--bg-deep); color:var(--text-main); cursor:pointer; font-weight:600; font-size:0.72rem; transition:all .2s; }
+  .preset-btn:hover { border-color:var(--accent-cyan); color:var(--accent-cyan); }
+  .preset-btn.active { background:var(--grad-hero); border-color:transparent; color:#fff; }
   .readout-panel { border-left:3px solid var(--accent-pink); }
   .readout-panel h4 { background:linear-gradient(135deg, var(--accent-pink), var(--accent-cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
 
@@ -99,45 +156,54 @@
   .challenge-feedback.success { background:rgba(74,222,128,0.1); color:var(--accent-green); border:1px solid rgba(74,222,128,0.3); }
   .challenge-feedback.error { background:rgba(255,85,85,0.1); color:var(--accent-red); border:1px solid rgba(255,85,85,0.3); }
   .challenge-feedback.hint { background:rgba(250,204,21,0.1); color:var(--accent-yellow); border:1px solid rgba(250,204,21,0.3); }
+
+  .challenge-panel {
+    background:var(--bg-panel);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:1rem;
+    margin-top:1rem;
+  }
+  .challenge-panel:first-of-type { margin-top:0; }
 </style>
 </head>
-<body>
+<body data-module="15" data-tab="overview">
+
 <div class="orb orb-cyan"></div>
 <div class="orb orb-purple"></div>
 <div class="orb orb-pink"></div>
 
-<nav class="game-nav">
+<nav class="lab-topbar">
   <div class="nav-brand"><a href="../../index.html" style="text-decoration:none;color:inherit;"><span class="nav-logo">⚛</span> Physics Playground</a></div>
   <div class="nav-stats">
-    <div class="stat-badge"><span class="stat-icon">🔥</span><span class="stat-value">Thermal Properties Lab</span></div>
-    <div class="stat-badge"><span class="stat-icon">⭐</span><span class="stat-value" id="nav-xp">0 XP</span></div>
+    <select id="module-jump" class="stat-badge" style="background:var(--bg-elevated);border:1px solid var(--glass-border);border-radius:var(--radius-pill);padding:0.3rem 0.8rem;font-size:0.82rem;color:var(--text-muted);">
+      <option>Jump to module...</option>
+    </select>
   </div>
 </nav>
 
-<div class="game-hero" style="padding-bottom:0;">
-  <div class="level-badge">Module 15 · Level <span id="current-level">1</span> · Heat Engine</div>
-  <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-yellow),var(--accent-red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Thermal Properties</span></h1>
-  <p class="hero-desc">Explore how phonons and electrons store heat, conduct it, and make the lattice expand.</p>
-</div>
+<div class="lab-root">
 
-<div class="game-container" data-active-mode="story" style="max-width:1600px;margin:0 auto;padding:0 2rem 3rem;">
+  <header class="lab-header" style="padding-bottom:0.5rem;">
+    <div>
+      <h1 style="font-size:2.4rem;"><span style="background:linear-gradient(135deg,var(--accent-yellow),var(--accent-red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Thermal Properties</span></h1>
+      <p class="lab-desc">Explore how phonons and electrons store heat, conduct it, and make the lattice expand.</p>
+    </div>
+  </header>
 
-  <!-- MODE BAR -->
-  <div class="game-mode-bar">
-    <button class="game-mode-btn active" id="mode-story" onclick="setGameMode('story')">📖 Story</button>
-    <button class="game-mode-btn" id="mode-theory" onclick="setGameMode('theory')">🎓 Theory</button>
-    <button class="game-mode-btn" id="mode-play" onclick="setGameMode('play')">🔬 Playground</button>
-    <button class="game-mode-btn" id="mode-challenge" onclick="setGameMode('challenge')">🎯 Challenges</button>
-    <button class="game-mode-btn" id="mode-puzzle" onclick="setGameMode('puzzle')">🧩 Puzzles</button>
+  <div class="tab-bar" role="tablist">
+    <button class="tab-btn active" data-tab="overview" role="tab">📋 Overview</button>
+    <button class="tab-btn" data-tab="theory" role="tab">📖 Theory</button>
+    <button class="tab-btn" data-tab="simulation" role="tab">🔬 Simulation</button>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-     STORY MODE
-     ═══════════════════════════════════════════════════════════════ -->
-  <div class="mode-section" id="section-story" style="display:block;">
-    <div class="game-layout">
-      <div class="game-main">
-        <section class="macro-panel">
+  <div class="lab-layout">
+    <main class="lab-main">
+
+      <!-- ═══════════════ OVERVIEW TAB ═══════════════ -->
+      <section id="tab-overview" class="tab-section active">
+
+        <div class="content-card">
           <h3>🔥 The Heat Chronicles</h3>
           <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.55;margin-bottom:0.75rem;">
             You arrive at the <strong style="color:var(--accent-cyan);">Thermal Observatory</strong>, a station suspended above a crystal lattice frozen at millikelvin temperatures. Your mission: understand why some solids conduct heat like lightning while others trap it like a cage, and why every crystal whispers a phonon song that changes pitch as it warms.
@@ -161,169 +227,126 @@
               <p>A temperature gradient across a metal drives electrons uphill — the Seebeck effect. Reverse the current and you pump heat — the Peltier effect. These phenomena are the backbone of thermoelectric generators and solid-state cooling.</p>
             </div>
           </div>
-        </section>
-      </div>
-      <aside class="game-sidebar static">
-        <div class="sidebar-card">
-          <h4>🗺 Lab Navigator</h4>
-          <div id="module-nav-story"></div>
-        </div>
-        <div class="sidebar-card">
-          <h4>🏆 Your Badges</h4>
-          <div id="badge-list-story" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        </div>
-        <div class="sidebar-card">
-          <h4>📊 Progress</h4>
-          <div class="scoreboard">
-            <div class="score-cell"><div class="score-num" id="stat-challenges-story">0</div><div class="score-label">Challenges</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-puzzles-story">0</div><div class="score-label">Puzzles</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-xp-story">0</div><div class="score-label">Total XP</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-badges-story">0</div><div class="score-label">Badges</div></div>
-          </div>
-        </div>
-      </aside>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════
-     THEORY MODE
-     ═══════════════════════════════════════════════════════════════ -->
-  <div class="mode-section" id="section-theory" style="display:none;">
-    <div class="game-layout">
-      <div class="game-main">
-        <section class="macro-panel">
-          <h3>📚 Complete Thermal Physics Theory</h3>
-          <div class="theory-content">
-            <p>
-              Thermal properties of solids are governed by two quantum fluids: <strong>phonons</strong> (quantized lattice vibrations) and <strong>electrons</strong> near the Fermi surface. Their excitations store heat, transport it, and couple to the lattice geometry through anharmonicity.
-            </p>
-          </div>
-
-          <div class="physics-note">
-            <details open>
-              <summary>1. Debye Model — Lattice Heat Capacity</summary>
-              <div class="note-body">
-                The Debye model treats the crystal as a continuous elastic medium up to a cutoff ωD. Defining x = ℏω/kBT and xD = θD/T, the heat capacity is
-                <div class="equation-box" style="margin:0.5rem 0;">
-                  $$C_V = 9R \left(\frac{T}{\theta_D}\right)^3 \int_0^{x_D} \frac{x^4 e^x}{(e^x - 1)^2} \, dx$$
-                </div>
-                At low T this gives Cᵥ ∝ T³; at high T it approaches the Dulong–Petit limit 3R.
-              </div>
-            </details>
-          </div>
-          <div class="physics-note">
-            <details>
-              <summary>2. Einstein Model — Single-Frequency Approximation</summary>
-              <div class="note-body">
-                Einstein assumes all 3N oscillators vibrate at one frequency ωE. The heat capacity is
-                <div class="equation-box" style="margin:0.5rem 0;">
-                  $$C_V = 3R \left(\frac{\theta_E}{T}\right)^2 \frac{e^{\theta_E/T}}{(e^{\theta_E/T} - 1)^2}$$
-                </div>
-                It also tends to 3R at high T, but falls off exponentially at low T because it misses low-frequency acoustic modes.
-              </div>
-            </details>
-          </div>
-          <div class="physics-note">
-            <details>
-              <summary>3. Electronic Heat Capacity — Free-Electron Gas</summary>
-              <div class="note-body">
-                Only electrons within ~ kBT of the Fermi surface can be thermally excited. This gives a linear term
-                <div class="equation-box" style="margin:0.5rem 0;">
-                  $$C_{V,\text{el}} = \gamma T, \qquad \gamma = \frac{\pi^2}{3} k_B^2 g(E_F)$$
-                </div>
-                For copper, γ ≈ 0.695 mJ/mol·K².
-              </div>
-            </details>
-          </div>
-          <div class="physics-note">
-            <details>
-              <summary>4. Thermal Conductivity — Boltzmann Transport</summary>
-              <div class="note-body">
-                From kinetic theory, κ = (1/3) C_v v ℓ. Phonon mean free path is limited by boundaries, impurities, and Umklapp scattering. The Matthiessen rule is
-                <div class="equation-box" style="margin:0.5rem 0;">
-                  $$\frac{1}{\ell} = \frac{1}{\ell_\text{boundary}} + \frac{1}{\ell_\text{impurity}} + \frac{1}{\ell_\text{Umklapp}}$$
-                </div>
-                At low T, κ ∝ T³; near θD/5 it peaks; at high T, Umklapp limits give κ ∝ 1/T.
-              </div>
-            </details>
-          </div>
-          <div class="physics-note">
-            <details>
-              <summary>5. Thermal Expansion — Grüneisen Theory</summary>
-              <div class="note-body">
-                The expansion coefficient is linked to the Grüneisen parameter by
-                <div class="equation-box" style="margin:0.5rem 0;">
-                  $$\alpha = \frac{\gamma_G C_V}{3 B V}, \qquad \gamma_G = -\frac{d(\ln \omega)}{d(\ln V)}$$
-                </div>
-                In a harmonic crystal γG = 0 and α = 0. Anharmonicity creates γG > 0 and thus expansion.
-              </div>
-            </details>
-          </div>
-          <div class="physics-note">
-            <details>
-              <summary>6. Wiedemann–Franz Law</summary>
-              <div class="note-body">
-                For metals, the ratio κ/(σT) is the Lorenz number
-                <div class="equation-box" style="margin:0.5rem 0;">
-                  $$\frac{\kappa}{\sigma T} = L_0 = \frac{\pi^2}{3} \left(\frac{k_B}{e}\right)^2 = 2.44 \times 10^{-8} \, \text{W}\cdot\Omega/\text{K}^2$$
-                </div>
-                This works because both heat and charge are carried by the same electrons.
-              </div>
-            </details>
-          </div>
-          <div class="physics-note">
-            <details>
-              <summary>7. Thermoelectric Effects</summary>
-              <div class="note-body">
-                A temperature gradient creates a voltage (Seebeck) and a current pumps heat (Peltier). Their coefficients satisfy Π = ST, and the figure of merit is
-                <div class="equation-box" style="margin:0.5rem 0;">
-                  $$ZT = \frac{S^2 \sigma T}{\kappa}$$
-                </div>
-                State-of-the-art materials such as Bi₂Te₃ and SnSe reach ZT ≈ 2–3 at room temperature.
-              </div>
-            </details>
-          </div>
-        </section>
-      </div>
-      <aside class="game-sidebar static">
-        <div class="sidebar-card">
-          <h4>🗺 Lab Navigator</h4>
-          <div id="module-nav-theory"></div>
-        </div>
-        <div class="sidebar-card">
-          <h4>🏆 Your Badges</h4>
-          <div id="badge-list-theory" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        </div>
-        <div class="sidebar-card">
-          <h4>📊 Progress</h4>
-          <div class="scoreboard">
-            <div class="score-cell"><div class="score-num" id="stat-challenges-theory">0</div><div class="score-label">Challenges</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-puzzles-theory">0</div><div class="score-label">Puzzles</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-xp-theory">0</div><div class="score-label">Total XP</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-badges-theory">0</div><div class="score-label">Badges</div></div>
-          </div>
-        </div>
-      </aside>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════
-     PLAYGROUND MODE
-     ═══════════════════════════════════════════════════════════════ -->
-  <div class="mode-section active" id="section-play" style="display:none;">
-    <div class="game-layout">
-      <div class="game-main">
-
-        <div class="sub-mode-bar">
-          <button class="sub-mode-btn active" id="sub-lattice" onclick="setPlaySubTab('lattice')">🌡️ Lattice Sandbox</button>
-          <button class="sub-mode-btn" id="sub-cv" onclick="setPlaySubTab('cv')">📈 Heat Capacity</button>
-          <button class="sub-mode-btn" id="sub-kappa" onclick="setPlaySubTab('kappa')">⚡ Thermal Conductivity</button>
         </div>
 
-        <!-- SUBTAB 1: Lattice + Debye -->
-        <div class="subtab-content active" id="subtab-lattice">
-          <section class="macro-panel">
-            <h3>🌡️ Phonon Lattice Sandbox</h3>
+      </section>
+
+      <!-- ═══════════════ THEORY TAB ═══════════════ -->
+      <section id="tab-theory" class="tab-section">
+
+        <div class="content-card">
+          <h3>📚 Thermal Physics — Overview</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+            Thermal properties of solids are governed by two quantum fluids: <strong style="color:var(--accent-cyan);">phonons</strong> (quantized lattice vibrations) and <strong style="color:var(--accent-cyan);">electrons</strong> near the Fermi surface. Their excitations store heat, transport it, and couple to the lattice geometry through anharmonicity.
+          </p>
+        </div>
+
+        <div class="content-card">
+          <h3>1. Debye Model — Lattice Heat Capacity</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+            The Debye model treats the crystal as a continuous elastic medium up to a cutoff ω<sub>D</sub>. Defining x = ℏω/k<sub>B</sub>T and x<sub>D</sub> = θ<sub>D</sub>/T, the heat capacity is
+          </p>
+          <div class="equation-box">
+            $$C_V = 9R \left(\frac{T}{\theta_D}\right)^3 \int_0^{x_D} \frac{x^4 e^x}{(e^x - 1)^2} \, dx$$
+          </div>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-top:0.4rem;">
+            At low T this gives C<sub>V</sub> ∝ T³; at high T it approaches the Dulong–Petit limit 3R.
+          </p>
+        </div>
+
+        <div class="content-card">
+          <h3>2. Einstein Model — Single-Frequency Approximation</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+            Einstein assumes all 3N oscillators vibrate at one frequency ω<sub>E</sub>. The heat capacity is
+          </p>
+          <div class="equation-box">
+            $$C_V = 3R \left(\frac{\theta_E}{T}\right)^2 \frac{e^{\theta_E/T}}{(e^{\theta_E/T} - 1)^2}$$
+          </div>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-top:0.4rem;">
+            It also tends to 3R at high T, but falls off exponentially at low T because it misses low-frequency acoustic modes.
+          </p>
+        </div>
+
+        <div class="content-card">
+          <h3>3. Electronic Heat Capacity — Free-Electron Gas</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+            Only electrons within ~ k<sub>B</sub>T of the Fermi surface can be thermally excited. This gives a linear term
+          </p>
+          <div class="equation-box">
+            $$C_{V,\text{el}} = \gamma T, \qquad \gamma = \frac{\pi^2}{3} k_B^2 g(E_F)$$
+          </div>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-top:0.4rem;">
+            For copper, γ ≈ 0.695 mJ/mol·K².
+          </p>
+        </div>
+
+        <div class="content-card">
+          <h3>4. Thermal Conductivity — Boltzmann Transport</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+            From kinetic theory, κ = (1/3) C<sub>v</sub> v ℓ. Phonon mean free path is limited by boundaries, impurities, and Umklapp scattering. The Matthiessen rule is
+          </p>
+          <div class="equation-box">
+            $$\frac{1}{\ell} = \frac{1}{\ell_\text{boundary}} + \frac{1}{\ell_\text{impurity}} + \frac{1}{\ell_\text{Umklapp}}$$
+          </div>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-top:0.4rem;">
+            At low T, κ ∝ T³; near θ<sub>D</sub>/5 it peaks; at high T, Umklapp limits give κ ∝ 1/T.
+          </p>
+        </div>
+
+        <div class="content-card">
+          <h3>5. Thermal Expansion — Grüneisen Theory</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+            The expansion coefficient is linked to the Grüneisen parameter by
+          </p>
+          <div class="equation-box">
+            $$\alpha = \frac{\gamma_G C_V}{3 B V}, \qquad \gamma_G = -\frac{d(\ln \omega)}{d(\ln V)}$$
+          </div>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-top:0.4rem;">
+            In a harmonic crystal γ<sub>G</sub> = 0 and α = 0. Anharmonicity creates γ<sub>G</sub> > 0 and thus expansion.
+          </p>
+        </div>
+
+        <div class="content-card">
+          <h3>6. Wiedemann–Franz Law</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+            For metals, the ratio κ/(σT) is the Lorenz number
+          </p>
+          <div class="equation-box">
+            $$\frac{\kappa}{\sigma T} = L_0 = \frac{\pi^2}{3} \left(\frac{k_B}{e}\right)^2 = 2.44 \times 10^{-8} \, \text{W}\cdot\Omega/\text{K}^2$$
+          </div>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-top:0.4rem;">
+            This works because both heat and charge are carried by the same electrons.
+          </p>
+        </div>
+
+        <div class="content-card">
+          <h3>7. Thermoelectric Effects</h3>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;">
+            A temperature gradient creates a voltage (Seebeck) and a current pumps heat (Peltier). Their coefficients satisfy Π = ST, and the figure of merit is
+          </p>
+          <div class="equation-box">
+            $$ZT = \frac{S^2 \sigma T}{\kappa}$$
+          </div>
+          <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-top:0.4rem;">
+            State-of-the-art materials such as Bi₂Te₃ and SnSe reach ZT ≈ 2–3 at room temperature.
+          </p>
+        </div>
+      </section>
+
+      <!-- ═══════════════ SIMULATION TAB ═══════════════ -->
+      <section id="tab-simulation" class="tab-section">
+
+        <div class="content-card">
+          <h3>🔬 Thermal Properties Simulator</h3>
+
+          <div class="sub-mode-bar">
+            <button class="sub-mode-btn active" id="sub-lattice" onclick="setPlaySubTab('lattice')">🌡️ Lattice Sandbox</button>
+            <button class="sub-mode-btn" id="sub-cv" onclick="setPlaySubTab('cv')">📈 Heat Capacity</button>
+            <button class="sub-mode-btn" id="sub-kappa" onclick="setPlaySubTab('kappa')">⚡ Thermal Conductivity</button>
+          </div>
+
+          <!-- SUBTAB 1: Lattice + Debye -->
+          <div class="subtab-content active" id="subtab-lattice">
             <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.6;">
               Heat, cool, or probe a vibrating crystal lattice. The Debye sphere shows how many phonon modes are excited at the current temperature.
             </p>
@@ -354,13 +377,10 @@
               <div style="padding:0.6rem 1rem;border-bottom:1px solid var(--glass-border);font-weight:700;color:var(--text-bright);font-size:0.9rem;">🔮 Debye Sphere</div>
               <canvas id="debye-sphere"></canvas>
             </div>
-          </section>
-        </div>
+          </div>
 
-        <!-- SUBTAB 2: Heat Capacity -->
-        <div class="subtab-content active" id="subtab-cv">
-          <section class="macro-panel">
-            <h3>📈 Heat Capacity Cᵥ(T)</h3>
+          <!-- SUBTAB 2: Heat Capacity -->
+          <div class="subtab-content" id="subtab-cv">
             <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.6;">
               Debye T³ + electronic γT. Electronic γT dominates below ~10 K.
             </p>
@@ -380,13 +400,10 @@
                 Electronic:  Cᵥ,el = γ T
               </div>
             </div>
-          </section>
-        </div>
+          </div>
 
-        <!-- SUBTAB 3: Thermal Conductivity -->
-        <div class="subtab-content" id="subtab-kappa">
-          <section class="macro-panel">
-            <h3>⚡ Thermal Conductivity κ(T)</h3>
+          <!-- SUBTAB 3: Thermal Conductivity -->
+          <div class="subtab-content" id="subtab-kappa">
             <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.6;">
               κ = κ_ph + κ_el. Umklapp peak ~50 K. Electron κ_el ∝ T⁻¹ at low T.
             </p>
@@ -402,18 +419,21 @@
                 materials science.
               </p>
               <div class="equation-box" style="font-size:0.85rem;">
-                κ_ph = (1/3) C_v v_s ℓ_ph<br>
-                Wiedemann–Franz:  κ_el / (σT) = L₀ = 2.44×10⁻⁸ W·Ω/K²
+                $$\kappa_{\text{ph}} = \frac{1}{3}\, C_V\, v_s\, \ell_{\text{ph}}$$
+                $$\text{Wiedemann–Franz:} \quad \frac{\kappa_{\text{el}}}{\sigma T} = L_0 = \frac{\pi^2}{3}\left(\frac{k_B}{e}\right)^2 = 2.44 \times 10^{-8}\;\text{W}\cdot\Omega\cdot\text{K}^{-2}$$
               </div>
             </div>
-          </section>
+          </div>
         </div>
 
-      </div>
+      </section>
 
-      <aside class="game-sidebar">
-        <div class="sidebar-card ctrl-panel">
-          <h4>⚙ Controls</h4>
+    </main>
+
+    <aside class="lab-sidebar">
+      <div class="sidebar-card ctrl-panel" id="sim-controls-card">
+        <h4>⚙ Controls</h4>
+        <div id="sim-controls">
           <div class="slider-group">
             <label>Material type</label>
             <select id="select-type-tp">
@@ -425,6 +445,16 @@
             <label>Temperature T <span class="slider-value" id="val-T-tp">300</span><span class="unit-tag">K</span></label>
             <input type="range" id="slider-T-tp" min="5" max="800" value="300" step="5">
           </div>
+          <div class="slider-group">
+            <label>Browse elements</label>
+            <div class="preset-grid">
+              <button class="preset-btn" onclick="setTPMaterial('Quartz')">Quartz</button>
+              <button class="preset-btn" onclick="setTPMaterial('Cu')">Copper</button>
+              <button class="preset-btn" onclick="setTPMaterial('Al')">Aluminum</button>
+              <button class="preset-btn" onclick="setTPMaterial('Diamond')">Diamond</button>
+              <button class="preset-btn" onclick="setTPMaterial('Si')">Silicon</button>
+            </div>
+          </div>
           <div class="slider-group tp-side-cv tp-side-kappa">
             <label>Debye θD <span class="slider-value" id="val-thetaD">400</span><span class="unit-tag">K</span></label>
             <input type="range" id="slider-thetaD" min="50" max="1000" value="400" step="10">
@@ -434,225 +464,103 @@
             <input type="range" id="slider-gamma" min="0" max="0.01" value="0.002" step="0.0005">
           </div>
         </div>
-
-        <div class="sidebar-card tp-side-cv tp-side-kappa readout-panel">
-          <h4>📊 Live Readout</h4>
-          <table class="readout-table">
+      </div>
+      <div class="sidebar-card readout-panel" id="sim-readout-card">
+        <h4>📊 Live Readout</h4>
+        <div id="sim-readout">
+          <table class="readout-table tp-side-cv tp-side-kappa">
             <tr><th>Quantity</th><th>Value</th></tr>
             <tr><td>Cv total</td><td class="highlight-num" id="live-Cv">—</td></tr>
             <tr><td>Cv lattice</td><td class="highlight-pink" id="live-Cv-lat">—</td></tr>
             <tr><td>Cv electronic</td><td class="highlight-num" id="live-Cv-el">—</td></tr>
             <tr><td>κ (W/m·K)</td><td class="highlight-num" id="live-kappa">—</td></tr>
           </table>
-        </div>
-
-        <div class="sidebar-card tp-side-cv tp-side-kappa">
-          <h4>📈 Gauge Readings</h4>
-          <div class="gauge-card">
-            <div class="gauge-label">Cv fraction of 3R</div>
-            <div class="gauge-track"><div class="gauge-fill" id="gauge-cv"></div></div>
-            <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;" id="gauge-cv-val">0%</div>
-          </div>
-          <div class="gauge-card" style="margin-top:0.8rem;">
-            <div class="gauge-label">κ fraction of peak</div>
-            <div class="gauge-track"><div class="gauge-fill" id="gauge-kappa"></div></div>
-            <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;" id="gauge-kappa-val">0%</div>
-          </div>
-        </div>
-
-        <div class="sidebar-card tp-side-all">
-          <h4>🗺 Lab Navigator</h4>
-          <div id="module-nav"></div>
-        </div>
-        <div class="sidebar-card tp-side-all">
-          <h4>🏆 Your Badges</h4>
-          <div id="badge-list" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        </div>
-        <div class="sidebar-card tp-side-all">
-          <h4>📊 Progress</h4>
-          <div class="scoreboard">
-            <div class="score-cell"><div class="score-num" id="stat-challenges">0</div><div class="score-label">Challenges</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-puzzles">0</div><div class="score-label">Puzzles</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-xp">0</div><div class="score-label">Total XP</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-badges">0</div><div class="score-label">Badges</div></div>
-          </div>
-        </div>
-      </aside>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════
-     CHALLENGE MODE
-     ═══════════════════════════════════════════════════════════════ -->
-  <div class="mode-section" id="section-challenge" style="display:none;">
-    <div class="game-layout">
-      <div class="game-main">
-        <div class="challenge-grid">
-          <div class="challenge-card">
-            <div class="challenge-header">
-              <span class="challenge-icon">🎮</span>
-              <span class="challenge-title">Challenge 1: Metal or Insulator?</span>
-              <span class="challenge-difficulty easy">Easy</span>
+          <div style="margin-top:1rem;">
+            <div class="gauge-card tp-side-cv">
+              <div class="gauge-label">Cv fraction of 3R</div>
+              <div class="gauge-track"><div class="gauge-fill" id="gauge-cv"></div></div>
+              <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;" id="gauge-cv-val">0%</div>
             </div>
-            <div class="challenge-desc">Given Cv(T) behavior, classify the material as metal or insulator.</div>
-            <div class="challenge-reward">🏆 Reward: 50 XP</div>
-            <div class="timer-bar"><div class="timer-fill" id="tp-timer" style="width:100%"></div></div>
-            <div id="tp-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-            <div style="display:flex; gap:0.5rem;"><button class="btn" onclick="guessTP('metal')">Metal</button><button class="btn" onclick="guessTP('insulator')">Insulator</button></div>
-            <div style="font-size:0.85rem;color:var(--text-dim);margin-top:0.5rem;"><strong>Score:</strong> <span id="tp-score">0</span> · <strong>Combo:</strong> <span id="tp-combo">0</span></div>
-            <div class="challenge-feedback" id="tp-feedback"></div>
-          </div>
-          <div class="challenge-card">
-            <div class="challenge-header">
-              <span class="challenge-icon">📐</span>
-              <span class="challenge-title">Challenge 2: Debye Temperature Estimator</span>
-              <span class="challenge-difficulty medium">Medium</span>
+            <div class="gauge-card tp-side-kappa" style="margin-top:0.8rem;">
+              <div class="gauge-label">κ fraction of peak</div>
+              <div class="gauge-track"><div class="gauge-fill" id="gauge-kappa"></div></div>
+              <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;" id="gauge-kappa-val">0%</div>
             </div>
-            <div class="challenge-desc">Given low-T Cv ∝ T³ data, estimate the Debye temperature.</div>
-            <div class="challenge-reward">🏆 Reward: 75 XP</div>
-            <div id="debye-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-            <input type="text" id="debye-ans" placeholder="K" style="width:120px;background:var(--bg-elevated);border:1px solid var(--glass-border);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
-            <button class="btn" onclick="checkDebye()" style="margin-left:0.5rem;">Submit</button>
-            <div class="challenge-feedback" id="debye-feedback"></div>
-          </div>
-          <div class="challenge-card">
-            <div class="challenge-header">
-              <span class="challenge-icon">⚡</span>
-              <span class="challenge-title">Challenge 3: Wiedemann-Franz Calculator</span>
-              <span class="challenge-difficulty hard">Hard</span>
-            </div>
-            <div class="challenge-desc">Estimate κ from σ and T using the Wiedemann–Franz law with L₀≈2.44×10⁻⁸ W·Ω/K².</div>
-            <div class="challenge-reward">🏆 Reward: 100 XP</div>
-            <div id="wf-target-text" style="font-size:1rem;margin-bottom:1rem;">Loading...</div>
-            <input type="text" id="wf-ans" placeholder="W/m·K" style="width:120px;background:var(--bg-elevated);border:1px solid var(--glass-border);color:var(--text-main);padding:0.5rem;border-radius:6px;font-family:var(--font-mono);">
-            <button class="btn" onclick="checkWF()" style="margin-left:0.5rem;">Submit</button>
-            <div class="challenge-feedback" id="wf-feedback"></div>
           </div>
         </div>
       </div>
-      <aside class="game-sidebar static">
-        <div class="sidebar-card">
-          <h4>🗺 Lab Navigator</h4>
-          <div id="module-nav-challenge"></div>
-        </div>
-        <div class="sidebar-card">
-          <h4>🏆 Your Badges</h4>
-          <div id="badge-list-challenge" style="font-size:0.8rem;color:var(--text-dim);">Complete challenges to earn badges!</div>
-        </div>
-        <div class="sidebar-card">
-          <h4>📊 Progress</h4>
-          <div class="scoreboard">
-            <div class="score-cell"><div class="score-num" id="stat-chal-ch">0</div><div class="score-label">Challenges</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-puz-ch">0</div><div class="score-label">Puzzles</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-xp-ch">0</div><div class="score-label">Total XP</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-badges-ch">0</div><div class="score-label">Badges</div></div>
-          </div>
-        </div>
-      </aside>
-    </div>
+      <div id="module-nav" style="display:none;"></div>
+    </aside>
+
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-     PUZZLE MODE
-     ═══════════════════════════════════════════════════════════════ -->
-  <div class="mode-section" id="section-puzzle" style="display:none;">
-    <div class="game-layout">
-      <div class="game-main">
-        <div class="challenge-grid">
-          <div class="puzzle-card">
-            <div class="challenge-header">
-              <span class="challenge-icon">🔧</span>
-              <span class="challenge-title">Puzzle 1: Build Cv Contributions</span>
-              <span class="challenge-difficulty medium">Medium</span>
-            </div>
-            <div class="challenge-desc">Assemble the low-temperature heat capacity formula for a metal by placing terms.</div>
-            <div class="challenge-reward">🏆 Reward: 60 XP</div>
-            <div id="tp-pool" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0.5rem 0;"></div>
-            <div id="tp-zones" style="display:flex;gap:0.3rem;flex-wrap:wrap;margin:0.5rem 0;"></div>
-            <button class="btn" onclick="checkTPBuilder()">✓ Verify</button>
-            <div class="challenge-feedback" id="tp-builder-feedback"></div>
-          </div>
-          <div class="puzzle-card">
-            <div class="challenge-header">
-              <span class="challenge-icon">📐</span>
-              <span class="challenge-title">Puzzle 2: Debye vs Einstein</span>
-              <span class="challenge-difficulty medium">Medium</span>
-            </div>
-            <div class="challenge-desc">Match each model behavior to the correct model.</div>
-            <div class="challenge-reward">🏆 Reward: 70 XP</div>
-            <div id="model-list" style="margin-top:0.5rem;"></div>
-            <button class="btn" onclick="checkModelPuzzle()">✓ Check</button>
-            <div class="challenge-feedback" id="model-feedback"></div>
-          </div>
-          <div class="puzzle-card">
-            <div class="challenge-header">
-              <span class="challenge-icon">💡</span>
-              <span class="challenge-title">Puzzle 3: Thermal Expansion Origin</span>
-              <span class="challenge-difficulty master">Master</span>
-            </div>
-            <div class="challenge-desc">Why does a solid expand when heated? Select the correct microscopic reason.</div>
-            <div class="challenge-reward">🏆 Reward: 120 XP</div>
-            <div id="exp-list" style="margin-top:0.5rem;"></div>
-            <button class="btn" onclick="checkExpPuzzle()">✓ Check</button>
-            <div class="challenge-feedback" id="exp-feedback"></div>
-          </div>
-        </div>
-      </div>
-      <aside class="game-sidebar static">
-        <div class="sidebar-card">
-          <h4>🗺 Lab Navigator</h4>
-          <div id="module-nav-puzzle"></div>
-        </div>
-        <div class="sidebar-card">
-          <h4>🏆 Your Badges</h4>
-          <div id="badge-list-puzzle" style="font-size:0.8rem;color:var(--text-dim);">Complete puzzles to earn badges!</div>
-        </div>
-        <div class="sidebar-card">
-          <h4>📊 Progress</h4>
-          <div class="scoreboard">
-            <div class="score-cell"><div class="score-num" id="stat-chal-puz">0</div><div class="score-label">Challenges</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-puz-puz">0</div><div class="score-label">Puzzles</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-xp-puz">0</div><div class="score-label">Total XP</div></div>
-            <div class="score-cell"><div class="score-num" id="stat-badges-puz">0</div><div class="score-label">Badges</div></div>
-          </div>
-        </div>
-      </aside>
-    </div>
-  </div>
-
-</div><!-- game-container -->
+</div>
 
 <script src="../../shared_ui.js"></script>
-<script src="../../shared_games.js"></script>
+<script src="../../shared_lab.js"></script>
 <script src="../../shared_interactive.js"></script>
 <script src="tp_canvas.js?v=1"></script>
 <script src="tp_sim.js?v=1"></script>
 <script src="tp_apps.js?v=1"></script>
-<script src="tp_apps_games.js?v=1"></script>
 <script src="../../shared_effects.js"></script>
 
 <script>
-function setGameMode(mode) {
-  document.querySelectorAll('.mode-section').forEach(function(s) { s.classList.remove('active'); s.style.display = 'none'; });
-  var section = document.getElementById('section-' + mode);
-  if (section) { section.classList.add('active'); section.style.display = 'block'; }
-  document.querySelectorAll('.game-mode-btn').forEach(function(b) { b.classList.remove('active'); });
-  var btn = document.getElementById('mode-' + mode);
-  if (btn) btn.classList.add('active');
-  var gc = document.querySelector('.game-container');
-  if (gc) gc.setAttribute('data-active-mode', mode);
+(function() {
+  'use strict';
 
-  if (mode === 'play') {
-    if (!window.__TP_inited) { initTP(); window.__TP_inited = true; }
-    if (typeof resizeTPCanvas === 'function') resizeTPCanvas();
-    // default sub-tab lattice (first)
+  // Compatibility shim: alias old mode system to new tab system
+  window.setGameMode = function(mode) {
+    var map = { story:'overview', theory:'theory', play:'simulation', challenge:'exercises', puzzle:'exercises' };
+    window.switchTab(map[mode] || 'overview');
+  };
+
+  // Stub gamification functions so existing game apps JS doesn't crash
+  if (!window.__GameState) window.__GameState = {
+    xp: function(){ return 0; },
+    addXP: function(){},
+    unlock: function(){},
+    hasAchievement: function(){ return false; },
+    get: function(){ return []; },
+    set: function(){},
+    getProgress: function(){ return 0; },
+    setProgress: function(){},
+    earnedBadges: { add: function(){}, has: function(){ return false; }, size: 0 },
+    save: function(){}
+  };
+  window.showXPFloat = function(){};
+  window.showAchievementPopup = function(){};
+  window.particleBurst = function(){};
+  window.celebrateCorrect = function(){ return { count:0, bonus:0 }; };
+  window.comboCheck = function(){ return { count:1, bonus:0 }; };
+  window.buildChallengePanel = function(){ return document.createElement('div'); };
+  window.showHint = function(){};
+  window.setModuleProgress = function(){};
+  window.updateNavXP = function(){};
+  window.updateNavBadges = function(){};
+  window.updateScoreboardTP = function(){};
+
+  // Tab-specific init hooks
+  window.initSimulation = function() {
+    if (!window.__TP_inited) {
+      if (typeof initTP === 'function') initTP();
+      window.__TP_inited = true;
+    }
+    if (typeof resizeTPCanvas === 'function') setTimeout(resizeTPCanvas, 50);
     if (typeof setPlaySubTab === 'function') setPlaySubTab('lattice');
-  }
-  if ((mode === 'challenge' || mode === 'puzzle') && !window.__TP_gamesInited) {
-    if (typeof initTPGames === 'function') initTPGames();
-    window.__TP_gamesInited = true;
-  }
-}
+  };
+  /* Toggle sidebar visibility via switchTab */
+  var _origSwitch = window.switchTab;
+  window.switchTab = function(tabId) {
+    if (typeof _origSwitch === 'function') _origSwitch(tabId);
+    var layout = document.querySelector('.lab-layout');
+    if (layout) layout.classList.toggle('sim-tab', tabId === 'simulation');
+  };
+  (function() {
+    var tab = document.body.getAttribute('data-tab') || 'overview';
+    var layout = document.querySelector('.lab-layout');
+    if (layout) layout.classList.toggle('sim-tab', tab === 'simulation');
+  })();
+})();
 
 function setPlaySubTab(tab) {
   document.querySelectorAll('.subtab-content').forEach(function(t) { t.classList.remove('active'); });
@@ -662,23 +570,23 @@ function setPlaySubTab(tab) {
   var btn = document.getElementById('sub-' + tab);
   if (btn) btn.classList.add('active');
 
-  // Show/hide sidebar cards per sub-tab
-  document.querySelectorAll('#section-play .game-sidebar > .sidebar-card').forEach(function(card) {
-    var scoped = card.classList.contains('tp-side-lattice') || card.classList.contains('tp-side-cv') || card.classList.contains('tp-side-kappa');
-    if (card.classList.contains('tp-side-all') || !scoped || card.classList.contains('tp-side-' + tab)) {
-      card.style.display = '';
-    } else {
-      card.style.display = 'none';
-    }
-  });
-
-  // Granular slider groups inside the controls card
-  document.querySelectorAll('#section-play .game-sidebar .slider-group').forEach(function(g) {
+  // Show/hide sidebar controls per sub-tab
+  document.querySelectorAll('#sim-controls > .slider-group').forEach(function(g) {
     var scoped = g.classList.contains('tp-side-lattice') || g.classList.contains('tp-side-cv') || g.classList.contains('tp-side-kappa');
     if (!scoped || g.classList.contains('tp-side-' + tab)) {
       g.style.display = '';
     } else {
       g.style.display = 'none';
+    }
+  });
+
+  // Show/hide sidebar readout items per sub-tab
+  document.querySelectorAll('#sim-readout-card .gauge-card, #sim-readout-card table').forEach(function(el) {
+    var scoped = el.classList.contains('tp-side-lattice') || el.classList.contains('tp-side-cv') || el.classList.contains('tp-side-kappa');
+    if (!scoped || el.classList.contains('tp-side-' + tab)) {
+      el.style.display = '';
+    } else {
+      el.style.display = 'none';
     }
   });
 
@@ -698,15 +606,13 @@ function setPlaySubTab(tab) {
   }, 80);
 }
 
-window.setGameMode = setGameMode;
 window.setPlaySubTab = setPlaySubTab;
 
 // Boot
 (function(){
   function bootTP() {
     if (typeof buildModuleNavTP === 'function') buildModuleNavTP();
-    if (typeof updateScoreboardTP === 'function') updateScoreboardTP();
-    if (typeof setGameMode === 'function') setGameMode('story');
+    if (typeof window.switchTab === 'function') window.switchTab('overview');
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootTP); else bootTP();
 })();

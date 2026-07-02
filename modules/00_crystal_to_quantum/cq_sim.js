@@ -25,6 +25,28 @@
     return 0.008 + E * 0.006;   // ~3× slower than before
   }
 
+  /* ─── MATERIAL PRESETS DATABASE ───
+     Only solid-state semiconductors with defined band structure.
+     Each entry has the properties needed for the crystal simulator. */
+  var MATERIAL_PRESETS = {
+    si:    { id:'si',    name:'Silicon',           formula:'Si',    type:'cubic',   bandgap:1.12, workFunction:4.5,  latticeConstant:5.43, n0:3.42, dn:0.08, dk:0.15, atomColorA:0x7da4c4, atomColorB:null,  bondColor:0x556677, simColor:0x8899aa, desc:'The workhorse of microelectronics.', shells:[[8,2,'2s 2p'],[4,3,'3s 3p']], valence:4 },
+    ge:    { id:'ge',    name:'Germanium',         formula:'Ge',    type:'cubic',   bandgap:0.67, workFunction:4.3,  latticeConstant:5.66, n0:4.0,  dn:0.12, dk:0.20, atomColorA:0x6b8b9e, atomColorB:null,  bondColor:0x556677, simColor:0x8899aa, desc:'Narrow-gap semiconductor. Used in high-speed electronics.', shells:[[8,2,'2s 2p'],[18,3,'3d 3s 3p'],[4,4,'4s 4p']], valence:4 },
+    c_dia: { id:'c_dia', name:'Diamond',           formula:'C',     type:'cubic',   bandgap:5.47, workFunction:5.0,  latticeConstant:3.57, n0:2.42, dn:0.04, dk:0.05, atomColorA:0xccccdd, atomColorB:null,  bondColor:0x8899aa, simColor:0xccccdd, desc:'Wide bandgap. The hardest known natural material.', shells:[[4,2,'2s 2p']], valence:4 },
+    sn:    { id:'sn',    name:'α-Tin (Gray Tin)',  formula:'Sn',    type:'cubic',   bandgap:0.00, workFunction:4.42, latticeConstant:6.49, n0:4.5,  dn:0.10, dk:0.20, atomColorA:0x99aabb, atomColorB:null,  bondColor:0x667788, simColor:0x99aabb, desc:'Zero-gap semiconductor. Cubic at low temperature.', shells:[[8,2,'2s 2p'],[18,3,'3d 3s 3p'],[18,4,'4d 4s 4p'],[4,5,'5s 5p']], valence:4 },
+    gaas:  { id:'gaas',  name:'Gallium Arsenide',  formula:'GaAs',  type:'cubic', bandgap:1.42, workFunction:4.6,  latticeConstant:5.65, n0:3.3,  dn:0.18, dk:0.40, atomColorA:0x6b8b9e, atomColorB:0x5b7b8e, bondColor:0x556677, simColor:0x8899bb, desc:'III-V compound. Key material for high-frequency electronics.', shells:[[8,2,'2s 2p'],[18,3,'3d 3s 3p'],[4,4,'4s 4p']], valence:4, valenceA:3, valenceB:5 },
+    inp:   { id:'inp',   name:'Indium Phosphide',  formula:'InP',   type:'cubic', bandgap:1.34, workFunction:4.38, latticeConstant:5.87, n0:3.1,  dn:0.15, dk:0.35, atomColorA:0x6b7b8e, atomColorB:0xaa6622, bondColor:0x556677, simColor:0x8899aa, desc:'III-V compound. Used in telecom lasers and photonics.', shells:[[8,2,'2s 2p'],[18,3,'3d 3s 3p'],[18,4,'4d 4s 4p'],[4,5,'5s 5p']], valence:4, valenceA:3, valenceB:5 },
+    inas:  { id:'inas',  name:'Indium Arsenide',   formula:'InAs',  type:'cubic', bandgap:0.35, workFunction:4.5,  latticeConstant:6.06, n0:3.5,  dn:0.20, dk:0.45, atomColorA:0x6b7b8e, atomColorB:0x5b7b8e, bondColor:0x556677, simColor:0x8899aa, desc:'Narrow-gap III-V. High electron mobility.', shells:[[8,2,'2s 2p'],[18,3,'3d 3s 3p'],[10,4,'4d 4p'],[4,5,'5s 5p']], valence:4, valenceA:3, valenceB:5 },
+    insb:  { id:'insb',  name:'Indium Antimonide', formula:'InSb',  type:'cubic', bandgap:0.17, workFunction:4.59, latticeConstant:6.48, n0:4.0,  dn:0.22, dk:0.50, atomColorA:0x6b7b8e, atomColorB:0x889966, bondColor:0x667788, simColor:0x8899aa, desc:'Narrowest-gap III-V. Used in infrared detectors.', shells:[[8,2,'2s 2p'],[18,3,'3d 3s 3p'],[18,4,'4d 4s 4p'],[4,5,'5s 5p']], valence:4, valenceA:3, valenceB:5 },
+    gaP:   { id:'gap',   name:'Gallium Phosphide', formula:'GaP',   type:'cubic', bandgap:2.26, workFunction:4.0,  latticeConstant:5.45, n0:3.0,  dn:0.06, dk:0.15, atomColorA:0x6b8b9e, atomColorB:0xaa6622, bondColor:0x556677, simColor:0x8899bb, desc:'III-V compound. Used in LEDs.', shells:[[8,2,'2s 2p'],[8,3,'3s 3p'],[4,4,'4s 4p']], valence:4, valenceA:3, valenceB:5 },
+    alas:  { id:'alas',  name:'Aluminium Arsenide',formula:'AlAs',  type:'cubic', bandgap:2.15, workFunction:4.0,  latticeConstant:5.66, n0:3.0,  dn:0.06, dk:0.15, atomColorA:0x7799aa, atomColorB:0x5b7b8e, bondColor:0x556677, simColor:0x99aacc, desc:'III-V compound. Used in heterojunction devices.', shells:[[8,2,'2s 2p'],[8,3,'3s 3p'],[4,4,'4s 4p']], valence:4, valenceA:3, valenceB:5 },
+    cdte:  { id:'cdte',  name:'Cadmium Telluride', formula:'CdTe',  type:'cubic', bandgap:1.49, workFunction:4.5,  latticeConstant:6.48, n0:2.7,  dn:0.15, dk:0.35, atomColorA:0x8899aa, atomColorB:0x888877, bondColor:0x667788, simColor:0x8899aa, desc:'II-VI compound. Used in thin-film solar cells.', shells:[[8,2,'2s 2p'],[18,3,'3d 3s 3p'],[18,4,'4d 4s 4p'],[4,5,'5s 5p']], valence:4, valenceA:2, valenceB:6 },
+    zns:   { id:'zns',   name:'Zinc Sulfide',      formula:'ZnS',   type:'cubic', bandgap:3.54, workFunction:4.5,  latticeConstant:5.41, n0:2.3,  dn:0.12, dk:0.30, atomColorA:0x99aacc, atomColorB:0xccaa44, bondColor:0x778899, simColor:0x99aacc, desc:'II-VI compound. Used in phosphors and IR optics.', shells:[[8,2,'2s 2p'],[8,3,'3s 3p'],[4,4,'4s 4p']], valence:4, valenceA:2, valenceB:6 },
+    zno:   { id:'zno',   name:'Zinc Oxide',        formula:'ZnO',   type:'wurtzite', bandgap:3.37, workFunction:4.5,  latticeConstant:4.50, n0:2.0,  dn:0.12, dk:0.30, atomColorA:0x99aacc, atomColorB:0x4488cc, bondColor:0x778899, simColor:0x99aacc, desc:'Wide-gap II-VI. Transparent conductor, used in LEDs.', shells:[[8,2,'2s 2p'],[8,3,'3s 3p'],[2,4,'4s 4p']], valence:4, valenceA:2, valenceB:6 }
+  };
+  window.MATERIAL_PRESETS = MATERIAL_PRESETS;
+
+  var currentMatId = 'si';
+
   /* ─── THREE.JS GLOBALS ─── */
   var scene, camera, renderer;
   var atoms = [], bonds = [], clouds = [];
@@ -54,10 +76,10 @@
 
   /* ─── SCALE STATE ─── 6 scales */
   var SCALE = {
-    macro:   { camZ: 18, fov: 45, vis: ['macro'],                     label: 'Macro — 1 cm',       info: 'Silicon crystal at centimeter scale. A solid grey block. Classical continuum — no quantum confinement visible.' },
-    lattice: { camZ: 6,  fov: 50, vis: ['atoms','bonds'],             label: 'Lattice — 5 Å',      info: 'Diamond-cubic lattice. Each Si has 4 nearest neighbors held by covalent bonds. Atoms vibrate thermally. Bulk band gap = 1.12 eV.' },
-    cluster: { camZ: 4.5,fov: 45, vis: ['cluster'],                   label: 'Cluster — 2 Å',      info: '5 Si atoms in tetrahedral bonding. 4 valence electrons orbit the entire cluster — delocalized bonding electrons start feeling finite size.' },
-    atom:    { camZ: 2.5,fov: 35, vis: ['focusAtom','bands','shells'], label: 'Atom — 100 pm',    info: 'Single Si atom: 14 electrons orbit the nucleus on 4 energy levels (1s² 2s² 2p⁶ 3s² 3p²). Bohr speed law v_n = v₁/n makes the inner 1s shell visibly fastest; outer 3p ring glides. Photon with E > gap excites valence → conduction.' },
+    macro:   { camZ: 18, fov: 45, vis: ['macro'],                     label: 'Macro — 1 cm',       info: 'Crystal at centimeter scale. A solid block. Classical continuum — no quantum confinement visible.' },
+    lattice: { camZ: 6,  fov: 50, vis: ['atoms','bonds'],             label: 'Lattice — 5 Å',      info: 'Tetrahedral lattice. Each atom has 4 nearest neighbors held by covalent bonds. Atoms vibrate thermally. Bulk band gap defined by the material.' },
+    cluster: { camZ: 4.5,fov: 45, vis: ['cluster'],                   label: 'Cluster — 2 Å',      info: 'Small atomic cluster in tetrahedral bonding. Valence electrons orbit the cluster — delocalized bonding electrons start feeling finite size.' },
+    atom:    { camZ: 2.5,fov: 35, vis: ['focusAtom','bands','shells'], label: 'Atom — 100 pm',    info: 'Electrons orbit the nucleus in shells. Bohr speed law v_n = v₁/n makes inner shells visibly fastest; outer shells glide. Photon with E > gap excites valence → conduction.' },
     spin:    { camZ: 2,  fov: 30, vis: ['focusAtom','spin'],        label: 'Spin — 10 pm',       info: 'Every energy level splits in two: spin-up (cyan ↑) and spin-down (pink ↓). Each orbital holds 2 electrons with opposite spin — the Pauli exclusion principle.' }
   };
   var curScale = 'macro';
@@ -103,15 +125,20 @@
     scene.add(ptL);
 
     /* Build everything */
+    var matConfig = MATERIAL_PRESETS.si;
     buildMacroCube();
-    buildLattice(2, 2, 2, 1.0);
+    buildLattice(2, 2, 2, 1.0, matConfig);
     buildLatticeElectrons();
-    buildFocusAtom();
-    buildCluster();
-    buildEnergyBands();
+    buildFocusAtom(matConfig);
+    buildCluster(matConfig);
+    buildEnergyBands(matConfig);
     buildSpinLevels();
     buildQuantumClouds();
     buildLaserPistol();
+
+    /* Click-to-aim */
+    buildAimReticle();
+    setupCanvasClickTargeting();
 
     /* Start */
     setCrystalScale('macro');
@@ -135,15 +162,18 @@
     scene.add(macroCube);
   }
 
-  function buildLattice(nx, ny, nz, a) {
-    var siColor = 0x7da4c4;
-    var bondColor = 0x556677;
-    var atomGeo = new THREE.SphereGeometry(0.12, 24, 24);
-    var atomMat = new THREE.MeshStandardMaterial({ color: siColor, metalness: 0.4, roughness: 0.4 });
-    var bondGeo = new THREE.CylinderGeometry(0.025, 0.025, 1, 8);
-    var bondMat = new THREE.MeshStandardMaterial({ color: bondColor, metalness: 0.3, roughness: 0.5 });
+  function buildLattice(nx, ny, nz, a, matConfig) {
+    matConfig = matConfig || MATERIAL_PRESETS.si;
+    var isZincblende = matConfig.atomColorB != null && matConfig.atomColorA !== matConfig.atomColorB;
+    var colorA = matConfig.atomColorA || 0x7da4c4;
+    var colorB = matConfig.atomColorB || colorA;
+    var bc = matConfig.bondColor || 0x556677;
 
-    var positions = [];
+    var atomGeo = new THREE.SphereGeometry(0.12, 24, 24);
+    var bondGeo = new THREE.CylinderGeometry(0.025, 0.025, 1, 8);
+    var bondMat = new THREE.MeshStandardMaterial({ color: bc, metalness: 0.3, roughness: 0.5 });
+
+    var positions = [], atomTypes = [];
     var basis = [
       [0,0,0],[0.5,0.5,0],[0.5,0,0.5],[0,0.5,0.5],
       [0.25,0.25,0.25],[0.75,0.75,0.25],[0.75,0.25,0.75],[0.25,0.75,0.75]
@@ -158,15 +188,19 @@
             var y = (iy + p[1]) * a - (ny * a) / 2;
             var z = (iz + p[2]) * a - (nz * a) / 2;
             positions.push(new THREE.Vector3(x, y, z));
+            var t = (isZincblende && b >= 4) ? 'B' : 'A';
+            atomTypes.push(t);
           }
         }
       }
     }
 
     for (var i = 0; i < positions.length; i++) {
-      var mesh = new THREE.Mesh(atomGeo, atomMat.clone());
+      var c = atomTypes[i] === 'B' ? colorB : colorA;
+      var mat = new THREE.MeshStandardMaterial({ color: c, metalness: 0.4, roughness: 0.4 });
+      var mesh = new THREE.Mesh(atomGeo, mat);
       mesh.position.copy(positions[i]);
-      mesh.userData = { type: 'atom', basePos: positions[i].clone(), idx: i, excited: false };
+      mesh.userData = { type: 'atom', basePos: positions[i].clone(), idx: i, atomType: atomTypes[i], excited: false };
       atoms.push(mesh);
       scene.add(mesh);
     }
@@ -174,6 +208,7 @@
     var maxBond = 0.45 * a;
     for (var i = 0; i < positions.length; i++) {
       for (var j = i + 1; j < positions.length; j++) {
+        if (isZincblende && atomTypes[i] === atomTypes[j]) continue;
         var d = positions[i].distanceTo(positions[j]);
         if (d < maxBond && d > 0.01) {
           var mid = new THREE.Vector3().addVectors(positions[i], positions[j]).multiplyScalar(0.5);
@@ -240,13 +275,22 @@
      Free electrons orbit their atom as small cyan spheres. */
   var clusterSprings = []; // { atomA, atomB, restLength, k }
 
-  function buildCluster() {
-    var siColor = 0x7da4c4;
-    var bondColor = 0x8899aa;
-    var atomGeo = new THREE.SphereGeometry(0.14, 24, 24);
-    var atomMat = new THREE.MeshStandardMaterial({ color: siColor, metalness: 0.5, roughness: 0.3 });
-    var bondGeo = new THREE.CylinderGeometry(0.025, 0.025, 1, 8);
-    var bondMat = new THREE.MeshStandardMaterial({ color: bondColor, metalness: 0.3, roughness: 0.4 });
+  function buildCluster(matConfig) {
+    matConfig = matConfig || MATERIAL_PRESETS.si;
+    var s = matConfig.latticeConstant / 5.43;
+    var isZincblende = matConfig.atomColorB != null && matConfig.atomColorA !== matConfig.atomColorB;
+    var colorA = matConfig.atomColorA || 0x7da4c4;
+    var colorB = matConfig.atomColorB || colorA;
+    var bc = matConfig.bondColor || 0x8899aa;
+    // Atom radii — compound B atom (typically smaller anion) slightly smaller
+    var radiusA = 0.14 * s;
+    var radiusB = isZincblende ? 0.13 * s : radiusA;
+    var atomGeoA = new THREE.SphereGeometry(radiusA, 24, 24);
+    var atomGeoB = new THREE.SphereGeometry(radiusB, 24, 24);
+    var atomMatA = new THREE.MeshStandardMaterial({ color: colorA, metalness: 0.5, roughness: 0.3 });
+    var atomMatB = new THREE.MeshStandardMaterial({ color: colorB, metalness: 0.5, roughness: 0.3 });
+    var bondGeo = new THREE.CylinderGeometry(0.025 * s, 0.025 * s, 1, 8);
+    var bondMat = new THREE.MeshStandardMaterial({ color: bc, metalness: 0.3, roughness: 0.4 });
 
     // Tetrahedral directions
     var dirs = [
@@ -255,26 +299,26 @@
       new THREE.Vector3(-1, 1, -1).normalize(),
       new THREE.Vector3(-1, -1, 1).normalize()
     ];
-    var dist = 0.65;
+    var dist = 0.65 * s;
 
-    // Center atom
-    var center = new THREE.Mesh(atomGeo, atomMat.clone());
+    // Center atom (type A for zincblende)
+    var center = new THREE.Mesh(atomGeoA, atomMatA);
     center.position.set(0, 0, 0);
     center.userData = {
       type: 'clusterAtom', basePos: new THREE.Vector3(0,0,0),
-      idx: 0, vel: new THREE.Vector3(0,0,0), bondCount: 0
+      idx: 0, atomType: 'A', vel: new THREE.Vector3(0,0,0), bondCount: 0
     };
     clusterAtoms.push(center);
     scene.add(center);
 
-    // 4 corner atoms
+    // 4 corner atoms (type B for zincblende)
     for (var i = 0; i < 4; i++) {
       var pos = dirs[i].clone().multiplyScalar(dist);
-      var a = new THREE.Mesh(atomGeo, atomMat.clone());
+      var a = new THREE.Mesh(atomGeoB, atomMatB.clone());
       a.position.copy(pos);
       a.userData = {
         type: 'clusterAtom', basePos: pos.clone(),
-        idx: i + 1, vel: new THREE.Vector3(0,0,0), bondCount: 0
+        idx: i + 1, atomType: isZincblende ? 'B' : 'A', vel: new THREE.Vector3(0,0,0), bondCount: 0
       };
       clusterAtoms.push(a);
       scene.add(a);
@@ -300,21 +344,46 @@
       clusterAtoms[bi].userData.bondCount = (clusterAtoms[bi].userData.bondCount || 0) + 1;
     }
 
-    // Center-to-corners (4 bonds)
+    // Center-to-corners (4 bonds — always correct for tetrahedral)
     for (var i = 1; i < 5; i++) addBond(0, i);
     // Corner-to-corner (tetrahedron edges)
+    // For zincblende: same-type B-B bonds don't exist in real crystal,
+    // but we show them as faint guide-lines for structural context.
     for (var i = 1; i < 5; i++) {
       for (var j = i + 1; j < 5; j++) {
-        addBond(i, j);
+        if (isZincblende) {
+          // Faint guide-line (not a real bond — same-type atoms)
+          var pa = clusterAtoms[i].position;
+          var pb = clusterAtoms[j].position;
+          var rl = pa.distanceTo(pb);
+          var mid = new THREE.Vector3().addVectors(pa, pb).multiplyScalar(0.5);
+          var gGeo = new THREE.CylinderGeometry(0.012, 0.012, 1, 6);
+          var gMat = new THREE.MeshBasicMaterial({ color: bc, transparent: true, opacity: 0.15, depthWrite: false });
+          var guide = new THREE.Mesh(gGeo, gMat);
+          guide.position.copy(mid);
+          guide.lookAt(pb);
+          guide.rotateX(Math.PI / 2);
+          guide.scale.set(1, rl, 1);
+          guide.userData = { type: 'clusterBond', atomA: i, atomB: j, guide: true };
+          clusterBonds.push(guide);
+          scene.add(guide);
+          // No spring for guide bonds
+        } else {
+          addBond(i, j);
+        }
       }
     }
 
-    // ── FREE ELECTRONS: one per corner atom (Si valence=4, corners have 3 bonds) ──
-    var eGeo = new THREE.SphereGeometry(0.038, 16, 16);
+    // ── FREE ELECTRONS: per-atom valence minus bulk coord (4 for tetrahedral) ──
+    var eGeo = new THREE.SphereGeometry(0.038 * s, 16, 16);
     var eMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.9 });
     clusterAtoms.forEach(function(atom, idx) {
-      var bonds = atom.userData.bondCount || 0;
-      var free = Math.max(0, 4 - bonds);
+      var atomType = atom.userData.atomType;
+      var valE = (atomType === 'B' && matConfig.valenceB != null) ? matConfig.valenceB :
+                 (atomType === 'A' && matConfig.valenceA != null) ? matConfig.valenceA :
+                 (matConfig.valence || 4);
+      // Bulk coordination = 4 (full tetrahedral). Dangling bonds from truncation ignored.
+      var free = Math.max(0, valE - 4);
       for (var e = 0; e < free; e++) {
         var electron = new THREE.Mesh(eGeo, eMat.clone());
         electron.position.copy(atom.position);
@@ -333,47 +402,133 @@
     });
   }
 
-  /* ─── FOCUS ATOM: nucleus + shells ─── */
-  function buildFocusAtom() {
+  /* ─── FOCUS ATOM: nucleus + shells (diatomic for compounds) ─── */
+  function buildFocusAtom(matConfig) {
+    matConfig = matConfig || MATERIAL_PRESETS.si;
+    var s = matConfig.latticeConstant / 5.43;
+    var isCompound = matConfig.atomColorB != null && matConfig.atomColorA !== matConfig.atomColorB;
     focusGroup = new THREE.Group();
 
-    // Nucleus
-    var nGeo = new THREE.SphereGeometry(0.04, 32, 32);
-    var nMat = new THREE.MeshBasicMaterial({ color: 0xff3333 });
-    nucleus = new THREE.Mesh(nGeo, nMat);
-    nucleus.userData.type = 'nucleus';
-    focusGroup.add(nucleus);
+    if (isCompound) {
+      // Diatomic molecule: two atoms with own core electrons + shared bonding
+      var bondLen = 0.35 * s;
+      var atomR = 0.04 * s;
+      var colorA = matConfig.atomColorA || 0x7da4c4;
+      var colorB = matConfig.atomColorB || 0x5b7b8e;
+      var bc = matConfig.bondColor || 0x556677;
+      var shells = matConfig.shells || [[8,2,'2s 2p'],[4,3,'3s 3p']];
+      var valCount = matConfig.valence || 4;
 
-    // Core shell (tight)
-    var cGeo = new THREE.SphereGeometry(0.18, 32, 32);
-    var cMat = new THREE.MeshBasicMaterial({
-      color: 0x555588, transparent: true, opacity: 0.22,
-      blending: THREE.AdditiveBlending, depthWrite: false
-    });
-    coreCloud = new THREE.Mesh(cGeo, cMat);
-    coreCloud.userData.type = 'coreShell';
-    focusGroup.add(coreCloud);
+      // Atom A nucleus (e.g. In, Ga)
+      var ag = new THREE.SphereGeometry(atomR * 1.8, 24, 24);
+      var amA = new THREE.MeshBasicMaterial({ color: colorA });
+      var atomA = new THREE.Mesh(ag, amA);
+      atomA.position.set(-bondLen / 2, 0, 0);
+      atomA.userData = { type: 'nucleus', element: 'A' };
+      focusGroup.add(atomA);
 
-    // Valence lobes (4 tetrahedral)
-    var valDirs = [
-      new THREE.Vector3(1,1,1).normalize(),
-      new THREE.Vector3(1,-1,-1).normalize(),
-      new THREE.Vector3(-1,1,-1).normalize(),
-      new THREE.Vector3(-1,-1,1).normalize()
-    ];
-    var vGeo = new THREE.SphereGeometry(0.26, 32, 32);
-    var vMat = new THREE.MeshBasicMaterial({
-      color: 0x00f0ff, transparent: true, opacity: 0.15,
-      blending: THREE.AdditiveBlending, depthWrite: false
-    });
-    for (var i = 0; i < 4; i++) {
-      var lobe = new THREE.Mesh(vGeo, vMat.clone());
-      lobe.position.copy(valDirs[i]).multiplyScalar(0.22);
-      lobe.scale.set(1, 0.55, 1);
-      lobe.lookAt(new THREE.Vector3().addVectors(lobe.position, valDirs[i]));
-      lobe.userData = { type: 'valenceShell', dir: valDirs[i] };
-      valenceShells.push(lobe);
-      focusGroup.add(lobe);
+      // Atom B nucleus (e.g. P, As)
+      var amB = new THREE.MeshBasicMaterial({ color: colorB });
+      var atomB = new THREE.Mesh(ag.clone(), amB);
+      atomB.position.set(bondLen / 2, 0, 0);
+      atomB.userData = { type: 'nucleus', element: 'B' };
+      focusGroup.add(atomB);
+
+      // Bond cylinder between them
+      var bondGeo = new THREE.CylinderGeometry(0.018, 0.018, 1, 8);
+      var bondMat = new THREE.MeshBasicMaterial({ color: bc, transparent: true, opacity: 0.5 });
+      var bond = new THREE.Mesh(bondGeo, bondMat);
+      bond.position.set(0, 0, 0);
+      bond.scale.set(1, bondLen, 1);
+      bond.rotation.x = Math.PI / 2;
+      bond.userData = { type: 'bond' };
+      focusGroup.add(bond);
+
+      // Bonding electron cloud between atoms (shared valence)
+      var bondCloudGeo = new THREE.SphereGeometry(0.08 * s, 16, 16);
+      var bondCloudMat = new THREE.MeshBasicMaterial({
+        color: 0x00f0ff, transparent: true, opacity: 0.2,
+        blending: THREE.AdditiveBlending, depthWrite: false
+      });
+      var bondCloud = new THREE.Mesh(bondCloudGeo, bondCloudMat);
+      bondCloud.position.set(0, 0, 0);
+      bondCloud.scale.set(1.8, 0.8, 0.8);
+      bondCloud.userData = { type: 'bondingCloud' };
+      focusGroup.add(bondCloud);
+
+      // Core electron cloud around each atom (inner shells — radii differ by group)
+      var coreRA = 0.065 * s;  // cation (group III, smaller core)
+      var coreRB = 0.055 * s;  // anion (group V, larger core — more core electrons)
+      var coreColorA = 0x555588;
+      var coreColorB = 0x664466;
+      [-1, 1].forEach(function(side) {
+        var isA = side < 0;
+        var r = isA ? coreRA : coreRB;
+        var col = isA ? coreColorA : coreColorB;
+        var cGeo = new THREE.SphereGeometry(r, 16, 16);
+        var cMat = new THREE.MeshBasicMaterial({
+          color: col, transparent: true, opacity: 0.18,
+          blending: THREE.AdditiveBlending, depthWrite: false
+        });
+        var cMesh = new THREE.Mesh(cGeo, cMat);
+        cMesh.position.set(side * bondLen / 2, 0, 0);
+        cMesh.userData = { type: 'coreShell' };
+        valenceShells.push(cMesh);
+        focusGroup.add(cMesh);
+      });
+
+      // Shared valence electron dots orbiting around the bond axis
+      var veGeo = new THREE.SphereGeometry(0.025 * s, 8, 8);
+      var veMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+      for (var e = 0; e < Math.min(valCount, 4); e++) {
+        var edot = new THREE.Mesh(veGeo, veMat.clone());
+        var angle = (e / Math.min(valCount, 4)) * Math.PI * 2;
+        edot.position.set(0, Math.cos(angle) * 0.14 * s, Math.sin(angle) * 0.14 * s);
+        edot.userData = { type: 'bandElectron', baseAngle: angle, orbitR: 0.14 * s, n: 3, linV: 0.004, baseOmega: 0.004 / (0.14 * s), speed: 1.0, excited: false, bandIdx: -1 };
+        bandElectrons.push(edot);
+        focusGroup.add(edot);
+      }
+
+      coreCloud = bondCloud;
+      nucleus = atomA;
+    } else {
+      // Single atom for elemental materials
+      var nGeo = new THREE.SphereGeometry(0.04 * s, 32, 32);
+      var nMat = new THREE.MeshBasicMaterial({ color: 0xff3333 });
+      nucleus = new THREE.Mesh(nGeo, nMat);
+      nucleus.userData.type = 'nucleus';
+      focusGroup.add(nucleus);
+
+      var cGeo = new THREE.SphereGeometry(0.18 * s, 32, 32);
+      var cMat = new THREE.MeshBasicMaterial({
+        color: 0x555588, transparent: true, opacity: 0.22,
+        blending: THREE.AdditiveBlending, depthWrite: false
+      });
+      coreCloud = new THREE.Mesh(cGeo, cMat);
+      coreCloud.userData.type = 'coreShell';
+      focusGroup.add(coreCloud);
+
+      // Valence lobes (4 tetrahedral)
+      var valDirs = [
+        new THREE.Vector3(1,1,1).normalize(),
+        new THREE.Vector3(1,-1,-1).normalize(),
+        new THREE.Vector3(-1,1,-1).normalize(),
+        new THREE.Vector3(-1,-1,1).normalize()
+      ];
+      var vGeo = new THREE.SphereGeometry(0.26 * s, 32, 32);
+      var vMat = new THREE.MeshBasicMaterial({
+        color: 0x00f0ff, transparent: true, opacity: 0.15,
+        blending: THREE.AdditiveBlending, depthWrite: false
+      });
+      for (var i = 0; i < 4; i++) {
+        var lobe = new THREE.Mesh(vGeo, vMat.clone());
+        lobe.position.copy(valDirs[i]).multiplyScalar(0.22 * s);
+        lobe.scale.set(1, 0.55, 1);
+        lobe.lookAt(new THREE.Vector3().addVectors(lobe.position, valDirs[i]));
+        lobe.userData = { type: 'valenceShell', dir: valDirs[i] };
+        valenceShells.push(lobe);
+        focusGroup.add(lobe);
+      }
     }
 
     var fp = atoms[focusedAtomIndex].userData.basePos;
@@ -383,25 +538,36 @@
   }
 
   /* ─── ENERGY BANDS: concentric rings around nucleus, electrons orbit ─── */
-  function buildEnergyBands() {
-    // 4 energy levels for Si: 1s² 2s² 2p⁶ 3s² 3p²
-    // Visual: 4 concentric rings at different radii from nucleus
-    /* Bohr model: v_n = v_1 / n  → linear speed halves each shell outward.
-       Inner shells have a much higher angular rate on a small circle,
-       so the visible motion is "inner whizzes, outer cruises" — the
-       info-text claim "inner electrons orbit fastest" is now literally
-       true on screen.  baseOmega is the per-frame angular step at the
-       reference multiplier speed=1; the existing `speed` field stays as
-       a dynamic multiplier used by photon-excitation handlers. */
-    var levels = [
-      { r: 0.22, color: 0x555588, opacity: 0.25, label: '1s (core)', count: 2, n: 1 },
-      { r: 0.32, color: 0x6666aa, opacity: 0.22, label: '2s 2p',    count: 8, n: 2 },
-      { r: 0.48, color: 0x00f0ff, opacity: 0.20, label: '3s 3p',    count: 4, n: 3 },
-      { r: 0.65, color: 0xc084fc, opacity: 0.15, label: '4s (cond)', count: 0, n: 4 }  // empty at 0K
-    ];
+  function buildEnergyBands(matConfig) {
+    matConfig = matConfig || MATERIAL_PRESETS.si;
+    var shells = matConfig.shells || [[8,2,'2s 2p'],[4,3,'3s 3p']];
+    var valence = matConfig.valence || 4;
+    var s = matConfig.latticeConstant / 5.43;
+
+    /* Build ring levels from shell data.
+       Base radius starts at 0.25, each shell gets +0.12 spacing, scaled by s.
+       Inner 1s² core is always the first ring (r=0.18). */
+    var levels = [];
+    var baseR = 0.22;
+    var rStep = 0.13;
+    // Core level (1s-like, always present as first tight ring)
+    levels.push({ r: baseR * s, color: 0x555588, opacity: 0.28, label: 'core', count: 2, n: 1 });
+    shellLoop:
+    for (var si = 0; si < shells.length; si++) {
+      var sh = shells[si];
+      var count = sh[0], n = sh[1], label = sh[2] || '';
+      var r = (baseR + rStep * (si + 1)) * s;
+      var hue = 0.6 + si * 0.08;
+      // Cycle through colors
+      var colors = [0x6666aa, 0x4488cc, 0x00f0ff, 0xaa88ff, 0xff88cc];
+      levels.push({ r: r, color: colors[si % colors.length], opacity: 0.18 + si * 0.01, label: label, count: count, n: n });
+    }
+    // Empty conduction level
+    var condR = (baseR + rStep * (shells.length + 1)) * s;
+    levels.push({ r: condR, color: 0xc084fc, opacity: 0.15, label: 'cond', count: 0, n: (shells[shells.length-1]||[0,4])[1] + 1 });
 
     levels.forEach(function(lvl, idx) {
-      // Concentric ring (torus-like, represented as thin tube)
+      // Concentric ring
       var tubeGeo = new THREE.TorusGeometry(lvl.r, 0.008, 8, 64);
       var tubeMat = new THREE.MeshBasicMaterial({
         color: lvl.color, transparent: true, opacity: lvl.opacity,
@@ -411,59 +577,57 @@
       ring.rotation.x = Math.PI / 2;
       ring.userData = { type: 'bandPlane', levelIdx: idx, levelInfo: lvl };
       bandPlanes.push(ring);
-      focusGroup.add(ring);  // ADD TO FOCUS GROUP so it follows the nucleus
+      focusGroup.add(ring);
 
       // Electrons orbiting on this ring
       if (lvl.count > 0) {
-        var eGeo = new THREE.SphereGeometry(0.032, 16, 16);
+        var eGeo = new THREE.SphereGeometry(0.032 * s, 16, 16);
         var eMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
-        // Bohr linear speed for this shell: v_n = LIN_V_REF / n
+        var visCount = Math.min(lvl.count, 8);
         var linV  = LIN_V_REF / lvl.n;
-        // Angular rate  ω = v / r  → per-frame angle at speed-multiplier = 1
         var baseO = linV / lvl.r;
-        for (var e = 0; e < lvl.count; e++) {
+        for (var e = 0; e < visCount; e++) {
           var electron = new THREE.Mesh(eGeo, eMat.clone());
-          var angle = (e / lvl.count) * Math.PI * 2 + idx * 0.7;
+          var angle = (e / visCount) * Math.PI * 2 + idx * 0.7;
           electron.position.set(Math.cos(angle) * lvl.r, 0, Math.sin(angle) * lvl.r);
           electron.userData = {
             type: 'bandElectron',
             bandIdx: idx,
             baseAngle: angle,
             orbitR: lvl.r,
-            n: lvl.n,                  // principal quantum number (for the readout)
-            linV: linV,               // linear speed in model units/frame
-            baseOmega: baseO,         // per-frame angular step at speed-multiplier = 1
-            speed: 1.0,               // dynamic multiplier (1.0 = baseline)
+            n: lvl.n,
+            linV: linV,
+            baseOmega: baseO,
+            speed: 1.0,
             excited: false
           };
           bandElectrons.push(electron);
-          focusGroup.add(electron);  // ADD TO FOCUS GROUP
+          focusGroup.add(electron);
         }
       }
     });
 
-    // Conduction band electrons (hidden initially, appear on excitation)
-    var ceGeo = new THREE.SphereGeometry(0.032, 16, 16);
+    // Conduction band electrons (hidden initially)
+    var ceGeo = new THREE.SphereGeometry(0.032 * s, 16, 16);
     var ceMat = new THREE.MeshBasicMaterial({ color: 0xc084fc, transparent: true, opacity: 0 });
-    // n=4 conduction band: v_n = LIN_V_REF / n,  ω = v / r
-    var condLinV  = LIN_V_REF / 4;
-    var condBaseO = condLinV / 0.65;
+    var condLinV  = LIN_V_REF / (shells.length + 1);
+    var condBaseO = condLinV / condR;
     for (var e = 0; e < 4; e++) {
       var ce = new THREE.Mesh(ceGeo, ceMat.clone());
       var angle = (e / 4) * Math.PI * 2;
-      ce.position.set(Math.cos(angle) * 0.65, 0, Math.sin(angle) * 0.65);
+      ce.position.set(Math.cos(angle) * condR, 0, Math.sin(angle) * condR);
       ce.userData = {
         type: 'conductionElectron',
         baseAngle: angle,
-        orbitR: 0.65,
-        n: 4,
+        orbitR: condR,
+        n: shells.length + 1,
         linV: condLinV,
         baseOmega: condBaseO,
-        speed: 1.0,                // dynamic multiplier
+        speed: 1.0,
         active: false
       };
       bandElectrons.push(ce);
-      focusGroup.add(ce);  // ADD TO FOCUS GROUP
+      focusGroup.add(ce);
     }
   }
 
@@ -687,6 +851,9 @@
      perpendicular to the gun→cube line, so the wave always enters the
      cube's front face (never flies off into empty space). */
   function getPistolAimTarget() {
+    // If user clicked to aim, use that point directly (θᵢ bypassed)
+    if (window.customAimTarget) return window.customAimTarget.clone();
+
     // Centre of the cube/atom we want to aim at (or just origin)
     var center = new THREE.Vector3(0, 0, 0);
     if (['bands','atom','spin'].indexOf(curScale) >= 0 && atoms[focusedAtomIndex]) {
@@ -726,6 +893,84 @@
       center.y + up.y * offset,
       center.z + up.z * offset
     );
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     MOUSE AIM — click on canvas to set photon impact point
+     ═══════════════════════════════════════════════════════════════ */
+  window.customAimTarget = null;  // Vector3 or null — exposed so UI can read
+  window.aimModeActive = false;   // toggle — click-to-aim on/off
+  var aimReticle = null;       // small ring marking the aim point
+  var raycaster = new THREE.Raycaster();
+  var mouse = new THREE.Vector2();
+
+  function buildAimReticle() {
+    if (aimReticle) { scene.remove(aimReticle); aimReticle = null; }
+    var ring = new THREE.RingGeometry(0.045, 0.065, 24);
+    var ringMat = new THREE.MeshBasicMaterial({
+      color: 0xff4444, side: THREE.DoubleSide, transparent: true, opacity: 0.8,
+      depthTest: false
+    });
+    aimReticle = new THREE.Mesh(ring, ringMat);
+    aimReticle.visible = false;
+    scene.add(aimReticle);
+  }
+
+  window.setPhotonAimTarget = function(point) {
+    window.customAimTarget = point.clone();
+    if (!aimReticle) buildAimReticle();
+    aimReticle.position.copy(point);
+    aimReticle.lookAt(camera.position);
+    aimReticle.visible = true;
+  }
+
+  window.clearPhotonAimTarget = function() {
+    window.customAimTarget = null;
+    if (aimReticle) aimReticle.visible = false;
+  }
+
+  window.toggleAimMode = function(active) {
+    window.aimModeActive = !!active;
+    renderer.domElement.style.cursor = window.aimModeActive ? 'crosshair' : '';
+    if (!window.aimModeActive) {
+      window.customAimTarget = null;
+      if (aimReticle) aimReticle.visible = false;
+    }
+  };
+
+  function setupCanvasClickTargeting() {
+    var canvas = renderer.domElement;
+    canvas.addEventListener('click', function(e) {
+      if (!window.aimModeActive) return;  // ignore click, let orbit controls work
+      var rect = canvas.getBoundingClientRect();
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+
+      // Collect all visible meshes in the scene for hit testing
+      var meshes = [];
+      scene.traverse(function(child) {
+        if (child.isMesh && child.visible && child !== aimReticle) {
+          meshes.push(child);
+        }
+      });
+
+      var intersects = raycaster.intersectObjects(meshes);
+      if (intersects.length > 0) {
+        setPhotonAimTarget(intersects[0].point);
+      } else {
+        // Click on empty space → fire toward that direction along the ray
+        var dir = raycaster.ray.direction.clone();
+        var dist = 2.0; // scene-relative depth
+        var point = raycaster.ray.origin.clone().add(dir.multiplyScalar(dist));
+        setPhotonAimTarget(point);
+      }
+    });
+
+    // Right-click or Escape to clear manual aim (only in aim mode)
+    canvas.addEventListener('contextmenu', function(e) { if (window.aimModeActive) { e.preventDefault(); clearPhotonAimTarget(); } });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && window.aimModeActive) clearPhotonAimTarget(); });
   }
 
   function positionPistolForScale(mode) {
@@ -908,10 +1153,15 @@
     spinArrows.forEach(function(a){ a.visible = cfg.vis.indexOf('spin') >= 0; });
 
     // UI update
-    var labelEl = document.getElementById('scale-label');
-    var infoEl = document.getElementById('scale-info');
-    if (labelEl) labelEl.textContent = cfg.label;
-    if (infoEl) infoEl.textContent = cfg.info;
+    if (typeof window.updateDisplayInfo === 'function') {
+      window.currentScale = mode;
+      window.updateDisplayInfo();
+    } else {
+      var labelEl = document.getElementById('scale-label');
+      var infoEl = document.getElementById('scale-info');
+      if (labelEl) labelEl.textContent = cfg.label;
+      if (infoEl) infoEl.textContent = cfg.info;
+    }
 
     updateScaleBar(mode);
 
@@ -965,36 +1215,47 @@
     viewMode = mode;
   };
 
-  /* Material optical properties (Si at room temp, simplified)
-     ε1 = n² - κ²,  ε2 = σ/(ε0ω) = 2nκ for E > Eg
-     Hagen-Rubens: R ≈ 1 - 4√(πε0ω/σ) for metals at low ω
-     For Si: n ≈ 3.4 (visible), κ ≈ 0 (transparent < Eg), κ large (absorbing > Eg) */
-  var MAT_SI = {
-    name: 'Silicon',
-    Eg: 1.12,                  // bandgap eV
-    workFn: 4.5,               // work function eV
-    n: function(E) {           // refractive index (simplified Sellmeier)
-      if (E < 0.08) return 3.42;                 // IR
-      if (E < 1.12) return 3.45;                 // near-IR transparent
-      if (E < 2.5) return 3.4 + (E-1.12)*0.1;   // visible
-      if (E < 4.5) return 3.55 + (E-2.5)*0.05; // UV
-      return 1.0 + 2.0/E;                        // X-ray: n → 1
-    },
-    kappa: function(E) {       // extinction coefficient
-      if (E < 0.08) return 0.001;                // IR transparent
-      if (E < 1.12) return 0.002;                // near-IR
-      if (E < 4.5) return 0.15 * (E - 1.12);     // strong absorption
-      return 2.5;                                 // deep UV/X-ray
-    },
-    alpha: function(E) {       // absorption coefficient (1/scene unit)
-      return this.kappa(E) * E * 2.5;  // proportional to κ
-    },
-    R: function(E) {           // reflectivity (Fresnel normal incidence)
-      var n0 = 1.0;             // air
-      var n1 = this.n(E);
-      return Math.pow((n0 - n1)/(n0 + n1), 2);
-    }
-  };
+  /* ─── Material optical properties ───
+     Built dynamically from per-material preset data (n0, Eg, workFn).
+     n(E) models:  n ≈ n0  below Eg, slight increase above Eg, then fall-off.
+     κ(E) models:  κ ≈ 0  below Eg,  κ ∝ (E − Eg)  above Eg.
+     α(E) = 4πκ/λ  (absorption coefficient, scene units).
+     R(E) = Fresnel normal-incidence reflectivity. */
+  function buildMatOptics(matConfig) {
+    var Eg = matConfig.bandgap || 1.12;
+    var n0 = matConfig.n0 || 3.42;
+    var dn = matConfig.dn || 0.08;  // n increase rate above Eg
+    var dk = matConfig.dk || 0.15;  // absorption steepness
+    var wf = matConfig.workFunction || 4.5;
+    var color = matConfig.simColor || 0x8899aa;
+    return {
+      name: matConfig.name || 'Material',
+      Eg: Eg, dk: dk,
+      workFn: wf,
+      color: color,
+      n: function(E) {
+        if (E < 0.08) return n0;
+        if (E < Eg) return n0;
+        if (E < Eg + 1.5) return n0 + (E - Eg) * dn;
+        if (E < 5) return n0 + dn * 1.5 + (E - Eg - 1.5) * dn * 0.5;
+        return 1.0 + 2.0 / E;
+      },
+      kappa: function(E) {
+        if (E < 0.08) return 0.001;
+        if (E < Eg) return 0.001;
+        if (E < 5) return dk * (E - Eg);
+        return 2.5;
+      },
+      alpha: function(E) {
+        return this.kappa(E) * E * 2.5;
+      },
+      R: function(E) {
+        var n1 = this.n(E);
+        return Math.pow((1 - n1) / (1 + n1), 2);
+      }
+    };
+  }
+  var MAT_SI = buildMatOptics(MATERIAL_PRESETS.si);
 
   function updateScaleBar(mode) {
     var bars = document.querySelectorAll('.scale-step');
@@ -2536,6 +2797,8 @@
     updateBandElectrons();
     updateSpinVisuals();
     updateParticlesAndWaves();
+    // Keep reticle facing camera
+    if (aimReticle && aimReticle.visible) aimReticle.lookAt(camera.position);
     updateAimLine();
     thermalAmp = Math.max(thermalAmp * 0.9995, 0.02);
     renderer.render(scene, camera);
@@ -2559,8 +2822,153 @@
     var el = document.getElementById('mat-props');
     if (el) {
       var λ = wavelengthFromEnergy(E).toFixed(0);
-      el.innerHTML = '<b>Si optical constants @ ' + E.toFixed(2) + ' eV</b><br>' +
+      el.innerHTML = '<b>' + MAT_SI.name + ' optical constants @ ' + E.toFixed(2) + ' eV</b><br>' +
         'λ = ' + λ + ' nm · n = ' + n + ' · κ = ' + kappa + ' · R = ' + R + '%';
+    }
+  };
+
+  /* ─── LATTICE TEARDOWN & REBUILD ─── */
+
+  function clearLatticeScene() {
+    function removeAll(arr) {
+      for (var i = arr.length - 1; i >= 0; i--) {
+        var obj = arr[i];
+        if (obj.parent) obj.parent.remove(obj);
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) obj.material.dispose();
+      }
+      arr.length = 0;
+    }
+    removeAll(atoms);
+    removeAll(bonds);
+    removeAll(clouds);
+    removeAll(latticeElectrons);
+    removeAll(clusterAtoms);
+    removeAll(clusterBonds);
+    removeAll(clusterElectrons);
+    clusterSprings.length = 0;
+    removeAll(bandPlanes);
+    removeAll(bandElectrons);
+    removeAll(spinLevels);
+    removeAll(spinArrows);
+    removeAll(spinElectrons);
+    spinRingLevels.length = 0;
+    removeAll(valenceShells);
+    removeAll(valenceClouds);
+    if (focusGroup) {
+      if (focusGroup.parent) focusGroup.parent.remove(focusGroup);
+      focusGroup = null;
+    }
+    nucleus = null; coreCloud = null;
+  }
+
+  /* ─── Full material switch — rebuilds lattice, cluster, electrons ─── */
+  window.switchCrystalMaterial = function(matId) {
+    var matConfig = MATERIAL_PRESETS[matId];
+    if (!matConfig) { console.warn('[SIM] Unknown material:', matId); return; }
+    if (matId === currentMatId) return;
+    currentMatId = matId;
+
+    // Update constants
+    BANDGAP_SI = matConfig.bandgap !== undefined ? matConfig.bandgap : BANDGAP_SI;
+    WORKFN_SI = matConfig.workFunction !== undefined ? matConfig.workFunction : WORKFN_SI;
+    if (matConfig.latticeConstant) A_SI = matConfig.latticeConstant;
+
+    // Tear down and rebuild lattice visuals
+    clearLatticeScene();
+
+    // Store current scale to restore after rebuild
+    var savedScale = curScale;
+    setCrystalScale('macro');
+
+    buildLattice(2, 2, 2, 1.0, matConfig);
+    buildLatticeElectrons();
+    buildFocusAtom(matConfig);
+    buildCluster(matConfig);
+    buildEnergyBands(matConfig);
+    buildSpinLevels();
+    buildQuantumClouds();
+
+    // Update focus group position to new middle atom
+    if (atoms.length > 0 && focusGroup) {
+      var midIdx = Math.floor(atoms.length / 2);
+      focusGroup.position.copy(atoms[midIdx].userData.basePos);
+    }
+
+    // Restore scale
+    setCrystalScale(savedScale);
+
+    // Rebuild material optical constants dynamically
+    MAT_SI = buildMatOptics(matConfig);
+    MAT_SI.Eg = BANDGAP_SI;
+    MAT_SI.workFn = WORKFN_SI;
+
+    // Update macro cube
+    if (macroCube && macroCube.material) {
+      macroCube.material.color.setHex(matConfig.simColor || 0x8899aa);
+    }
+
+    // Update material panel
+    var photonSlider = document.getElementById('photon-slider');
+    var E = photonSlider ? parseFloat(photonSlider.value) : 1.5;
+    if (typeof window.updateMaterialPanel === 'function') window.updateMaterialPanel(E);
+    if (typeof window.updateSnellReadout === 'function') window.updateSnellReadout(E);
+
+    // Update bandgap diagram
+    var zoomSlider = document.getElementById('zoom-slider');
+    if (zoomSlider) {
+      var v = parseFloat(zoomSlider.value) || 0;
+      var evt = new Event('input');
+      zoomSlider.dispatchEvent(evt);
+    }
+
+    console.log('[SIM] Switched to', matConfig.name);
+  };
+
+  // Legacy API bridge
+  window.setCrystalMaterial = function(props) {
+    if (!props) return;
+    if (props.materialId && MATERIAL_PRESETS[props.materialId]) {
+      window.switchCrystalMaterial(props.materialId);
+      return;
+    }
+    // Fallback: just update colors/constants without rebuild
+    BANDGAP_SI = props.bandgap !== undefined && props.bandgap !== null ? props.bandgap : BANDGAP_SI;
+    WORKFN_SI = props.workFunction !== undefined && props.workFunction !== null ? props.workFunction : WORKFN_SI;
+    if (props.latticeConstant !== undefined && props.latticeConstant !== null) A_SI = props.latticeConstant;
+    MAT_SI.name = props.name || MAT_SI.name;
+    MAT_SI.Eg = BANDGAP_SI;
+    MAT_SI.workFn = WORKFN_SI;
+    if (props.color !== undefined) MAT_SI.color = props.color;
+    if (macroCube && macroCube.material) {
+      macroCube.material.color.setHex(props.color || 0x8899aa);
+    }
+    var atomColor = props.atomColor || 0x7da4c4;
+    atoms.forEach(function(a) {
+      if (a.material) a.material.color.setHex(atomColor);
+    });
+    clusterAtoms.forEach(function(a) {
+      if (a.material) a.material.color.setHex(atomColor);
+    });
+    var labelEl = document.getElementById('scale-label');
+    var infoEl = document.getElementById('scale-info');
+    var labelBadge = document.getElementById('scale-label-badge');
+    if (labelEl) labelEl.textContent = 'Macro — 1 cm ' + (props.symbol || '') + ' crystal';
+    if (infoEl) infoEl.textContent = props.name + ' crystal. Band gap = ' + BANDGAP_SI.toFixed(2) + ' eV.';
+    if (labelBadge) labelBadge.textContent = (props.symbol || 'Si') + ' ' + (props.name || 'crystal');
+    var photonSlider = document.getElementById('photon-slider');
+    var E = photonSlider ? parseFloat(photonSlider.value) : 1.5;
+    if (typeof window.updateMaterialPanel === 'function') window.updateMaterialPanel(E);
+    if (typeof window.updateSnellReadout === 'function') window.updateSnellReadout(E);
+    var gapText = document.querySelector('.photon-val + span');
+    if (gapText) {
+      gapText.textContent = (props.symbol || 'Si') + ' gap = ' + BANDGAP_SI.toFixed(2) + ' eV';
+    }
+    var zoomSlider = document.getElementById('zoom-slider');
+    if (zoomSlider) {
+      var v = parseFloat(zoomSlider.value) || 0;
+      var evt = new Event('input');
+      zoomSlider.dispatchEvent(evt);
     }
   };
 })();

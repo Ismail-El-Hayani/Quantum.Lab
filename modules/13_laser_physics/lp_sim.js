@@ -53,7 +53,7 @@ function lpResizeCanvas() {
   var wrap = document.querySelector('.cavity-wrap');
   if (!wrap || !LP_CANVAS.c) return;
   var w = wrap.clientWidth;
-  var h = 380;
+  var h = 440;
   LP_CANVAS.c.width = w;
   LP_CANVAS.c.height = h;
   LP_CANVAS.width = w;
@@ -734,9 +734,9 @@ function lpUpdateReadouts() {
 /* ---------- Animation loop ---------- */
 function lpAnimate() {
   if (!LP_CANVAS.running) return;
-  // Pause if Playground is hidden (safety net)
-  var secPlay = document.getElementById('section-play');
-  if (!secPlay || secPlay.style.display === 'none') { LP_CANVAS.running = false; return; }
+  // Pause if Simulation tab is hidden
+  var simTab = document.getElementById('tab-simulation');
+  if (!simTab || simTab.style.display === 'none') { LP_CANVAS.running = false; return; }
   LP_CANVAS.frame++;
   lpUpdatePhotons();
   lpDraw();

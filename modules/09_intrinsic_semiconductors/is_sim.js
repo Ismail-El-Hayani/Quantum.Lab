@@ -563,7 +563,7 @@ function updateIS3D() {
 
 function animateIS3D() {
   IS3D.animId = requestAnimationFrame(animateIS3D);
-  var pg = document.getElementById('section-play');
+  var pg = document.getElementById('tab-simulation');
   if (!pg || pg.style.display === 'none') return;
   IS3D.time += 0.016;
 
