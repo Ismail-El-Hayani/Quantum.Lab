@@ -86,6 +86,23 @@
     font-size: 0.8rem; color: var(--text-dim); text-align: center;
   }
 
+  .lab-references {
+    max-width: 1400px; margin: 0 auto; padding: var(--space-xl) var(--space-xl) var(--space-lg);
+    font-size: 0.78rem; color: var(--text-dim); line-height: 1.7;
+  }
+  .lab-references h3 {
+    font-family: var(--font-display); font-size: 0.85rem; font-weight: 600;
+    color: var(--text-muted); margin-bottom: 0.6rem; letter-spacing: 0.03em;
+  }
+  .lab-references ul { list-style: none; padding: 0; margin: 0; }
+  .lab-references li {
+    padding: 0.15rem 0; border-left: 2px solid var(--glass-border);
+    padding-left: 0.75rem; margin-bottom: 0.2rem;
+    transition: border-color 0.2s;
+  }
+  .lab-references li:hover { border-left-color: var(--accent-cyan); }
+  .lab-references cite { font-style: normal; color: var(--text-muted); }
+
   .module-jump {
     display: flex; flex-wrap: wrap; gap: 0.35rem;
     padding: var(--space-md) var(--space-xl) 0;
@@ -309,6 +326,23 @@
 <footer class="lab-footer">
   <span>⚛ Quantum Lab</span>
 </footer>
+
+<!-- REFERENCES -->
+<section class="lab-references">
+  <h3>References</h3>
+  <ul>
+    <li><cite>Kittel, C. — <em>Introduction to Solid State Physics</em>, 8th ed., Wiley (2005)</cite></li>
+    <li><cite>Ashcroft, N. W. &amp; Mermin, N. D. — <em>Solid State Physics</em>, Holt, Rinehart and Winston (1976)</cite></li>
+    <li><cite>Sze, S. M. &amp; Ng, K. K. — <em>Physics of Semiconductor Devices</em>, 3rd ed., Wiley (2007)</cite></li>
+    <li><cite>Yu, P. Y. &amp; Cardona, M. — <em>Fundamentals of Semiconductors</em>, 4th ed., Springer (2010)</cite></li>
+    <li><cite>Griffiths, D. J. — <em>Introduction to Quantum Mechanics</em>, 2nd ed., Cambridge (2017)</cite></li>
+    <li><cite>Ibach, H. &amp; Lüth, H. — <em>Solid-State Physics</em>, 4th ed., Springer (2009)</cite></li>
+    <li><cite>Bardeen, J., Cooper, L. N. &amp; Schrieffer, J. R. — "Theory of Superconductivity", <em>Phys. Rev.</em> 108, 1175 (1957)</cite></li>
+    <li><cite>Kronig, R. de L. &amp; Penney, W. G. — "Quantum Mechanics of Electrons in Crystal Lattices", <em>Proc. R. Soc. Lond. A</em> 130, 499 (1931)</cite></li>
+    <li><cite>Bloch, F. — "Über die Quantenmechanik der Elektronen in Kristallgittern", <em>Z. Phys.</em> 52, 555 (1928)</cite></li>
+    <li><cite>Esaki, L. — "New Phenomenon in Narrow Germanium p–n Junctions", <em>Phys. Rev.</em> 109, 603 (1958)</cite></li>
+  </ul>
+</section>
 
 <!-- SCRIPTS -->
 <script src="shared_lab.js"></script>
