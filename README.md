@@ -1,6 +1,6 @@
-# ⚛ Physics Playground
+# ⚛ Quantum Lab
 
-**Learn Physics by Playing** — An interactive, gamified learning platform covering quantum mechanics, solid-state physics, and device physics through hands-on experiments and puzzles.
+**Learn Physics by Experimenting** — An interactive physics laboratory covering quantum mechanics, solid-state physics, and device physics through live simulations and guided exercises.
 
 No textbooks. No lectures. Drag electrons, tune lasers, freeze atoms — discover equations through experiments.
 
@@ -9,22 +9,23 @@ No textbooks. No lectures. Drag electrons, tune lasers, freeze atoms — discove
 ## Features
 
 - **16 Interactive Laboratories** — From quantum fundamentals to thermal properties
-- **60+ Challenges & Puzzles** — Gamified progression with XP, levels, and badges
 - **Live Simulations** — Real-time Plotly.js visualizations with interactive controls
-- **Beautiful 3D Universe Background** — Particle system with constellation tracking
-- **Gamification** — Level up from "Quantum Initiate" through the curriculum
-- **Progressive Storyline** — Timeline navigation connecting all modules
+- **Unified Lab Interface** — Every module follows the same 4-tab layout (Overview → Theory → Simulation → Exercises) with a persistent Lab Navigator sidebar
+- **Interactive Periodic Table** — 118 elements with solid-state properties, 18 semiconductor materials, integrated into Module 00
+- **3D Universe Background** — Particle system with constellation tracking
+- **Custom Physics Engines** — 25,700+ lines of hand-written simulation JavaScript across 46 module JS files
+- **Python Engine** — QHO Hermite polynomial generator (`engines/qho_engine.py`)
 - **Responsive Design** — Works on desktop and tablet
 
 ## Module Roadmap
 
 | Lab | Module | Topic |
 |:---:|:------:|-------|
-| 00 | Crystal → Quantum | 3D zoom journey through a silicon crystal |
+| 00 | Crystal → Quantum | 3D zoom journey through a silicon crystal, periodic table integration |
 | 01 | Quantum Harmonic Oscillator | Energy ladders, wavefunctions, laser tuning |
 | 02 | Hydrogen Atom | Orbital building, spectral puzzles |
 | 03 | Spin-1/2 & Measurement | Bloch sphere, Stern-Gerlach, quantum gates |
-| 04 | Kronig-Penney Model | Crystal designer, bandgap engineering |
+| 04 | Kronig-Penney Model | Crystal designer, bandgap engineering, wave packets |
 | 05 | Energy Bands & DOS | Fermi level, material design |
 | 06 | Fermi Surface & Temperature | 3D Fermi surfaces, temperature effects |
 | 07 | Electrical Conductivity | Circuit builder, drift race, superconductivity intro |
@@ -39,37 +40,29 @@ No textbooks. No lectures. Drag electrons, tune lasers, freeze atoms — discove
 
 ## Getting Started
 
-### Option 1: Open directly
+### Option 1: Serve locally (recommended)
 
-Open `index.html` in a modern browser (Chrome, Firefox, Edge recommended). No build step required.
+ES modules + importmap + jsDelivr CDN require `http://` — browsers silently fail under `file://`.
 
-### Option 2: Serve locally (recommended for best performance)
+**Windows:** double-click `serve.bat`
+**Linux/macOS/WSL:** `chmod +x serve.sh && ./serve.sh`
 
-**Windows:**
-```batch
-serve.bat
-```
+Then open `http://127.0.0.1:8080/` in your browser.
 
-**Linux/macOS:**
-```bash
-chmod +x serve.sh && ./serve.sh
-```
-
-Then open `http://localhost:8000` in your browser.
-
-Some modules load scripts dynamically — a local server avoids CORS issues.
-
-### Option 3: Python one-liner
+### Option 2: Python one-liner
 
 ```bash
-python -m http.server 8000
+python -m http.server 8080
 ```
+
+Then open `http://127.0.0.1:8080/`.
 
 ## Technology Stack
 
-- **Vanilla JavaScript (ES5)** — No framework, maximum compatibility
-- **Plotly.js 2.27** — Interactive scientific visualizations
+- **Vanilla JavaScript (ES5/ES6)** — No framework, maximum compatibility
+- **Plotly.js 2.27** — Interactive scientific visualizations (vendored locally)
 - **MathJax 3** — LaTeX equation rendering
+- **Three.js** — 3D crystal-to-quantum intro (Module 00)
 - **Canvas API** — Custom universe background engine
 - **CSS3** — Glassmorphism design, custom properties, animations
 
@@ -77,13 +70,21 @@ python -m http.server 8000
 
 ```
 quantum-lab/
-├── index.html                  # Main hub / lab selection
-├── shared_*.js                 # Shared UI, game state, effects, interactivity
-├── shared_styles.css           # Global design system
+├── index.html                  # Main hub — 16-module card grid
+├── module-template.html        # Reference template for module structure
+├── universe-background.html    # Standalone universe bg demo
+├── shared_styles.css           # Global design system (701 lines)
+├── shared_lab.js               # Unified module bootstrapper: tab switching, Lab Navigator
+├── shared_effects.js           # Cursor glow, scroll reveal, 3D tilt, spotlight
+├── shared_interactive.js       # Sliders, drag/drop, matching, experiment recorder
+├── shared_ui.js                # Tooltips
+├── shared_periodic.js          # Periodic table renderer + 118-element database (976 lines)
 ├── assets/
 │   └── universe-bg.js          # 3D particle background engine
+├── engines/
+│   └── qho_engine.py           # Python QHO Hermite polynomial generator
 ├── modules/
-│   ├── 00_crystal_to_quantum/  # Intro module (Three.js 3D)
+│   ├── 00_crystal_to_quantum/  # Three.js 3D intro + periodic table
 │   ├── 01_qho/                 # Quantum harmonic oscillator
 │   ├── 02_hydrogen/            # Hydrogen atom
 │   ├── 03_spin/                # Spin & measurement
@@ -95,23 +96,31 @@ quantum-lab/
 │   ├── 09_intrinsic_semiconductors/
 │   ├── 10_doped_semiconductors/
 │   ├── 11_junctions_devices/
-│   ├── 12_optics_dispersion/
+│   ├── 12_optics_dispersion/   # Snell, Fresnel, thin films, spectral
 │   ├── 13_laser_physics/
 │   ├── 14_magnetism/
 │   └── 15_thermal_properties/
-├── engines/
-│   └── qho_engine.py           # Python simulation engine
+├── serve.bat                   # Windows dev server launcher
+├── serve.sh                    # Linux/macOS dev server launcher
 ├── README.md
+├── SIMULATION_GUIDE.md         # Parameter reference for all 16 modules
+├── PROJECT_LOG.md              # Development history & architecture
+├── UNIFIED_UI_PLAN.md          # UI unification plan (all phases complete)
+├── SONAR_INVENTORY.md          # SonarQube issue inventory
+├── Rules.md                    # Agent rules for subagents
 └── .gitignore
 ```
 
-## Gamification System
+## Module Architecture
 
-- **XP (Experience Points):** Earned by completing challenges and puzzles
-- **Levels:** 100 XP per level; track progress on the hero XP bar
-- **Modules Explored:** `/15` tracker in the navbar
-- **Progress Rings:** Per-module completion percentage on each lab card
-- **Preview Plot:** Hover any lab card to see a live waveform preview
+Every module (01–15) follows the unified lab template:
+
+- **4 tabs:** Overview · Theory · Simulation · Exercises
+- **Lab Navigator sidebar:** Cross-module navigation links, simulation controls, live readouts
+- **Compatibility shim:** Legacy `setGameMode()` calls aliased to `switchTab()` so existing exercise JS works unmodified
+- **File pattern:** `*_sim.js` (physics engine), `*_apps.js` / `*_apps_games.js` (exercises), `*_equations.js` (MathJax), `*_embed.js` / `*_sections.js` (sub-tab content)
+
+Module 00 is the exception — its Simulation tab is full-width (no sidebar) to preserve the immersive Three.js experience.
 
 ## Contributing
 
@@ -121,7 +130,7 @@ Contributions welcome! Ideas for new modules, challenges, or visual improvements
 2. Create a feature branch
 3. Submit a pull request
 
-See individual module files for the pattern (each module typically has `*_sim.js` for physics, `*_apps_games.js` for challenges).
+See `module-template.html` for the canonical module structure and `Rules.md` for agent guidelines.
 
 ## License
 
