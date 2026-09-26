@@ -25,3 +25,11 @@ package-lock.json
 # Uncomment if you want to exclude media:
 # *.mp4
 # *.png
+
+# Coursework source documents (kept locally, not part of the lab)
+atomic_physics.docx
+Solid_physics.docx
+solid_physics_extracted.txt
+Part_III_Optical_Properties.md
+Socraticode Audit.txt
+.hermes/
