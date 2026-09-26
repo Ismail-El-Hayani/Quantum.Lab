@@ -13,7 +13,7 @@ No textbooks. No lectures. Drag electrons, tune lasers, freeze atoms — discove
 - **Unified Lab Interface** — Every module follows the same 4-tab layout (Overview → Theory → Simulation → Exercises) with a persistent Lab Navigator sidebar
 - **Interactive Periodic Table** — 118 elements with solid-state properties, 18 semiconductor materials, integrated into Module 00
 - **3D Universe Background** — Particle system with constellation tracking
-- **Custom Physics Engines** — 25,700+ lines of hand-written simulation JavaScript across 46 module JS files
+- **Custom Physics Engines** — 24,400+ lines of hand-written simulation JavaScript across 43 module JS files
 - **Python Engine** — QHO Hermite polynomial generator (`engines/qho_engine.py`)
 - **Responsive Design** — Works on desktop and tablet
 
@@ -25,10 +25,10 @@ No textbooks. No lectures. Drag electrons, tune lasers, freeze atoms — discove
 | 01 | Quantum Harmonic Oscillator | Energy ladders, wavefunctions, laser tuning |
 | 02 | Hydrogen Atom | Orbital building, spectral puzzles |
 | 03 | Spin-1/2 & Measurement | Bloch sphere, Stern-Gerlach, quantum gates |
-| 04 | Kronig-Penney Model | Crystal designer, bandgap engineering, wave packets |
+| 04 | Kronig-Penney Model | Periodic potentials, band gaps, wave packets |
 | 05 | Energy Bands & DOS | Fermi level, material design |
 | 06 | Fermi Surface & Temperature | 3D Fermi surfaces, temperature effects |
-| 07 | Electrical Conductivity | Circuit builder, drift race, superconductivity intro |
+| 07 | Electrical Conductivity | Electron drift, resistivity, Hall effect |
 | 08 | Superconductivity | BCS gap, Meissner effect, isotope puzzle |
 | 09 | Intrinsic Semiconductors | Bandgap, carrier concentration, conductivity |
 | 10 | Doped Semiconductors | n-type/p-type, compensation, mobility |
@@ -60,7 +60,7 @@ Then open `http://127.0.0.1:8080/`.
 ## Technology Stack
 
 - **Vanilla JavaScript (ES5/ES6)** — No framework, maximum compatibility
-- **Plotly.js 2.27** — Interactive scientific visualizations (vendored locally)
+- **Plotly.js 2.27** — Interactive scientific visualizations (local vendor copy in Module 01, CDN elsewhere)
 - **MathJax 3** — LaTeX equation rendering
 - **Three.js** — 3D crystal-to-quantum intro (Module 00)
 - **Canvas API** — Custom universe background engine
@@ -115,10 +115,10 @@ quantum-lab/
 
 Every module (01–15) follows the unified lab template:
 
-- **4 tabs:** Overview · Theory · Simulation · Exercises
+- **4 tabs:** Overview · Theory · Simulation · Exercises (Exercises is provided by the template; modules 01–15 currently ship Overview/Theory/Simulation, with exercises content living in the Simulation tab)
 - **Lab Navigator sidebar:** Cross-module navigation links, simulation controls, live readouts
 - **Compatibility shim:** Legacy `setGameMode()` calls aliased to `switchTab()` so existing exercise JS works unmodified
-- **File pattern:** `*_sim.js` (physics engine), `*_apps.js` / `*_apps_games.js` (exercises), `*_equations.js` (MathJax), `*_embed.js` / `*_sections.js` (sub-tab content)
+- **File pattern:** `*_sim.js` (physics engine), `*_apps.js` / `*_apps_games.js` (exercises; files in modules 01, 08–15 are superseded legacy and not loaded), `*_equations.js` (MathJax), `*_embed.js` / `*_sections.js` (sub-tab content)
 
 Module 00 is the exception — its Simulation tab is full-width (no sidebar) to preserve the immersive Three.js experience.
 
