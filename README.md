@@ -134,7 +134,7 @@ See `module-template.html` for the canonical module structure and `Rules.md` for
 
 ## License
 
-Academic project — MIT License. Built for the Nano Master program in Atomic Physics & Solid State.
+Academic project — MIT License.
 
 ---
 
